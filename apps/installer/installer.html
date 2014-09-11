@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title></title>
+
+    <!-- Import Socket.IO client library -->
+    <script src="http://%SYSIP%:8001/socket.io/socket.io.js"></script>
+
+    <!-- Import Socket.IO-stream library for file transfer support -->
+    <script src="js/socket.io-stream.js"></script>
+
+    <!-- Import JQuery library -->
+    <script src="http://%SYSIP%:8001/lib/jquery/jquery-1.11.1.min.js"></script>
+    <script src="http://%SYSIP%:8001/lib/jquery/ui/1.11.1/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="http://%SYSIP%:8001/lib/jquery/ui/1.11.1/themes/ui-lightness/jquery-ui.min.css">
+
+    <!-- Import Foundation Frameworks -->
+    <script src="http://%SYSIP%:8001/lib/framework/foundation/core-client.js"></script>
+    <script src="http://%SYSIP%:8001/lib/framework/foundation/core-client-delegate.js"></script>
+
+    <!-- Import UI Frameworks -->
+    <script src="http://%SYSIP%:8001/lib/framework/ui/page/js/page.js"></script>
+    <link rel="stylesheet" href="http://%SYSIP%:8001/lib/framework/ui/page/css/page.css">
+    <script src="http://%SYSIP%:8001/lib/framework/ui/navigation-bar/js/navigation-bar.js"></script>
+    <link rel="stylesheet" href="http://%SYSIP%:8001/lib/framework/ui/navigation-bar/css/navigation-bar.css">
+
+    <!-- Import installer style -->
+    <link rel="stylesheet" href="css/style.css">
+
+    <script>
+        /* InstallerDelegate Constructor */
+        var InstallerDelegate = function() {
+            this.dialog = null;
+            this.uploadButton = null;
+            this.closeUpload = null;
+        };
+
+        /* Create installer delegate and inherit CoreClientDelegate */
+        InstallerDelegate.prototype = new CoreClientDelegate;
+        InstallerDelegate.prototype.constructor = InstallerDelegate;
+
+        /* Implement connection delegates */
+        InstallerDelegate.prototype.connectionEstablished = function(coreClient) {
+            var self = this;
+
+            //alert("Socket.IO connection established");
+
+            $("#progressbar").progressbar({
+                value: false,
+                change: function() {
+                    $(".progress-label").text("Uploading APP: " + $("#progressbar").progressbar( "value" ) + "%");
+                },
+                complete: function() {}
+            });
+
+            function progress(val) {
+                $("#progressbar").progressbar( "value", val );
+            }
+
+            self.closeUpload = function() {
+                self.dialog.dialog("close");
+                progress(false);
+                self.uploadButton.focus();
+            }
+
+            self.cancelUpload = function() {
+                var appBundle = $("#uploadAppBundle")[0].files[0];
+                coreClient.appCancelInstall(appBundle);
+            }
+
+            self.dialog = $("#dialog").dialog({
+                autoOpen: false,
+                closeOnEscape: false,
+                resizable: false,
+                open: function() {},
+                beforeClose: function() {
+                    self.uploadButton.button("option", {
+                        disabled: false,
+                        label: "Start Upload"
+                    });
+                }
+            });
+
+            self.uploadButton = $("#uploadButton").button().on("click", function() {
+                $(this).button( "option", {
+                    disabled: true,
+                    label: "Uploading..."
+                });
+
+                self.dialog.dialog("option", "buttons", [{
+                    text: "Cancel",
+                    click: self.cancelUpload
+                }]);
+
+                var appBundle = $("#uploadAppBundle")[0].files[0];
+                var size = 0;
+
+                // Upload appBundle to the server.
+                coreClient.appInstall(ss, appBundle, function(chunk) {
+                    size += chunk.length;
+                    progress(Math.floor(size / appBundle.size * 100));
+                });
+
+                self.dialog.dialog("open");
+            });
+        };
+
+        InstallerDelegate.prototype.connectionClosed = function(coreClient) {
+            var self = this;
+
+            //alert("Socket.IO connection closed");
+            self.uploadButton = null;
+            self.closeUpload = null;
+        };
+
+        InstallerDelegate.prototype.connectionFailWithError = function(coreClient, error) {
+            alert("Socket.IO connection error: " + error.toString());
+        };
+
+        /* Implement protocol delegates */
+        InstallerDelegate.prototype.protoErrorProtoLoad = function(coreClient, error) {
+            alert("Protocol error: " + error);
+        };
+
+        InstallerDelegate.prototype.protoResponseAppInstalling = function(coreClient, appBundle) {
+            var self = this;
+
+            $(".progress-label").text("Installing " + appBundle.name);
+            self.dialog.dialog("option", "buttons", [{
+                text: "Please wait",
+                click: self.closeUpload
+            }]);
+            $(".ui-dialog button").attr("disabled", true).addClass('ui-state-disabled');
+        };
+
+        InstallerDelegate.prototype.protoResponseAppInstalled = function(coreClient, appBundle) {
+            var self = this;
+
+            $(".progress-label").text(appBundle.name + " Installed!");
+            self.dialog.dialog("option", "buttons", [{
+                text: "Close",
+                click: self.closeUpload
+            }]);
+            $(".ui-dialog button").attr("disabled", false).removeClass('ui-state-disabled');
+            $(".ui-dialog button").last().focus();
+        };
+
+        InstallerDelegate.prototype.protoResponseAppInstallCancelled = function(coreClient, appBundle) {
+            var self = this;
+
+            $(".progress-label").text(appBundle.name + " installation cancelled!");
+            self.dialog.dialog("option", "buttons", [{
+                text: "Close",
+                click: self.closeUpload
+            }]);
+            $(".ui-dialog button").attr("disabled", false).removeClass('ui-state-disabled');
+            $(".ui-dialog button").last().focus();
+        };
+
+        InstallerDelegate.prototype.protoErrorAppInstall = function(coreClient, error) {
+            var self = this;
+
+            $(".progress-label").text("Unable to install APP (Error: " + error + ")");
+            self.dialog.dialog("option", "buttons", [{
+                text: "Close",
+                click: self.closeUpload
+            }]);
+            $(".ui-dialog button").attr("disabled", false).removeClass('ui-state-disabled');
+            $(".ui-dialog button").last().focus();
+        };
+
+        $(function() {
+            var coreClient = new CoreClient();
+            coreClient.delegate = new InstallerDelegate();
+            coreClient.initiate();
+        });
+    </script>
+    <style>
+
+    </style>
+</head>
+<body>
+    <div id="wrapper">
+        <div id="header"></div>
+        <div id="content">
+            <div id="dialog" title="APP Installer">
+                <div class="progress-label">Starting upload...</div>
+                <div id="progressbar"></div>
+            </div>
+
+            <input type="file" id="uploadAppBundle" />
+            <button id="uploadButton">Start Upload</button>
+        </div>
+        <div id="footer"></div>
+    </div>
+
+    <script>
+        var page = new Page();
+        page.setTitle("APP Installer");
+        page.createNavigationBar("APP Installer");
+        page.setFooterText("%COPYRIGHT%");
+
+        var brandLabel = new NavigationBarLabel("%BRAND%");
+        page.navigationBar.rightContainer.pushItem(brandLabel);
+    </script>
+</body>
+</html>

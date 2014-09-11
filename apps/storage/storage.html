@@ -1,0 +1,166 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title></title>
+
+    <!-- Import Socket.IO client library -->
+    <script src="http://%SYSIP%:8001/socket.io/socket.io.js"></script>
+
+    <!-- Import JQuery library -->
+    <script src="http://%SYSIP%:8001/lib/jquery/jquery-1.11.1.min.js"></script>
+    <script src="http://%SYSIP%:8001/lib/jquery/ui/1.11.1/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="http://%SYSIP%:8001/lib/jquery/ui/1.11.1/themes/ui-lightness/jquery-ui.min.css">
+    <script src="js/jquery.flot.js"></script>
+    <script src="js/jquery.flot.pie.js"></script>
+
+    <!-- Import Foundation Frameworks -->
+    <script src="http://%SYSIP%:8001/lib/framework/foundation/core-client.js"></script>
+    <script src="http://%SYSIP%:8001/lib/framework/foundation/core-client-delegate.js"></script>
+
+    <!-- Import UI Frameworks -->
+    <script src="http://%SYSIP%:8001/lib/framework/ui/page/js/page.js"></script>
+    <link rel="stylesheet" href="http://%SYSIP%:8001/lib/framework/ui/page/css/page.css">
+    <script src="http://%SYSIP%:8001/lib/framework/ui/navigation-bar/js/navigation-bar.js"></script>
+    <link rel="stylesheet" href="http://%SYSIP%:8001/lib/framework/ui/navigation-bar/css/navigation-bar.css">
+
+    <!-- Import Storage style -->
+    <link rel="stylesheet" href="css/style.css">
+
+    <script>
+        /* StorageDelegate Constructor */
+        var StorageDelegate = function() {};
+
+        /* Create storage delegate and inherit CoreClientDelegate */
+        StorageDelegate.prototype = new CoreClientDelegate;
+        StorageDelegate.prototype.constructor = StorageDelegate;
+
+        /* Implement connection delegates */
+        StorageDelegate.prototype.connectionEstablished = function(coreClient) {
+            //alert("Socket.IO connection established");
+            coreClient.storageGetLocalDisks();
+        };
+
+        StorageDelegate.prototype.connectionClosed = function(coreClient) {
+            //alert("Socket.IO connection closed");
+        };
+
+        StorageDelegate.prototype.connectionFailWithError = function(coreClient, error) {
+            alert("Socket.IO connection error: " + error.toString());
+        };
+
+        /* Implement protocol delegates */
+        StorageDelegate.prototype.protoError = function(coreClient, error) {
+            alert("Protocol error: " + error.toString());
+        };
+
+        StorageDelegate.prototype.protoResponseLocalDisks = function(coreClient, disks) {
+            if (disks.system) {
+                $("#content").append(
+                    "<div id='system-container' class='storage-container'> \
+                        <h3 id='system-title' align='left'></h3> \
+                        <div id='system-placeholder' class='storage-placeholder'></div> \
+                    </div>"
+                );
+
+                $("#system-title").text("System (" + disks.system.mountpoint + ") (" + disks.system.total + ")");
+                plotPieChart($("#system-placeholder"), disks.system);
+            }
+
+            if (disks.user) {
+                $("#content").append(
+                    "<div id='user-container' class='storage-container'> \
+                        <h3 id='user-title' align='left'></h3> \
+                        <div id='user-placeholder' class='storage-placeholder'></div> \
+                    </div>"
+                );
+
+                $("#user-title").text("User (" + disks.user.mountpoint + ") (" + disks.user.total + ")");
+                plotPieChart($("#user-placeholder"), disks.user);
+            }
+
+            for (var i = 0; i  < disks.removable.length; i++) {
+                $("#content").append(
+                    "<div id='removable-container[" + i + "]' class='storage-container'> \
+                        <h3 id='removable-title[" + i + "]' align='left'></h3> \
+                        <div id='removable-placeholder[" + i + "]' class='storage-placeholder'></div> \
+                    </div>"
+                );
+
+                $("#removable-title\\[" + i + "\\]").text("Removable (" + disks.removable[i].mountpoint + ") (" + disks.removable[i].total + ")");
+                plotPieChart($("#removable-placeholder\\[" + i + "\\]"), disks.removable[i]);
+            }
+        };
+
+        StorageDelegate.prototype.protoErrorGetLocalDisks = function(coreClient, error) {
+            //alert(error);
+        };
+
+        $(function() {
+            var coreClient = new CoreClient();
+            coreClient.delegate = new StorageDelegate();
+            coreClient.initiate();
+        });
+
+        /* UI interaction handling */
+        var plotPieChart = function(placeholder, disk) {
+            var data = [{
+                label: "Used",
+                data: disk.usedPer,
+                color: "#D51"
+            },
+            {
+                label: "Available",
+                data: disk.freePer,
+                color: "#6B0"
+            }];
+
+            placeholder.unbind();
+
+            $.plot(placeholder, data, {
+                series: {
+                    pie: {
+                        show: true,
+                        radius: 1,
+                        label: {
+                            show: true,
+                            radius: 3/5,
+                            formatter: function (label, series) {
+                                var divStyleBegin = "<div style='text-align:center; padding:2px; color:white;'>";
+                                var divStyleEnd = "</div>";
+                                if (label == "Used")
+                                    return divStyleBegin + disk.used + " Used<br/>" + disk.usedPer + "%" + divStyleEnd;
+                                else
+                                    return divStyleBegin + disk.available + " Available<br/>" + disk.freePer + "%" + divStyleEnd;
+                            },
+                            background: {
+                                opacity: 0.5
+                            }
+                        }
+                    }
+                },
+                legend: {
+                    show: true
+                }
+            });
+        };
+    </script>
+</head>
+<body>
+    <div id="wrapper">
+        <div id="header"></div>
+        <div id="content"></div>
+        <div id="footer"></div>
+    </div>
+
+    <script>
+        var page = new Page();
+        page.setTitle("Storage Usage");
+        page.createNavigationBar("Storage Usage");
+        page.setFooterText("%COPYRIGHT%");
+
+        var brandLabel = new NavigationBarLabel("%BRAND%");
+        page.navigationBar.rightContainer.pushItem(brandLabel);
+    </script>
+</body>
+</html>

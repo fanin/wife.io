@@ -1,0 +1,16 @@
+{
+    "AppName": "Template",
+    "Version": "0.1.0",
+    "ProtocolVersion": "0.1",
+    "Directory": "template",
+    "AppEntry": "template.html",
+    "Localizations": [ "en_US", "zh_TW" ],
+    "BrowserVersionSupport": {
+        "Chrome": "*",
+        "Firefox": "*",
+        "IE": "*",
+        "Safari": "*"
+    },
+    "Description": "APP template codes",
+    "ShowInLauncher": false
+}

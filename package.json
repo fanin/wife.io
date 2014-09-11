@@ -1,0 +1,16 @@
+{
+    "name": "Instrument.IO",
+    "version": "0.0.1",
+    "private": true,
+    "description": "Integrated web control system for GwInstek instruments",
+    "dependencies": {
+        "ip": "0.3.1",
+        "mime": "1.2.11",
+        "socket.io": "1.0.6",
+        "socket.io-stream": "0.5.3",
+        "adm-zip": "0.4.4",
+        "fs-extra": "0.11.0",
+        "async": "0.9.0",
+        "numeral": "1.5.3"
+    }
+}

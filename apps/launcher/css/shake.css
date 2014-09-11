@@ -1,0 +1,218 @@
+div.shake, div.shake img {
+    -webkit-transform: translate3d(0,0,0);
+    -moz-transform: translate3d(0,0,0);
+    -ie-transform: translate3d(0,0,0);
+    -o-transform: translate3d(0,0,0);
+    -khtml-transform: translate3d(0,0,0);
+    transform: translate3d(0,0,0);
+}
+
+div.shake {
+    display: inline-block;
+    text-align: center;
+    color: white;
+    font: bold 12px Helvetica, Sans-serif;
+    text-shadow: -1px 2px 1px rgb(50, 50, 50);
+    margin: 5px;
+    margin-bottom: 15px;
+    padding: 0;
+    width: 64px;
+    height: 64px;
+    border-radius: 10px;
+    box-shadow: 0 8px 18px rgb(100, 100, 100);
+    cursor: default;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ie-user-select: none;
+    -o-user-select: none;
+    -khtml-user-select: none;
+    user-select: none;
+}
+
+div.shake img {
+/*
+    width: 64px;
+    height: 64px;
+*/
+    border-radius: 10px;
+    cursor: default;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ie-user-select: none;
+    -o-user-select: none;
+    -khtml-user-select: none;
+}
+
+div.shake:nth-child(even) {
+    -webkit-animation: shake-even 250ms infinite linear;
+    -moz-animation: shake-even 250ms infinite linear;
+    -ms-animation: shake-even 250ms infinite linear;
+    animation: shake-even 250ms infinite linear;
+}
+
+div.shake:nth-child(odd) {
+    -webkit-animation: shake-odd 250ms infinite linear;
+    -moz-animation: shake-odd 250ms infinite linear;
+    -ms-animation: shake-odd 250ms infinite linear;
+    animation: shake-odd 250ms infinite linear;
+}
+
+@-webkit-keyframes shake-even {
+    from {
+        -webkit-transform: rotate(0deg);
+        margin-bottom: 15px;
+    }
+    25% {
+        -webkit-transform: rotate(2deg);
+        margin-bottom: 14px;
+    }
+    75% {
+        -webkit-transform: rotate(-2deg);
+        margin-bottom: 16px;
+    }
+    to {
+        -webkit-transform: rotate(0deg);
+        margin-bottom: 15px;
+    }
+}
+
+@-webkit-keyframes shake-odd {
+    from {
+        -webkit-transform: rotate(0deg);
+        margin-bottom: 15px;
+    }
+    25% {
+        -webkit-transform: rotate(-2deg);
+        margin-bottom: 16px;
+    }
+    75% {
+        -webkit-transform: rotate(2deg);
+        margin-bottom: 14px;
+    }
+    to {
+        -webkit-transform: rotate(0deg);
+        margin-bottom: 15px;
+    }
+}
+
+
+
+@-moz-keyframes shake-even {
+    from {
+        -moz-transform: rotate(0deg);
+        margin-bottom: 15px;
+    }
+    25% {
+        -moz-transform: rotate(2deg);
+        margin-bottom: 14px;
+    }
+    75% {
+        -moz-transform: rotate(-2deg);
+        margin-bottom: 16px;
+    }
+    to {
+        -moz-transform: rotate(0deg);
+        margin-bottom: 15px;
+    }
+}
+
+@-moz-keyframes shake-odd {
+    from {
+        -moz-transform: rotate(0deg);
+        margin-bottom: 15px;
+    }
+    25% {
+        -moz-transform: rotate(-2deg);
+        margin-bottom: 16px;
+    }
+    75% {
+        -moz-transform: rotate(2deg);
+        margin-bottom: 14px;
+    }
+    to {
+        -moz-transform: rotate(0deg);
+        margin-bottom: 15px;
+    }
+}
+
+
+
+
+@-ms-keyframes shake-even {
+    from {
+        -ms-transform: rotate(0deg);
+        margin-bottom: 15px;
+    }
+    25% {
+        -ms-transform: rotate(2deg);
+        margin-bottom: 14px;
+    }
+    75% {
+        -ms-transform: rotate(-2deg);
+        margin-bottom: 16px;
+    }
+    to {
+        -ms-transform: rotate(0deg);
+        margin-bottom: 15px;
+    }
+ }
+
+ @-ms-keyframes shake-odd {
+    from {
+        -ms-transform: rotate(0deg);
+        margin-bottom: 15px;
+    }
+    25% {
+        -ms-transform: rotate(-2deg);
+        margin-bottom: 16px;
+    }
+    75% {
+        -ms-transform: rotate(2deg);
+        margin-bottom: 14px;
+    }
+    to {
+        -ms-transform: rotate(0deg);
+        margin-bottom: 15px;
+    }
+ }
+
+
+
+
+@keyframes shake-even {
+    from {
+        transform: rotate(0deg);
+        margin-bottom: 15px;
+    }
+    25% {
+        transform: rotate(2deg);
+        margin-bottom: 14px;
+    }
+    75% {
+        transform: rotate(-2deg);
+        margin-bottom: 16px;
+    }
+    to {
+        transform: rotate(0deg);
+        margin-bottom: 15px;
+    }
+ }
+
+ @keyframes shake-odd {
+    from {
+        transform: rotate(0deg);
+        margin-bottom: 15px;
+    }
+    25% {
+        transform: rotate(-2deg);
+        margin-bottom: 16px;
+    }
+    75% {
+        transform: rotate(2deg);
+        margin-bottom: 14px;
+    }
+    to {
+        transform: rotate(0deg);
+        margin-bottom: 15px;
+    }
+ }

@@ -1,0 +1,348 @@
+<!doctype html>
+<html>
+<head>
+    <title></title>
+
+    <!-- Import Socket.IO client library -->
+    <script src="http://%SYSIP%:8001/socket.io/socket.io.js"></script>
+
+    <!-- Import JQuery library -->
+    <script src="http://%SYSIP%:8001/lib/jquery/jquery-1.11.1.min.js"></script>
+    <script src="http://%SYSIP%:8001/lib/jquery/ui/1.11.1/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="http://%SYSIP%:8001/lib/jquery/ui/1.11.1/themes/ui-lightness/jquery-ui.min.css">
+
+    <!-- Import Foundation Frameworks -->
+    <script src="http://%SYSIP%:8001/lib/framework/foundation/core-client.js"></script>
+    <script src="http://%SYSIP%:8001/lib/framework/foundation/core-client-delegate.js"></script>
+
+    <!-- Import UI Frameworks -->
+    <script src="http://%SYSIP%:8001/lib/framework/ui/page/js/page.js"></script>
+    <link rel="stylesheet" href="http://%SYSIP%:8001/lib/framework/ui/page/css/page.css">
+    <script src="http://%SYSIP%:8001/lib/framework/ui/navigation-bar/js/navigation-bar.js"></script>
+    <link rel="stylesheet" href="http://%SYSIP%:8001/lib/framework/ui/navigation-bar/css/navigation-bar.css">
+
+    <!-- Import Launcher page style -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/shake.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+
+    <script>
+        /* LauncherDelegate Constructor */
+        var LauncherDelegate = function() {
+            this.appList = null;
+            this.manageMode = false;
+        };
+
+        /* Create launcher delegate and inherit CoreClientDelegate */
+        LauncherDelegate.prototype = new CoreClientDelegate;
+        LauncherDelegate.prototype.constructor = LauncherDelegate;
+
+        /* Implement connection delegates */
+        LauncherDelegate.prototype.connectionEstablished = function(coreClient) {
+            //alert("Socket.IO connection established");
+            coreClient.appGetList();
+        };
+
+        LauncherDelegate.prototype.connectionClosed = function(coreClient) {
+            //alert("Socket.IO connection closed");
+        };
+
+        LauncherDelegate.prototype.connectionFailWithError = function(coreClient, error) {
+            alert("Socket.IO connection error: " + error);
+        };
+
+        /* Implement protocol delegates */
+        LauncherDelegate.prototype.protoErrorProtoLoad = function(coreClient, error) {
+            alert("Protocol error: " + error);
+        };
+
+        LauncherDelegate.prototype.protoResponseAppList = function(coreClient, apps) {
+            var self = this;
+            var i;
+            var elementLi;
+            var elementA;
+            var elementIconDiv;
+            var elementIconImg;
+
+            self.appList = apps;
+
+            for (i in self.appList.builtin) {
+                if (self.appList.builtin[i].ShowInLauncher) {
+                    elementIconImg = document.createElement("img");
+                    elementIconImg.setAttribute("id", "icon-img-" + self.appList.builtin[i].Directory);
+                    elementIconImg.setAttribute("src", "../" + self.appList.builtin[i].Directory + "/img/icon.png");
+                    elementIconImg.setAttribute("width", "100%");
+                    elementIconImg.setAttribute("height", "100%");
+
+                    elementIconDiv = document.createElement("div");
+                    elementIconDiv.setAttribute("id", "icon-div-" + self.appList.builtin[i].Directory);
+                    elementIconDiv.appendChild(elementIconImg);
+
+                    elementA = document.createElement("a");
+                    elementA.setAttribute("id", "icon-a-builtin-" + self.appList.builtin[i].Directory);
+                    elementA.setAttribute("href", "../" + self.appList.builtin[i].Directory + "/" + self.appList.builtin[i].AppEntry);
+                    elementA.setAttribute("title", self.appList.builtin[i].Description);
+                    elementA.appendChild(elementIconDiv);
+                    elementA.appendChild(document.createTextNode(self.appList.builtin[i].AppName));
+
+                    elementLi = document.createElement("li");
+                    elementLi.setAttribute("id", "icon-li-builtin-" + self.appList.builtin[i].Directory);
+                    elementLi.appendChild(elementA);
+                    document.getElementById("applist").appendChild(elementLi);
+                }
+            }
+
+            for (i in self.appList.user) {
+                if (self.appList.user[i].ShowInLauncher) {
+                    elementIconDiv = document.createElement("div");
+                    elementIconDiv.setAttribute("id", "icon-div-" + self.appList.user[i].Directory);
+                    elementIconDiv.setAttribute("style", "background:url(../" + self.appList.user[i].Directory + "/img/icon.png) no-repeat; background-size: contain;");
+
+                    elementA = document.createElement("a");
+                    elementA.setAttribute("id", "icon-a-user-" + self.appList.user[i].Directory);
+                    elementA.setAttribute("href", "../" + self.appList.user[i].Directory + "/" + self.appList.user[i].AppEntry);
+                    elementA.setAttribute("title", self.appList.user[i].Description);
+                    elementA.appendChild(elementIconDiv);
+                    elementA.appendChild(document.createTextNode(self.appList.user[i].AppName));
+
+                    elementLi = document.createElement("li");
+                    elementLi.setAttribute("id", "icon-li-user-" + self.appList.user[i].Directory);
+                    elementLi.appendChild(elementA);
+                    document.getElementById("applist").appendChild(elementLi);
+                }
+            }
+
+            postConfigUI(coreClient);
+        };
+
+        LauncherDelegate.prototype.protoResponseAppUninstalled = function(coreClient, appDirectory) {
+            var elementIconLi = document.getElementById("icon-li-user-" + appDirectory);
+
+            if (elementIconLi)
+                document.getElementById("applist").removeChild(elementIconLi);
+        };
+
+        LauncherDelegate.prototype.protoErrorAppUninstall = function(coreClient, error) {
+            alert(error);
+        };
+
+        $(function() {
+            var coreClient = new CoreClient();
+            coreClient.delegate = new LauncherDelegate();
+            coreClient.initiate();
+        });
+
+        /* UI interaction handling */
+        function enterManageMode(coreClient) {
+            var i;
+            var elementIconDiv;
+            var elementA;
+            var elementOverlayDiv;
+            var elementOverlaySpan;
+            var elementOverlayImg;
+
+            if (coreClient.delegate.manageMode)
+                return;
+            else
+                coreClient.delegate.manageMode = true;
+
+            $("#applist").sortable("enable");
+
+            for (i in coreClient.delegate.appList.builtin) {
+                if (coreClient.delegate.appList.builtin[i].ShowInLauncher) {
+                    elementIconDiv = document.getElementById("icon-div-" + coreClient.delegate.appList.builtin[i].Directory);
+                    if (elementIconDiv) {
+                        elementIconDiv.setAttribute("class", "shake");
+                    }
+
+                    elementA = document.getElementById("icon-a-builtin-" + coreClient.delegate.appList.builtin[i].Directory);
+                    if (elementA) {
+                        elementA.setAttribute("href", "#");
+                        elementA.setAttribute("title", "Builtin APP");
+                    }
+                }
+            }
+
+            for (i in coreClient.delegate.appList.user) {
+                if (coreClient.delegate.appList.user[i].ShowInLauncher) {
+                    elementIconDiv = document.getElementById("icon-div-" + coreClient.delegate.appList.user[i].Directory);
+                    if (elementIconDiv) {
+                        elementOverlayImg = document.createElement("img");
+                        elementOverlayImg.setAttribute("id", "overlay-img-" + coreClient.delegate.appList.user[i].Directory);
+                        elementOverlayImg.setAttribute("src", "img/delete-icon.png");
+                        elementOverlayImg.setAttribute("width", "50%");
+                        elementOverlayImg.setAttribute("height", "50%");
+
+                        elementOverlaySpan = document.createElement("span");
+                        elementOverlaySpan.setAttribute("id", "overlay-span-" + coreClient.delegate.appList.user[i].Directory);
+                        elementOverlaySpan.setAttribute("class", "delete");
+                        elementOverlaySpan.appendChild(elementOverlayImg);
+
+                        elementOverlayDiv = document.createElement("div");
+                        elementOverlayDiv.setAttribute("id", "overlay-div-" + coreClient.delegate.appList.user[i].Directory);
+                        elementOverlayDiv.setAttribute("class", "overlay");
+                        elementOverlayDiv.appendChild(elementOverlaySpan);
+
+                        elementIconDiv.appendChild(elementOverlayDiv);
+                        elementIconDiv.setAttribute("class", "shake");
+                    }
+
+                    elementA = document.getElementById("icon-a-user-" + coreClient.delegate.appList.user[i].Directory);
+                    if (elementA) {
+                        elementA.setAttribute("href", "#");
+                        elementA.setAttribute("title", "Delete " + coreClient.delegate.appList.user[i].AppName);
+                    }
+                }
+            }
+        };
+
+        function leaveManageMode(coreClient) {
+            var i;
+            var elementIconDiv;
+            var elementOverlayDiv;
+            var elementOverlaySpan;
+            var elementOverlayImg;
+
+            if (!coreClient.delegate.manageMode)
+                return;
+
+            $("#applist").sortable("disable");
+
+            for (i in coreClient.delegate.appList.builtin) {
+                if (coreClient.delegate.appList.builtin[i].ShowInLauncher) {
+                    elementIconDiv = document.getElementById("icon-div-" + coreClient.delegate.appList.builtin[i].Directory);
+                    if (elementIconDiv) {
+                        elementIconDiv.removeAttribute("class");
+                    }
+
+                    elementA = document.getElementById("icon-a-builtin-" + coreClient.delegate.appList.builtin[i].Directory);
+                    if (elementA) {
+                        elementA.setAttribute("href", "../" + coreClient.delegate.appList.builtin[i].Directory
+                                                    + "/" + coreClient.delegate.appList.builtin[i].AppEntry);
+                        elementA.setAttribute("title", coreClient.delegate.appList.builtin[i].Description);
+                    }
+                }
+            }
+
+            for (i in coreClient.delegate.appList.user) {
+                if (coreClient.delegate.appList.user[i].ShowInLauncher) {
+                    elementIconDiv = document.getElementById("icon-div-" + coreClient.delegate.appList.user[i].Directory);
+                    if (elementIconDiv) {
+                        elementOverlayImg = document.getElementById("overlay-img-" + coreClient.delegate.appList.user[i].Directory);
+
+                        elementOverlaySpan = document.getElementById("overlay-span-" + coreClient.delegate.appList.user[i].Directory);
+                        elementOverlaySpan.removeChild(elementOverlayImg);
+
+                        elementOverlayDiv = document.getElementById("overlay-div-" + coreClient.delegate.appList.user[i].Directory);
+                        elementOverlayDiv.removeChild(elementOverlaySpan);
+
+                        elementIconDiv.removeChild(elementOverlayDiv);
+                        elementIconDiv.removeAttribute("class");
+                    }
+
+                    elementA = document.getElementById("icon-a-user-" + coreClient.delegate.appList.user[i].Directory);
+                    if (elementA) {
+                        elementA.setAttribute("href", "../" + coreClient.delegate.appList.user[i].Directory
+                                                    + "/" + coreClient.delegate.appList.user[i].AppEntry);
+                        elementA.setAttribute("title", coreClient.delegate.appList.user[i].Description);
+                    }
+                }
+            }
+
+            coreClient.delegate.manageMode = false;
+        };
+
+        function postConfigUI(coreClient) {
+            $("a").mousedown(function() {
+                if (!coreClient.delegate.manageMode) {
+                    var ignoreClick = true;
+                }
+
+                var longPressTimeout = setTimeout(enterManageMode, 750, coreClient);
+                $(this).mouseup(function() {
+                    clearTimeout(longPressTimeout);
+                    $(this).unbind("mouseup");
+                    return true;
+                });
+
+                $(this).mousemove(function() {
+                    clearTimeout(longPressTimeout);
+                    $(this).unbind("mousemove");
+                    return true;
+                });
+
+                $(this).unbind("click");
+                $(this).bind("click", function() {
+                    if (coreClient.delegate.manageMode) {
+                        if (!ignoreClick) {
+                            var ids = $(this).attr("id").split("-");
+                            if (ids[2] == "user") {
+                                if (confirm("Are you sure?"))
+                                    coreClient.appUninstall(ids[3]);
+                            }
+                        }
+                        return false;
+                    }
+                    else
+                        return true;
+                });
+
+                return true;
+            });
+
+            $("#applist").bind("click", function() {
+                if (coreClient.delegate.manageMode) {
+                    leaveManageMode(coreClient);
+                    return false;
+                }
+                return true;
+            });
+
+            $("#applist").sortable();
+            $("#applist").sortable("disable");
+            $("#applist").disableSelection();
+        };
+    </script>
+</head>
+<body>
+    <div id="wrapper">
+        <div id="header"></div>
+        <div id="content">
+            <div class="apps">
+                <ul id="applist">
+    <!--
+                    <li><a href="#"><i class="fa fa-facebook-square fa-4x"></i>Facebook</a></li>
+                    <li><a href="#"><i class="fa fa-twitter-square fa-4x"></i>Twitter</a></li>
+                    <li><a href="#"><i class="fa fa-youtube-square fa-4x"></i>Youtube</a></li>
+                    <li><a href="#"><i class="fa fa-skype fa-4x"></i>Skype</a></li>
+                    <li><a href="#"><i class="fa fa-windows fa-4x"></i>Windows</a></li>
+                    <li><a href="#"><i class="fa fa-linkedin fa-4x"></i>Linkedin</a></li>
+                    <li><a href="#"><i class="fa fa-apple fa-4x"></i>Apple</a></li>
+                    <li><a href="#"><i class="fa fa-android fa-4x"></i>Android</a></li>
+                    <li><a href="#"><i class="fa fa-dribbble fa-4x"></i>Dribbble</a></li>
+                    <li><a href="#"><i class="fa fa-html5 fa-4x"></i>HTML5</a></li>
+                    <li><a href="#"><i class="fa fa-linux fa-4x"></i>Linux</a></li>
+                    <li><a href="#"><i class="fa fa-css3 fa-4x"></i>CSS3</a></li>
+                    <li><a href="#"><i class="fa fa-github fa-4x"></i>Github</a></li>
+                    <li><a href="#"><i class="fa fa-pinterest fa-4x"></i>Pinterest</a></li>
+                    <li><a href="#"><i class="fa fa-tumblr-square fa-4x"></i>Tumblr</a></li>
+                    <li><a href="#"><i class="fa fa-dropbox fa-4x"></i>Dropbox</a></li>
+                    <li><a href="#"><i class="fa fa-instagram fa-4x"></i>Instagram</a></li>
+    -->
+                </ul>
+            </div>
+        </div>
+        <div id="footer"></div>
+    </div>
+
+    <script>
+        var page = new Page();
+        page.setTitle("%SYSNAME% Launcher");
+        page.createNavigationBar("%SYSNAME% Launcher");
+        page.setFooterText("%COPYRIGHT%");
+
+        var brandLabel = new NavigationBarLabel("%BRAND%");
+        page.navigationBar.rightContainer.pushItem(brandLabel);
+    </script>
+</body>
+</html>

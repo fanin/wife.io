@@ -1,0 +1,46 @@
+{
+    "MajorVersion": "0",
+    "Command": [
+        {
+            "MinorVersion": "0",
+            "APP": {
+                "List": "PROTO-0-C-APP-LIST",
+                "Install": "PROTO-0-C-APP-INSTALL",
+                "CancelInstall": "PROTO-0-C-APP-CANCEL",
+                "Uninstall": "PROTO-0-C-APP-UNINSTALL"
+            },
+            "Storage": {
+                "GetLocalDisks": "PROTO-0-C-STOR-GET-LOCAL"
+            }
+        }
+    ],
+
+    "Response": [
+        {
+            "MinorVersion": "0",
+            "APP": {
+                "List": "PROTO-0-R-APP-LIST",
+                "Installing": "PROTO-0-R-APP-INSTALLING",
+                "InstallCancelled": "PROTO-0-R-APP-INSTALL-CANCEL",
+                "Installed": "PROTO-0-R-APP-INSTALLED",
+                "Uninstalled": "PROTO-0-R-APP-UNINSTALLED"
+            },
+            "Storage": {
+                "LocalDisks": "PROTO-0-R-STOR-LOCALDISKS"
+            }
+        }
+    ],
+
+    "Error": [
+        {
+            "MinorVersion": "0",
+            "APP": {
+                "Install": "PROTO-0-E-APP-INSTALL",
+                "Uninstall": "PROTO-0-E-APP-UNINSTALL"
+            },
+            "Storage": {
+                "GetLocalDisks": "PROTO-0-E-STOR-GET-LOCAL"
+            }
+        }
+    ]
+}
