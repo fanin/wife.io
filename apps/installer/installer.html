@@ -107,11 +107,9 @@
         };
 
         InstallerDelegate.prototype.connectionClosed = function(coreClient) {
-            var self = this;
-
             //alert("Socket.IO connection closed");
-            self.uploadButton = null;
-            self.closeUpload = null;
+            this.uploadButton = null;
+            this.closeUpload = null;
         };
 
         InstallerDelegate.prototype.connectionFailWithError = function(coreClient, error) {
