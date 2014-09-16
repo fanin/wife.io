@@ -24,17 +24,21 @@
     <link rel="stylesheet" href="http://%SYSIP%:8001/lib/framework/ui/page/css/page.css">
     <script src="http://%SYSIP%:8001/lib/framework/ui/navigation-bar/js/navigation-bar.js"></script>
     <link rel="stylesheet" href="http://%SYSIP%:8001/lib/framework/ui/navigation-bar/css/navigation-bar.css">
+    <script src="http://%SYSIP%:8001/lib/framework/ui/progress-dialog/js/progress-dialog.js"></script>
+    <link rel="stylesheet" href="http://%SYSIP%:8001/lib/framework/ui/progress-dialog/css/progress-dialog.css">
 
     <!-- Import installer style -->
     <link rel="stylesheet" href="css/style.css">
 
     <script>
+        var closeUpload = function() {
+            progressDialog.close();
+            progressDialog.setProgress(false);
+            $("#uploadButton").button().focus();
+        }
+
         /* InstallerDelegate Constructor */
-        var InstallerDelegate = function() {
-            this.dialog = null;
-            this.uploadButton = null;
-            this.closeUpload = null;
-        };
+        var InstallerDelegate = function() {};
 
         /* Create installer delegate and inherit CoreClientDelegate */
         InstallerDelegate.prototype = new CoreClientDelegate;
@@ -42,56 +46,38 @@
 
         /* Implement connection delegates */
         InstallerDelegate.prototype.connectionEstablished = function(coreClient) {
-            var self = this;
-
             //alert("Socket.IO connection established");
 
-            $("#progressbar").progressbar({
-                value: false,
+            progressDialog.onProgressEvent({
                 change: function() {
-                    $(".progress-label").text("Uploading APP: " + $("#progressbar").progressbar( "value" ) + "%");
+                    progressDialog.setMessage("Uploading APP: " + progressDialog.progress() + "%");
                 },
-                complete: function() {}
+                complete: function() {
+                    progressDialog.setMessage("Prepare to install ...");
+                }
             });
 
-            function progress(val) {
-                $("#progressbar").progressbar( "value", val );
-            }
-
-            self.closeUpload = function() {
-                self.dialog.dialog("close");
-                progress(false);
-                self.uploadButton.focus();
-            }
-
-            self.cancelUpload = function() {
-                var appBundle = $("#uploadAppBundle")[0].files[0];
-                coreClient.appCancelInstall(appBundle);
-            }
-
-            self.dialog = $("#dialog").dialog({
-                autoOpen: false,
-                closeOnEscape: false,
-                resizable: false,
+            progressDialog.onDialogEvent({
                 open: function() {},
+                close: function() {},
                 beforeClose: function() {
-                    self.uploadButton.button("option", {
+                    $("#uploadButton").button().button("option", {
                         disabled: false,
                         label: "Start Upload"
                     });
                 }
             });
 
-            self.uploadButton = $("#uploadButton").button().on("click", function() {
-                $(this).button( "option", {
+            $("#uploadButton").button().on("click", function() {
+                $(this).button("option", {
                     disabled: true,
                     label: "Uploading..."
                 });
 
-                self.dialog.dialog("option", "buttons", [{
-                    text: "Cancel",
-                    click: self.cancelUpload
-                }]);
+                progressDialog.setButton("Cancel", function() {
+                    var appBundle = $("#uploadAppBundle")[0].files[0];
+                    coreClient.appCancelInstall(appBundle);
+                });
 
                 var appBundle = $("#uploadAppBundle")[0].files[0];
                 var size = 0;
@@ -99,17 +85,15 @@
                 // Upload appBundle to the server.
                 coreClient.appInstall(ss, appBundle, function(chunk) {
                     size += chunk.length;
-                    progress(Math.floor(size / appBundle.size * 100));
+                    progressDialog.setProgress(Math.floor(size / appBundle.size * 100));
                 });
 
-                self.dialog.dialog("open");
+                progressDialog.open();
             });
         };
 
         InstallerDelegate.prototype.connectionClosed = function(coreClient) {
             //alert("Socket.IO connection closed");
-            this.uploadButton = null;
-            this.closeUpload = null;
         };
 
         InstallerDelegate.prototype.connectionFailWithError = function(coreClient, error) {
@@ -122,50 +106,30 @@
         };
 
         InstallerDelegate.prototype.protoResponseAppInstalling = function(coreClient, appBundle) {
-            var self = this;
-
-            $(".progress-label").text("Installing " + appBundle.name);
-            self.dialog.dialog("option", "buttons", [{
-                text: "Please wait",
-                click: self.closeUpload
-            }]);
-            $(".ui-dialog button").attr("disabled", true).addClass('ui-state-disabled');
+            progressDialog.setMessage("Installing " + appBundle.name);
+            progressDialog.setButton("Please wait", function(){});
+            progressDialog.setButtonEnable(false);
         };
 
         InstallerDelegate.prototype.protoResponseAppInstalled = function(coreClient, appBundle) {
-            var self = this;
-
-            $(".progress-label").text(appBundle.name + " Installed!");
-            self.dialog.dialog("option", "buttons", [{
-                text: "Close",
-                click: self.closeUpload
-            }]);
-            $(".ui-dialog button").attr("disabled", false).removeClass('ui-state-disabled');
-            $(".ui-dialog button").last().focus();
+            progressDialog.setMessage(appBundle.name + " Installed!");
+            progressDialog.setButton("Close", closeUpload);
+            progressDialog.setButtonEnable(true);
+            progressDialog.setButtonFocus(true);
         };
 
         InstallerDelegate.prototype.protoResponseAppInstallCancelled = function(coreClient, appBundle) {
-            var self = this;
-
-            $(".progress-label").text(appBundle.name + " installation cancelled!");
-            self.dialog.dialog("option", "buttons", [{
-                text: "Close",
-                click: self.closeUpload
-            }]);
-            $(".ui-dialog button").attr("disabled", false).removeClass('ui-state-disabled');
-            $(".ui-dialog button").last().focus();
+            progressDialog.setMessage(appBundle.name + " installation cancelled!");
+            progressDialog.setButton("Close", closeUpload);
+            progressDialog.setButtonEnable(true);
+            progressDialog.setButtonFocus(true);
         };
 
         InstallerDelegate.prototype.protoErrorAppInstall = function(coreClient, error) {
-            var self = this;
-
-            $(".progress-label").text("Unable to install APP (Error: " + error + ")");
-            self.dialog.dialog("option", "buttons", [{
-                text: "Close",
-                click: self.closeUpload
-            }]);
-            $(".ui-dialog button").attr("disabled", false).removeClass('ui-state-disabled');
-            $(".ui-dialog button").last().focus();
+            progressDialog.setMessage("Unable to install APP (Error: " + error + ")");
+            progressDialog.setButton("Close", closeUpload);
+            progressDialog.setButtonEnable(true);
+            progressDialog.setButtonFocus(true);
         };
 
         $(function() {
@@ -174,19 +138,12 @@
             coreClient.initiate();
         });
     </script>
-    <style>
-
-    </style>
 </head>
 <body>
     <div id="wrapper">
         <div id="header"></div>
         <div id="content">
-            <div id="dialog" title="APP Installer">
-                <div class="progress-label">Starting upload...</div>
-                <div id="progressbar"></div>
-            </div>
-
+            <div id="dialog"></div>
             <input type="file" id="uploadAppBundle" />
             <button id="uploadButton">Start Upload</button>
         </div>
@@ -201,6 +158,9 @@
 
         var brandLabel = new NavigationBarLabel("%BRAND%");
         page.navigationBar.rightContainer.pushItem(brandLabel);
+
+        var progressDialog = new ProgressDialog();
+        progressDialog.setTitle("APP Installer");
     </script>
 </body>
 </html>

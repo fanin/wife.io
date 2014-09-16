@@ -1,2 +1,2 @@
-exports.settings = undefined;
-exports.server = undefined;
+exports.SETTINGS = undefined;
+exports.SERVER = undefined;

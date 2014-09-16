@@ -2,25 +2,31 @@ var http = require('http').createServer(handler),
     fs = require('fs'),
     path = require('path'),
     ip = require('ip'),
-    mime = require('mime'),
-    system = require('./system'),
-    CoreServer = require('./server/core-server');
-
-http.listen(8001, function() {
-    if (!system.server) {
-        system.server = new CoreServer(http);
-        system.server.listen();
-    }
-});
+    mime = require('mime');
 
 try {
-    var jsonString = fs.readFileSync(path.resolve(__dirname, 'Settings.json'));
-    system.settings = JSON.parse(jsonString);
+    var settingsFile = 'Settings.json';
+
+    if (process.argv.length == 3)
+        settingsFile = process.argv[2];
+
+    var jsonString = fs.readFileSync(path.resolve(__dirname, settingsFile));
+
+    var SYSTEM = require('./system');
+    SYSTEM.SETTINGS = JSON.parse(jsonString);
 }
 catch (err) {
-    console.log('Read Settings.json error: ' + err.toString());
+    console.log('Read ' + settingsFile + ' error: ' + err.toString());
     process.exit(1);
 }
+
+http.listen(8001, function() {
+    var CoreServer = require('./server/' + SYSTEM.SETTINGS.CoreServer);
+    if (!SYSTEM.SERVER) {
+        SYSTEM.SERVER = new CoreServer(http);
+        SYSTEM.SERVER.listen();
+    }
+});
 
 setInterval(function() {
     var rss = (process.memoryUsage().rss / (1024 * 1024));
@@ -70,9 +76,9 @@ function handler(req, res) {
 
             if (ctype.indexOf('text') > -1 || ctype.indexOf('javascript') > -1) {
                 var contentString = content.toString().replace(/%SYSIP%/g, ip.address());
-                contentString = contentString.replace(/%SYSNAME%/g, system.settings.SysName);
-                contentString = contentString.replace(/%BRAND%/g, system.settings.Brand);
-                contentString = contentString.replace(/%COPYRIGHT%/g, system.settings.Copyright);
+                contentString = contentString.replace(/%SYSNAME%/g, SYSTEM.SETTINGS.SysName);
+                contentString = contentString.replace(/%BRAND%/g, SYSTEM.SETTINGS.Brand);
+                contentString = contentString.replace(/%COPYRIGHT%/g, SYSTEM.SETTINGS.Copyright);
                 res.end(contentString);
             }
             else {

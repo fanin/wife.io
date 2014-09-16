@@ -1,8 +1,8 @@
 var fs = require('fs-extra'),
     path = require('path'),
-    system = require('../system'),
     AdmZip = require('adm-zip');
 
+var SYSTEM = require('../system');
 var AppPath = path.resolve(__dirname, '../apps');
 var AppInfoFile = 'AppInfo.json';
 
@@ -60,7 +60,7 @@ function AppManager() {
     };
 
     this.buildUserAppSymlink = function(directory) {
-        fs.symlinkSync(system.settings.UserAppPath + '/' + directory, AppPath + '/' + directory);
+        fs.symlinkSync(SYSTEM.SETTINGS.UserAppPath + '/' + directory, AppPath + '/' + directory);
     };
 
     this.destroyUserAppSymlink = function(directory) {
@@ -82,8 +82,8 @@ function AppManager() {
         catch (err) { console.log(err); }
 
         try {
-            var userAppList = fs.readdirSync(system.settings.UserAppPath).filter(function (file) {
-                var currUserAppPath = system.settings.UserAppPath + '/' + file;
+            var userAppList = fs.readdirSync(SYSTEM.SETTINGS.UserAppPath).filter(function (file) {
+                var currUserAppPath = SYSTEM.SETTINGS.UserAppPath + '/' + file;
                 var stat = fs.lstatSync(currUserAppPath);
                 if (stat.isDirectory() || stat.isSymbolicLink())
                     if (fs.existsSync(currUserAppPath + '/' + AppInfoFile))
@@ -140,8 +140,8 @@ function AppManager() {
     };
 
     /* Create user app path if not exist */
-    if (!fs.existsSync(system.settings.UserAppPath)) {
-        var dirs = system.settings.UserAppPath.split('/');
+    if (!fs.existsSync(SYSTEM.SETTINGS.UserAppPath)) {
+        var dirs = SYSTEM.SETTINGS.UserAppPath.split('/');
         var p = '';
 
         /* Remove first '/' */
@@ -192,7 +192,7 @@ AppManager.prototype.install = function(appBundlePath) {
         return { result: 'ERROR-BAD-FILE-STRUCT' };
 
     try {
-        appBundle.extractAllTo(system.settings.UserAppPath, true);
+        appBundle.extractAllTo(SYSTEM.SETTINGS.UserAppPath, true);
     }
     catch (err) {
         return { result: 'ERROR-UNZIP-FAIL' };
@@ -214,7 +214,7 @@ AppManager.prototype.install = function(appBundlePath) {
 }
 
 AppManager.prototype.uninstall = function(appDirectory) {
-    var appPath = system.settings.UserAppPath + '/' + appDirectory;
+    var appPath = SYSTEM.SETTINGS.UserAppPath + '/' + appDirectory;
 
     if (!fs.existsSync(appPath))
         return { result: 'ERROR-NOT-EXIST' };
