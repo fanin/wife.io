@@ -5,7 +5,7 @@ var http = require('http').createServer(handler),
     mime = require('mime');
 
 try {
-    var settingsFile = 'Settings.json';
+    var settingsFile = 'settings.json';
 
     if (process.argv.length == 3)
         settingsFile = process.argv[2];
