@@ -1,0 +1,56 @@
+#header {
+    padding: 20px;
+}
+
+#content {
+    display: -moz-box;
+    display: -webkit-box;
+    -moz-box-orient: vertical;
+    -webkit-box-orient: vertical;
+}
+
+#control-bar {
+    width: 100%;
+    height: 60px;
+    background-color: gray;
+}
+
+#container {
+    display: -moz-box;
+    display: -webkit-box;
+}
+
+#bookshelf {
+    width: 15%;
+    background-color: green;
+}
+
+#bookshelf ul, li {
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+#bookshelf ul {
+    display: block;
+    width: 100%;
+    list-style: none;
+}
+
+#bookshelf li {
+    width: 100%;
+    height: 50px;
+    display: block;
+    background-color: #f4f4f4;
+}
+
+#notes {
+    width: 15%;
+    background-color: yellow;
+}
+
+#note-content {
+    -moz-box-flex:1;
+    -webkit-box-flex:1;
+    background-color: white;
+}

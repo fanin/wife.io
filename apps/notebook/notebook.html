@@ -1,0 +1,116 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title></title>
+
+    <!-- Import Socket.IO client library -->
+    <script src="http://%SYSIP%:8001/socket.io/socket.io.js"></script>
+
+    <!-- Import JQuery library -->
+    <script src="http://%SYSIP%:8001/lib/jquery/jquery-1.11.1.min.js"></script>
+    <script src="http://%SYSIP%:8001/lib/jquery/ui/1.11.1/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="http://%SYSIP%:8001/lib/jquery/ui/1.11.1/themes/ui-lightness/jquery-ui.min.css">
+
+    <!-- Import Foundation Frameworks -->
+    <script src="http://%SYSIP%:8001/lib/framework/foundation/core-client.js"></script>
+    <script src="http://%SYSIP%:8001/lib/framework/foundation/core-client-delegate.js"></script>
+
+    <!-- Import UI Frameworks -->
+    <script src="http://%SYSIP%:8001/lib/framework/ui/page/js/page.js"></script>
+    <link rel="stylesheet" href="http://%SYSIP%:8001/lib/framework/ui/page/css/page.css">
+    <script src="http://%SYSIP%:8001/lib/framework/ui/navigation-bar/js/navigation-bar.js"></script>
+    <link rel="stylesheet" href="http://%SYSIP%:8001/lib/framework/ui/navigation-bar/css/navigation-bar.css">
+
+    <!-- Import customized ckeditor -->
+    <script src="./lib/ckeditor/ckeditor.js"></script>
+
+    <!-- Import note style -->
+    <link rel="stylesheet" href="css/style.css"></script>
+
+    <script>
+        /* CourseDelegate Constructor */
+        var CourseDelegate = function() {};
+
+        /* Create course delegate and inherit CoreClientDelegate */
+        CourseDelegate.prototype = new CoreClientDelegate;
+        CourseDelegate.prototype.constructor = CourseDelegate;
+
+        /* Implement required delegates */
+        CourseDelegate.prototype.connectionEstablished = function(coreClient) {
+            //alert("Socket.IO connection established");
+        };
+
+        CourseDelegate.prototype.connectionClosed = function(coreClient) {
+            //alert("Socket.IO connection closed");
+        };
+
+        CourseDelegate.prototype.connectionFailWithError = function(coreClient, error) {
+            alert("Socket.IO connection error: " + error);
+        };
+
+        /* Implement protocol delegates */
+        CourseDelegate.prototype.protoErrorProtoLoad = function(coreClient, error) {
+            alert("Protocol error: " + error);
+        };
+
+        $(function() {
+            var coreClient = new CoreClient();
+            coreClient.delegate = new CourseDelegate();
+            coreClient.initiate();
+        });
+    </script>
+</head>
+<body>
+    <div id="wrapper">
+        <div id="header"></div>
+        <div id="content">
+            <div id="control-bar"><p>Control Bar</p></div>
+            <div id="container">
+                <div id="bookshelf">
+                    <ul>
+                        <li class="active"><a href="#">Home</a></li>
+                        <li><a href="#">About</a></li>
+                        <li><a href="#">Projects</a></li>
+                        <li><a href="#">Blog</a></li>
+                    </ul>
+                </div>
+                <div id="notes"><p>Notes</p></div>
+                <div id="note-content">
+                    <section>
+                        <textarea id="noteEditor" name="noteEditor">
+                            <h1><u><em><strong>Hello Chardi &amp; Bowie, I love you!</strong></em></u></h1>
+                        </textarea>
+                    </section>
+                </div>
+            </div>
+        <div id="footer"></div>
+    </div>
+
+    <script>
+        var page = new Page();
+        page.setTitle("Note");
+        page.createNavigationBar("Note");
+        page.setFooterText("%COPYRIGHT%");
+
+        var brandLabel = new NavigationBarLabel("%BRAND%");
+        page.navigationBar.rightContainer.pushItem(brandLabel);
+
+        CKEDITOR.replace("noteEditor", { "extraPlugins": "customsave" });
+        //CKEDITOR.config.width = '100%';
+        CKEDITOR.config.height = '600px';
+
+        CKEDITOR.instances['noteEditor'].on("customsave", function() {
+            var value = CKEDITOR.instances['noteEditor'].getData();
+            alert(value);
+        });
+
+        CKEDITOR.instances['noteEditor'].on("maximize", function(state) {
+            if (state.data === CKEDITOR.TRISTATE_ON)
+                page.navigationBar.hide();
+            else
+                page.navigationBar.show();
+        });
+    </script>
+</body>
+</html>

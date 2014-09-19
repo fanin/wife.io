@@ -1,0 +1,16 @@
+{
+    "AppName": "Notebook",
+    "Version": "0.1.0",
+    "ProtocolVersion": "0.1",
+    "Directory": "notebook",
+    "AppEntry": "notebook.html",
+    "Localizations": [ "en_US", "zh_TW" ],
+    "BrowserVersionSupport": {
+        "Chrome": "*",
+        "Firefox": "*",
+        "IE": "*",
+        "Safari": "*"
+    },
+    "Description": "Write and manage notes",
+    "ShowInLauncher": true
+}
