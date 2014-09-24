@@ -1,5 +1,5 @@
 ul.jqtree-tree {
-    margin-left: 0;
+    margin: 5px 0;
 }
 
 ul.jqtree-tree,
@@ -26,7 +26,7 @@ ul.jqtree-tree .jqtree-toggler {
     border-bottom: none;
     color: #333;
     text-decoration: none;
-    margin-right: 0.5em;
+    margin: 0.5em;
 }
 
 ul.jqtree-tree .jqtree-toggler:hover {

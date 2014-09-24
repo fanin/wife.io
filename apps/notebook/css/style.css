@@ -72,13 +72,14 @@
 }
 
 #notebook-stack {
-    padding: 0 18px;
+    padding: 0
 }
 
 #notes {
     background-color: white;
     overflow-x: hidden;
     overflow-y: auto;
+    border-right: 1px solid lightgray;
 }
 
 #notes ul, li {
