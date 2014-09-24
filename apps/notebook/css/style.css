@@ -1,5 +1,5 @@
 #header {
-    padding: 20px;
+    padding: 0;
 }
 
 #content {
@@ -16,19 +16,25 @@
 }
 
 #container {
+    width: 100%;
     display: -moz-box;
     display: -webkit-box;
 }
 
 #bookshelf {
-    width: 15%;
-    background-color: green;
+    white-space: nowrap;
+    text-align: left;
+    color: black;
+    background-color: white;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-right: 1px solid lightgray;
 }
 
+/*
 #bookshelf ul, li {
     margin: 0;
-    padding: 0;
-    border: 0;
+    padding: 3px;
 }
 
 #bookshelf ul {
@@ -41,12 +47,65 @@
     width: 100%;
     height: 50px;
     display: block;
-    background-color: #f4f4f4;
+    background-color: white;
+    text-align: left;
+    color: black;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.15);
+}
+
+#bookshelf li.selected {
+    box-shadow: 0 1px 1px 0 #C7C7C7 inset;
+    background: none repeat scroll 0 0 #E9E9E9;
+}
+*/
+
+#accordion {
+    font-size: 80%;
+    padding: 0;
+}
+
+#bookmark-list ul, li {
+    margin: 0;
+    padding: 1px;
+    list-style: none;
+}
+
+#notebook-stack {
+    padding: 0 18px;
 }
 
 #notes {
-    width: 15%;
-    background-color: yellow;
+    background-color: white;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+#notes ul, li {
+    margin: 0;
+    padding: 1px;
+}
+
+#notes ul {
+    display: block;
+    width: 100%;
+    list-style: none;
+}
+
+#notes li {
+    width: 100%;
+    height: 50px;
+    display: block;
+    color: black;
+    background-color: white;
+    text-align: left;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.15);
+}
+
+#notes li.selected {
+    box-shadow: 0 1px 1px 0 #C7C7C7 inset;
+    background: none repeat scroll 0 0 #E9E9E9;
 }
 
 #note-content {

@@ -1,31 +1,46 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<!--[if lt IE 7]> <html lang="en" class="lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>    <html lang="en" class="lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>    <html lang="en" class="lt-ie9"> <![endif]-->
+<!--[if IE 9]>    <html lang="en" class="ie9"> <![endif]-->
+<!--[if gt IE 9]><!--> <html lang="en"> <!--<![endif]-->
 <head>
     <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title></title>
 
     <!-- Import Socket.IO client library -->
     <script src="http://%SYSIP%:8001/socket.io/socket.io.js"></script>
 
     <!-- Import JQuery library -->
+    <link rel="stylesheet" href="http://%SYSIP%:8001/lib/jquery/ui/1.11.1/themes/smoothness/jquery-ui.min.css">
     <script src="http://%SYSIP%:8001/lib/jquery/jquery-1.11.1.min.js"></script>
     <script src="http://%SYSIP%:8001/lib/jquery/ui/1.11.1/jquery-ui.min.js"></script>
-    <link rel="stylesheet" href="http://%SYSIP%:8001/lib/jquery/ui/1.11.1/themes/ui-lightness/jquery-ui.min.css">
+
+    <!-- Import Font Awesome -->
+    <link rel="stylesheet" href="http://%SYSIP%:8001/lib/font-awesome/4.2.0/css/font-awesome.min.css">
 
     <!-- Import Foundation Frameworks -->
     <script src="http://%SYSIP%:8001/lib/framework/foundation/core-client.js"></script>
     <script src="http://%SYSIP%:8001/lib/framework/foundation/core-client-delegate.js"></script>
 
     <!-- Import UI Frameworks -->
-    <script src="http://%SYSIP%:8001/lib/framework/ui/page/js/page.js"></script>
     <link rel="stylesheet" href="http://%SYSIP%:8001/lib/framework/ui/page/css/page.css">
-    <script src="http://%SYSIP%:8001/lib/framework/ui/navigation-bar/js/navigation-bar.js"></script>
+    <script src="http://%SYSIP%:8001/lib/framework/ui/page/js/page.js"></script>
     <link rel="stylesheet" href="http://%SYSIP%:8001/lib/framework/ui/navigation-bar/css/navigation-bar.css">
+    <script src="http://%SYSIP%:8001/lib/framework/ui/navigation-bar/js/navigation-bar.js"></script>
 
-    <!-- Import customized ckeditor -->
+    <!-- Import 3rd party frameworks -->
     <script src="./lib/ckeditor/ckeditor.js"></script>
+    <!--
+    <link rel="stylesheet" href="./lib/jquery.a11yTree/a11yTree.css">
+    <script src="./lib/jquery.a11yTree/jquery.a11yTree.js"></script>
+    -->
+    <script src="./lib/jqTree/tree.jquery.js"></script>
 
     <!-- Import note style -->
+    <link rel="stylesheet" href="./lib/jqTree/jqtree.css">
     <link rel="stylesheet" href="css/style.css"></script>
 
     <script>
@@ -58,6 +73,18 @@
             var coreClient = new CoreClient();
             coreClient.delegate = new CourseDelegate();
             coreClient.initiate();
+
+            resizeContent();
+
+            $('#accordion').accordion({
+                heightStyle: "fill",
+                collapsible: true,
+                active: 1
+            });
+        });
+
+        $(window).resize(function() {
+            resizeContent();
         });
     </script>
 </head>
@@ -68,37 +95,128 @@
             <div id="control-bar"><p>Control Bar</p></div>
             <div id="container">
                 <div id="bookshelf">
+                    <div id="accordion">
+                        <h3>Bookmarks</h3>
+                        <div id="bookmark-list">
+                            <ul>
+                                <li>
+                                    <i class="fa fa-bookmark-o"></i>
+                                    <span>Bookmark 1</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <h3>Notebooks</h3>
+                        <div id="notebook-stack"></div>
+                        <!--
+                        <div id="treeview-arrow" class="font-awesome-tree">
+                            <ul>
+                                <li>
+                                    <i class="fa fa-caret-right"></i>
+                                    <i class="fa fa-list"></i>
+                                    <span class="tree-item-label" id="at-example-tree-n-0-label">Notebook Stack 1</span>
+                                    <ul>
+                                        <li>
+                                            <i class="fa fa-book"></i>
+                                            <span class="tree-item-label" id="at-example-tree-n-0-0-label">Notebook 1</span>
+                                        </li>
+                                        <li>
+                                            <i class="fa fa-book"></i>
+                                            <span class="tree-item-label" id="at-example-tree-n-0-1-label">Notebook 2</span>
+                                        </li>
+                                    </ul>
+                                </li>
+                                <li>
+                                    <i class="fa fa-caret-right"></i>
+                                    <i class="fa fa-list"></i>
+                                    <span class="tree-item-label" id="at-example-tree-n-1-label">Notebook Stack 2</span>
+                                    <ul>
+                                        <li>
+                                            <i class="fa fa-book"></i>
+                                            <span class="tree-item-label" id="at-example-tree-n-1-0-label">Notebook 3</span>
+                                        </li>
+                                        <li>
+                                            <i class="fa fa-book"></i>
+                                            <span class="tree-item-label" id="at-example-tree-n-1-1-label">Notebook 4</span>
+                                        </li>
+                                    </ul>
+                                </li>
+                                <li>
+                                    <i class="fa fa-book"></i>
+                                    <span class="tree-item-label" id="at-example-tree-n-2-label">Notebook 5</span>
+                                    <ul></ul>
+                                </li>
+                            </ul>
+                        </div>
+                        -->
+                    </div>
+                </div>
+                <div id="notes">
                     <ul>
-                        <li class="active"><a href="#">Home</a></li>
-                        <li><a href="#">About</a></li>
-                        <li><a href="#">Projects</a></li>
-                        <li><a href="#">Blog</a></li>
+                        <li>Home</li>
+                        <li>About</li>
+                        <li>Projects</li>
+                        <li>Blog</li>
+                        <li>Home</li>
+                        <li>About</li>
+                        <li>Projects</li>
+                        <li>Blog</li>
+                        <li>Home</li>
+                        <li>About</li>
+                        <li>Projects</li>
+                        <li>Blog</li>
+                        <li>Home</li>
+                        <li>About</li>
+                        <li>Projects</li>
+                        <li>Blog</li>
+                        <li>Home</li>
+                        <li>About</li>
+                        <li>Projects</li>
+                        <li>Blog</li>
+                        <li>Home</li>
+                        <li>About</li>
+                        <li>Projects</li>
+                        <li>Blog</li>
                     </ul>
                 </div>
-                <div id="notes"><p>Notes</p></div>
                 <div id="note-content">
-                    <section>
-                        <textarea id="noteEditor" name="noteEditor">
-                            <h1><u><em><strong>Hello Chardi &amp; Bowie, I love you!</strong></em></u></h1>
-                        </textarea>
-                    </section>
+                    <textarea id="noteEditor" name="noteEditor">
+                        <h1><u><em><strong>Hello Chardi &amp; Bowie!</strong></em></u></h1>
+                    </textarea>
                 </div>
             </div>
         <div id="footer"></div>
     </div>
 
     <script>
+        function resizeContent() {
+            var newWidth = $("html").width();
+            var newHeight = $("html").height() - $("#header").height() - $("#control-bar").height() - $("#footer").height();
+            $("#bookshelf").css("width", newWidth * 0.12 + "px");
+            $("#bookshelf").css("height", newHeight + "px");
+            $("#notes").css("width", newWidth * 0.15 + "px");
+            $("#notes").css("height", newHeight + "px");
+            $("#note-content").css("height", newHeight + "px");
+            try {
+                CKEDITOR.instances['noteEditor'].resize("100%", newHeight);
+            } catch (e) {}
+        }
+
         var page = new Page();
-        page.setTitle("Note");
-        page.createNavigationBar("Note");
+        page.setTitle("Notebook");
+        page.createNavigationBar("Notebook");
         page.setFooterText("%COPYRIGHT%");
 
         var brandLabel = new NavigationBarLabel("%BRAND%");
         page.navigationBar.rightContainer.pushItem(brandLabel);
 
         CKEDITOR.replace("noteEditor", { "extraPlugins": "customsave" });
-        //CKEDITOR.config.width = '100%';
-        CKEDITOR.config.height = '600px';
+        CKEDITOR.config.resize_enabled = false;
+        CKEDITOR.config.removePlugins = 'elementspath, about';
+
+        CKEDITOR.on("instanceReady", function(event) {
+            resizeContent();
+        });
 
         CKEDITOR.instances['noteEditor'].on("customsave", function() {
             var value = CKEDITOR.instances['noteEditor'].getData();
@@ -110,6 +228,64 @@
                 page.navigationBar.hide();
             else
                 page.navigationBar.show();
+        });
+
+        /* Initialize bookshelf */
+        var data = [
+            {
+                label: 'Notebook Stack 1',
+                children: [
+                    { label: 'Notebook 1' },
+                    { label: 'Notebook 2' }
+                ]
+            },
+            {
+                label: 'Notebook Stack 2',
+                children: [
+                    { label: 'Notebook 3' }
+                ]
+            },
+            {
+                label: 'Notebook 4',
+            }
+        ];
+
+        $('#notebook-stack').tree({
+            closedIcon: $('<i class="fa fa-caret-right"></i>'),
+            openedIcon: $('<i class="fa fa-caret-down"></i>'),
+            folderIcon: $('<i class="fa fa-list"></i>'),
+            nodeIcon: $('<i class="fa fa-book"></i>'),
+            dragAndDrop: true,
+            autoOpen: 0,
+            data: data
+        });
+
+        /*
+        $("#treeview-arrow > ul").a11yTree({
+            toggleSelector:"i.fa",
+            treeItemLabelSelector:".tree-item-label",
+            onCollapse:function($item) {
+                $item.children(".fa-caret-down").removeClass("fa-caret-down").addClass("fa-caret-right");
+                //if ($('#accordion').is('.ui-accordion'))
+                //    $('#accordion').accordion("refresh");
+            },
+            onExpand:function($item) {
+                $item.children(".fa-caret-right").removeClass("fa-caret-right").addClass("fa-caret-down");
+                //if ($('#accordion').is('.ui-accordion'))
+                //    $('#accordion').accordion("refresh");
+            }
+        });
+        */
+
+        /* Initialize note list */
+        var selectedNoteIndex = -1;
+        $("#notes li").click(function() {
+            if (!$(this).hasClass("selected")) {
+                if (selectedNoteIndex >= 0)
+                    $("#notes li").eq(selectedNoteIndex).removeClass("selected");
+                selectedNoteIndex = $("#notes li").index($(this));
+                $(this).addClass("selected");
+            }
         });
     </script>
 </body>
