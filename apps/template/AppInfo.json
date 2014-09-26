@@ -12,5 +12,5 @@
         "Safari": "*"
     },
     "Description": "APP template codes",
-    "ShowInLauncher": false
+    "ShowInLauncher": true
 }

@@ -1014,6 +1014,7 @@ limitations under the License.
       saveState: false,
       dragAndDrop: false,
       selectable: true,
+      toggleable: true,
       useContextMenu: true,
       onCanSelectNode: null,
       onSetStateFromStorage: null,
@@ -1604,7 +1605,7 @@ limitations under the License.
             click_event: e
           });
           if (!event.isDefaultPrevented()) {
-            return this._selectNode(node, true);
+              return this._selectNode(node, this.options.toggleable);
           }
         }
       }

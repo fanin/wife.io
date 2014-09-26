@@ -16,7 +16,7 @@ var async = require('async'),
 exports.drives = function (callback) {
     switch (os.platform().toLowerCase()) {
         case'darwin':
-            getDrives('df -k | awk \'{print $1}\'', callback); // FIXME
+            getDrives('df -k | awk \'{print $1}\'', callback);
             break;
         case'linux':
         default:
@@ -42,6 +42,8 @@ function getDrives(command, callback) {
 
             // Removes ram drives
             drives = drives.filter(function(item){ return item != "none"});
+            // Removes map drives
+            drives = drives.filter(function(item){ return item != "map"});
             callback(null, drives);
         }
     );

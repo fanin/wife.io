@@ -3,6 +3,10 @@
     "Command": [
         {
             "MinorVersion": "0",
+            "Extension": {
+                "Load": "PROTO-0-C-EXT-LOAD",
+                "Unload": "PROTO-0-C-EXT-UNLOAD"
+            },
             "APP": {
                 "List": "PROTO-0-C-APP-LIST",
                 "Install": "PROTO-0-C-APP-INSTALL",
@@ -18,6 +22,10 @@
     "Response": [
         {
             "MinorVersion": "0",
+            "Extension": {
+                "Loaded": "PROTO-0-R-EXT-LOADED",
+                "Unloaded": "PROTO-0-R-EXT-UNLOADED"
+            },
             "APP": {
                 "List": "PROTO-0-R-APP-LIST",
                 "Installing": "PROTO-0-R-APP-INSTALLING",
@@ -34,6 +42,10 @@
     "Error": [
         {
             "MinorVersion": "0",
+            "Extension": {
+                "Load": "PROTO-0-E-EXT-LOAD",
+                "Unload": "PROTO-0-E-EXT-UNLOAD"
+            },
             "APP": {
                 "Install": "PROTO-0-E-APP-INSTALL",
                 "Uninstall": "PROTO-0-E-APP-UNINSTALL"

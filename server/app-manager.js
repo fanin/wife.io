@@ -78,10 +78,7 @@ function AppManager() {
                         return true;
                 return false;
             });
-        }
-        catch (err) { console.log(err); }
 
-        try {
             var userAppList = fs.readdirSync(SYSTEM.SETTINGS.UserAppPath).filter(function (file) {
                 var currUserAppPath = SYSTEM.SETTINGS.UserAppPath + '/' + file;
                 var stat = fs.lstatSync(currUserAppPath);
@@ -90,25 +87,25 @@ function AppManager() {
                         return true;
                 return false;
             });
-        }
-        catch (err) { console.log(err); }
 
-        for (var i in appList) {
-            var currAppPath = AppPath + '/' + appList[i];
-            var stat = fs.lstatSync(currAppPath);
-            if (stat.isSymbolicLink())
-                if (!fs.existsSync(fs.readlinkSync(currAppPath))) {
-                    /* Destroy symbolic links of removed APPs */
-                    self.destroyUserAppSymlink(appList[i]);
+            for (var i in appList) {
+                var currAppPath = AppPath + '/' + appList[i];
+                var stat = fs.lstatSync(currAppPath);
+                if (stat.isSymbolicLink())
+                    if (!fs.existsSync(fs.readlinkSync(currAppPath))) {
+                        /* Destroy symbolic links of removed APPs */
+                        self.destroyUserAppSymlink(appList[i]);
+                    }
+            }
+
+            for (i in userAppList) {
+                if (appList.indexOf(userAppList[i]) < 0) {
+                    /* Rebuild symbolic links for existing APPs */
+                    self.buildUserAppSymlink(userAppList[i]);
                 }
-        }
-
-        for (i in userAppList) {
-            if (appList.indexOf(userAppList[i]) < 0) {
-                /* Rebuild symbolic links for existing APPs */
-                self.buildUserAppSymlink(userAppList[i]);
             }
         }
+        catch (err) { console.log(err); }
     };
 
     this.loadApps = function(path, list) {
@@ -167,10 +164,10 @@ AppManager.prototype.listApps = function() {
                     return true;
             return false;
         });
+
+        return this.loadApps(AppPath, appList);
     }
     catch (err) { console.log(err); }
-
-    return this.loadApps(AppPath, appList);
 }
 
 AppManager.prototype.install = function(appBundlePath) {

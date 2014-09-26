@@ -4,28 +4,14 @@
     <meta charset="utf-8">
     <title></title>
 
-    <!-- Import Socket.IO client library -->
-    <script src="http://%SYSIP%:8001/socket.io/socket.io.js"></script>
-
-    <!-- Import Socket.IO-stream library for file transfer support -->
-    <script src="js/socket.io-stream.js"></script>
-
     <!-- Import JQuery library -->
-    <link rel="stylesheet" href="http://%SYSIP%:8001/lib/jquery/ui/1.11.1/themes/ui-lightness/jquery-ui.min.css">
     <script src="http://%SYSIP%:8001/lib/jquery/jquery-1.11.1.min.js"></script>
-    <script src="http://%SYSIP%:8001/lib/jquery/ui/1.11.1/jquery-ui.min.js"></script>
 
     <!-- Import Foundation Frameworks -->
-    <script src="http://%SYSIP%:8001/lib/framework/foundation/core-client.js"></script>
-    <script src="http://%SYSIP%:8001/lib/framework/foundation/core-client-delegate.js"></script>
+    <script src="http://%SYSIP%:8001/lib/framework/foundation/foundation.js"></script>
 
     <!-- Import UI Frameworks -->
-    <link rel="stylesheet" href="http://%SYSIP%:8001/lib/framework/ui/page/css/page.css">
-    <script src="http://%SYSIP%:8001/lib/framework/ui/page/js/page.js"></script>
-    <link rel="stylesheet" href="http://%SYSIP%:8001/lib/framework/ui/navigation-bar/css/navigation-bar.css">
-    <script src="http://%SYSIP%:8001/lib/framework/ui/navigation-bar/js/navigation-bar.js"></script>
-    <link rel="stylesheet" href="http://%SYSIP%:8001/lib/framework/ui/progress-dialog/css/progress-dialog.css">
-    <script src="http://%SYSIP%:8001/lib/framework/ui/progress-dialog/js/progress-dialog.js"></script>
+    <script src="http://%SYSIP%:8001/lib/framework/ui/ui-kits.js"></script>
 
     <!-- Import installer style -->
     <link rel="stylesheet" href="css/style.css">
@@ -38,10 +24,10 @@
         }
 
         /* InstallerDelegate Constructor */
-        var InstallerDelegate = function() {};
+        function InstallerDelegate() {};
 
         /* Create installer delegate and inherit CoreClientDelegate */
-        InstallerDelegate.prototype = new CoreClientDelegate;
+        InstallerDelegate.prototype = new CoreClientDelegate();
         InstallerDelegate.prototype.constructor = InstallerDelegate;
 
         /* Implement connection delegates */

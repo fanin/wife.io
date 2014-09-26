@@ -1,0 +1,29 @@
+{
+    "MajorVersion": "0",
+    "Command": [
+        {
+            "MinorVersion": "0",
+            "Say": {
+                "Hello": "EXT-PROTO-0-C-EX-SAYHELLO"
+            }
+        }
+    ],
+
+    "Response": [
+        {
+            "MinorVersion": "0",
+            "Say": {
+                "Hello": "EXT-PROTO-0-R-EX-SAYHELLO"
+            }
+        }
+    ],
+
+    "Error": [
+        {
+            "MinorVersion": "0",
+            "Say": {
+                "Hello": "EXT-PROTO-0-E-EX-SAYHELLO"
+            }
+        }
+    ]
+}

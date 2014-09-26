@@ -4,42 +4,57 @@
     <meta charset="utf-8">
     <title></title>
 
-    <!-- Import Socket.IO client library -->
-    <script src="http://%SYSIP%:8001/socket.io/socket.io.js"></script>
-
     <!-- Import JQuery library -->
-    <link rel="stylesheet" href="http://%SYSIP%:8001/lib/jquery/ui/1.11.1/themes/ui-lightness/jquery-ui.min.css">
     <script src="http://%SYSIP%:8001/lib/jquery/jquery-1.11.1.min.js"></script>
-    <script src="http://%SYSIP%:8001/lib/jquery/ui/1.11.1/jquery-ui.min.js"></script>
 
     <!-- Import Foundation Frameworks -->
-    <script src="http://%SYSIP%:8001/lib/framework/foundation/core-client.js"></script>
-    <script src="http://%SYSIP%:8001/lib/framework/foundation/core-client-delegate.js"></script>
+    <script src="http://%SYSIP%:8001/lib/framework/foundation/foundation.js"></script>
 
     <!-- Import UI Frameworks -->
-    <link rel="stylesheet" href="http://%SYSIP%:8001/lib/framework/ui/page/css/page.css">
-    <script src="http://%SYSIP%:8001/lib/framework/ui/page/js/page.js"></script>
-    <link rel="stylesheet" href="http://%SYSIP%:8001/lib/framework/ui/navigation-bar/css/navigation-bar.css">
-    <script src="http://%SYSIP%:8001/lib/framework/ui/navigation-bar/js/navigation-bar.js"></script>
+    <script src="http://%SYSIP%:8001/lib/framework/ui/ui-kits.js"></script>
 
     <!-- Import Template style -->
-    <link rel="stylesheet" href="css/style.css">
+    <link href="css/style.css" rel="stylesheet">
+
+    <!-- Import extension module -->
+    <script src="js/extension/example.js"></script>
 
     <script>
         /* TemplateDelegate Constructor */
-        var TemplateDelegate = function() {};
+        function TemplateDelegate() {
+            /* Create & implement example extension delegates */
+            var exampleDelegate = new ExampleExtensionDelegate();
+
+            exampleDelegate.protoResponseSayHello = function(example, msg) {
+                $("#ext-response").html("Extension Response Test: <font color=blue>" + msg + "</font>");
+            };
+
+            exampleDelegate.protoErrorSayHello = function(example, err) {
+                $("#ext-error").html("Extenstion Error Test: <font color=blue>" + err + "</font>");
+            };
+
+            /* Create client side example extension & install delegate */
+            this.extension = new ExampleExtension();
+            this.extension.delegate = exampleDelegate;
+        };
 
         /* Create template delegate and inherit CoreClientDelegate */
-        TemplateDelegate.prototype = new CoreClientDelegate;
+        TemplateDelegate.prototype = new CoreClientDelegate();
         TemplateDelegate.prototype.constructor = TemplateDelegate;
 
         /* Implement connection delegates */
         TemplateDelegate.prototype.connectionEstablished = function(coreClient) {
             //alert("Socket.IO connection established");
+
+            /* Load both client & server side extension module */
+            coreClient.extensionLoad(this.extension);
         };
 
         TemplateDelegate.prototype.connectionClosed = function(coreClient) {
             //alert("Socket.IO connection closed");
+
+            /* Unload both client & server side extension module */
+            coreClient.extensionUnload(this.extension);
         };
 
         TemplateDelegate.prototype.connectionFailWithError = function(coreClient, error) {
@@ -48,11 +63,34 @@
 
         /* Implement protocol delegates */
         TemplateDelegate.prototype.protoResponseProtoLoaded = function(coreClient) {
-            $("#proto").html("Protocol major version: " + coreClient.protocol.MajorVersion);
+            $("#proto").html(
+                "Protocol major version: <font color=blue>" +
+                coreClient.protocol.MajorVersion + "</font>"
+            );
         };
 
         TemplateDelegate.prototype.protoErrorProtoLoad = function(coreClient, error) {
             alert("Protocol error: " + error);
+        };
+
+        /* Implement extension protocol delegates */
+        TemplateDelegate.prototype.protoResponseExtProtoLoaded = function(coreClient) {
+            $("#proto").html(
+                $("#proto").html() +
+                "<br>Extension protocol major version: <font color=blue>" +
+                this.extension.protocol.MajorVersion + "</font>"
+            );
+
+            /* Test extension protocol */
+            this.extension.sayHello();
+        };
+
+        TemplateDelegate.prototype.protoResponseExtProtoUnloaded = function(coreClient) {
+            alert("Extension protocol unloaded");
+        };
+
+        TemplateDelegate.prototype.protoErrorExtProtoLoad = function(coreClient) {
+            alert("Extension protocol load failed");
         };
 
         /* Implement protocol delegates you need */
@@ -72,6 +110,8 @@
             <!-- Your codes here -->
             <h2>Hello Template</h2>
             <div id="proto"></div>
+            <div id="ext-response"></div>
+            <div id="ext-error"></div>
         </div>
         <div id="footer"></div>
     </div>

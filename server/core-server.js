@@ -6,58 +6,66 @@ var sio = require('socket.io'),
     AppManager = require('./app-manager'),
     StorageMonitor = require('./storage-monitor');
 
+var SYSTEM = require('../system');
+
 module.exports = CoreServer;
 
 function CoreServer(http) {
-    this.protocol = undefined;
     this.ioServer = sio(http, { 'pingTimeout': 300000 });
+    this.extension = new Array();
     this.appManager = new AppManager();
     this.storageMonitor = new StorageMonitor();
-    this.loadProtoSpec();
-}
 
-CoreServer.prototype.loadProtoSpec = function(protoSpec) {
-    if (!protoSpec)
-        protoSpec = 'ProtoSpec-v0';
+    this.loadProtoSpec = function(protoSpec) {
+        if (!protoSpec)
+            protoSpec = 'ProtoSpec-v0';
 
-    var jsonString = fs.readFileSync(path.resolve(__dirname, '../protocol/' + protoSpec + '.json'));
-    if (jsonString) {
-        try {
-            this.protocol = JSON.parse(jsonString);
-            console.log('Protocol version: ' + this.protocol.MajorVersion);
+        var jsonString = fs.readFileSync(path.resolve(__dirname, '../protocol/' + protoSpec + '.json'));
+        if (jsonString) {
+            try {
+                var protocol = JSON.parse(jsonString);
+                console.log('Protocol version: ' + protocol.MajorVersion);
+                return protocol;
+            }
+            catch (err) {
+                console.log('Protocol error: ' + err.toString());
+                return null;
+            }
         }
-        catch (err) {
-            console.log('Protocol error: ' + err.toString());
-            process.exit(1);
+        else {
+            console.log('Protocol not specified');
+            return null;
         }
     }
-    else {
-        console.log('Protocol not specified');
+
+    this.loadExtProtoSpec = function(extName, version) {
+        if (!extName)
+            return null;
+
+        try {
+            var jsonString = fs.readFileSync(
+                path.resolve(__dirname, '../protocol/ProtoSpecExt-' + extName + '-v' + version + '.json')
+            );
+
+            try {
+                var protocol = JSON.parse(jsonString);
+                console.log('Extension [' + extName + '] version: ' + protocol.MajorVersion);
+                return protocol;
+            }
+            catch (err) {
+                console.log('Extension [' + extName + '] error: ' + err.toString());
+                return null;
+            }
+        }
+        catch (err) {
+            console.log('Extension[' + extName + '] ProtoSpec read error: ' + err.toString());
+            return null;
+        }
+    }
+
+    this.protocol = this.loadProtoSpec();
+    if (!this.protocol)
         process.exit(1);
-    }
-}
-
-CoreServer.prototype.loadExtProtoSpec = function(protoSpec) {
-    if (!protoSpec)
-        return false;
-
-    var jsonString = fs.readFileSync(path.resolve(__dirname, '../protocol/' + protoSpec + '.json'));
-    if (jsonString) {
-        try {
-            this.protocol.extension = JSON.parse(jsonString);
-            console.log('Extension Protocol version: ' + this.protocol.extension.MajorVersion);
-        }
-        catch (err) {
-            console.log('Extension Protocol error: ' + err.toString());
-            return false;
-        }
-    }
-    else {
-        console.log('Protocol not specified');
-        return false;
-    }
-
-    return true;
 }
 
 CoreServer.prototype.listen = function() {
@@ -78,14 +86,44 @@ CoreServer.prototype.onSioConnected = function(socket) {
     //console.log('CoreServer: a client connected to server');
 
     /**
-     * Socket.IO Protocol: App Management Events
+     * Protocol Listener: Extension Management Events
+     */
+    socket.on(self.protocol.Command[0].Extension.Load, function(extName, version) {
+        try {
+            var ExtensionModule = require('./extension/' + extName.toLowerCase() + '/' +  extName.toLowerCase());
+            self.extension[extName] = new ExtensionModule();
+
+            self.extension[extName].protocol = self.loadExtProtoSpec(extName, version);
+            if (self.extension[extName].protocol) {
+                self.extension[extName].socket = socket;
+                self.extension[extName].activate();
+                socket.emit(self.protocol.Response[0].Extension.Loaded, extName, self.extension[extName].protocol);
+            }
+            else {
+                socket.emit(self.protocol.Error[0].Extension.Load, extName);
+            }
+        }
+        catch (err) {
+            console.log('Unable to load extension module [' + extName + ']: ' + err);
+            socket.emit(self.protocol.Error[0].Extension.Load, extName);
+        }
+    });
+
+    socket.on(self.protocol.Command[0].Extension.Unload, function(extName, version) {
+        if (self.extension[extName]) {
+            self.extension[extName].inactivate();
+        }
+    });
+
+    /**
+     * Protocol Listener: App Management Events
      */
     socket.on(self.protocol.Command[0].APP.List, function() {
         socket.emit(self.protocol.Response[0].APP.List, self.appManager.listApps());
     });
 
     ss(socket).on(self.protocol.Command[0].APP.Install, function(stream, appBundle) {
-        var filename = '/tmp/' + appBundle.name;
+        var filename = SYSTEM.SETTINGS.FileUploadTempPath + '/' + appBundle.name;
         var appWriteStream = fs.createWriteStream(filename);
         self.stream = stream;
         stream.pipe(appWriteStream);
@@ -110,7 +148,7 @@ CoreServer.prototype.onSioConnected = function(socket) {
     });
 
     socket.on(self.protocol.Command[0].APP.CancelInstall, function(appBundle) {
-        var filename = '/tmp/' + appBundle.name;
+        var filename = SYSTEM.SETTINGS.FileUploadTempPath + '/' + appBundle.name;
         if (fs.existsSync(filename))
             fs.removeSync(filename);
 
@@ -126,14 +164,14 @@ CoreServer.prototype.onSioConnected = function(socket) {
 
     socket.on(self.protocol.Command[0].APP.Uninstall, function(appDirectory) {
         var result = self.appManager.uninstall(appDirectory).result;
-        if (result == 'OK')
+        if (result === 'OK')
             socket.emit(self.protocol.Response[0].APP.Uninstalled, appDirectory);
         else
             socket.emit(self.protocol.Error[0].APP.Uninstall, result);
     });
 
     /**
-     * Socket.IO Protocol: Storage Events
+     * Protocol Listener: Storage Events
      */
     socket.on(self.protocol.Command[0].Storage.GetLocalDisks, function() {
         self.storageMonitor.retrieveLocalDisks(function() {
@@ -156,6 +194,8 @@ CoreServer.prototype.onSioConnected = function(socket) {
 
 CoreServer.prototype.onSioDisconnected = function(socket) {
     //console.log('CoreServer: disconnected from client');
+    socket.removeAllListeners(this.protocol.Command[0].Extension.Load);
+    socket.removeAllListeners(this.protocol.Command[0].Extension.Unload);
     socket.removeAllListeners(this.protocol.Command[0].APP.List);
     socket.removeAllListeners(this.protocol.Command[0].APP.Install);
     socket.removeAllListeners(this.protocol.Command[0].APP.CancelInstall);
