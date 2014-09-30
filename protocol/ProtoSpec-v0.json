@@ -1,57 +1,169 @@
 {
     "MajorVersion": "0",
-    "Command": [
+    "MinorVersion": [
         {
-            "MinorVersion": "0",
             "Extension": {
-                "Load": "PROTO-0-C-EXT-LOAD",
-                "Unload": "PROTO-0-C-EXT-UNLOAD"
+                "Load": {
+                    "Command": "PROTO-0-C-EXT-LOAD",
+                    "Argument": [ "Name", "MajorVersion" ],
+                    "Return": {
+                        "Loaded": "PROTO-0-R-EXT-LOADED"
+                    },
+                    "Error": "PROTO-0-E-EXT-LOAD"
+                },
+                "Unload": {
+                    "Command": "PROTO-0-C-EXT-UNLOAD",
+                    "Argument": [ "Name", "MajorVersion" ],
+                    "Return": {
+                        "Unloaded": "PROTO-0-R-EXT-UNLOADED"
+                    },
+                    "Error": "PROTO-0-E-EXT-UNLOAD"
+                }
             },
             "APP": {
-                "List": "PROTO-0-C-APP-LIST",
-                "Install": "PROTO-0-C-APP-INSTALL",
-                "CancelInstall": "PROTO-0-C-APP-CANCEL",
-                "Uninstall": "PROTO-0-C-APP-UNINSTALL"
+                "List": {
+                    "Command": "PROTO-0-C-APP-LIST",
+                    "Argument": [],
+                    "Return": {
+                        "List": "PROTO-0-R-APP-LIST"
+                    },
+                    "Error": "PROTO-0-E-APP-LIST"
+                },
+                "Install": {
+                    "Command": "PROTO-0-C-APP-INSTALL",
+                    "Argument": [ "AppBundleDataStream" ],
+                    "Return": {
+                        "Uploading": "PROTO-0-R-APP-UPLOADING",
+                        "Installing": "PROTO-0-R-APP-INSTALLING",
+                        "Installed": "PROTO-0-R-APP-INSTALLED"
+                    },
+                    "Error": "PROTO-0-E-APP-INSTALL"
+                },
+                "CancelInstall": {
+                    "Command": "PROTO-0-C-APP-CANCEL",
+                    "Argument": [ "InstallationCode" ],
+                    "Return": {
+                        "Cancelled": "PROTO-0-R-APP-CANCELLED"
+                    },
+                    "Error": "PROTO-0-E-APP-CANCEL"
+                },
+                "Uninstall": {
+                    "Command": "PROTO-0-C-APP-UNINSTALL",
+                    "Argument": [ "AppInfo" ],
+                    "Return": {
+                        "Uninstalled": "PROTO-0-R-APP-UNINSTALLED"
+                    },
+                    "Error": "PROTO-0-E-APP-UNINSTALL"
+                }
             },
             "Storage": {
-                "GetLocalDisks": "PROTO-0-C-STOR-GET-LOCAL"
-            }
-        }
-    ],
+                "GetLocalDisks": {
+                    "Command": "PROTO-0-C-STOR-GET-LOCAL",
+                    "Argument": [],
+                    "Return": {
+                        "Disks": "PROTO-0-R-STOR-LOCAL-DISKS"
+                    },
+                    "Error": "PROTO-0-E-STOR-GET-LOCAL"
+                }
+            },
+            "File": {
+                "List": {
+                    "Command": "PROTO-0-C-FILE-LIST",
+                    "Argument": [],
+                    "Return": {
+                        "List": "PROTO-0-R-FILE-LIST"
+                    },
+                    "Error": "PROTO-0-E-FILE-LIST"
+                },
+                "CreateFile": {
+                    "Command": "PROTO-0-C-FILE-CREATE-FILE",
+                    "Argument": [],
+                    "Return": {
+                        "Handle": "PROTO-0-R-FILE-HANDLE"
+                    },
+                    "Error": "PROTO-0-E-FILE-CREATE-FILE"
+                },
+                "CreateDirectory": {
+                    "Command": "PROTO-0-C-FILE-CREATE-DIR",
+                    "Argument": [],
+                    "Return": {
+                        "Handle": "PROTO-0-R-FILE-HANDLE"
+                    },
+                    "Error": "PROTO-0-E-FILE-CREATE-DIR"
+                },
+                "CreateHardLink": {
+                    "Command": "PROTO-0-C-FILE-CREATE-HARDLINK",
+                    "Argument": [],
+                    "Return": {
+                        "Handle": "PROTO-0-R-FILE-HANDLE"
+                    },
+                    "Error": "PROTO-0-E-FILE-CREATE-HARDLINK"
+                },
+                "CreateSymbolicLink": {
+                    "Command": "PROTO-0-C-FILE-CREATE-SYMLINK",
+                    "Argument": [],
+                    "Return": {
+                        "Handle": "PROTO-0-R-FILE-HANDLE"
+                    },
+                    "Error": "PROTO-0-E-FILE-CREATE-SYMLINK"
+                },
+                "ReadData": {
+                    "Command": "PROTO-0-C-FILE-READ-DATA",
+                    "Argument": [ "FileHandle" ],
+                    "Return": {
 
-    "Response": [
-        {
-            "MinorVersion": "0",
-            "Extension": {
-                "Loaded": "PROTO-0-R-EXT-LOADED",
-                "Unloaded": "PROTO-0-R-EXT-UNLOADED"
-            },
-            "APP": {
-                "List": "PROTO-0-R-APP-LIST",
-                "Installing": "PROTO-0-R-APP-INSTALLING",
-                "InstallCancelled": "PROTO-0-R-APP-INSTALL-CANCEL",
-                "Installed": "PROTO-0-R-APP-INSTALLED",
-                "Uninstalled": "PROTO-0-R-APP-UNINSTALLED"
-            },
-            "Storage": {
-                "LocalDisks": "PROTO-0-R-STOR-LOCALDISKS"
-            }
-        }
-    ],
+                    },
+                    "Error": "PROTO-0-E-FILE-READ-DATA"
+                },
+                "WriteData": {
+                    "Command": "PROTO-0-C-FILE-WRITE-DATA",
+                    "Argument": [ "FileHandle" ],
+                    "Return": {
 
-    "Error": [
-        {
-            "MinorVersion": "0",
-            "Extension": {
-                "Load": "PROTO-0-E-EXT-LOAD",
-                "Unload": "PROTO-0-E-EXT-UNLOAD"
-            },
-            "APP": {
-                "Install": "PROTO-0-E-APP-INSTALL",
-                "Uninstall": "PROTO-0-E-APP-UNINSTALL"
-            },
-            "Storage": {
-                "GetLocalDisks": "PROTO-0-E-STOR-GET-LOCAL"
+                    },
+                    "Error": "PROTO-0-E-FILE-WRITE-DATA"
+                },
+                "AppendData": {
+                    "Command": "PROTO-0-C-FILE-APPEND-DATA",
+                    "Argument": [ "FileHandle" ],
+                    "Return": {
+
+                    },
+                    "Error": "PROTO-0-E-FILE-APPEND-DATA"
+                },
+                "RemoveItem": {
+                    "Command": "PROTO-0-C-FILE-REMOVE-ITEM",
+                    "Argument": [ "ITEM" ],
+                    "Return": {
+
+                    },
+                    "Error": "PROTO-0-E-FILE-REMOVE-ITEM"
+                },
+                "MoveItem": {
+                    "Command": "PROTO-0-C-FILE-MOVE-ITEM",
+                    "Argument": [ "SRC", "DST" ],
+                    "Return": {
+
+                    },
+                    "Error": "PROTO-0-E-FILE-MOVE-ITEM"
+                },
+                "CopyItem": {
+                    "Command": "PROTO-0-C-FILE-COPY-ITEM",
+                    "Argument": [ "SRC", "DST" ],
+                    "Return": {
+
+                    },
+                    "Error": "PROTO-0-E-FILE-COPY-ITEM"
+                },
+                "Exists": {
+                    "Command": "PROTO-0-C-FILE-EXISTS",
+                    "Argument": [ "PATH" ],
+                    "Return": {
+                        "True": true,
+                        "False": false
+                    },
+                    "Error": "PROTO-0-E-FILE-EXISTS"
+                }
             }
         }
     ]

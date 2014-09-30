@@ -175,24 +175,24 @@ AppManager.prototype.install = function(appBundlePath) {
     var appInfo;
 
     if (!fs.existsSync(appBundlePath))
-        return { result: 'ERROR-NOT-EXIST' };
+        return { result: SYSTEM.ERROR.FSNotExist };
 
     try {
         appBundle = new AdmZip(appBundlePath);
     }
     catch (err) {
-        return { result: 'ERROR-BAD-FORMAT' };
+        return { result: SYSTEM.ERROR.APPFileFormat };
     }
 
     appInfo = this.verifyAppBundle(appBundle);
     if (!appInfo)
-        return { result: 'ERROR-BAD-FILE-STRUCT' };
+        return { result: SYSTEM.ERROR.APPContentStruct };
 
     try {
         appBundle.extractAllTo(SYSTEM.SETTINGS.UserAppPath, true);
     }
     catch (err) {
-        return { result: 'ERROR-UNZIP-FAIL' };
+        return { result: SYSTEM.ERROR.APPExtract };
     }
 
     try {
@@ -204,28 +204,28 @@ AppManager.prototype.install = function(appBundlePath) {
     }
     catch (err) {
         console.log(err);
-        return { result: 'ERROR-UNLINK-SYMLINK' };
+        return { result: SYSTEM.ERROR.APPCreateSymLink };
     }
 
     return { result: 'OK' };
 }
 
-AppManager.prototype.uninstall = function(appDirectory) {
-    var appPath = SYSTEM.SETTINGS.UserAppPath + '/' + appDirectory;
+AppManager.prototype.uninstall = function(appInfo) {
+    var appPath = SYSTEM.SETTINGS.UserAppPath + '/' + appInfo.Directory;
 
     if (!fs.existsSync(appPath))
-        return { result: 'ERROR-NOT-EXIST' };
+        return { result: SYSTEM.ERROR.FSNotExist };
 
     try {
         /* Remove APP symbolic link */
-        this.destroyUserAppSymlink(appDirectory);
+        this.destroyUserAppSymlink(appInfo.Directory);
 
         /* Remove APP in user storage */
         fs.removeSync(appPath);
     }
     catch (err) {
         console.log(err);
-        return { result: 'ERROR-FS-REMOVE' };
+        return { result: SYSTEM.ERROR.FSRemoveItem };
     }
 
     return { result: 'OK' };

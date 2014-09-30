@@ -1,28 +1,24 @@
 {
     "MajorVersion": "0",
-    "Command": [
+    "MinorVersion": [
         {
-            "MinorVersion": "0",
             "Say": {
-                "Hello": "EXT-PROTO-0-C-EX-SAYHELLO"
-            }
-        }
-    ],
-
-    "Response": [
-        {
-            "MinorVersion": "0",
-            "Say": {
-                "Hello": "EXT-PROTO-0-R-EX-SAYHELLO"
-            }
-        }
-    ],
-
-    "Error": [
-        {
-            "MinorVersion": "0",
-            "Say": {
-                "Hello": "EXT-PROTO-0-E-EX-SAYHELLO"
+                "Hello": {
+                    "Command": "EXT-PROTO-0-C-SAY-HELLO",
+                    "Argument": [ "To", "From" ],
+                    "Return": {
+                        "Hello": "EXT-PROTO-0-R-SAY-HELLO"
+                    },
+                    "Error": "EXT-PROTO-0-E-SAY-HELLO"
+                },
+                "Sorry": {
+                    "Command": "EXT-PROTO-0-C-SAY-SORRY",
+                    "Argument": [ "To", "From" ],
+                    "Return": {
+                        "Sorry": "EXT-PROTO-0-R-SAY-SORRY"
+                    },
+                    "Error": "EXT-PROTO-0-E-SAY-SORRY"
+                }
             }
         }
     ]

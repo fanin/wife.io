@@ -1,6 +1,7 @@
 <!doctype html>
 <html>
 <head>
+    <meta charset="utf-8">
     <title></title>
 
     <!-- Import JQuery library -->
@@ -69,7 +70,7 @@
                     elementIconDiv.appendChild(elementIconImg);
 
                     elementA = document.createElement("a");
-                    elementA.setAttribute("id", "icon-a-builtin-" + self.appList.builtin[i].Directory);
+                    elementA.setAttribute("id", "icon-a-builtin-" + i);
                     elementA.setAttribute("href", "../" + self.appList.builtin[i].Directory + "/" + self.appList.builtin[i].AppEntry);
                     elementA.setAttribute("title", self.appList.builtin[i].Description);
                     elementA.appendChild(elementIconDiv);
@@ -89,7 +90,7 @@
                     elementIconDiv.setAttribute("style", "background:url(../" + self.appList.user[i].Directory + "/img/icon.png) no-repeat; background-size: contain;");
 
                     elementA = document.createElement("a");
-                    elementA.setAttribute("id", "icon-a-user-" + self.appList.user[i].Directory);
+                    elementA.setAttribute("id", "icon-a-user-" + i);
                     elementA.setAttribute("href", "../" + self.appList.user[i].Directory + "/" + self.appList.user[i].AppEntry);
                     elementA.setAttribute("title", self.appList.user[i].Description);
                     elementA.appendChild(elementIconDiv);
@@ -105,8 +106,8 @@
             postConfigUI(coreClient);
         };
 
-        LauncherDelegate.prototype.protoResponseAppUninstalled = function(coreClient, appDirectory) {
-            var elementIconLi = document.getElementById("icon-li-user-" + appDirectory);
+        LauncherDelegate.prototype.protoResponseAppUninstalled = function(coreClient, appInfo) {
+            var elementIconLi = document.getElementById("icon-li-user-" + appInfo.Directory);
 
             if (elementIconLi)
                 document.getElementById("applist").removeChild(elementIconLi);
@@ -145,7 +146,7 @@
                         elementIconDiv.setAttribute("class", "shake");
                     }
 
-                    elementA = document.getElementById("icon-a-builtin-" + coreClient.delegate.appList.builtin[i].Directory);
+                    elementA = document.getElementById("icon-a-builtin-" + i);
                     if (elementA) {
                         elementA.setAttribute("href", "#");
                         elementA.setAttribute("title", "Builtin APP");
@@ -177,7 +178,7 @@
                         elementIconDiv.setAttribute("class", "shake");
                     }
 
-                    elementA = document.getElementById("icon-a-user-" + coreClient.delegate.appList.user[i].Directory);
+                    elementA = document.getElementById("icon-a-user-" + i);
                     if (elementA) {
                         elementA.setAttribute("href", "#");
                         elementA.setAttribute("title", "Delete " + coreClient.delegate.appList.user[i].AppName);
@@ -205,7 +206,7 @@
                         elementIconDiv.removeAttribute("class");
                     }
 
-                    elementA = document.getElementById("icon-a-builtin-" + coreClient.delegate.appList.builtin[i].Directory);
+                    elementA = document.getElementById("icon-a-builtin-" + i);
                     if (elementA) {
                         elementA.setAttribute("href", "../" + coreClient.delegate.appList.builtin[i].Directory
                                                     + "/" + coreClient.delegate.appList.builtin[i].AppEntry);
@@ -230,7 +231,7 @@
                         elementIconDiv.removeAttribute("class");
                     }
 
-                    elementA = document.getElementById("icon-a-user-" + coreClient.delegate.appList.user[i].Directory);
+                    elementA = document.getElementById("icon-a-user-" + i);
                     if (elementA) {
                         elementA.setAttribute("href", "../" + coreClient.delegate.appList.user[i].Directory
                                                     + "/" + coreClient.delegate.appList.user[i].AppEntry);
@@ -268,7 +269,7 @@
                             var ids = $(this).attr("id").split("-");
                             if (ids[2] == "user") {
                                 if (confirm("Are you sure?"))
-                                    coreClient.appUninstall(ids[3]);
+                                    coreClient.appUninstall(coreClient.delegate.appList.user[parseInt(ids[3])]);
                             }
                         }
                         return false;
