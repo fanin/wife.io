@@ -65,7 +65,7 @@
         TemplateDelegate.prototype.protoResponseProtoLoaded = function(coreClient) {
             $("#proto").html(
                 "Protocol major version: <font color=blue>" +
-                coreClient.protocol.MajorVersion + "</font>"
+                coreClient.version + "</font>"
             );
         };
 
@@ -74,23 +74,27 @@
         };
 
         /* Implement extension protocol delegates */
-        TemplateDelegate.prototype.protoResponseExtProtoLoaded = function(coreClient) {
+        TemplateDelegate.prototype.protoResponseExtProtoLoaded = function(coreClient, name) {
             $("#proto").html(
                 $("#proto").html() +
-                "<br>Extension protocol major version: <font color=blue>" +
-                this.extension.protocol.MajorVersion + "</font>"
+                "<br>Extension protocol [" + name + "] major version: <font color=blue>" +
+                this.extension.version + "</font>"
             );
 
             /* Test extension protocol */
             this.extension.sayHello("Bowie", "Kenny");
         };
 
-        TemplateDelegate.prototype.protoResponseExtProtoUnloaded = function(coreClient) {
-            alert("Extension protocol unloaded");
+        TemplateDelegate.prototype.protoResponseExtProtoUnloaded = function(coreClient, name) {
+            alert("Extension protocol [" + name + "] unloaded");
         };
 
-        TemplateDelegate.prototype.protoErrorExtProtoLoad = function(coreClient) {
-            alert("Extension protocol load failed");
+        TemplateDelegate.prototype.protoErrorExtProtoLoad = function(coreClient, name) {
+            alert("Extension protocol [" + name + "] load failed");
+        };
+
+        TemplateDelegate.prototype.protoErrorExtProtoUnload = function(coreClient, name) {
+            alert("Extension protocol [" + name + "] unload failed");
         };
 
         /* Implement protocol delegates you need */

@@ -22,22 +22,22 @@ ExampleExtension.prototype.activate = function() {
     var self = this;
 
     /* Implement Example extension response handler */
-    self.socket.on(self.protocol.MinorVersion[self.version].Say.Hello.Return.Hello, function(msg) {
+    self.socket.on(self.protocol[0].Say.Hello.Return.Hello, function(msg) {
         self.delegate && self.delegate.protoResponseSayHello(self, msg);
     });
 
     /* Implement Example extension error handler */
-    self.socket.on(self.protocol.MinorVersion[self.version].Say.Hello.Error, function(err) {
+    self.socket.on(self.protocol[0].Say.Hello.Error, function(err) {
         self.delegate && self.delegate.protoErrorSayHello(self, err);
     });
 }
 
 ExampleExtension.prototype.inactivate = function() {
-    this.socket.removeAllListeners(this.protocol.MinorVersion[this.version].Say.Hello.Return.Hello);
-    this.socket.removeAllListeners(this.protocol.MinorVersion[this.version].Say.Hello.Error);
+    this.socket.removeAllListeners(this.protocol[0].Say.Hello.Return.Hello);
+    this.socket.removeAllListeners(this.protocol[0].Say.Hello.Error);
 }
 
 /* Implement Example extension command wrapper */
 ExampleExtension.prototype.sayHello = function(to, from) {
-    this.socket.emit(this.protocol.MinorVersion[this.version].Say.Hello.Command, to, from);
+    this.socket.emit(this.protocol[0].Say.Hello.Command, to, from);
 }

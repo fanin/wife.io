@@ -58,111 +58,133 @@
             },
             "Storage": {
                 "GetLocalDisks": {
-                    "Command": "PROTO-0-C-STOR-GET-LOCAL",
+                    "Command": "PROTO-0-C-STOR-GET-LOCAL-DISKS",
                     "Argument": [],
                     "Return": {
                         "Disks": "PROTO-0-R-STOR-LOCAL-DISKS"
                     },
-                    "Error": "PROTO-0-E-STOR-GET-LOCAL"
+                    "Error": "PROTO-0-E-STOR-GET-LOCAL-DISKS"
                 }
             },
-            "File": {
+            "FileSystem": {
                 "List": {
-                    "Command": "PROTO-0-C-FILE-LIST",
-                    "Argument": [],
+                    "Command": "PROTO-0-C-FS-LIST",
+                    "Argument": [ "Path" ],
                     "Return": {
-                        "List": "PROTO-0-R-FILE-LIST"
+                        "List": "PROTO-0-R-FS-LIST"
                     },
-                    "Error": "PROTO-0-E-FILE-LIST"
+                    "Error": "PROTO-0-E-FS-LIST"
                 },
                 "CreateFile": {
-                    "Command": "PROTO-0-C-FILE-CREATE-FILE",
-                    "Argument": [],
-                    "Return": {
-                        "Handle": "PROTO-0-R-FILE-HANDLE"
-                    },
-                    "Error": "PROTO-0-E-FILE-CREATE-FILE"
+                    "Command": "PROTO-0-C-FS-CREATE-FILE",
+                    "Argument": [ "Path" ],
+                    "Return": {},
+                    "Error": "PROTO-0-E-FS-CREATE-FILE"
                 },
                 "CreateDirectory": {
-                    "Command": "PROTO-0-C-FILE-CREATE-DIR",
-                    "Argument": [],
-                    "Return": {
-                        "Handle": "PROTO-0-R-FILE-HANDLE"
-                    },
-                    "Error": "PROTO-0-E-FILE-CREATE-DIR"
+                    "Command": "PROTO-0-C-FS-CREATE-DIR",
+                    "Argument": [ "Path" ],
+                    "Return": {},
+                    "Error": "PROTO-0-E-FS-CREATE-DIR"
                 },
                 "CreateHardLink": {
-                    "Command": "PROTO-0-C-FILE-CREATE-HARDLINK",
-                    "Argument": [],
-                    "Return": {
-                        "Handle": "PROTO-0-R-FILE-HANDLE"
-                    },
-                    "Error": "PROTO-0-E-FILE-CREATE-HARDLINK"
+                    "Command": "PROTO-0-C-FS-CREATE-HARDLINK",
+                    "Argument": [ "SrcPath", "DstPath" ],
+                    "Return": {},
+                    "Error": "PROTO-0-E-FS-CREATE-HARDLINK"
                 },
                 "CreateSymbolicLink": {
-                    "Command": "PROTO-0-C-FILE-CREATE-SYMLINK",
-                    "Argument": [],
+                    "Command": "PROTO-0-C-FS-CREATE-SYMLINK",
+                    "Argument": [ "SrcPath", "DstPath" ],
+                    "Return": {},
+                    "Error": "PROTO-0-E-FS-CREATE-SYMLINK"
+                },
+                "Remove": {
+                    "Command": "PROTO-0-C-FS-REMOVE",
+                    "Argument": [ "Path" ],
+                    "Return": {},
+                    "Error": "PROTO-0-E-FS-REMOVE"
+                },
+                "Move": {
+                    "Command": "PROTO-0-C-FS-MOVE",
+                    "Argument": [ "SrcPath", "DstPath" ],
+                    "Return": {},
+                    "Error": "PROTO-0-E-FS-MOVE"
+                },
+                "Copy": {
+                    "Command": "PROTO-0-C-FS-COPY",
+                    "Argument": [ "SrcPath", "DstPath" ],
+                    "Return": {},
+                    "Error": "PROTO-0-E-FS-COPY"
+                },
+                "Exists": {
+                    "Command": "PROTO-0-C-FS-EXISTS",
+                    "Argument": [ "Path" ],
                     "Return": {
-                        "Handle": "PROTO-0-R-FILE-HANDLE"
+                        "True": true,
+                        "False": false
                     },
-                    "Error": "PROTO-0-E-FILE-CREATE-SYMLINK"
+                    "Error": "PROTO-0-E-FS-EXISTS"
+                },
+                "ReadFile": {
+                    "Command": "PROTO-0-C-FS-READ-FILE",
+                    "Argument": [ "Path" ],
+                    "Return": {
+                        "Data": "PROTO-0-R-FS-READ-DATA"
+                    },
+                    "Error": "PROTO-0-E-FS-READ-FILE"
+                },
+                "WriteFile": {
+                    "Command": "PROTO-0-C-FS-WRITE-FILE",
+                    "Argument": [ "Path", "Data" ],
+                    "Return": {},
+                    "Error": "PROTO-0-E-FS-WRITE-FILE"
+                },
+                "AppendFile": {
+                    "Command": "PROTO-0-C-FS-APPEND-FILE",
+                    "Argument": [ "Path", "Data" ],
+                    "Return": {},
+                    "Error": "PROTO-0-E-FS-APPEND-FILE"
+                }
+            },
+            "FileHandle": {
+                "Open": {
+                    "Command": "PROTO-0-C-FILE-OPEN",
+                    "Argument": [ "Path" ],
+                    "Return": {
+                        "FileHandle": "PROTO-0-R-FILE-OPEN"
+                    },
+                    "Error": "PROTO-0-E-FILE-OPEN"
+                },
+                "Close": {
+                    "Command": "PROTO-0-C-FILE-CLOSE",
+                    "Argument": [ "FileHandle" ],
+                    "Return": {},
+                    "Error": "PROTO-0-E-FILE-CLOSE"
                 },
                 "ReadData": {
                     "Command": "PROTO-0-C-FILE-READ-DATA",
-                    "Argument": [ "FileHandle" ],
+                    "Argument": [ "FileHandle", "Offset", "Size" ],
                     "Return": {
-
+                        "Data": "PROTO-0-R-FILE-READ-DATA"
                     },
                     "Error": "PROTO-0-E-FILE-READ-DATA"
                 },
                 "WriteData": {
                     "Command": "PROTO-0-C-FILE-WRITE-DATA",
-                    "Argument": [ "FileHandle" ],
+                    "Argument": [ "FileHandle", "Offset", "Size", "Data" ],
                     "Return": {
-
+                        "Size": "PROTO-0-R-FILE-WRITE-DATA-SIZE"
                     },
                     "Error": "PROTO-0-E-FILE-WRITE-DATA"
                 },
                 "AppendData": {
                     "Command": "PROTO-0-C-FILE-APPEND-DATA",
-                    "Argument": [ "FileHandle" ],
+                    "Argument": [ "FileHandle", "Data" ],
                     "Return": {
-
+                        "Size": "PROTO-0-R-FILE-APPEND-DATA-SIZE"
                     },
                     "Error": "PROTO-0-E-FILE-APPEND-DATA"
-                },
-                "RemoveItem": {
-                    "Command": "PROTO-0-C-FILE-REMOVE-ITEM",
-                    "Argument": [ "ITEM" ],
-                    "Return": {
-
-                    },
-                    "Error": "PROTO-0-E-FILE-REMOVE-ITEM"
-                },
-                "MoveItem": {
-                    "Command": "PROTO-0-C-FILE-MOVE-ITEM",
-                    "Argument": [ "SRC", "DST" ],
-                    "Return": {
-
-                    },
-                    "Error": "PROTO-0-E-FILE-MOVE-ITEM"
-                },
-                "CopyItem": {
-                    "Command": "PROTO-0-C-FILE-COPY-ITEM",
-                    "Argument": [ "SRC", "DST" ],
-                    "Return": {
-
-                    },
-                    "Error": "PROTO-0-E-FILE-COPY-ITEM"
-                },
-                "Exists": {
-                    "Command": "PROTO-0-C-FILE-EXISTS",
-                    "Argument": [ "PATH" ],
-                    "Return": {
-                        "True": true,
-                        "False": false
-                    },
-                    "Error": "PROTO-0-E-FILE-EXISTS"
                 }
             }
         }

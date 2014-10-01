@@ -18,59 +18,34 @@ function CoreServer(http) {
     this.storageMonitor = new StorageMonitor();
     this.error = null;
 
-    this.loadProtoSpec = function(protoSpec) {
-        if (!protoSpec)
-            protoSpec = 'ProtoSpec-v0';
+    this.loadProtoSpec = function(name, version) {
+        var protoSpec = name + '-v' + version;
 
         var jsonString = fs.readFileSync(path.resolve(__dirname, '../protocol/' + protoSpec + '.json'));
         if (jsonString) {
             try {
-                var protocol = JSON.parse(jsonString);
-                console.log('Protocol version: ' + protocol.MajorVersion);
-                return protocol;
+                var p = JSON.parse(jsonString);
+                console.log('Protocol [' + protoSpec + '] version: ' + p.MajorVersion);
+                return p.MinorVersion;
             }
             catch (err) {
-                console.log('Protocol error: ' + err);
+                //console.log('Protocol error: ' + err);
                 this.error = SYSTEM.ERROR.ProtoParse;
                 return null;
             }
         }
         else {
-            console.log('Protocol not specified');
+            //console.log('Protocol not specified');
             this.error = SYSTEM.ERROR.ProtoRead;
             return null;
         }
     }
 
-    this.loadExtProtoSpec = function(extName, version) {
-        var protoSpec = extName + '-v' + version + '.json';
-
-        try {
-            var jsonString = fs.readFileSync(
-                path.resolve(__dirname, '../protocol/ProtoSpecExt-' + protoSpec)
-            );
-
-            try {
-                var protocol = JSON.parse(jsonString);
-                console.log('Extension [' + extName + '] version: ' + protocol.MajorVersion);
-                return protocol;
-            }
-            catch (err) {
-                console.log('Extension [' + extName + '] error: ' + err);
-                this.error = SYSTEM.ERROR.ProtoParse;
-                return null;
-            }
-        }
-        catch (err) {
-            console.log('Extension[' + extName + '] ProtoSpec read error: ' + err);
-            this.error = SYSTEM.ERROR.ProtoRead;
-            return null;
-        }
-    }
-
-    this.protocol = this.loadProtoSpec();
-    if (!this.protocol)
+    this.protocol = this.loadProtoSpec('ProtoSpec', 0);
+    if (!this.protocol) {
+        console.log('Unable to load protocol specification, error = ' + this.error);
         process.exit(1);
+    }
 }
 
 CoreServer.prototype.listen = function() {
@@ -93,41 +68,43 @@ CoreServer.prototype.onSioConnected = function(socket) {
     /**
      * Protocol Listener: Extension Management Events
      */
-    socket.on(self.protocol.MinorVersion[0].Extension.Load.Command, function(name, majorVersion) {
+    socket.on(self.protocol[0].Extension.Load.Command, function(name, majorVersion) {
         try {
             var ExtensionModule = require('./extension/' + name.toLowerCase() + '/' +  name.toLowerCase());
             self.extension[name] = new ExtensionModule();
 
-            self.extension[name].protocol = self.loadExtProtoSpec(name, majorVersion);
+            self.extension[name].protocol = self.loadProtoSpec('ProtoSpecExt-' + name, majorVersion);
             if (self.extension[name].protocol) {
                 self.extension[name].socket = socket;
                 self.extension[name].activate();
-                socket.emit(self.protocol.MinorVersion[0].Extension.Load.Return.Loaded, name, self.extension[name].protocol);
+                socket.emit(self.protocol[0].Extension.Load.Return.Loaded, name, self.extension[name].protocol);
             }
             else {
-                socket.emit(self.protocol.MinorVersion[0].Extension.Load.Error, name, self.error);
+                socket.emit(self.protocol[0].Extension.Load.Error, name, self.error);
             }
         }
         catch (err) {
             console.log('Unable to load extension module [' + name + ']: ' + err);
-            socket.emit(self.protocol.MinorVersion[0].Extension.Load.Error, name, SYSTEM.ERROR.ModuleLoad);
+            socket.emit(self.protocol[0].Extension.Load.Error, name, SYSTEM.ERROR.ModuleLoad);
         }
     });
 
-    socket.on(self.protocol.MinorVersion[0].Extension.Unload.Command, function(name, majorVersion) {
+    socket.on(self.protocol[0].Extension.Unload.Command, function(name, majorVersion) {
         if (self.extension[name]) {
             self.extension[name].inactivate();
         }
     });
 
+
+
     /**
      * Protocol Listener: App Management Events
      */
-    socket.on(self.protocol.MinorVersion[0].APP.List.Command, function() {
-        socket.emit(self.protocol.MinorVersion[0].APP.List.Return.List, self.appManager.listApps());
+    socket.on(self.protocol[0].APP.List.Command, function() {
+        socket.emit(self.protocol[0].APP.List.Return.List, self.appManager.listApps());
     });
 
-    ss(socket).on(self.protocol.MinorVersion[0].APP.Install.Command, function(appBundleDataStream) {
+    ss(socket).on(self.protocol[0].APP.Install.Command, function(appBundleDataStream) {
         var installationCode = randomstring.generate('XXXXXXXX');
         var filename = SYSTEM.SETTINGS.FileUploadTempPath + '/' + installationCode + '.zip';
         var appWriteStream = fs.createWriteStream(filename);
@@ -135,17 +112,17 @@ CoreServer.prototype.onSioConnected = function(socket) {
         appBundleDataStream.pipe(appWriteStream);
 
         appBundleDataStream.once('data', function() {
-            socket.emit(self.protocol.MinorVersion[0].APP.Install.Return.Uploading, installationCode);
+            socket.emit(self.protocol[0].APP.Install.Return.Uploading, installationCode);
         });
 
         appBundleDataStream.on('finish', function() {
-            socket.emit(self.protocol.MinorVersion[0].APP.Install.Return.Installing, installationCode);
+            socket.emit(self.protocol[0].APP.Install.Return.Installing, installationCode);
 
             var result = self.appManager.install(filename).result;
             if (result === 'OK')
-                socket.emit(self.protocol.MinorVersion[0].APP.Install.Return.Installed, installationCode);
+                socket.emit(self.protocol[0].APP.Install.Return.Installed, installationCode);
             else
-                socket.emit(self.protocol.MinorVersion[0].APP.Install.Error, result);
+                socket.emit(self.protocol[0].APP.Install.Error, result);
 
             appBundleDataStream.end();
             fs.removeSync(filename);
@@ -153,11 +130,11 @@ CoreServer.prototype.onSioConnected = function(socket) {
 
         appBundleDataStream.on('error', function(err) {
             console.log('APP Install: ' + err);
-            socket.emit(self.protocol.MinorVersion[0].APP.Install.Error, SYSTEM.ERROR.FSBrokenPipe);
+            socket.emit(self.protocol[0].APP.Install.Error, SYSTEM.ERROR.FSBrokenPipe);
         });
     });
 
-    socket.on(self.protocol.MinorVersion[0].APP.CancelInstall.Command, function(installationCode) {
+    socket.on(self.protocol[0].APP.CancelInstall.Command, function(installationCode) {
         var filename = SYSTEM.SETTINGS.FileUploadTempPath + '/' + installationCode + '.zip';
 
         if (fs.existsSync(filename))
@@ -170,47 +147,56 @@ CoreServer.prototype.onSioConnected = function(socket) {
             self.appBundleDataStream = undefined;
         }
 
-        socket.emit(self.protocol.MinorVersion[0].APP.CancelInstall.Return.Cancelled, installationCode);
+        socket.emit(self.protocol[0].APP.CancelInstall.Return.Cancelled, installationCode);
     });
 
-    socket.on(self.protocol.MinorVersion[0].APP.Uninstall.Command, function(appInfo) {
+    socket.on(self.protocol[0].APP.Uninstall.Command, function(appInfo) {
         var result = self.appManager.uninstall(appInfo).result;
         if (result === 'OK')
-            socket.emit(self.protocol.MinorVersion[0].APP.Uninstall.Return.Uninstalled, appInfo);
+            socket.emit(self.protocol[0].APP.Uninstall.Return.Uninstalled, appInfo);
         else
-            socket.emit(self.protocol.MinorVersion[0].APP.Uninstall.Error, result);
+            socket.emit(self.protocol[0].APP.Uninstall.Error, result);
     });
+
+
 
     /**
      * Protocol Listener: Storage Events
      */
-    socket.on(self.protocol.MinorVersion[0].Storage.GetLocalDisks.Command, function() {
+    socket.on(self.protocol[0].Storage.GetLocalDisks.Command, function() {
         self.storageMonitor.retrieveLocalDisks(function() {
             if (!self.storageMonitor.systemDisk) {
-                socket.emit(self.protocol.MinorVersion[0].Storage.GetLocalDisks.Error, SYSTEM.ERROR.StorSystemDiskNotFound);
+                socket.emit(self.protocol[0].Storage.GetLocalDisks.Error, SYSTEM.ERROR.StorSystemDiskNotFound);
             }
 
             if (!self.storageMonitor.userDisk) {
-                socket.emit(self.protocol.MinorVersion[0].Storage.GetLocalDisks.Error, SYSTEM.ERROR.StorUserDiskNotFound);
+                socket.emit(self.protocol[0].Storage.GetLocalDisks.Error, SYSTEM.ERROR.StorUserDiskNotFound);
             }
 
-            socket.emit(self.protocol.MinorVersion[0].Storage.GetLocalDisks.Return.Disks, {
+            socket.emit(self.protocol[0].Storage.GetLocalDisks.Return.Disks, {
                 system: self.storageMonitor.systemDisk,
                 user: self.storageMonitor.userDisk,
                 removable: self.storageMonitor.removableDisk
             });
         });
     });
+
+
+
+    /**
+     * Protocol Listener: File System Events
+     */
+
 }
 
 CoreServer.prototype.onSioDisconnected = function(socket) {
     //console.log('CoreServer: disconnected from client');
-    socket.removeAllListeners(this.protocol.MinorVersion[0].Extension.Load.Command);
-    socket.removeAllListeners(this.protocol.MinorVersion[0].Extension.Unload.Command);
-    socket.removeAllListeners(this.protocol.MinorVersion[0].APP.List.Command);
-    socket.removeAllListeners(this.protocol.MinorVersion[0].APP.Install.Command);
-    socket.removeAllListeners(this.protocol.MinorVersion[0].APP.CancelInstall.Command);
-    socket.removeAllListeners(this.protocol.MinorVersion[0].APP.Uninstall.Command);
-    socket.removeAllListeners(this.protocol.MinorVersion[0].Storage.GetLocalDisks.Command);
+    socket.removeAllListeners(this.protocol[0].Extension.Load.Command);
+    socket.removeAllListeners(this.protocol[0].Extension.Unload.Command);
+    socket.removeAllListeners(this.protocol[0].APP.List.Command);
+    socket.removeAllListeners(this.protocol[0].APP.Install.Command);
+    socket.removeAllListeners(this.protocol[0].APP.CancelInstall.Command);
+    socket.removeAllListeners(this.protocol[0].APP.Uninstall.Command);
+    socket.removeAllListeners(this.protocol[0].Storage.GetLocalDisks.Command);
     socket.removeAllListeners('disconnect');
 }
