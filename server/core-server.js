@@ -186,7 +186,78 @@ CoreServer.prototype.onSioConnected = function(socket) {
     /**
      * Protocol Listener: File System Events
      */
+    socket.on(self.protocol[0].FileSystem.List.Command, function(path) {
 
+    });
+
+    socket.on(self.protocol[0].FileSystem.CreateFile.Command, function(path) {
+
+    });
+
+    socket.on(self.protocol[0].FileSystem.CreateDirectory.Command, function(path) {
+
+    });
+
+    socket.on(self.protocol[0].FileSystem.CreateHardLink.Command, function(srcPath, dstPath) {
+
+    });
+
+    socket.on(self.protocol[0].FileSystem.CreateSymbolicLink.Command, function(srcPath, dstPath) {
+
+    });
+
+    socket.on(self.protocol[0].FileSystem.Remove.Command, function(path) {
+
+    });
+
+    socket.on(self.protocol[0].FileSystem.Move.Command, function(srcPath, dstPath) {
+
+    });
+
+    socket.on(self.protocol[0].FileSystem.Copy.Command, function(srcPath, dstPath) {
+
+    });
+
+    socket.on(self.protocol[0].FileSystem.Exists.Command, function(path) {
+
+    });
+
+    socket.on(self.protocol[0].FileSystem.ReadFile.Command, function(path) {
+
+    });
+
+    socket.on(self.protocol[0].FileSystem.WriteFile.Command, function(path, data) {
+
+    });
+
+    socket.on(self.protocol[0].FileSystem.AppendFile.Command, function(path, data) {
+
+    });
+
+
+
+    /**
+     * Protocol Listener: File Handle Events
+     */
+    socket.on(self.protocol[0].FileHandle.Open.Command, function(path) {
+
+    });
+
+    socket.on(self.protocol[0].FileHandle.Close.Command, function(fileHandle) {
+
+    });
+
+    socket.on(self.protocol[0].FileHandle.ReadData.Command, function(fileHandle, offset, size) {
+
+    });
+
+    socket.on(self.protocol[0].FileHandle.WriteData.Command, function(fileHandle, offset, size, data) {
+
+    });
+
+    socket.on(self.protocol[0].FileHandle.AppendData.Command, function(fileHandle, data) {
+
+    });
 }
 
 CoreServer.prototype.onSioDisconnected = function(socket) {

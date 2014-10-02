@@ -23,20 +23,24 @@
             $("#uploadButton").button().focus();
         }
 
-        /* InstallerDelegate Constructor */
-        function InstallerDelegate() {
+        /* Installer Constructor */
+        function Installer() {
+            this.parent = CoreClient;
+            this.delegate = this;
             this.appInstalling = { bundle: null, code: null };
         };
 
-        /* Create installer delegate and inherit CoreClientDelegate */
-        InstallerDelegate.prototype = new CoreClientDelegate();
-        InstallerDelegate.prototype.constructor = InstallerDelegate;
+        /* Inherit CoreClient */
+        Installer.prototype = new CoreClient();
+        Installer.prototype.constructor = Installer;
+
+        extend(Installer.prototype, AppManagerDelegate);
+        extend(Installer.prototype, AppManagerDataSource);
 
         /* Implement connection delegates */
-        InstallerDelegate.prototype.connectionEstablished = function(coreClient) {
+        Installer.prototype.connectionDidEstablish = function() {
             var self = this;
-
-            //alert("Socket.IO connection established");
+            this.parent.prototype.connectionDidEstablish.call(this);
 
             progressDialog.onProgressEvent({
                 change: function() {
@@ -66,7 +70,7 @@
 
                 progressDialog.setButton("Cancel", function() {
                     var appBundle = $("#uploadAppBundle")[0].files[0];
-                    coreClient.appCancelInstall(self.appInstalling.code);
+                    self.appCancelInstall(self.appInstalling.code);
                 });
 
                 var appBundle = $("#uploadAppBundle")[0].files[0];
@@ -75,7 +79,7 @@
                 self.appInstalling.bundle = appBundle;
 
                 // Upload appBundle to the server.
-                coreClient.appInstall(ss, appBundle, function(chunk) {
+                self.appInstall(ss, appBundle, function(chunk) {
                     size += chunk.length;
                     progressDialog.setProgress(Math.floor(size / appBundle.size * 100));
                 });
@@ -84,30 +88,17 @@
             });
         };
 
-        InstallerDelegate.prototype.connectionClosed = function(coreClient) {
-            //alert("Socket.IO connection closed");
-        };
-
-        InstallerDelegate.prototype.connectionFailWithError = function(coreClient, error) {
-            alert("Socket.IO connection error: " + error);
-        };
-
-        /* Implement protocol delegates */
-        InstallerDelegate.prototype.protoErrorProtoLoad = function(coreClient, error) {
-            alert("Protocol error: " + error);
-        };
-
-        InstallerDelegate.prototype.protoResponseAppUploading = function(coreClient, installationCode) {
+        Installer.prototype.appIsUploading = function(installationCode) {
             this.appInstalling.code = installationCode;
         };
 
-        InstallerDelegate.prototype.protoResponseAppInstalling = function(coreClient, installationCode) {
+        Installer.prototype.appIsInstalling = function(installationCode) {
             progressDialog.setMessage("Installing " + this.appInstalling.bundle.name);
             progressDialog.setButton("Please wait", function(){});
             progressDialog.setButtonEnable(false);
         };
 
-        InstallerDelegate.prototype.protoResponseAppInstalled = function(coreClient, installationCode) {
+        Installer.prototype.appDidInstall = function(installationCode) {
             if (this.appInstalling.code === installationCode) {
                 progressDialog.setMessage(this.appInstalling.bundle.name + " Installed!");
                 progressDialog.setButton("Close", closeUpload);
@@ -117,7 +108,7 @@
             }
         };
 
-        InstallerDelegate.prototype.protoResponseAppInstallCancelled = function(coreClient, installationCode) {
+        Installer.prototype.appDidCancelInstall = function(installationCode) {
             if (this.appInstalling.code === installationCode) {
                 progressDialog.setMessage(this.appInstalling.bundle.name + " installation cancelled!");
                 progressDialog.setButton("Close", closeUpload);
@@ -127,7 +118,7 @@
             }
         };
 
-        InstallerDelegate.prototype.protoErrorAppInstall = function(coreClient, error) {
+        Installer.prototype.appDidFailInstallWithError = function(error) {
             if (this.appInstalling.code) {
                 progressDialog.setMessage("Unable to install " + this.appInstalling.bundle.name + " (Error: " + error + ")");
                 progressDialog.setButton("Close", closeUpload);
@@ -137,9 +128,8 @@
         };
 
         $(function() {
-            var coreClient = new CoreClient();
-            coreClient.delegate = new InstallerDelegate();
-            coreClient.initiate();
+            var installer = new Installer();
+            installer.initiate();
         });
     </script>
 </head>

@@ -31,35 +31,19 @@
     <link href="css/style.css" rel="stylesheet"></script>
 
     <script>
-        /* NotebookDelegate Constructor */
-        function NotebookDelegate() {};
-
-        /* Create course delegate and inherit CoreClientDelegate */
-        NotebookDelegate.prototype = new CoreClientDelegate();
-        NotebookDelegate.prototype.constructor = NotebookDelegate;
-
-        /* Implement connection delegates */
-        NotebookDelegate.prototype.connectionEstablished = function(coreClient) {
-            //alert("Socket.IO connection established");
+        /* NotebookClient Constructor */
+        function NotebookClient() {
+            this.parent = CoreClient;
+            this.delegate = this;
         };
 
-        NotebookDelegate.prototype.connectionClosed = function(coreClient) {
-            //alert("Socket.IO connection closed");
-        };
-
-        NotebookDelegate.prototype.connectionFailWithError = function(coreClient, error) {
-            alert("Socket.IO connection error: " + error);
-        };
-
-        /* Implement protocol delegates */
-        NotebookDelegate.prototype.protoErrorProtoLoad = function(coreClient, error) {
-            alert("Protocol error: " + error);
-        };
+        /* Inherit CoreClient */
+        NotebookClient.prototype = new CoreClient();
+        NotebookClient.prototype.constructor = NotebookClient;
 
         $(function() {
-            var coreClient = new CoreClient();
-            coreClient.delegate = new NotebookDelegate();
-            coreClient.initiate();
+            var notebookClient = new NotebookClient();
+            notebookClient.initiate();
 
             resizeContent();
 

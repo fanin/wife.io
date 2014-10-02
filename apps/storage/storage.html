@@ -21,33 +21,27 @@
     <link href="css/style.css" rel="stylesheet">
 
     <script>
-        /* StorageDelegate Constructor */
-        function StorageDelegate() {};
-
-        /* Create storage delegate and inherit CoreClientDelegate */
-        StorageDelegate.prototype = new CoreClientDelegate();
-        StorageDelegate.prototype.constructor = StorageDelegate;
-
-        /* Implement connection delegates */
-        StorageDelegate.prototype.connectionEstablished = function(coreClient) {
-            //alert("Socket.IO connection established");
-            coreClient.storageGetLocalDisks();
+        /* StorageClient Constructor */
+        function StorageClient() {
+            this.parent = CoreClient;
+            this.delegate = this;
         };
 
-        StorageDelegate.prototype.connectionClosed = function(coreClient) {
-            //alert("Socket.IO connection closed");
+        /* Inherit CoreClient */
+        StorageClient.prototype = new CoreClient();
+        StorageClient.prototype.constructor = StorageClient;
+
+        extend(StorageClient.prototype, StorageDelegate);
+        extend(StorageClient.prototype, StorageDataSource);
+
+        /* Get local disks after connection established */
+        StorageClient.prototype.connectionDidEstablish = function() {
+            this.parent.prototype.connectionDidEstablish.call(this);
+            this.storageGetLocalDisks();
         };
 
-        StorageDelegate.prototype.connectionFailWithError = function(coreClient, error) {
-            alert("Socket.IO connection error: " + error.toString());
-        };
-
-        /* Implement protocol delegates */
-        StorageDelegate.prototype.protoError = function(coreClient, error) {
-            alert("Protocol error: " + error.toString());
-        };
-
-        StorageDelegate.prototype.protoResponseLocalDisks = function(coreClient, disks) {
+        /* Implement storage delegates & data sources */
+        StorageClient.prototype.localDisks = function(disks) {
             if (disks.system) {
                 $("#content").append(
                     "<div id='system-container' class='storage-container'> \
@@ -85,14 +79,13 @@
             }
         };
 
-        StorageDelegate.prototype.protoErrorGetLocalDisks = function(coreClient, error) {
+        StorageClient.prototype.storageDidFailGetLocalDisksWithError = function(error) {
             //alert(error);
         };
 
         $(function() {
-            var coreClient = new CoreClient();
-            coreClient.delegate = new StorageDelegate();
-            coreClient.initiate();
+            var storageClient = new StorageClient();
+            storageClient.initiate();
         });
 
         /* UI interaction handling */

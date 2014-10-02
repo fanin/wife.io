@@ -18,36 +18,47 @@
     <link href="css/shake.css" rel="stylesheet">
 
     <script>
-        /* LauncherDelegate Constructor */
-        function LauncherDelegate() {
+        /* Launcher Constructor */
+        function Launcher() {
+            this.parent = CoreClient;
+            this.delegate = this;
             this.appList = null;
             this.manageMode = false;
         };
 
-        /* Create launcher delegate and inherit CoreClientDelegate */
-        LauncherDelegate.prototype = new CoreClientDelegate();
-        LauncherDelegate.prototype.constructor = LauncherDelegate;
+        /* Inherit CoreClient */
+        Launcher.prototype = new CoreClient();
+        Launcher.prototype.constructor = Launcher;
+
+        extend(Launcher.prototype, AppManagerDelegate);
+        extend(Launcher.prototype, AppManagerDataSource);
 
         /* Implement connection delegates */
-        LauncherDelegate.prototype.connectionEstablished = function(coreClient) {
-            //alert("Socket.IO connection established");
-            coreClient.appGetList();
+        Launcher.prototype.connectionDidEstablish = function() {
+            this.parent.prototype.connectionDidEstablish.call(this);
+            this.appGetList();
         };
 
-        LauncherDelegate.prototype.connectionClosed = function(coreClient) {
-            //alert("Socket.IO connection closed");
+        /* Implement app manager delegates */
+        Launcher.prototype.appIsUploading = function(installationCode){};
+        Launcher.prototype.appIsInstalling = function(installationCode){};
+        Launcher.prototype.appDidInstall = function(installationCode){};
+        Launcher.prototype.appDidCancelInstall = function(installationCode){};
+
+        Launcher.prototype.appDidUninstall = function(appInfo) {
+            var elementIconLi = document.getElementById("icon-li-user-" + appInfo.Directory);
+
+            if (elementIconLi)
+                document.getElementById("applist").removeChild(elementIconLi);
         };
 
-        LauncherDelegate.prototype.connectionFailWithError = function(coreClient, error) {
-            alert("Socket.IO connection error: " + error);
+        Launcher.prototype.appDidFailInstallWithError = function(error){};
+
+        Launcher.prototype.appDidFailUninstallWithError = function(error) {
+            alert(error);
         };
 
-        /* Implement protocol delegates */
-        LauncherDelegate.prototype.protoErrorProtoLoad = function(coreClient, error) {
-            alert("Protocol error: " + error);
-        };
-
-        LauncherDelegate.prototype.protoResponseAppList = function(coreClient, apps) {
+        Launcher.prototype.list = function(apps) {
             var self = this;
             var i;
             var elementLi;
@@ -103,28 +114,16 @@
                 }
             }
 
-            postConfigUI(coreClient);
-        };
-
-        LauncherDelegate.prototype.protoResponseAppUninstalled = function(coreClient, appInfo) {
-            var elementIconLi = document.getElementById("icon-li-user-" + appInfo.Directory);
-
-            if (elementIconLi)
-                document.getElementById("applist").removeChild(elementIconLi);
-        };
-
-        LauncherDelegate.prototype.protoErrorAppUninstall = function(coreClient, error) {
-            alert(error);
+            postConfigUI(self);
         };
 
         $(function() {
-            var coreClient = new CoreClient();
-            coreClient.delegate = new LauncherDelegate();
-            coreClient.initiate();
+            var launcher = new Launcher();
+            launcher.initiate();
         });
 
         /* UI interaction handling */
-        function enterManageMode(coreClient) {
+        function enterManageMode(self) {
             var i;
             var elementIconDiv;
             var elementA;
@@ -132,16 +131,16 @@
             var elementOverlaySpan;
             var elementOverlayImg;
 
-            if (coreClient.delegate.manageMode)
+            if (self.delegate.manageMode)
                 return;
             else
-                coreClient.delegate.manageMode = true;
+                self.delegate.manageMode = true;
 
             $("#applist").sortable("enable");
 
-            for (i in coreClient.delegate.appList.builtin) {
-                if (coreClient.delegate.appList.builtin[i].ShowInLauncher) {
-                    elementIconDiv = document.getElementById("icon-div-" + coreClient.delegate.appList.builtin[i].Directory);
+            for (i in self.delegate.appList.builtin) {
+                if (self.delegate.appList.builtin[i].ShowInLauncher) {
+                    elementIconDiv = document.getElementById("icon-div-" + self.delegate.appList.builtin[i].Directory);
                     if (elementIconDiv) {
                         elementIconDiv.setAttribute("class", "shake");
                     }
@@ -154,23 +153,23 @@
                 }
             }
 
-            for (i in coreClient.delegate.appList.user) {
-                if (coreClient.delegate.appList.user[i].ShowInLauncher) {
-                    elementIconDiv = document.getElementById("icon-div-" + coreClient.delegate.appList.user[i].Directory);
+            for (i in self.delegate.appList.user) {
+                if (self.delegate.appList.user[i].ShowInLauncher) {
+                    elementIconDiv = document.getElementById("icon-div-" + self.delegate.appList.user[i].Directory);
                     if (elementIconDiv) {
                         elementOverlayImg = document.createElement("img");
-                        elementOverlayImg.setAttribute("id", "overlay-img-" + coreClient.delegate.appList.user[i].Directory);
+                        elementOverlayImg.setAttribute("id", "overlay-img-" + self.delegate.appList.user[i].Directory);
                         elementOverlayImg.setAttribute("src", "img/delete-icon.png");
                         elementOverlayImg.setAttribute("width", "50%");
                         elementOverlayImg.setAttribute("height", "50%");
 
                         elementOverlaySpan = document.createElement("span");
-                        elementOverlaySpan.setAttribute("id", "overlay-span-" + coreClient.delegate.appList.user[i].Directory);
+                        elementOverlaySpan.setAttribute("id", "overlay-span-" + self.delegate.appList.user[i].Directory);
                         elementOverlaySpan.setAttribute("class", "delete");
                         elementOverlaySpan.appendChild(elementOverlayImg);
 
                         elementOverlayDiv = document.createElement("div");
-                        elementOverlayDiv.setAttribute("id", "overlay-div-" + coreClient.delegate.appList.user[i].Directory);
+                        elementOverlayDiv.setAttribute("id", "overlay-div-" + self.delegate.appList.user[i].Directory);
                         elementOverlayDiv.setAttribute("class", "overlay");
                         elementOverlayDiv.appendChild(elementOverlaySpan);
 
@@ -181,50 +180,50 @@
                     elementA = document.getElementById("icon-a-user-" + i);
                     if (elementA) {
                         elementA.setAttribute("href", "#");
-                        elementA.setAttribute("title", "Delete " + coreClient.delegate.appList.user[i].AppName);
+                        elementA.setAttribute("title", "Delete " + self.delegate.appList.user[i].AppName);
                     }
                 }
             }
         };
 
-        function leaveManageMode(coreClient) {
+        function leaveManageMode(self) {
             var i;
             var elementIconDiv;
             var elementOverlayDiv;
             var elementOverlaySpan;
             var elementOverlayImg;
 
-            if (!coreClient.delegate.manageMode)
+            if (!self.delegate.manageMode)
                 return;
 
             $("#applist").sortable("disable");
 
-            for (i in coreClient.delegate.appList.builtin) {
-                if (coreClient.delegate.appList.builtin[i].ShowInLauncher) {
-                    elementIconDiv = document.getElementById("icon-div-" + coreClient.delegate.appList.builtin[i].Directory);
+            for (i in self.delegate.appList.builtin) {
+                if (self.delegate.appList.builtin[i].ShowInLauncher) {
+                    elementIconDiv = document.getElementById("icon-div-" + self.delegate.appList.builtin[i].Directory);
                     if (elementIconDiv) {
                         elementIconDiv.removeAttribute("class");
                     }
 
                     elementA = document.getElementById("icon-a-builtin-" + i);
                     if (elementA) {
-                        elementA.setAttribute("href", "../" + coreClient.delegate.appList.builtin[i].Directory
-                                                    + "/" + coreClient.delegate.appList.builtin[i].AppEntry);
-                        elementA.setAttribute("title", coreClient.delegate.appList.builtin[i].Description);
+                        elementA.setAttribute("href", "../" + self.delegate.appList.builtin[i].Directory
+                                              + "/" + self.delegate.appList.builtin[i].AppEntry);
+                        elementA.setAttribute("title", self.delegate.appList.builtin[i].Description);
                     }
                 }
             }
 
-            for (i in coreClient.delegate.appList.user) {
-                if (coreClient.delegate.appList.user[i].ShowInLauncher) {
-                    elementIconDiv = document.getElementById("icon-div-" + coreClient.delegate.appList.user[i].Directory);
+            for (i in self.delegate.appList.user) {
+                if (self.delegate.appList.user[i].ShowInLauncher) {
+                    elementIconDiv = document.getElementById("icon-div-" + self.delegate.appList.user[i].Directory);
                     if (elementIconDiv) {
-                        elementOverlayImg = document.getElementById("overlay-img-" + coreClient.delegate.appList.user[i].Directory);
+                        elementOverlayImg = document.getElementById("overlay-img-" + self.delegate.appList.user[i].Directory);
 
-                        elementOverlaySpan = document.getElementById("overlay-span-" + coreClient.delegate.appList.user[i].Directory);
+                        elementOverlaySpan = document.getElementById("overlay-span-" + self.delegate.appList.user[i].Directory);
                         elementOverlaySpan.removeChild(elementOverlayImg);
 
-                        elementOverlayDiv = document.getElementById("overlay-div-" + coreClient.delegate.appList.user[i].Directory);
+                        elementOverlayDiv = document.getElementById("overlay-div-" + self.delegate.appList.user[i].Directory);
                         elementOverlayDiv.removeChild(elementOverlaySpan);
 
                         elementIconDiv.removeChild(elementOverlayDiv);
@@ -233,23 +232,23 @@
 
                     elementA = document.getElementById("icon-a-user-" + i);
                     if (elementA) {
-                        elementA.setAttribute("href", "../" + coreClient.delegate.appList.user[i].Directory
-                                                    + "/" + coreClient.delegate.appList.user[i].AppEntry);
-                        elementA.setAttribute("title", coreClient.delegate.appList.user[i].Description);
+                        elementA.setAttribute("href", "../" + self.delegate.appList.user[i].Directory
+                                              + "/" + self.delegate.appList.user[i].AppEntry);
+                        elementA.setAttribute("title", self.delegate.appList.user[i].Description);
                     }
                 }
             }
 
-            coreClient.delegate.manageMode = false;
+            self.delegate.manageMode = false;
         };
 
-        function postConfigUI(coreClient) {
+        function postConfigUI(self) {
             $("a").mousedown(function() {
-                if (!coreClient.delegate.manageMode) {
+                if (!self.delegate.manageMode) {
                     var ignoreClick = true;
                 }
 
-                var longPressTimeout = setTimeout(enterManageMode, 750, coreClient);
+                var longPressTimeout = setTimeout(enterManageMode, 750, self);
                 $(this).mouseup(function() {
                     clearTimeout(longPressTimeout);
                     $(this).unbind("mouseup");
@@ -264,12 +263,12 @@
 
                 $(this).unbind("click");
                 $(this).bind("click", function() {
-                    if (coreClient.delegate.manageMode) {
+                    if (self.delegate.manageMode) {
                         if (!ignoreClick) {
                             var ids = $(this).attr("id").split("-");
                             if (ids[2] == "user") {
                                 if (confirm("Are you sure?"))
-                                    coreClient.appUninstall(coreClient.delegate.appList.user[parseInt(ids[3])]);
+                                    self.appUninstall(self.delegate.appList.user[parseInt(ids[3])]);
                             }
                         }
                         return false;
@@ -282,8 +281,8 @@
             });
 
             $("#applist").bind("click", function() {
-                if (coreClient.delegate.manageMode) {
-                    leaveManageMode(coreClient);
+                if (self.delegate.manageMode) {
+                    leaveManageMode(self);
                     return false;
                 }
                 return true;

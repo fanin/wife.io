@@ -10,8 +10,8 @@
 
 function ExampleExtensionDelegate() {};
 ExampleExtensionDelegate.prototype.constructor = ExampleExtensionDelegate;
-ExampleExtensionDelegate.prototype.protoResponseSayHello = function(example, msg){};
-ExampleExtensionDelegate.prototype.protoErrorSayHello = function(example, err){};
+ExampleExtensionDelegate.prototype.exampleDidSayHello = function(msg){};
+ExampleExtensionDelegate.prototype.exampleDidFailSayHelloWithError = function(err){};
 
 function ExampleExtension() {
     this.name = "Example";
@@ -23,12 +23,12 @@ ExampleExtension.prototype.activate = function() {
 
     /* Implement Example extension response handler */
     self.socket.on(self.protocol[0].Say.Hello.Return.Hello, function(msg) {
-        self.delegate && self.delegate.protoResponseSayHello(self, msg);
+        self.delegate.exampleDidSayHello(msg);
     });
 
     /* Implement Example extension error handler */
     self.socket.on(self.protocol[0].Say.Hello.Error, function(err) {
-        self.delegate && self.delegate.protoErrorSayHello(self, err);
+        self.delegate.exampleDidFailSayHelloWithError(err);
     });
 }
 
