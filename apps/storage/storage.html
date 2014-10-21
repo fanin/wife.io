@@ -21,27 +21,44 @@
     <link href="css/style.css" rel="stylesheet">
 
     <script>
-        /* StorageClient Constructor */
-        function StorageClient() {
-            this.parent = CoreClient;
+        /* StorageViewController Constructor */
+        function StorageViewController() {
+            this._super = CoreClient;
             this.delegate = this;
+            this.storageClient = new StorageClient();
         };
 
         /* Inherit CoreClient */
-        StorageClient.prototype = new CoreClient();
-        StorageClient.prototype.constructor = StorageClient;
+        StorageViewController.prototype = new CoreClient();
+        StorageViewController.prototype.constructor = StorageViewController;
 
-        extend(StorageClient.prototype, StorageDelegate);
-        extend(StorageClient.prototype, StorageDataSource);
+        extend(StorageViewController.prototype, StorageDelegate.prototype);
 
         /* Get local disks after connection established */
-        StorageClient.prototype.connectionDidEstablish = function() {
-            this.parent.prototype.connectionDidEstablish.call(this);
-            this.storageGetLocalDisks();
+        StorageViewController.prototype.connectionDidEstablish = function() {
+            this._super.prototype.connectionDidEstablish.call(this);
+            this.storageClient.register(this);
+        };
+
+        StorageViewController.prototype.connectionDidClose = function() {
+            this.storageClient.unregister();
+            this._super.prototype.connectionDidClose.call(this);
+        };
+
+        /* Implement protocol delegates */
+        StorageViewController.prototype.protoDidLoadSpec = function() {
+            this._super.prototype.protoDidLoadSpec.call(this);
+            this.storageClient.getLocalDisks();
+        };
+
+        StorageViewController.prototype.protoDidFailLoadSpecWithError = function(error) {
+            this._super.prototype.protoDidFailLoadSpecWithError.call(this);
         };
 
         /* Implement storage delegates & data sources */
-        StorageClient.prototype.localDisks = function(disks) {
+        StorageViewController.prototype.localDisksDidLoad = function() {
+            var disks = this.storageClient.localDisks;
+
             if (disks.system) {
                 $("#content").append(
                     "<div id='system-container' class='storage-container'> \
@@ -79,13 +96,13 @@
             }
         };
 
-        StorageClient.prototype.storageDidFailGetLocalDisksWithError = function(error) {
+        StorageViewController.prototype.storageDidFailGetLocalDisksWithError = function(error) {
             //alert(error);
         };
 
         $(function() {
-            var storageClient = new StorageClient();
-            storageClient.initiate();
+            var storageViewController = new StorageViewController();
+            storageViewController.initiate();
         });
 
         /* UI interaction handling */

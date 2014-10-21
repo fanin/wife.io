@@ -3,6 +3,6 @@
     "Brand": "Bowie!",
     "CoreServer": "core-server",
     "UserAppPath": "/tmp/bowie.io/apps",
-    "FileUploadTempPath": "/tmp",
+    "TempPath": "/tmp",
     "Copyright": "Copyright 2014 Chen, Shou-Yuan"
 }

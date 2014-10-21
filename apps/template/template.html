@@ -20,10 +20,11 @@
     <script src="js/extension/example.js"></script>
 
     <script>
-        /* TemplateClient Constructor */
-        function TemplateClient() {
-            this.parent = CoreClient;
+        /* TemplateViewController Constructor */
+        function TemplateViewController() {
+            this._super = CoreClient;
             this.delegate = this;
+            this.extensionClient = new ExtensionClient();
 
             /* Create & implement example extension delegates */
             var exampleDelegate = new ExampleExtensionDelegate();
@@ -37,82 +38,91 @@
             };
 
             /* Create client side example extension & install delegate */
-            this.extension = new ExampleExtension();
-            this.extension.delegate = exampleDelegate;
+            this.exampleExtension = new ExampleExtension();
+            this.exampleExtension.delegate = exampleDelegate;
         };
 
         /* Inherit CoreClient */
-        TemplateClient.prototype = new CoreClient();
-        TemplateClient.prototype.constructor = TemplateClient;
+        TemplateViewController.prototype = new CoreClient();
+        TemplateViewController.prototype.constructor = TemplateViewController;
 
-        TemplateClient.prototype.connectionDidEstablish = function() {
-            this.parent.prototype.connectionDidEstablish.call(this);
-            /* Load both client & server side extension module */
-            this.extensionLoad(this.extension);
+        extend(TemplateViewController.prototype, ExtensionDelegate.prototype);
+
+        TemplateViewController.prototype.connectionDidEstablish = function() {
+            this._super.prototype.connectionDidEstablish.call(this);
+            this.extensionClient.register(this);
         };
 
-        TemplateClient.prototype.connectionDidClose = function() {
-            this.parent.prototype.connectionDidClose.call(this);
+        TemplateViewController.prototype.connectionDidClose = function() {
             /* Unload both client & server side extension module */
-            this.extensionUnload(this.extension);
+            this.extensionClient.unload(this.exampleExtension);
+            this.extensionClient.unregister();
+            this._super.prototype.connectionDidClose.call(this);
         };
 
-        TemplateClient.prototype.connectionDidFailWithError = function(error) {
-            this.parent.prototype.connectionDidFailWithError.call(this, error);
+        TemplateViewController.prototype.connectionDidFailWithError = function(error) {
+            this._super.prototype.connectionDidFailWithError.call(this, error);
 
             $("#proto").html(
                 "Protocol version <font color=blue>" + this.version + "</font> load failed, error = " + error
             );
         };
 
-        /* Override protocol delegates */
-        TemplateClient.prototype.protocolDidLoad = function() {
-            this.parent.prototype.protocolDidLoad.call(this);
+        /* Implement protocol delegates */
+        TemplateViewController.prototype.protoDidLoadSpec = function() {
+            this._super.prototype.protoDidLoadSpec.call(this);
+
+            // NOTE: Do protocol relative operations here
 
             $("#proto").html(
-                "Protocol major version: <font color=blue>" +
-                this.version + "</font>"
+                "Protocol major version: <font color=blue>" + this.version + "</font>"
             );
+
+            /* Load both client & server side extension module */
+            this.extensionClient.load(this.exampleExtension);
+        };
+
+        TemplateViewController.prototype.protoDidFailLoadSpecWithError = function(error) {
+            this._super.prototype.protoDidFailLoadSpecWithError.call(this);
+            // TODO: Do something on protocol spec load failed
         };
 
         /* Implement extension protocol delegates */
-        TemplateClient.prototype.extensionDidLoad = function(name) {
-            this.parent.prototype.extensionDidLoad.call(this, name);
-
+        TemplateViewController.prototype.extensionDidLoad = function(name) {
             $("#proto").html(
                 $("#proto").html() +
                 "<br>Extension protocol [" + name + "] major version: <font color=blue>" +
-                this.extension.version + "</font>"
+                this.exampleExtension.version + "</font>"
             );
 
             /* Test extension protocol */
-            this.extension.sayHello("Bowie", "Kenny");
+            this.exampleExtension.sayHello("Bowie", "Kenny");
         };
 
-        TemplateClient.prototype.extensionDidUnload = function(name) {
-            this.parent.prototype.extensionDidUnload.call(this, name);
-
-            // TODO: Do something after extension unloaded
+        TemplateViewController.prototype.extensionDidUnload = function(name) {
+            // TODO: Do something on extension unloaded
         };
 
-        TemplateClient.prototype.extensionDidFailLoadWithError = function(name) {
-            this.parent.prototype.extensionDidFailLoadWithError.call(this, name);
+        TemplateViewController.prototype.extensionDidFailLoadWithError = function(name, error) {
+            alert('extensionDidFailLoadWithError');
+            this._super.prototype.extensionDidFailLoadWithError.call(this, name, error);
 
-            // TODO: Do something if extention load failed with error
+            alert('Load extension ' + name + ' failed with error: ' + error);
+            // TODO: Do something on extention load failed with error
         };
 
-        TemplateClient.prototype.extensionDidFailUnloadWithError = function(name) {
-            this.parent.prototype.extensionDidFailUnloadWithError.call(this, name);
+        TemplateViewController.prototype.extensionDidFailUnloadWithError = function(name, error) {
+            this._super.prototype.extensionDidFailUnloadWithError.call(this, name, error);
 
-            // TODO: Do something if extention unload failed with error
+            // TODO: Do something on extention unload failed with error
         };
 
         /* Implement protocol delegates you need */
         // TODO: Your codes here
 
         $(function() {
-            var templateClient = new TemplateClient();
-            templateClient.initiate();
+            var templateViewController = new TemplateViewController();
+            templateViewController.initiate();
         });
     </script>
 </head>

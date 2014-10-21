@@ -1,4 +1,5 @@
 var storage = require('./lib/disks.js');
+var SYSTEM = require('../system');
 
 module.exports = StorageMonitor;
 
@@ -6,6 +7,36 @@ function StorageMonitor() {
     this.systemDisk = null;
     this.userDisk = null;
     this.removableDisk = [];
+}
+
+StorageMonitor.prototype.register = function(_super, socket, protoStorage) {
+    var self = this;
+    var security = _super.securityManager[socket];
+
+    /**
+     * Protocol Listener: Storage Events
+     */
+    socket.on(protoStorage.GetLocalDisks.REQ, function() {
+        self.retrieveLocalDisks(function() {
+            if (!self.systemDisk) {
+                socket.emit(protoStorage.GetLocalDisks.ERR, SYSTEM.ERROR.StorSystemDiskNotFound);
+            }
+
+            if (!self.userDisk) {
+                socket.emit(protoStorage.GetLocalDisks.ERR, SYSTEM.ERROR.StorUserDiskNotFound);
+            }
+
+            socket.emit(protoStorage.GetLocalDisks.RES, {
+                system: self.systemDisk,
+                user: self.userDisk,
+                removable: self.removableDisk
+            });
+        });
+    });
+}
+
+StorageMonitor.prototype.unregister = function(socket, protoStorage) {
+    socket.removeAllListeners(protoStorage.GetLocalDisks.REQ);
 }
 
 StorageMonitor.prototype.retrieveLocalDisks = function(callback) {

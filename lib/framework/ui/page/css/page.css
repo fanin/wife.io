@@ -44,3 +44,5 @@ html, body {
     text-align: center;
     vertical-align: middle;
 }
+
+* { outline: none; }

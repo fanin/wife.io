@@ -2,189 +2,395 @@
     "MajorVersion": "0",
     "MinorVersion": [
         {
+            "Base": {
+                "GetInfo": {
+                    "REQ": "PROTO-0-C-APP-GET-INFO",
+                    "RES": "PROTO-0-R-APP-INFO",
+                    "ERR": "PROTO-0-E-APP-GET-INFO",
+                    "Comment": {
+                        "REQ Args": {
+                            "AppDirectory": "Find App by App directory"
+                        },
+                        "RES Params": {
+                            "AppInfo": "AppInfo object"
+                        },
+                        "ERR Params": {
+                            "Error": "Error code"
+                        }
+                    }
+                }
+            },
             "Extension": {
                 "Load": {
-                    "Command": "PROTO-0-C-EXT-LOAD",
-                    "Argument": [ "Name", "MajorVersion" ],
-                    "Return": {
-                        "Loaded": "PROTO-0-R-EXT-LOADED"
-                    },
-                    "Error": "PROTO-0-E-EXT-LOAD"
+                    "REQ": "PROTO-0-C-EXT-LOAD",
+                    "RES": "PROTO-0-R-EXT-LOADED",
+                    "ERR": "PROTO-0-E-EXT-LOAD",
+                    "Comment": {
+                        "REQ Args": {
+                            "Name": "Extension name to load",
+                            "MajorVersion": "Extension major version"
+                        },
+                        "RES Params": {
+                            "Name": "Extension name loaded",
+                            "Protocol": "Extension protocol JSON object"
+                        },
+                        "ERR Params": {
+                            "Name": "Name of failed extension",
+                            "Error": "Error code"
+                        }
+                    }
                 },
                 "Unload": {
-                    "Command": "PROTO-0-C-EXT-UNLOAD",
-                    "Argument": [ "Name", "MajorVersion" ],
-                    "Return": {
-                        "Unloaded": "PROTO-0-R-EXT-UNLOADED"
-                    },
-                    "Error": "PROTO-0-E-EXT-UNLOAD"
+                    "REQ": "PROTO-0-C-EXT-UNLOAD",
+                    "RES": "PROTO-0-R-EXT-UNLOADED",
+                    "ERR": "PROTO-0-E-EXT-UNLOAD",
+                    "Comment": {
+                        "REQ Args": {
+                            "Name": "Extension name to load",
+                            "MajorVersion": "Extension major version"
+                        },
+                        "RES Params": {
+                            "Name": "Extension name loaded",
+                            "Status": "Unloaded/InUse"
+                        },
+                        "ERR Params": {
+                            "Name": "Name of failed extension",
+                            "Error": "Error code"
+                        }
+                    }
                 }
             },
             "APP": {
                 "List": {
-                    "Command": "PROTO-0-C-APP-LIST",
-                    "Argument": [],
-                    "Return": {
-                        "List": "PROTO-0-R-APP-LIST"
-                    },
-                    "Error": "PROTO-0-E-APP-LIST"
+                    "REQ": "PROTO-0-C-APP-LIST",
+                    "RES": "PROTO-0-R-APP-LIST",
+                    "ERR": "PROTO-0-E-APP-LIST",
+                    "Comment": {
+                        "REQ Args": {},
+                        "RES Params": {
+                            "List": "App list returned"
+                        },
+                        "ERR Params": {}
+                    }
                 },
                 "Install": {
-                    "Command": "PROTO-0-C-APP-INSTALL",
-                    "Argument": [ "AppBundleDataStream" ],
-                    "Return": {
-                        "Uploading": "PROTO-0-R-APP-UPLOADING",
-                        "Installing": "PROTO-0-R-APP-INSTALLING",
-                        "Installed": "PROTO-0-R-APP-INSTALLED"
-                    },
-                    "Error": "PROTO-0-E-APP-INSTALL"
+                    "REQ": "PROTO-0-C-APP-INSTALL",
+                    "RES": "PROTO-0-R-APP-INSTALL",
+                    "ERR": "PROTO-0-E-APP-INSTALL",
+                    "Comment": {
+                        "REQ Args": {
+                            "AppBundleDataStream": "Data stream of App bundle"
+                        },
+                        "RES Params": {
+                            "InstallationCode": "Installation code",
+                            "Status": "Uploading, Installing or Installed"
+                        },
+                        "ERR Params": {
+                            "Error": "Error code"
+                        }
+                    }
                 },
                 "CancelInstall": {
-                    "Command": "PROTO-0-C-APP-CANCEL",
-                    "Argument": [ "InstallationCode" ],
-                    "Return": {
-                        "Cancelled": "PROTO-0-R-APP-CANCELLED"
-                    },
-                    "Error": "PROTO-0-E-APP-CANCEL"
+                    "REQ": "PROTO-0-C-APP-CANCEL",
+                    "RES": "PROTO-0-R-APP-CANCELLED",
+                    "ERR": "PROTO-0-E-APP-CANCEL",
+                    "Comment": {
+                        "REQ Args": {
+                            "InstallationCode": "Installation code returned by 'Install' command"
+                        },
+                        "RES Params": {
+                            "InstallationCode": "Installation code being cancelled"
+                        },
+                        "ERR Params": {
+                            "Error": "Error code"
+                        }
+                    }
                 },
                 "Uninstall": {
-                    "Command": "PROTO-0-C-APP-UNINSTALL",
-                    "Argument": [ "AppInfo" ],
-                    "Return": {
-                        "Uninstalled": "PROTO-0-R-APP-UNINSTALLED"
-                    },
-                    "Error": "PROTO-0-E-APP-UNINSTALL"
+                    "REQ": "PROTO-0-C-APP-UNINSTALL",
+                    "RES": "PROTO-0-R-APP-UNINSTALLED",
+                    "ERR": "PROTO-0-E-APP-UNINSTALL",
+                    "Comment": {
+                        "REQ Args": {
+                            "AppInfo": "AppInfo to indicate which App to be uninstalled"
+                        },
+                        "RES Params": {
+                            "AppInfo": "AppInfo to indicate which App being uninstalled"
+                        },
+                        "ERR Params": {
+                            "Error": "Error code"
+                        }
+                    }
                 }
             },
             "Storage": {
                 "GetLocalDisks": {
-                    "Command": "PROTO-0-C-STOR-GET-LOCAL-DISKS",
-                    "Argument": [],
-                    "Return": {
-                        "Disks": "PROTO-0-R-STOR-LOCAL-DISKS"
-                    },
-                    "Error": "PROTO-0-E-STOR-GET-LOCAL-DISKS"
+                    "REQ": "PROTO-0-C-STOR-GET-LOCAL-DISKS",
+                    "RES": "PROTO-0-R-STOR-LOCAL-DISKS",
+                    "ERR": "PROTO-0-E-STOR-GET-LOCAL-DISKS",
+                    "Comment": {
+                        "REQ Args": {},
+                        "RES Params": {
+                            "Disks": "Local disks information returned"
+                        },
+                        "ERR Params": {
+                            "Error": "Error code"
+                        }
+                    }
                 }
             },
             "FileSystem": {
                 "List": {
-                    "Command": "PROTO-0-C-FS-LIST",
-                    "Argument": [ "Path" ],
-                    "Return": {
-                        "List": "PROTO-0-R-FS-LIST"
-                    },
-                    "Error": "PROTO-0-E-FS-LIST"
+                    "REQ": "PROTO-0-C-FS-LIST",
+                    "RES": "PROTO-0-R-FS-LIST",
+                    "ERR": "PROTO-0-E-FS-LIST",
+                    "Comment": {
+                        "REQ Args": {
+                            "Path": "List files at path"
+                        },
+                        "RES Params": {
+                            "List": "File list returned"
+                        },
+                        "ERR Params": {
+                            "Error": "Error code"
+                        }
+                    }
                 },
                 "CreateFile": {
-                    "Command": "PROTO-0-C-FS-CREATE-FILE",
-                    "Argument": [ "Path" ],
-                    "Return": {},
-                    "Error": "PROTO-0-E-FS-CREATE-FILE"
+                    "REQ": "PROTO-0-C-FS-CREATE-FILE",
+                    "RES": "PROTO-0-R-FS-CREATE-FILE",
+                    "ERR": "PROTO-0-E-FS-CREATE-FILE",
+                    "Comment": {
+                        "REQ Args": {
+                            "Path": "Path of file to create"
+                        },
+                        "RES Params": {},
+                        "ERR Params": {
+                            "Error": "Error code"
+                        }
+                    }
                 },
                 "CreateDirectory": {
-                    "Command": "PROTO-0-C-FS-CREATE-DIR",
-                    "Argument": [ "Path" ],
-                    "Return": {},
-                    "Error": "PROTO-0-E-FS-CREATE-DIR"
+                    "REQ": "PROTO-0-C-FS-CREATE-DIR",
+                    "RES": "PROTO-0-R-FS-CREATE-DIR",
+                    "ERR": "PROTO-0-E-FS-CREATE-DIR",
+                    "Comment": {
+                        "REQ Args": {
+                            "Path": "Path of directory to create"
+                        },
+                        "RES Params": {},
+                        "ERR Params": {
+                            "Error": "Error code"
+                        }
+                    }
                 },
                 "CreateHardLink": {
-                    "Command": "PROTO-0-C-FS-CREATE-HARDLINK",
-                    "Argument": [ "SrcPath", "DstPath" ],
-                    "Return": {},
-                    "Error": "PROTO-0-E-FS-CREATE-HARDLINK"
+                    "REQ": "PROTO-0-C-FS-CREATE-HARDLINK",
+                    "RES": "PROTO-0-R-FS-CREATE-HARDLINK",
+                    "ERR": "PROTO-0-E-FS-CREATE-HARDLINK",
+                    "Comment": {
+                        "REQ Args": {
+                            "SrcPath": "Hard link source path",
+                            "DstPath": "Hard link destination path"
+                        },
+                        "RES Params": {},
+                        "ERR Params": {
+                            "Error": "Error code"
+                        }
+                    }
                 },
                 "CreateSymbolicLink": {
-                    "Command": "PROTO-0-C-FS-CREATE-SYMLINK",
-                    "Argument": [ "SrcPath", "DstPath" ],
-                    "Return": {},
-                    "Error": "PROTO-0-E-FS-CREATE-SYMLINK"
+                    "REQ": "PROTO-0-C-FS-CREATE-SYMLINK",
+                    "RES": "PROTO-0-R-FS-CREATE-SYMLINK",
+                    "ERR": "PROTO-0-E-FS-CREATE-SYMLINK",
+                    "Comment": {
+                        "REQ Args": {
+                            "SrcPath": "Symbolick link source path",
+                            "DstPath": "Symbolick link destination path"
+                        },
+                        "RES Params": {},
+                        "ERR Params": {
+                            "Error": "Error code"
+                        }
+                    }
                 },
                 "Remove": {
-                    "Command": "PROTO-0-C-FS-REMOVE",
-                    "Argument": [ "Path" ],
-                    "Return": {},
-                    "Error": "PROTO-0-E-FS-REMOVE"
+                    "REQ": "PROTO-0-C-FS-REMOVE",
+                    "RES": "PROTO-0-R-FS-REMOVE",
+                    "ERR": "PROTO-0-E-FS-REMOVE",
+                    "Comment": {
+                        "REQ Args": {
+                            "Path": "File or directory path to remove"
+                        },
+                        "RES Params": {},
+                        "ERR Params": {
+                            "Error": "Error code"
+                        }
+                    }
                 },
                 "Move": {
-                    "Command": "PROTO-0-C-FS-MOVE",
-                    "Argument": [ "SrcPath", "DstPath" ],
-                    "Return": {},
-                    "Error": "PROTO-0-E-FS-MOVE"
+                    "REQ": "PROTO-0-C-FS-MOVE",
+                    "RES": "PROTO-0-R-FS-MOVE",
+                    "ERR": "PROTO-0-E-FS-MOVE",
+                    "Comment": {
+                        "REQ Args": {
+                            "SrcPath": "Source path to move",
+                            "DstPath": "Destination path move to"
+                        },
+                        "RES Params": {},
+                        "ERR Params": {
+                            "Error": "Error code"
+                        }
+                    }
                 },
                 "Copy": {
-                    "Command": "PROTO-0-C-FS-COPY",
-                    "Argument": [ "SrcPath", "DstPath" ],
-                    "Return": {},
-                    "Error": "PROTO-0-E-FS-COPY"
+                    "REQ": "PROTO-0-C-FS-COPY",
+                    "RES": "PROTO-0-R-FS-COPY",
+                    "ERR": "PROTO-0-E-FS-COPY",
+                    "Comment": {
+                        "REQ Args": {
+                            "SrcPath": "Source path to copy",
+                            "DstPath": "Destination path copy to"
+                        },
+                        "RES Params": {},
+                        "ERR Params": {
+                            "Error": "Error code"
+                        }
+                    }
                 },
-                "Exists": {
-                    "Command": "PROTO-0-C-FS-EXISTS",
-                    "Argument": [ "Path" ],
-                    "Return": {
-                        "True": true,
-                        "False": false
-                    },
-                    "Error": "PROTO-0-E-FS-EXISTS"
+                "Exist": {
+                    "REQ": "PROTO-0-C-FS-EXIST",
+                    "RES": "PROTO-0-R-FS-EXIST",
+                    "ERR": "PROTO-0-E-FS-EXIST",
+                    "Comment": {
+                        "REQ Args": {
+                            "Path": "File or directory path to check existence"
+                        },
+                        "RES Params": {
+                            "Existence": "True or false"
+                        },
+                        "ERR Params": {
+                            "Error": "Error code"
+                        }
+                    }
                 },
                 "ReadFile": {
-                    "Command": "PROTO-0-C-FS-READ-FILE",
-                    "Argument": [ "Path" ],
-                    "Return": {
-                        "Data": "PROTO-0-R-FS-READ-DATA"
-                    },
-                    "Error": "PROTO-0-E-FS-READ-FILE"
+                    "REQ": "PROTO-0-C-FS-READ-FILE",
+                    "RES": "PROTO-0-R-FS-READ-DATA",
+                    "ERR": "PROTO-0-E-FS-READ-FILE",
+                    "Comment": {
+                        "REQ Args": {
+                            "Path": "File path to read"
+                        },
+                        "RES Params": {
+                            "Data": "Data stream of file to read"
+                        },
+                        "ERR Params": {
+                            "Error": "Error code"
+                        }
+                    }
                 },
                 "WriteFile": {
-                    "Command": "PROTO-0-C-FS-WRITE-FILE",
-                    "Argument": [ "Path", "Data" ],
-                    "Return": {},
-                    "Error": "PROTO-0-E-FS-WRITE-FILE"
+                    "REQ": "PROTO-0-C-FS-WRITE-FILE",
+                    "RES": "PROTO-0-R-FS-WRITE-FILE",
+                    "ERR": "PROTO-0-E-FS-WRITE-FILE",
+                    "Comment": {
+                        "REQ Args": {
+                            "Path": "File path to write",
+                            "Data": "Data stream of file to write"
+                        },
+                        "RES Params": {
+                            "Path": "Path of file written"
+                        },
+                        "ERR Params": {
+                            "Error": "Error code"
+                        }
+                    }
                 },
                 "AppendFile": {
-                    "Command": "PROTO-0-C-FS-APPEND-FILE",
-                    "Argument": [ "Path", "Data" ],
-                    "Return": {},
-                    "Error": "PROTO-0-E-FS-APPEND-FILE"
-                }
-            },
-            "FileHandle": {
+                    "REQ": "PROTO-0-C-FS-APPEND-FILE",
+                    "RES": "PROTO-0-R-FS-APPEND-FILE",
+                    "ERR": "PROTO-0-E-FS-APPEND-FILE",
+                    "Comment": {
+                        "REQ Args": {
+                            "Path": "File path to append",
+                            "Data": "Data stream of file to append"
+                        },
+                        "RES Params": {},
+                        "ERR Params": {
+                            "Error": "Error code"
+                        }
+                    }
+                },
                 "Open": {
-                    "Command": "PROTO-0-C-FILE-OPEN",
-                    "Argument": [ "Path" ],
-                    "Return": {
-                        "FileHandle": "PROTO-0-R-FILE-OPEN"
-                    },
-                    "Error": "PROTO-0-E-FILE-OPEN"
+                    "REQ": "PROTO-0-C-FILE-OPEN",
+                    "RES": "PROTO-0-R-FILE-OPEN",
+                    "ERR": "PROTO-0-E-FILE-OPEN",
+                    "Comment": {
+                        "REQ Args": {
+                            "Path": "Path of file to open",
+                            "Flag": "rwxa+",
+                            "Mode": "Defaults to 0666"
+                        },
+                        "RES Params": {
+                            "FileHandle": "File descriptor"
+                        },
+                        "ERR Params": {
+                            "Error": "Error code"
+                        }
+                    }
                 },
                 "Close": {
-                    "Command": "PROTO-0-C-FILE-CLOSE",
-                    "Argument": [ "FileHandle" ],
-                    "Return": {},
-                    "Error": "PROTO-0-E-FILE-CLOSE"
+                    "REQ": "PROTO-0-C-FILE-CLOSE",
+                    "RES": "PROTO-0-R-FILE-CLOSE",
+                    "ERR": "PROTO-0-E-FILE-CLOSE",
+                    "Comment": {
+                        "REQ Args": {
+                            "FileHandle": "File descriptor"
+                        },
+                        "RES Params": {},
+                        "ERR Params": {
+                            "Error": "Error code"
+                        }
+                    }
                 },
                 "ReadData": {
-                    "Command": "PROTO-0-C-FILE-READ-DATA",
-                    "Argument": [ "FileHandle", "Offset", "Size" ],
-                    "Return": {
-                        "Data": "PROTO-0-R-FILE-READ-DATA"
-                    },
-                    "Error": "PROTO-0-E-FILE-READ-DATA"
+                    "REQ": "PROTO-0-C-FILE-READ-DATA",
+                    "RES": "PROTO-0-R-FILE-READ-DATA",
+                    "ERR": "PROTO-0-E-FILE-READ-DATA",
+                    "Comment": {
+                        "REQ Args": {
+                            "FileHandle": "File descriptor",
+                            "Offset": "Offset to read",
+                            "Size": "Size to read"
+                        },
+                        "RES Params": {
+                            "Data": "Data buffer with read data",
+                            "Size": "Data size read"
+                        },
+                        "ERR Params": {
+                            "Error": "Error code"
+                        }
+                    }
                 },
                 "WriteData": {
-                    "Command": "PROTO-0-C-FILE-WRITE-DATA",
-                    "Argument": [ "FileHandle", "Offset", "Size", "Data" ],
-                    "Return": {
-                        "Size": "PROTO-0-R-FILE-WRITE-DATA-SIZE"
-                    },
-                    "Error": "PROTO-0-E-FILE-WRITE-DATA"
-                },
-                "AppendData": {
-                    "Command": "PROTO-0-C-FILE-APPEND-DATA",
-                    "Argument": [ "FileHandle", "Data" ],
-                    "Return": {
-                        "Size": "PROTO-0-R-FILE-APPEND-DATA-SIZE"
-                    },
-                    "Error": "PROTO-0-E-FILE-APPEND-DATA"
+                    "REQ": "PROTO-0-C-FILE-WRITE-DATA",
+                    "RES": "PROTO-0-R-FILE-WRITE-DATA",
+                    "ERR": "PROTO-0-E-FILE-WRITE-DATA",
+                    "Comment": {
+                        "REQ Args": {
+                            "FileHandle": "File descriptor",
+                            "Offset": "Offset to write",
+                            "Size": "Size to write",
+                            "Data": "Data to write"
+                        },
+                        "RES Params": {
+                            "Size": "Data size written"
+                        },
+                        "ERR Params": {
+                            "Error": "Error code"
+                        }
+                    }
                 }
             }
         }

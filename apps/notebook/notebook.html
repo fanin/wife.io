@@ -31,19 +31,19 @@
     <link href="css/style.css" rel="stylesheet"></script>
 
     <script>
-        /* NotebookClient Constructor */
-        function NotebookClient() {
-            this.parent = CoreClient;
+        /* NotebookViewController Constructor */
+        function NotebookViewController() {
+            this._super = CoreClient;
             this.delegate = this;
         };
 
         /* Inherit CoreClient */
-        NotebookClient.prototype = new CoreClient();
-        NotebookClient.prototype.constructor = NotebookClient;
+        NotebookViewController.prototype = new CoreClient();
+        NotebookViewController.prototype.constructor = NotebookViewController;
 
         $(function() {
-            var notebookClient = new NotebookClient();
-            notebookClient.initiate();
+            var notebookViewController = new NotebookViewController();
+            notebookViewController.initiate();
 
             resizeContent();
 

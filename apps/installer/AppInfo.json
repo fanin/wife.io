@@ -1,16 +1,21 @@
 {
-    "AppName": "APP Installer",
-    "Version": "0.1.0",
-    "ProtocolVersion": "0.1",
-    "Directory": "installer",
-    "AppEntry": "installer.html",
-    "Localizations": [ "en_US", "zh_TW" ],
-    "BrowserVersionSupport": {
-        "Chrome": "*",
-        "Firefox": "*",
-        "IE": "*",
-        "Safari": "*"
-    },
-    "Description": "APP installer",
-    "ShowInLauncher": true
+  "AppName": "APP Installer",
+  "Version": "0.1.0",
+  "ProtocolVersion": "0.1",
+  "Directory": "installer",
+  "AppEntry": "installer.html",
+  "Extensions": [],
+  "Localizations": [
+    "en_US",
+    "zh_TW"
+  ],
+  "BrowserVersionSupport": {
+    "Chrome": "*",
+    "Firefox": "*",
+    "IE": "*",
+    "Safari": "*"
+  },
+  "Description": "APP installer",
+  "ShowInLauncher": true,
+  "AppIdentifier": "BAPPbE6ZHWOj"
 }
