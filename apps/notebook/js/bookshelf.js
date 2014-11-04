@@ -397,6 +397,26 @@ function Bookshelf(fileManager) {
         // The clicked node is 'event.node'
     });
 
+    /* Create and initialize tree */
+    var initNotebookTree = function() {
+        /* Initialize notebook tree */
+        $('#notebook-tree').tree({
+            closedIcon: $('<i class="fa fa-caret-right"></i>'),
+            openedIcon: $('<i class="fa fa-caret-down"></i>'),
+            nodeIcon: $('<i class="fa fa-book"></i>'),
+            onCreateLi: function(node, $li) {
+                if (node.isFolder())
+                    $li.find('.jqtree-title').before('<i class="fa fa-list"></i>&nbsp;');
+            },
+            toggleable: false,
+            dragAndDrop: true,
+            autoOpen: false,
+            data: self.treeData
+        });
+
+        updateHoverHandler();
+    }
+
     /* Save notebook tree to bookshelf-tree.json */
     var saveTreeData = function() {
         var treeData = $('#notebook-tree').tree('toJson');
@@ -483,7 +503,6 @@ function Bookshelf(fileManager) {
         active: 1
     });
 
-
     /* Create /bookshelf if necessary */
     self.fileManager.exist(getPath(), function(path, exist, isDir, error) {
         if (error) throw new Error('fs operation error');
@@ -514,33 +533,17 @@ function Bookshelf(fileManager) {
 
                 try {
                     self.treeData = JSON.parse(data);
-
-                    /* Initialize notebook tree */
-                    $('#notebook-tree').tree({
-                        closedIcon: $('<i class="fa fa-caret-right"></i>'),
-                        openedIcon: $('<i class="fa fa-caret-down"></i>'),
-                        nodeIcon: $('<i class="fa fa-book"></i>'),
-                        onCreateLi: function(node, $li) {
-                            if (node.isFolder())
-                                $li.find('.jqtree-title').before('<i class="fa fa-list"></i>&nbsp;');
-                        },
-                        toggleable: false,
-                        dragAndDrop: true,
-                        autoOpen: false,
-                        data: self.treeData
-                    });
-
-                    updateHoverHandler();
+                    initNotebookTree();
                 }
                 catch (err) {
-                    alert(err);
+                    alert("Parse Tree Data " + err);
                 }
             });
         }
         else {
-            var treeData = JSON.stringify(self.treeData);
-            self.fileManager.writeFile("bookshelf-tree.json", treeData, function(path, error) {
+            self.fileManager.writeFile("bookshelf-tree.json", self.treeData, function(path, error) {
                 if (error) throw new Error("Unable to write bookshelf tree data");
+                initNotebookTree();
             });
         }
     });
