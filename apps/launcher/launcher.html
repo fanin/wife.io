@@ -94,14 +94,11 @@
             var self = this;
 
             /* Sort app list if needed */
-            self.fileManagerClient.exist("appsort.json", function(path, exist, error) {
-                if (error) {
-                    alert("File system operation error");
-                    return;
-                }
+            self.fileManagerClient.exist("appsort.json", function(path, exist, isDir, error) {
+                if (error) throw new Error("File system operation error");
 
                 if (exist) {
-                    self.fileManagerClient.readFile("appsort.json", function(path, data, error) {
+                    self.fileManagerClient.readFile("appsort.json", "utf8", function(path, data, error) {
                         if (error)
                             alert("Unable to read sorted list");
                         else {

@@ -105,22 +105,28 @@ ul.jqtree-tree .jqtree-element {
     position: relative;
 }
 
-ul.jqtree-tree li.jqtree-selected > .jqtree-element,
-ul.jqtree-tree li.jqtree-selected > .jqtree-element:hover {
+ul.jqtree-tree li.jqtree-selected > .jqtree-element {
     -webkit-border-radius: 2px;
     -moz-border-radius: 2px;
     border-radius: 2px;
-    -moz-background-clip: padding;
-    -webkit-background-clip: padding-box;
-    background-clip: padding-box
-    background-color: #97BDD6;
-    background: -webkit-gradient(linear, left top, left bottom, from(#BEE0F5), to(#89AFCA));
-    background: -moz-linear-gradient(top, #BEE0F5, #89AFCA);
-    background: -ms-linear-gradient(top, #BEE0F5, #89AFCA);
-    background: -o-linear-gradient(top, #BEE0F5, #89AFCA);
+    background: -webkit-gradient(linear, left top, left bottom, from(#FFBB00), to(#FFBB00));
+    background: -moz-linear-gradient(top, #FFBB00, #FFBB00);
+    background: -ms-linear-gradient(top, #FFBB00, #FFBB00);
+    background: -o-linear-gradient(top, #FFBB00, #FFBB00);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+ul.jqtree-tree li > .jqtree-element:hover {
+    -webkit-border-radius: 2px;
+    -moz-border-radius: 2px;
+    border-radius: 2px;
+    background: -webkit-gradient(linear, left top, left bottom, from(#FFDDAA), to(#FFDDAA));
+    background: -moz-linear-gradient(top, #FFDDAA, #FFDDAA);
+    background: -ms-linear-gradient(top, #FFDDAA, #FFDDAA);
+    background: -o-linear-gradient(top, #FFDDAA, #FFDDAA);
     text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
 ul.jqtree-tree .jqtree-moving > .jqtree-element .jqtree-title {
-    outline: dashed 1px #0000ff;
+    outline: dashed 1px #FF8833;
 }

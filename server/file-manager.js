@@ -124,11 +124,15 @@ FileManager.prototype.register = function(_super, socket, protoFS) {
     });
 
     socket.on(protoFS.Exist.REQ, function(path) {
-        socket.emit(protoFS.Exist.RES, path, fs.existsSync(security.getUserDataPath(path)));
+        var exist = fs.existsSync(security.getUserDataPath(path));
+        var isDir = exist ? fs.lstatSync(security.getUserDataPath(path)).isDirectory() : false;
+        socket.emit(protoFS.Exist.RES, path, exist, isDir);
     });
 
-    socket.on(protoFS.ReadFile.REQ, function(path) {
+    socket.on(protoFS.ReadFile.REQ, function(path, encoding) {
         var realPath = security.getUserDataPath(path);
+
+        encoding = encoding || 'utf8';
 
         if (fs.existsSync(realPath)) {
             /*
@@ -144,13 +148,14 @@ FileManager.prototype.register = function(_super, socket, protoFS) {
             });
             */
 
-            fs.readFile(realPath, 'utf8', function(err, data) {
+            fs.readFile(realPath, encoding, function(err, data) {
                 if (err) {
                     console.log('ReadFile: ' + err);
                     socket.emit(protoFS.ReadFile.ERR, path, SYSTEM.ERROR.FSIOError);
                 }
-                else
-                    socket.emit(protoFS.ReadFile.RES, path, data);
+                else {
+                    socket.emit(protoFS.ReadFile.RES, path, { data: data });
+                }
             });
 
         }

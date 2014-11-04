@@ -1,0 +1,29 @@
+.tableview ul {
+    display: block;
+    width: 100%;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.tableview ul li {
+    width: 100%;
+    height: 50px;
+    display: block;
+    background-color: white;
+    text-align: left;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.15);
+}
+
+.tableview ul li div {
+    width: 92%;
+    overflow:hidden;
+    color: #555;
+    padding: 5px;
+}
+
+.tableview ul li.selected {
+    box-shadow: 0 1px 1px 0 #C7C7C7 inset;
+    background: none repeat scroll 0 0 #E9E9E9;
+}

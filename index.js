@@ -4,9 +4,9 @@ var http = require('http').createServer(handler),
     ip = require('ip'),
     mime = require('mime');
 
+var jqueryuiPath;
+var settingsFile = 'settings.json';
 try {
-    var settingsFile = 'settings.json';
-
     if (process.argv.length == 3)
         settingsFile = process.argv[2];
 
@@ -45,7 +45,7 @@ function handler(req, res) {
     var filename = url.pathname;
     var filepath = require('path').join(__dirname, filename);
 
-    if (filename == '/' || filename == '/%SYSNAME%'.toLocaleLowerCase()) {
+    if (filename === '/' || filename === '/%SYSNAME%'.toLocaleLowerCase()) {
         // Redirect to launcher
         res.writeHead(301, {
             "location" : 'http://' + req.headers.host + '/apps/launcher/launcher.html'
@@ -54,10 +54,18 @@ function handler(req, res) {
         return;
     }
 
+    if (path.basename(filename) === 'jquery-ui.min.css')
+        jqueryuiPath = path.dirname(filename);
+
     fs.exists(filepath, function(exists) {
         if (!exists) {
-            if (path.basename(filename) == 'icon.png') {
+            if (path.basename(filename) === 'icon.png') {
                 filename = '/resources/img/unknown-icon.png';
+                filepath = require('path').join(__dirname, filename);
+            }
+            else if (path.basename(filename).match(/^ui/) && path.basename(filename).match(/png$/)) {
+                /* Rebuild jquery-ui images path */
+                filename = jqueryuiPath + '/images/' + path.basename(filename);
                 filepath = require('path').join(__dirname, filename);
             }
             else {

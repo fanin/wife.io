@@ -94,11 +94,25 @@
                 $("#removable-title\\[" + i + "\\]").text("Removable (" + disks.removable[i].mountpoint + ") (" + disks.removable[i].total + ")");
                 plotPieChart($("#removable-placeholder\\[" + i + "\\]"), disks.removable[i]);
             }
+
+            setContentWidth();
         };
 
         StorageViewController.prototype.storageDidFailGetLocalDisksWithError = function(error) {
             //alert(error);
         };
+
+        function setContentWidth()
+        {
+            var windowWidth = $(document).width();
+            var blockWidth = $('.storage-container').outerWidth(true);
+            var maxBoxPerRow = Math.floor(windowWidth / blockWidth);
+            $('#content').width(maxBoxPerRow * blockWidth);
+        }
+
+        $(window).resize(function(){
+            setContentWidth();
+        });
 
         $(function() {
             var storageViewController = new StorageViewController();

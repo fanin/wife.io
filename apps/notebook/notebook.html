@@ -4,203 +4,226 @@
 <!--[if IE 8]>    <html class="lt-ie9"> <![endif]-->
 <!--[if IE 9]>    <html class="ie9"> <![endif]-->
 <!--[if gt IE 9]><!--> <html> <!--<![endif]-->
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title></title>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title></title>
 
-    <!-- Import JQuery library -->
-    <script src="http://%SYSIP%:8001/lib/jquery/jquery-1.11.1.min.js"></script>
+        <!-- Import JQuery library -->
+        <script src="http://%SYSIP%:8001/lib/jquery/jquery-1.11.1.min.js"></script>
 
-    <!-- Import Foundation Frameworks -->
-    <script src="http://%SYSIP%:8001/lib/framework/foundation/foundation.js"></script>
+        <!-- Import Foundation Frameworks -->
+        <script src="http://%SYSIP%:8001/lib/framework/foundation/foundation.js"></script>
 
-    <!-- Import UI Frameworks -->
-    <script src="http://%SYSIP%:8001/lib/framework/ui/ui-kits.js"></script>
+        <!-- Import UI Frameworks -->
+        <script src="http://%SYSIP%:8001/lib/framework/ui/ui-kits.js"></script>
 
-    <!-- Import Font Awesome -->
-    <link href="http://%SYSIP%:8001/lib/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+        <!-- Import Font Awesome -->
+        <link href="http://%SYSIP%:8001/lib/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
 
-    <!-- Import 3rd party frameworks -->
-    <script src="lib/ckeditor/ckeditor.js"></script>
-    <script src="lib/jqTree/tree.jquery.js"></script>
+        <!-- Import 3rd party frameworks -->
+        <script src="lib/ckeditor/ckeditor.js"></script>
+        <script src="lib/jqTree/tree.jquery.js"></script>
 
-    <!-- Import note style -->
-    <link href="lib/jqTree/jqtree.css" rel="stylesheet">
-    <link href="css/style.css" rel="stylesheet"></script>
+        <!-- Import note style -->
+        <link href="lib/jqTree/jqtree.css" rel="stylesheet">
+        <link href="css/main.css" rel="stylesheet"></script>
+        <link href="css/bookshelf.css" rel="stylesheet"></script>
+        <link href="css/notebook.css" rel="stylesheet"></script>
+        <link href="css/note-editor.css" rel="stylesheet"></script>
 
-    <script>
-        /* NotebookViewController Constructor */
-        function NotebookViewController() {
-            this._super = CoreClient;
-            this.delegate = this;
-        };
+        <!-- Import bookshelf -->
+        <script src="js/bookshelf.js"></script>
+        <script src="js/notebook.js"></script>
+        <script src="js/note-editor.js"></script>
 
-        /* Inherit CoreClient */
-        NotebookViewController.prototype = new CoreClient();
-        NotebookViewController.prototype.constructor = NotebookViewController;
+        <script>
+            var bookshelf;
+            var notebook;
+            var noteEditor;
 
-        $(function() {
-            var notebookViewController = new NotebookViewController();
-            notebookViewController.initiate();
+            /* NotebookViewController Constructor */
+            function NotebookViewController() {
+                this._super = CoreClient;
+                this.delegate = this;
+                this.fileManagerClient = new FileManagerClient();
+            };
 
-            resizeContent();
+            /* Inherit CoreClient */
+            NotebookViewController.prototype = new CoreClient();
+            NotebookViewController.prototype.constructor = NotebookViewController;
 
-            $('#accordion').accordion({
-                heightStyle: "fill",
-                collapsible: true,
-                active: 1
+            /* Implement connection delegates */
+            NotebookViewController.prototype.connectionDidEstablish = function() {
+                this._super.prototype.connectionDidEstablish.call(this);
+                this.fileManagerClient.register(this);
+            };
+
+            NotebookViewController.prototype.connectionDidClose = function() {
+                this.fileManagerClient.unregister();
+                this._super.prototype.connectionDidClose.call(this);
+            };
+
+            /* Implement protocol delegates */
+            NotebookViewController.prototype.protoDidLoadSpec = function() {
+                this._super.prototype.protoDidLoadSpec.call(this);
+
+                /* Initialize bookshelf and load notebooks */
+                bookshelf = new Bookshelf(this.fileManagerClient);
+                notebook = new Notebook(this.fileManagerClient);
+                noteEditor = new NoteEditor(this.fileManagerClient);
+            };
+
+            NotebookViewController.prototype.protoDidFailLoadSpecWithError = function(error) {
+                this._super.prototype.protoDidFailLoadSpecWithError.call(this);
+            };
+
+            $(function() {
+                var notebookViewController = new NotebookViewController();
+                notebookViewController.initiate();
+                setContentSizeFit();
             });
-        });
 
-        $(window).resize(function() {
-            resizeContent();
-        });
-    </script>
-</head>
-<body>
-    <div id="wrapper">
-        <div id="header"></div>
-        <div id="content">
-            <div id="control-bar"><p>Control Bar</p></div>
-            <div id="container">
-                <div id="bookshelf">
-                    <div id="accordion">
-                        <h3>Bookmarks</h3>
-                        <div id="bookmark-list">
-                            <ul>
-                                <li>
-                                    <i class="fa fa-bookmark-o"></i>
-                                    <span>Bookmark 1</span>
-                                </li>
-                            </ul>
-                        </div>
-
-                        <h3>Notebooks</h3>
-                        <div id="notebook-stack"></div>
+            $(window).resize(function() {
+                setContentSizeFit();
+            });
+        </script>
+    </head>
+    <body>
+        <div id="wrapper">
+            <div id="header"></div>
+            <div id="content">
+                <div id="toolbar" class="ui-toolbar ui-widget-header ui-helper-clearfix">
+                    <div id="search-bar">
+                        <span class="search-btn ui-state-default" title="search">
+                            <span class="ui-icon ui-icon-search"></span>
+                        </span>
+                        <input id="search-text-input" type="text" placeholder="Search">
+                    </div>
+                    <div id="control-bar">
+                        <button id="new-note-btn">New Note</button>
                     </div>
                 </div>
-                <div id="notes">
-                    <ul>
-                        <li>Home</li>
-                        <li>About</li>
-                        <li>Projects</li>
-                        <li>Blog</li>
-                        <li>Home</li>
-                        <li>About</li>
-                        <li>Projects</li>
-                        <li>Blog</li>
-                        <li>Home</li>
-                        <li>About</li>
-                        <li>Projects</li>
-                        <li>Blog</li>
-                        <li>Home</li>
-                        <li>About</li>
-                        <li>Projects</li>
-                        <li>Blog</li>
-                        <li>Home</li>
-                        <li>About</li>
-                        <li>Projects</li>
-                        <li>Blog</li>
-                        <li>Home</li>
-                        <li>About</li>
-                        <li>Projects</li>
-                        <li>Blog</li>
-                    </ul>
+                <div id="container">
+                    <div id="bookshelf">
+                        <div id="accordion">
+                            <h3>Bookmarks</h3>
+                            <div id="bookmark-list">
+                                <ul>
+                                    <li>
+                                        <i class="fa fa-bookmark-o"></i>
+                                        <span>Bookmark 1</span>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <h3>
+                                Notebooks
+                                <span id="all-notebook-down-btn" class="action-button">
+                                    <a href="#"><i class="fa fa-caret-square-o-down"></i></a>
+                                </span>
+                            </h3>
+                            <div id="notebook-tree"></div>
+                        </div>
+                    </div>
+                    <div id="notebook">
+                        <div id="notebook-name"><span><i class="fa fa-book"></i>&nbsp;All</span></div>
+                        <div id="notes" class="tableview"></div>
+                    </div>
+                    <div id="note-editor">
+                        <input id="note-title-input" type="text" placeholder="Untitled">
+                        <textarea id="note-content-editor" name="note-content-editor"></textarea>
+                    </div>
                 </div>
-                <div id="note-content">
-                    <textarea id="noteEditor" name="noteEditor">
-                        <h1><u><em><strong>Hello Chardi &amp; Bowie!</strong></em></u></h1>
-                    </textarea>
-                </div>
+                <div id="footer"></div>
             </div>
-        <div id="footer"></div>
-    </div>
+        </div>
 
-    <script>
-        function resizeContent() {
-            var newWidth = $("html").width();
-            var newHeight = $("html").height() - $("#header").height() - $("#control-bar").height() - $("#footer").height();
-            $("#bookshelf").css("width", newWidth * 0.15 + "px");
-            $("#bookshelf").css("height", newHeight + "px");
-            $("#notes").css("width", newWidth * 0.2 + "px");
-            $("#notes").css("height", newHeight + "px");
-            $("#note-content").css("height", newHeight + "px");
-            try {
-                CKEDITOR.instances['noteEditor'].resize("100%", newHeight);
-            } catch (e) {}
-        }
+        <div id="create-nb-dialog" title="Create a new notebook" style="overflow: hidden;">
+            <form>
+                <fieldset>
+                    <label for="name">Notebook Name: </label>
+                    <input type="text" name="name" class="dialog-input-name text ui-widget-content">
 
-        var page = new Page();
-        page.setTitle("Notebook");
-        page.createNavigationBar("Notebook");
-        page.setFooterText("%COPYRIGHT%");
+                    <p class="validate-tips"></p>
 
-        var brandLabel = new NavigationBarLabel("%BRAND%");
-        page.navigationBar.rightContainer.pushItem(brandLabel);
+                    <!-- Allow form submission with keyboard without duplicating the dialog button -->
+                    <input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
+                </fieldset>
+            </form>
+        </div>
 
-        CKEDITOR.replace("noteEditor", { "extraPlugins": "customsave" });
-        CKEDITOR.config.resize_enabled = false;
-        CKEDITOR.config.removePlugins = 'elementspath, about';
+        <div id="rename-nb-dialog" title="Rename notebook" style="overflow: hidden;">
+            <form>
+                <fieldset>
+                    <label for="name">Notebook Name: </label>
+                    <input type="text" name="name" class="dialog-input-name text ui-widget-content">
 
-        CKEDITOR.on("instanceReady", function(event) {
-            resizeContent();
-        });
+                    <p class="validate-tips"></p>
 
-        CKEDITOR.instances['noteEditor'].on("customsave", function() {
-            var value = CKEDITOR.instances['noteEditor'].getData();
-            alert(value);
-        });
+                    <!-- Allow form submission with keyboard without duplicating the dialog button -->
+                    <input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
+                </fieldset>
+            </form>
+        </div>
 
-        CKEDITOR.instances['noteEditor'].on("maximize", function(state) {
-            if (state.data === CKEDITOR.TRISTATE_ON)
-                page.navigationBar.hide();
-            else
-                page.navigationBar.show();
-        });
+        <div id="create-nb-stack-dialog" title="Create a new stack" style="overflow: hidden;">
+            <form>
+                <fieldset>
+                    <label for="name">Stack Name: </label>
+                    <input type="text" name="name" class="dialog-input-name text ui-widget-content">
 
-        /* Initialize bookshelf */
-        var data = [
-            {
-                label: 'Notebook Stack 1',
-                children: [
-                    { label: 'Notebook 1' },
-                    { label: 'Notebook 2' }
-                ]
-            },
-            {
-                label: 'Notebook Stack 2',
-                children: [
-                    { label: 'Notebook 3' }
-                ]
-            },
-            {
-                label: 'Notebook 4',
+                    <p class="validate-tips"></p>
+
+                    <!-- Allow form submission with keyboard without duplicating the dialog button -->
+                    <input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
+                </fieldset>
+            </form>
+        </div>
+
+        <script>
+            function setContentSizeFit() {
+                var newWidth = $("html").width();
+                var newHeight = $("html").height() - $("#header").height() - $("#control-bar").height() - $("#footer").height();
+                $("#container").height(newHeight);
+                try {
+                    bookshelf.fitSize(newWidth, newHeight);
+                    notebook.fitSize(newWidth, newHeight);
+                    noteEditor.fitSize(newWidth, newHeight);
+                }
+                catch (err) {}
             }
-        ];
 
-        $('#notebook-stack').tree({
-            closedIcon: $('<i class="fa fa-caret-right"></i>'),
-            openedIcon: $('<i class="fa fa-caret-down"></i>'),
-            folderIcon: $('<i class="fa fa-list"></i>'),
-            nodeIcon: $('<i class="fa fa-book"></i>'),
-            toggleable: false,
-            dragAndDrop: true,
-            autoOpen: 0,
-            data: data
-        });
+            var page = new Page();
+            page.setTitle("Notebook");
+            page.createNavigationBar("Notebook");
+            page.setFooterText("%COPYRIGHT%");
 
-        /* Initialize note list */
-        var selectedNoteIndex = -1;
-        $("#notes li").click(function() {
-            if (!$(this).hasClass("selected")) {
-                if (selectedNoteIndex >= 0)
-                    $("#notes li").eq(selectedNoteIndex).removeClass("selected");
-                selectedNoteIndex = $("#notes li").index($(this));
-                $(this).addClass("selected");
-            }
-        });
-    </script>
-</body>
+            var brandLabel = new NavigationBarLabel("%BRAND%");
+            page.navigationBar.rightContainer.pushItem(brandLabel);
+
+            /* Initialize control bar */
+            $("#new-note-btn").button({
+                icons: {
+                    primary: "ui-icon-plus"
+                }
+            });
+
+            /* Initialize note list */
+            $("#bookshelf").on("loaded", function(event, arg) {
+                //arg.treeData;
+
+            });
+
+            $("#bookshelf").on("select", function(event, arg) {
+                notebook.open(arg.node);
+            });
+
+            /* Resize editor after loaded */
+            $('#note-editor').on('ready', function(event, arg) {
+                setContentSizeFit();
+            });
+        </script>
+    </body>
 </html>

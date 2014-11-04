@@ -1,10 +1,21 @@
+html, body {
+    overflow: auto;
+}
+
+h3 {
+    margin-left: 30px;
+    font: normal 20px Helvetica, Arial, sans-serif;
+    color: #666;
+}
+
 .storage-container {
-    box-sizing: border-box;
-    width: 600px;
-    height: 450px;
+    width: 500px;
+    height: 440px;
     padding: 0px 15px 15px 15px;
-    margin: 5px auto 5px auto;
+    margin: 15px;
     border: 1px solid #ddd;
+    float: left;
+    display: block;
     background: #fff;
     background: linear-gradient(#f6f6f6 0, #fff 50px);
     background: -o-linear-gradient(#f6f6f6 0, #fff 50px);
@@ -24,10 +35,4 @@
     font-size: 14px;
     line-height: 1.2em;
     position: relative;
-}
-
-h3 {
-    margin-left: 30px;
-    font: normal 20px Helvetica, Arial, sans-serif;
-    color: #666;
 }
