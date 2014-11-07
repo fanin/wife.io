@@ -1,8 +1,8 @@
 {
-    "SysName": "Wife.IO",
+    "SysName": "Wife.io",
     "Brand": "Bowie!",
     "CoreServer": "core-server",
-    "UserAppPath": "/tmp/bowie.io/apps",
+    "UserAppPath": "/tmp/wife.io/apps",
     "TempPath": "/tmp",
     "Copyright": "Copyright 2014 Chen, Shou-Yuan"
 }

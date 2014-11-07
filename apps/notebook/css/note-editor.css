@@ -2,18 +2,20 @@
     -moz-box-flex:1;
     -webkit-box-flex:1;
     margin: 0;
+    border: 0;
 }
 
 #note-title-input {
+    width: 99%;
     height: 28px;
-    padding: 0 5px;
-    border: 0px solid #BBB;
-    width: 100%;
     font-size: 16px;
     color: #555;
+    border: 0;
+    padding: 0;
 }
 
-#note-content-editor {
-    margin: 0;
-    padding: 0;
+#cke_note-content-editor {
+    border: 0;
+    -moz-box-shadow: none;
+    -webkit-box-shadow: none;
 }

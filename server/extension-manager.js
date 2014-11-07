@@ -39,6 +39,7 @@ ExtensionManager.prototype.register = function(_super, socket, protoExtension) {
                 socket.emit(protoExtension.Load.RES, name, self.extensions[name].protocol);
             }
             else {
+                console.log('Unable to load extension protocol spec');
                 socket.emit(protoExtension.Load.ERR, name, self.error);
             }
         }

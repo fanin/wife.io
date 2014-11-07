@@ -26,7 +26,6 @@
         /* Installer Constructor */
         function Installer() {
             this._super = CoreClient;
-            this.delegate = this;
             this.appInstalling = { bundle: null, code: null };
             this.appManagerClient = new AppManagerClient();
         };
@@ -35,125 +34,119 @@
         Installer.prototype = new CoreClient();
         Installer.prototype.constructor = Installer;
 
-        extend(Installer.prototype, AppManagerDelegate.prototype);
-
-        /* Implement connection delegates */
-        Installer.prototype.connectionDidEstablish = function() {
-            var self = this;
-            this._super.prototype.connectionDidEstablish.call(this);
-            this.appManagerClient.register(this);
-
-            progressDialog.onProgressEvent({
-                change: function() {
-                    progressDialog.setMessage("Uploading APP: " + progressDialog.progress() + "%");
-                },
-                complete: function() {
-                    progressDialog.setMessage("Prepare to install ...");
-                }
-            });
-
-            progressDialog.onDialogEvent({
-                open: function() {},
-                close: function() {},
-                beforeClose: function() {
-                    $("#uploadButton").button().button("option", {
-                        disabled: false,
-                        label: "Start Upload"
-                    });
-                }
-            });
-
-            $("#uploadButton").button().on("click", function() {
-                $(this).button("option", {
-                    disabled: true,
-                    label: "Uploading..."
-                });
-
-                progressDialog.setButton("Cancel", function() {
-                    var appBundle = $("#uploadAppBundle")[0].files[0];
-                    self.appManagerClient.cancelInstall(self.appInstalling.code);
-                });
-
-                var appBundle = $("#uploadAppBundle")[0].files[0];
-                var size = 0;
-
-                self.appInstalling.bundle = appBundle;
-
-                // Upload appBundle to the server.
-                self.appManagerClient.install(appBundle, function(chunk) {
-                    size += chunk.length;
-                    progressDialog.setProgress(Math.floor(size / appBundle.size * 100));
-                });
-
-                progressDialog.show();
-            });
-        };
-
-        Installer.prototype.connectionDidClose = function() {
-            this.appManagerClient.unregister();
-            this._super.prototype.connectionDidClose.call(this);
-        };
-
-        /* Implement protocol delegates */
-        Installer.prototype.protoDidLoadSpec = function() {
-            this._super.prototype.protoDidLoadSpec.call(this);
-        };
-
-        Installer.prototype.protoDidFailLoadSpecWithError = function(error) {
-            this._super.prototype.protoDidFailLoadSpecWithError.call(this);
-        };
-
-        /* Implement app manager delegates */
-        Installer.prototype.appIsUploading = function(installationCode) {
-            this.appInstalling.code = installationCode;
-        };
-
-        Installer.prototype.appIsInstalling = function(installationCode) {
-            progressDialog.setMessage("Installing " + this.appInstalling.bundle.name);
-            progressDialog.setButton("Please wait", function(){});
-            progressDialog.setButtonEnable(false);
-        };
-
-        Installer.prototype.appDidInstall = function(installationCode) {
-            if (this.appInstalling.code === installationCode) {
-                progressDialog.setMessage(this.appInstalling.bundle.name + " Installed!");
-                progressDialog.setButton("Close", closeUpload);
-                progressDialog.setButtonEnable(true);
-                progressDialog.setButtonFocus(true);
-                this.appInstalling = { bundle: null, code: null };
-            }
-        };
-
-        Installer.prototype.appDidCancelInstall = function(installationCode) {
-            if (this.appInstalling.code === installationCode) {
-                progressDialog.setMessage(this.appInstalling.bundle.name + " installation cancelled!");
-                progressDialog.setButton("Close", closeUpload);
-                progressDialog.setButtonEnable(true);
-                progressDialog.setButtonFocus(true);
-                this.appInstalling = { bundle: null, code: null };
-            }
-        };
-
-        Installer.prototype.appDidFailInstallWithError = function(error) {
-            if (this.appInstalling.code) {
-                progressDialog.setMessage("Unable to install " + this.appInstalling.bundle.name + " (Error: " + error + ")");
-                progressDialog.setButton("Close", closeUpload);
-                progressDialog.setButtonEnable(true);
-                progressDialog.setButtonFocus(true);
-            }
-        };
-
-        Installer.prototype.appDidFailCancelInstallWithError = function(error) {
-            if (this.appInstalling.code) {
-                progressDialog.setMessage("Unable to cancel install " + this.appInstalling.bundle.name + " (Error: " + error + ")");
-                progressDialog.setButton("Close", closeUpload);
-                progressDialog.setButtonEnable(true);
-                progressDialog.setButtonFocus(true);
-            }
-        }
-
         $(function() {
             var installer = new Installer();
+
+            installer.event.on("core.connection#established", function(event) {
+                var self = installer;
+                self.appManagerClient.attach(self);
+
+                progressDialog.onProgressEvent({
+                    change: function() {
+                        progressDialog.setMessage("Uploading APP: " + progressDialog.progress() + "%");
+                    },
+                    complete: function() {
+                        progressDialog.setMessage("Prepare to install ...");
+                    }
+                });
+
+                progressDialog.onDialogEvent({
+                    open: function() {},
+                    close: function() {},
+                    beforeClose: function() {
+                        $("#uploadButton").button().button("option", {
+                            disabled: false,
+                            label: "Start Upload"
+                        });
+                    }
+                });
+
+                $("#uploadButton").button().on("click", function() {
+                    $(this).button("option", {
+                        disabled: true,
+                        label: "Uploading..."
+                    });
+
+                    progressDialog.setButton("Cancel", function() {
+                        var appBundle = $("#uploadAppBundle")[0].files[0];
+                        self.appManagerClient.cancelInstall(self.appInstalling.code);
+                    });
+
+                    var appBundle = $("#uploadAppBundle")[0].files[0];
+                    var size = 0;
+
+                    self.appInstalling.bundle = appBundle;
+
+                    // Upload appBundle to the server.
+                    self.appManagerClient.install(appBundle, function(chunk) {
+                        size += chunk.length;
+                        progressDialog.setProgress(Math.floor(size / appBundle.size * 100));
+                    });
+
+                    progressDialog.show();
+                });
+            });
+
+            installer.event.on("core.connection#closed", function(event) {
+                installer.appManagerClient.detach();
+            });
+
+            installer.event.on("core.connection#error", function(event, error) {});
+
+            installer.event.on("core.protospec#loaded", function(event) {
+                var self = installer;
+
+                self.appManagerClient.event.on("app.install#uploading", function(event, installationCode) {
+                    self.appInstalling.code = installationCode;
+                });
+
+                self.appManagerClient.event.on("app.install#installing", function(event, installationCode) {
+                    progressDialog.setMessage("Installing " + self.appInstalling.bundle.name);
+                    progressDialog.setButton("Please wait", function(){});
+                    progressDialog.setButtonEnable(false);
+                });
+
+                self.appManagerClient.event.on("app.install#success", function(event, installationCode) {
+                    if (self.appInstalling.code === installationCode) {
+                        progressDialog.setMessage(self.appInstalling.bundle.name + " Installed!");
+                        progressDialog.setButton("Close", closeUpload);
+                        progressDialog.setButtonEnable(true);
+                        progressDialog.setButtonFocus(true);
+                        self.appInstalling = { bundle: null, code: null };
+                    }
+                });
+
+                self.appManagerClient.event.on("app.install#cancelled", function(event, installationCode) {
+                    if (self.appInstalling.code === installationCode) {
+                        progressDialog.setMessage(self.appInstalling.bundle.name + " installation cancelled!");
+                        progressDialog.setButton("Close", closeUpload);
+                        progressDialog.setButtonEnable(true);
+                        progressDialog.setButtonFocus(true);
+                        self.appInstalling = { bundle: null, code: null };
+                    }
+                });
+
+                self.appManagerClient.event.on("app.install#error", function(event, error) {
+                    if (self.appInstalling.code) {
+                        progressDialog.setMessage("Unable to install " + self.appInstalling.bundle.name + " (Error: " + error + ")");
+                        progressDialog.setButton("Close", closeUpload);
+                        progressDialog.setButtonEnable(true);
+                        progressDialog.setButtonFocus(true);
+                    }
+                });
+
+                self.appManagerClient.event.on("app.install#cancel-error", function(event, error) {
+                    if (self.appInstalling.code) {
+                        progressDialog.setMessage("Unable to cancel install " + self.appInstalling.bundle.name + " (Error: " + error + ")");
+                        progressDialog.setButton("Close", closeUpload);
+                        progressDialog.setButtonEnable(true);
+                        progressDialog.setButtonFocus(true);
+                    }
+                });
+            });
+
+            installer.event.on("core.protospec#error", function(event, error) {});
+
             installer.initiate();
         });
     </script>

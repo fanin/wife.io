@@ -21,7 +21,6 @@
         /* Launcher Constructor */
         function Launcher() {
             this._super = CoreClient;
-            this.delegate = this;
             this.manageMode = false;
             this.appManagerClient = new AppManagerClient();
             this.fileManagerClient = new FileManagerClient();
@@ -31,118 +30,104 @@
         Launcher.prototype = new CoreClient();
         Launcher.prototype.constructor = Launcher;
 
-        extend(Launcher.prototype, AppManagerDelegate.prototype);
+        $(function() {
+            var launcher = new Launcher();
 
-        /* Implement connection delegates */
-        Launcher.prototype.connectionDidEstablish = function() {
-            this._super.prototype.connectionDidEstablish.call(this);
-            this.appManagerClient.register(this);
-            this.fileManagerClient.register(this);
-        };
-
-        Launcher.prototype.connectionDidClose = function() {
-            this.appManagerClient.unregister();
-            this.fileManagerClient.unregister();
-            this._super.prototype.connectionDidClose.call(this);
-        };
-
-        /* Implement protocol delegates */
-        Launcher.prototype.protoDidLoadSpec = function() {
-            this._super.prototype.protoDidLoadSpec.call(this);
-            this.appManagerClient.list();
-        };
-
-        Launcher.prototype.protoDidFailLoadSpecWithError = function(error) {
-            this._super.prototype.protoDidFailLoadSpecWithError.call(this);
-        };
-
-        /* Implement app manager delegates */
-        Launcher.prototype.appIsUploading = function(installationCode){};
-        Launcher.prototype.appIsInstalling = function(installationCode){};
-        Launcher.prototype.appDidInstall = function(installationCode){};
-        Launcher.prototype.appDidCancelInstall = function(installationCode){};
-
-        Launcher.prototype.appDidUninstall = function(appInfo) {
-            /* Remove appInfo from appList */
-            for (var i = 0, len = this.appList.length; i < len; i++) {
-                if (this.appList[i].Directory === appInfo.Directory) {
-                    this.appList.splice(i, 1);
-                    break;
-                }
-            }
-
-            /* Update appsort.json */
-            var appsort = JSON.stringify(this.appList, null, 4);
-            this.fileManagerClient.writeFile("appsort.json", appsort, function(path, error) {
-                if (error)
-                    alert("Unable to write sorted list");
+            launcher.event.on("core.connection#established", function(event) {
+                launcher.appManagerClient.attach(launcher);
+                launcher.fileManagerClient.attach(launcher);
             });
 
-            /* Remove app icon */
-            var elementIconLi = document.getElementById("icon-li-" + appInfo.Directory);
-            if (elementIconLi)
-                document.getElementById("applist").removeChild(elementIconLi);
-        };
+            launcher.event.on("core.connection#closed", function(event) {
+                launcher.appManagerClient.detach();
+                launcher.fileManagerClient.detach();
+            });
 
-        Launcher.prototype.appDidFailInstallWithError = function(error){};
+            launcher.event.on("core.connection#error", function(event, error) {});
 
-        Launcher.prototype.appDidFailUninstallWithError = function(error) {
-            alert(error);
-        };
+            launcher.event.on("core.protospec#loaded", function(event) {
+                var self = launcher;
 
-        Launcher.prototype.appListDidLoad = function(appList) {
-            var self = this;
+                self.appManagerClient.event.on("app.list", function(event, arg) {
+                    /* Sort app list if needed */
+                    self.fileManagerClient.exist("appsort.json", function(path, exist, isDir, error) {
+                        if (error) throw new Error("File system operation error");
 
-            /* Sort app list if needed */
-            self.fileManagerClient.exist("appsort.json", function(path, exist, isDir, error) {
-                if (error) throw new Error("File system operation error");
+                        if (exist) {
+                            self.fileManagerClient.readFile("appsort.json", "utf8", function(path, data, error) {
+                                if (error)
+                                    alert("Unable to read sorted list");
+                                else {
+                                    //try {
+                                    var i;
+                                    var sorted = JSON.parse(data);
 
-                if (exist) {
-                    self.fileManagerClient.readFile("appsort.json", "utf8", function(path, data, error) {
-                        if (error)
-                            alert("Unable to read sorted list");
+                                    /* Build sorted app list directory to speed up merge process */
+                                    var appDirectory = [];
+                                    for (i in sorted)
+                                        appDirectory[sorted[i].Directory] = sorted[i];
+
+                                    /* Merge sorted list & latest app list */
+                                    for (i in arg.list)
+                                        if (appDirectory[arg.list[i].Directory] === undefined)
+                                            sorted.push(arg.list[i]);
+
+                                    self.appList = sorted;
+
+                                    showApps(self);
+                                    postConfigUI(self);
+                                    //}
+                                    //catch (err) {
+                                    //    alert("Read appsort.json error: " + err);
+                                    //}
+                                }
+                            });
+                        }
                         else {
-                            try {
-                                var i;
-                                var sorted = JSON.parse(data);
+                            var appsort = JSON.stringify(arg.list, null, 4);
+                            self.fileManagerClient.writeFile("appsort.json", appsort, function(path, error) {
+                                if (error)
+                                    alert("Unable to write sorted list");
+                            });
 
-                                /* Build sorted app list directory to speed up merge process */
-                                var appDirectory = [];
-                                for (i in sorted)
-                                    appDirectory[sorted[i].Directory] = sorted[i];
-
-                                /* Merge sorted list & latest app list */
-                                for (i in appList)
-                                    if (appDirectory[appList[i].Directory] === undefined)
-                                        sorted.push(appList[i]);
-
-                                self.appList = sorted;
-
-                                showApps(self);
-                                postConfigUI(self);
-                            }
-                            catch (err) {
-                                alert(err);
-                            }
+                            self.appList = arg.list;
+                            showApps(self);
+                            postConfigUI(self);
                         }
                     });
-                }
-                else {
-                    var appsort = JSON.stringify(appList, null, 4);
+                });
+
+                self.appManagerClient.event.on("app.uninstall#success", function(event, appInfo) {
+                    /* Remove appInfo from appList */
+                    for (var i = 0, len = self.appList.length; i < len; i++) {
+                        if (self.appList[i].Directory === appInfo.Directory) {
+                            self.appList.splice(i, 1);
+                            break;
+                        }
+                    }
+
+                    /* Update appsort.json */
+                    var appsort = JSON.stringify(self.appList, null, 4);
                     self.fileManagerClient.writeFile("appsort.json", appsort, function(path, error) {
                         if (error)
                             alert("Unable to write sorted list");
                     });
 
-                    self.appList = appList;
-                    showApps(self);
-                    postConfigUI(self);
-                }
-            });
-        };
+                    /* Remove app icon */
+                    var elementIconLi = document.getElementById("icon-li-" + appInfo.Directory);
+                    if (elementIconLi)
+                        document.getElementById("applist").removeChild(elementIconLi);
+                });
 
-        $(function() {
-            var launcher = new Launcher();
+                self.appManagerClient.event.on("app.uninstall#error", function(event, error) {
+                    alert("Uninstall error: " + error);
+                });
+
+                self.appManagerClient.list();
+            });
+
+            launcher.event.on("core.protospec#error", function(event, error) {});
+
             launcher.initiate();
         });
 

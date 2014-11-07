@@ -1,6 +1,5 @@
 function Notebook(fileManager) {
-    this.notes = undefined;;
-    this.node = null;
+    this.notePaths = undefined;
     this.fileManager = fileManager;
     this.tableView = new TableView(this, $("#notes"));
 
@@ -15,9 +14,32 @@ function Notebook(fileManager) {
 
         return "bookshelf" + path;
     }
+
+    this.listenToEvents = function() {
+        var self = this;
+
+        $("#notebook").off("refresh");
+        $("#notebook").on("refresh", function(event, index) {
+            self.tableView.reloadRowAtIndex(index);
+        });
+
+        self.tableView.view.off("contextmenu");
+        self.tableView.view.on("contextmenu", function(event, index) {
+            alert("show menu at " + index);
+        });
+
+        self.tableView.view.off("tableview.select");
+        self.tableView.view.on("tableview.select", function(event, index) {
+            $("#notebook").trigger("select", { path: self.notePaths[index] + "/main.html", index: index });
+        });
+
+        self.tableView.view.off("tableview.deselect");
+        self.tableView.view.on("tableview.deselect", function(event, index) {
+            $("#notebook").trigger("deselect", { index: index });
+        });
+    }
 }
 
-extend(Notebook.prototype, TableViewDelegate.prototype);
 extend(Notebook.prototype, TableViewDataSource.prototype);
 
 Notebook.prototype.fitSize = function(width, height) {
@@ -29,7 +51,7 @@ Notebook.prototype.fitSize = function(width, height) {
 Notebook.prototype.open = function(node) {
     var self = this;
 
-    self.node = node;
+    self.notePaths = [];
 
     $("#notebook-name").find("span").remove();
     if (node.isFolder())
@@ -38,44 +60,55 @@ Notebook.prototype.open = function(node) {
         $("#notebook-name").append("<span><i class='fa fa-book'></i>&nbsp;" + node.name + "</span>");
 
     if (node.isFolder()) {
-        //TODO
+        for (var i = 0; i < node.children.length; i++) {
+            var child = node.children[i];
+            self.fileManager.iterateList(
+                self.getPath(child),
+                function(path, item, i, error) {
+                    if (error)
+                        console.log("Unable to list " + path + "/" + item);
+                    else
+                        self.notePaths.push(path + "/" + item);
+                },
+                function(path) {
+                    self.tableView.show();
+                }
+            );
+        }
     }
     else {
-        self.fileManager.list(self.getPath(node), function(path, items, error) {
-            if (error) {
-                console.log("Unable to list " + path);
-                return;
+        self.fileManager.iterateList(
+            self.getPath(node),
+            function(path, item, i, error) {
+                if (error)
+                    console.log("Unable to list " + path + "/" + item);
+                else
+                    self.notePaths.push(path + "/" + item);
+            },
+            function(path) {
+                self.tableView.show();
             }
-
-            self.notes = items;
-            self.tableView.show();
-        });
+        );
     }
+
+    self.listenToEvents();
 }
 
 Notebook.prototype.tableViewNumberOfRows = function() {
-    return this.notes.length;
+    return this.notePaths.length;
 }
 
 Notebook.prototype.tableViewCellForRowAtIndex = function(index, appendDivToTableRow) {
     var self = this;
     var defaultDiv = $("<div></div>");
 
-    self.fileManager.readFile(self.getPath(self.node) + "/" + self.notes[index] + "/main.html", "utf8", function(path, data, error) {
+    self.fileManager.readFile(self.notePaths[index] + "/main.html", "utf8", function(path, data, error) {
         if (error) {
-            console.log("Unable to read " + path + "/" + self.notes[index] + "/main.html");
+            console.log("Unable to read " + self.notePaths[index] + "/main.html");
             appendDivToTableRow(defaultDiv, index);
             return;
         }
 
         appendDivToTableRow("<div>" + $("<div></div>").append(data).find("title").text() + "</div>", index);
     });
-}
-
-Notebook.prototype.tableViewDidSelectRowAtIndex = function(index) {
-
-}
-
-Notebook.prototype.tableViewDidDeselectRowAtIndex = function(index) {
-
 }

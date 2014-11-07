@@ -46,7 +46,6 @@
             /* NotebookViewController Constructor */
             function NotebookViewController() {
                 this._super = CoreClient;
-                this.delegate = this;
                 this.fileManagerClient = new FileManagerClient();
             };
 
@@ -54,33 +53,28 @@
             NotebookViewController.prototype = new CoreClient();
             NotebookViewController.prototype.constructor = NotebookViewController;
 
-            /* Implement connection delegates */
-            NotebookViewController.prototype.connectionDidEstablish = function() {
-                this._super.prototype.connectionDidEstablish.call(this);
-                this.fileManagerClient.register(this);
-            };
-
-            NotebookViewController.prototype.connectionDidClose = function() {
-                this.fileManagerClient.unregister();
-                this._super.prototype.connectionDidClose.call(this);
-            };
-
-            /* Implement protocol delegates */
-            NotebookViewController.prototype.protoDidLoadSpec = function() {
-                this._super.prototype.protoDidLoadSpec.call(this);
-
-                /* Initialize bookshelf and load notebooks */
-                bookshelf = new Bookshelf(this.fileManagerClient);
-                notebook = new Notebook(this.fileManagerClient);
-                noteEditor = new NoteEditor(this.fileManagerClient);
-            };
-
-            NotebookViewController.prototype.protoDidFailLoadSpecWithError = function(error) {
-                this._super.prototype.protoDidFailLoadSpecWithError.call(this);
-            };
-
             $(function() {
                 var notebookViewController = new NotebookViewController();
+
+                notebookViewController.event.on("core.connection#established", function(event) {
+                    notebookViewController.fileManagerClient.attach(notebookViewController);
+                });
+
+                notebookViewController.event.on("core.connection#closed", function(event) {
+                    notebookViewController.fileManagerClient.detach();
+                });
+
+                notebookViewController.event.on("core.connection#error", function(event, error) {});
+
+                notebookViewController.event.on("core.protospec#loaded", function(event) {
+                    /* Initialize bookshelf and load notebooks */
+                    bookshelf = new Bookshelf(notebookViewController.fileManagerClient);
+                    notebook = new Notebook(notebookViewController.fileManagerClient);
+                    noteEditor = new NoteEditor(notebookViewController.fileManagerClient);
+                });
+
+                notebookViewController.event.on("core.protospec#error", function(event, error) {});
+
                 notebookViewController.initiate();
                 setContentSizeFit();
             });
