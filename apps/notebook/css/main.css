@@ -1,13 +1,13 @@
+html, body {
+    height: 100%;
+    overflow: hidden;
+}
+
 .ui-widget {
     font-size:80%;
 }
 
 a { text-decoration: none; }
-
-html, body {
-    height: 100%;
-    overflow: hidden;
-}
 
 #header {
     padding: 0;
@@ -20,10 +20,21 @@ html, body {
     -webkit-box-orient: vertical;
 }
 
+#bar-container {
+    display: inline-block;
+    display: -moz-box;
+    display: -webkit-box;
+    -moz-box-orient: horizontal;
+    -webkit-box-orient: horizontal;
+}
+
 #toolbar {
-    width: 100%;
+    width: 90%;
     height: 40px;
+    border: 0;
+    padding: 0;
     background-color: #BBB;
+    display: inline-block;
     display: -moz-box;
     display: -webkit-box;
     -moz-box-orient: horizontal;
@@ -36,7 +47,7 @@ html, body {
     padding: 5px;
 }
 
-.search-btn {
+#search-button {
     position: relative;
     padding: 5px;
     cursor: pointer;
@@ -44,11 +55,11 @@ html, body {
 }
 
 #search-text-input {
+    width: 452px;
     height: 25px;
     padding: 1px 6px 0;
     border: 1px solid #BBB;
     float: left;
-    width: 452px;
 }
 
 #control-bar {
@@ -57,8 +68,29 @@ html, body {
     padding: 5px;
 }
 
-#new-note-btn {
+#add-note-button {
     float: left;
+}
+
+#add-note-button:disabled {
+    color: lightgray;
+    cursor: default;
+}
+
+#status-bar {
+    width: 10%;
+    height: 40px;
+    border: 0;
+    padding: 0;
+}
+
+#status-msg {
+    height: 40px;
+    line-height: 40px;
+    background-color: transparent;
+    font-size: 14px;
+    padding: 0 10px 0 0;
+    text-align: right;
 }
 
 #container {

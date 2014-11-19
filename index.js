@@ -79,6 +79,11 @@ function handler(req, res) {
             filepath += 'index.html';
 
         fs.readFile(filepath, function(err, content) {
+            if (err) {
+                console.log(err);
+                return;
+            }
+
             var ctype = mime.lookup(filepath);
             res.writeHead(200, {'Content-Type': ctype});
 

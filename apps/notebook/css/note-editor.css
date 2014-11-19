@@ -19,3 +19,11 @@
     -moz-box-shadow: none;
     -webkit-box-shadow: none;
 }
+
+.glowing-border {
+    outline: none;
+    border-color: #9ecaed;
+    box-shadow: 0 0 10px #9ecaed;
+    -moz-box-shadow: 10px;
+    -webkit-box-shadow: 10px;
+}

@@ -616,7 +616,8 @@ limitations under the License.
             var result;
             result = null;
             this.iterate(function(node) {
-                if (node.name === name) {
+                /* Wife.IO: assume we are using case-insensitive file system */
+                if (node.name.toLocaleLowerCase() === name.toLocaleLowerCase()) {
                     if (!type || (type === 'folder' && node.isFolder()) || (type === 'node' && !node.isFolder())) {
                         result = node;
                         return false;

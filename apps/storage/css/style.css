@@ -1,5 +1,6 @@
 html, body {
     overflow: auto;
+    background-color: black;
 }
 
 h3 {

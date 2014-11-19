@@ -68,11 +68,11 @@
                     });
 
                     progressDialog.setButton("Cancel", function() {
-                        var appBundle = $("#uploadAppBundle")[0].files[0];
+                        var appBundle = $("#app-bundle-to-upload")[0].files[0];
                         self.appManagerClient.cancelInstall(self.appInstalling.code);
                     });
 
-                    var appBundle = $("#uploadAppBundle")[0].files[0];
+                    var appBundle = $("#app-bundle-to-upload")[0].files[0];
                     var size = 0;
 
                     self.appInstalling.bundle = appBundle;
@@ -153,10 +153,11 @@
 </head>
 <body>
     <div id="wrapper">
+        <img class="background-image" src="img/background.jpg" />
         <div id="header"></div>
         <div id="content">
-            <div id="dialog"></div>
-            <input type="file" id="uploadAppBundle" />
+            <div id="progress-dialog"></div>
+            <input type="file" id="app-bundle-to-upload" />
             <button id="uploadButton">Start Upload</button>
         </div>
         <div id="footer"></div>

@@ -28,12 +28,14 @@
 
         <!-- Import note style -->
         <link href="lib/jqTree/jqtree.css" rel="stylesheet">
-        <link href="css/main.css" rel="stylesheet"></script>
-        <link href="css/bookshelf.css" rel="stylesheet"></script>
-        <link href="css/notebook.css" rel="stylesheet"></script>
-        <link href="css/note-editor.css" rel="stylesheet"></script>
+        <link href="css/main.css" rel="stylesheet">
+        <link href="css/text-input-dialog.css" rel="stylesheet">
+        <link href="css/bookshelf.css" rel="stylesheet">
+        <link href="css/notebook.css" rel="stylesheet">
+        <link href="css/note-editor.css" rel="stylesheet">
 
         <!-- Import bookshelf -->
+        <script src="js/text-input-dialog.js"></script>
         <script src="js/bookshelf.js"></script>
         <script src="js/notebook.js"></script>
         <script src="js/note-editor.js"></script>
@@ -71,6 +73,53 @@
                     bookshelf = new Bookshelf(notebookViewController.fileManagerClient);
                     notebook = new Notebook(notebookViewController.fileManagerClient);
                     noteEditor = new NoteEditor(notebookViewController.fileManagerClient);
+
+                    /* bookshelf event handling */
+                    bookshelf.jqueryElement.on("bookshelf.loaded", function(event, arg) {
+                        //arg.treeData;
+                    });
+
+                    bookshelf.jqueryElement.on("bookshelf.select", function(event, arg) {
+                        if (arg.node)
+                            notebook.open(arg.node);
+                        else
+                            notebook.close();
+
+                        if (bookshelf.selectedNode && bookshelf.selectedNode.isFolder())
+                            $("#add-note-button").attr("disabled", true);
+                        else
+                            $("#add-note-button").attr("disabled", false);
+                    });
+
+                    bookshelf.jqueryElement.on("bookshelf.update", function(event, arg) {
+                        if (arg.node === notebook.notebookNode) {
+                            setTimeout(function() { notebook.updateTitleBar(); }, 500);
+                        }
+                    });
+
+                    /* Notebook list event handling */
+                    notebook.jqueryElement.on("notebook.select", function(event, arg) {
+                        noteEditor.loadContent(arg.path, arg.index);
+                    });
+
+                    notebook.jqueryElement.on("notebook.deselect", function(event, arg) {
+                        noteEditor.clearContent();
+                    });
+
+                    /* Note editor event handling */
+                    noteEditor.jqueryElement.on("note-editor.ready", function(event, arg) {
+                        /* Resize editor after loaded */
+                        setContentSizeFit();
+                        /* Select first stack or notebook by default */
+                        bookshelf.selectNotebookAtIndex(0);
+                    });
+
+                    noteEditor.jqueryElement.on("note-editor.save", function(event, index) {
+                        $("#status-msg").text("Saved!");
+                        $("#status-msg").fadeIn(500);
+                        $("#status-msg").fadeOut(2000, function() {});
+                        notebook.reloadNote(index);
+                    });
                 });
 
                 notebookViewController.event.on("core.protospec#error", function(event, error) {});
@@ -88,15 +137,20 @@
         <div id="wrapper">
             <div id="header"></div>
             <div id="content">
-                <div id="toolbar" class="ui-toolbar ui-widget-header ui-helper-clearfix">
-                    <div id="search-bar">
-                        <span class="search-btn ui-state-default" title="search">
-                            <span class="ui-icon ui-icon-search"></span>
-                        </span>
-                        <input id="search-text-input" type="text" placeholder="Search">
+                <div id="bar-container">
+                    <div id="toolbar" class="ui-toolbar ui-widget-header ui-helper-clearfix">
+                        <div id="search-bar">
+                            <span id="search-button" class="ui-state-default" title="search">
+                                <span class="ui-icon ui-icon-search"></span>
+                            </span>
+                            <input id="search-text-input" type="text" placeholder="Search">
+                        </div>
+                        <div id="control-bar">
+                            <button id="add-note-button">New Note</button>
+                        </div>
                     </div>
-                    <div id="control-bar">
-                        <button id="new-note-btn">New Note</button>
+                    <div id="status-bar" class="ui-toolbar ui-widget-header ui-helper-clearfix">
+                        <div id="status-msg"></div>
                     </div>
                 </div>
                 <div id="container">
@@ -122,10 +176,12 @@
                         </div>
                     </div>
                     <div id="notebook">
-                        <div id="notebook-name"><span><i class="fa fa-book"></i>&nbsp;All</span></div>
-                        <div id="notes" class="tableview"></div>
+                        <div id="notebook-title-bar"><span><i class="fa fa-book"></i>&nbsp;</span></div>
+                        <div id="note-list" class="tableview"></div>
+                        <div id="note-manage-bottom-bar"><span id="note-options"><i class="fa fa-cog"></i>&nbsp;Options</span></div>
                     </div>
                     <div id="note-editor">
+                        <div id="progress-dialog"></div>
                         <input id="note-title-input" type="text" placeholder="Untitled">
                         <textarea id="note-content-editor" name="note-content-editor"></textarea>
                     </div>
@@ -198,25 +254,14 @@
             page.navigationBar.rightContainer.pushItem(brandLabel);
 
             /* Initialize control bar */
-            $("#new-note-btn").button({
+            $("#add-note-button").button({
                 icons: {
                     primary: "ui-icon-plus"
                 }
             });
 
-            /* Initialize note list */
-            $("#bookshelf").on("loaded", function(event, arg) {
-                //arg.treeData;
-
-            });
-
-            $("#bookshelf").on("select", function(event, arg) {
-                notebook.open(arg.node);
-            });
-
-            /* Resize editor after loaded */
-            $('#note-editor').on('ready', function(event, arg) {
-                setContentSizeFit();
+            $("#add-note-button").click(function() {
+                notebook.addNote(null, null);
             });
         </script>
     </body>

@@ -43,7 +43,7 @@ function AppManager() {
                     appDirs.push(path.join(zipEntry.entryName, '.'));
                 else if (path.basename(zipEntry.entryName) == AppInfoFile) {
                     try {
-                        var info = JSON.parse(appBundle.readAsText(zipEntry, 'ascii'));
+                        var info = JSON.parse(appBundle.readAsText(zipEntry, 'utf8'));
                         if (self.verifyAppInfo(info)) {
                             if (appBundle.getEntry(info.Directory + '/' + info.AppEntry)) {
                                 if (appDirs.indexOf(info.Directory) >= 0) {
@@ -53,14 +53,14 @@ function AppManager() {
                             }
                         }
                     }
-                    catch (err) { console.log(err); }
+                    catch (err) { console.log('Parse AppInfo Error: ' + err); }
                     return false;
                 }
 
                 return true;
             });
         }
-        catch (err) { console.log(err); }
+        catch (err) { 'App Bundle Error: ' + console.log(err); }
 
         return appInfo;
     };
@@ -313,7 +313,7 @@ AppManager.prototype.install = function(appBundlePath) {
     var appBundle;
     var appInfo;
     var oldAppInfo;
-    var upgradeOfficially = false;
+    var officialUpgrade = false;
 
     if (!fs.existsSync(appBundlePath))
         return { result: SYSTEM.ERROR.FSNotExist };
@@ -350,20 +350,19 @@ AppManager.prototype.install = function(appBundlePath) {
 
         if (appInfo.AppIdentifier === undefined)
             appInfo.AppIdentifier = 'UAPP00000000';
-        else if (appInfo.AppIdentifier == oldAppInfo.AppIdentifier)
-            upgradeOfficially = true;
+        else if (appInfo.AppIdentifier === oldAppInfo.AppIdentifier)
+            officialUpgrade = true;
 
         if (appInfo.AppIdentifier.indexOf('BAPP') == 0) {
             /* Upgrade builtin APP */
 
-            if (fs.existsSync(sysAppPath + '.backup'))
-                fs.removeSync(sysAppPath);
-            else
+            /* First make a backup of first builtin version */
+            if (!fs.existsSync(sysAppPath + '.backup'))
                 fs.renameSync(sysAppPath, sysAppPath + '.backup');
 
             try {
                 /* Install extracted APP */
-                fs.renameSync(SYSTEM.SETTINGS.TempPath + '/' + appInfo.Directory, sysAppPath);
+                fs.copySync(SYSTEM.SETTINGS.TempPath + '/' + appInfo.Directory, sysAppPath);
             }
             catch (error) {
                 console.log(error);
@@ -371,27 +370,30 @@ AppManager.prototype.install = function(appBundlePath) {
             }
 
             /* Copy APP identifier if this is not an official upgrade */
-            if (!upgradeOfficially) {
+            if (!officialUpgrade) {
                 appInfo.AppIdentifier = oldAppInfo.AppIdentifier;
                 fs.writeJsonSync(sysAppPath + '/' + AppInfoFile, appInfo);
             }
+
+            /* Remove tmp path */
+            fs.removeSync(SYSTEM.SETTINGS.TempPath + '/' + appInfo.Directory);
         }
         else if (appInfo.AppIdentifier.indexOf('UAPP') == 0) {
             /* Upgrade user APP */
 
-            if (upgradeOfficially) {
+            if (officialUpgrade) {
                 /* We assume the official APP will work correctly, so no need to backup */
             }
             else {
+                /* This is unofficial upgrade, make a backup of latest version */
                 if (fs.existsSync(userAppPath + '.backup'))
-                    fs.removeSync(userAppPath);
-                else
-                    fs.renameSync(userAppPath, userAppPath + '.backup');
+                    fs.removeSync(userAppPath + '.backup');
+                fs.renameSync(userAppPath, userAppPath + '.backup');
             }
 
             try {
                 /* Install extracted APP */
-                fs.renameSync(SYSTEM.SETTINGS.TempPath + '/' + appInfo.Directory, userAppPath);
+                fs.copySync(SYSTEM.SETTINGS.TempPath + '/' + appInfo.Directory, userAppPath);
 
                 /* Remove existing APP symbolic link */
                 this.destroyAppSymlink(appInfo.Directory);
@@ -405,10 +407,13 @@ AppManager.prototype.install = function(appBundlePath) {
             }
 
             /* Copy APP identifier if this is not an official upgrade */
-            if (!upgradeOfficially) {
+            if (!officialUpgrade) {
                 appInfo.AppIdentifier = oldAppInfo.AppIdentifier;
                 fs.writeJsonSync(userAppPath + '/' + AppInfoFile, appInfo);
             }
+
+            /* Remove tmp path */
+            fs.removeSync(SYSTEM.SETTINGS.TempPath + '/' + appInfo.Directory);
         }
         else {
             return { result: SYSTEM.ERROR.APPBadIdentifier };

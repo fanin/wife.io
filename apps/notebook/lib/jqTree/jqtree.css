@@ -77,7 +77,7 @@ ul.jqtree-tree li.jqtree-ghost span {
 }
 
 ul.jqtree-tree li.jqtree-ghost span.jqtree-line {
-    background-color: #FF8833;
+    background-color: #888888;
     height: 2px;
     padding: 0;
     position: absolute;
@@ -95,7 +95,7 @@ ul.jqtree-tree span.jqtree-border {
     display: block;
     left: -2px;
     top: 0;
-    border: solid 2px #FF8833;
+    border: solid 2px #888888;
     border-radius: 6px;
     margin: 0;
     box-sizing: content-box;
@@ -106,27 +106,13 @@ ul.jqtree-tree .jqtree-element {
 }
 
 ul.jqtree-tree li.jqtree-selected > .jqtree-element {
-    -webkit-border-radius: 2px;
-    -moz-border-radius: 2px;
-    border-radius: 2px;
-    background: -webkit-gradient(linear, left top, left bottom, from(#FFBB00), to(#FFBB00));
-    background: -moz-linear-gradient(top, #FFBB00, #FFBB00);
-    background: -ms-linear-gradient(top, #FFBB00, #FFBB00);
-    background: -o-linear-gradient(top, #FFBB00, #FFBB00);
-    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+    background-color: #D0D0D0;
 }
 
 ul.jqtree-tree li > .jqtree-element:hover {
-    -webkit-border-radius: 2px;
-    -moz-border-radius: 2px;
-    border-radius: 2px;
-    background: -webkit-gradient(linear, left top, left bottom, from(#FFDDAA), to(#FFDDAA));
-    background: -moz-linear-gradient(top, #FFDDAA, #FFDDAA);
-    background: -ms-linear-gradient(top, #FFDDAA, #FFDDAA);
-    background: -o-linear-gradient(top, #FFDDAA, #FFDDAA);
-    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+    background-color: #E9E9E9;
 }
 
 ul.jqtree-tree .jqtree-moving > .jqtree-element .jqtree-title {
-    outline: dashed 1px #FF8833;
+    outline: dashed 1px #888888;
 }

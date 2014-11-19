@@ -156,6 +156,22 @@
                         }
                     }
                 },
+                "StatList": {
+                    "REQ": "PROTO-0-C-FS-STAT-LIST",
+                    "RES": "PROTO-0-R-FS-STAT-LIST",
+                    "ERR": "PROTO-0-E-FS-STAT-LIST",
+                    "Comment": {
+                        "REQ Args": {
+                            "Path": "List files with stat at path"
+                        },
+                        "RES Params": {
+                            "List": "File list with stat returned"
+                        },
+                        "ERR Params": {
+                            "Error": "Error code"
+                        }
+                    }
+                },
                 "CreateFile": {
                     "REQ": "PROTO-0-C-FS-CREATE-FILE",
                     "RES": "PROTO-0-R-FS-CREATE-FILE",
@@ -164,7 +180,9 @@
                         "REQ Args": {
                             "Path": "Path of file to create"
                         },
-                        "RES Params": {},
+                        "RES Params": {
+                            "Path": "Path of file created"
+                        },
                         "ERR Params": {
                             "Error": "Error code"
                         }
@@ -178,7 +196,9 @@
                         "REQ Args": {
                             "Path": "Path of directory to create"
                         },
-                        "RES Params": {},
+                        "RES Params": {
+                            "Path": "Path of directory created"
+                        },
                         "ERR Params": {
                             "Error": "Error code"
                         }
@@ -222,7 +242,9 @@
                         "REQ Args": {
                             "Path": "File or directory path to remove"
                         },
-                        "RES Params": {},
+                        "RES Params": {
+                            "Path": "File or directory path removed"
+                        },
                         "ERR Params": {
                             "Error": "Error code"
                         }
@@ -237,7 +259,10 @@
                             "SrcPath": "Source path to move",
                             "DstPath": "Destination path move to"
                         },
-                        "RES Params": {},
+                        "RES Params": {
+                            "SrcPath": "Source path moved from",
+                            "DstPath": "Destination path moved to"
+                        },
                         "ERR Params": {
                             "Error": "Error code"
                         }
@@ -252,7 +277,10 @@
                             "SrcPath": "Source path to copy",
                             "DstPath": "Destination path copy to"
                         },
-                        "RES Params": {},
+                        "RES Params": {
+                            "SrcPath": "Source path copied from",
+                            "DstPath": "Destination path copied to"
+                        },
                         "ERR Params": {
                             "Error": "Error code"
                         }
@@ -274,6 +302,38 @@
                         }
                     }
                 },
+                "Stat": {
+                    "REQ": "PROTO-0-C-FS-STAT",
+                    "RES": "PROTO-0-R-FS-STAT",
+                    "ERR": "PROTO-0-E-FS-STAT",
+                    "Comment": {
+                        "REQ Args": {
+                            "Path": "File or directory path to get stat"
+                        },
+                        "RES Params": {
+                            "Stat": "fs.Stat object"
+                        },
+                        "ERR Params": {
+                            "Error": "Error code"
+                        }
+                    }
+                },
+                "Touch": {
+                    "REQ": "PROTO-0-C-FS-TOUCH",
+                    "RES": "PROTO-0-R-FS-TOUCH",
+                    "ERR": "PROTO-0-E-FS-TOUCH",
+                    "Comment": {
+                        "REQ Args": {
+                            "Path": "File or directory path to touch"
+                        },
+                        "RES Params": {
+                            "Path": "File or directory touched"
+                        },
+                        "ERR Params": {
+                            "Error": "Error code"
+                        }
+                    }
+                },
                 "ReadFile": {
                     "REQ": "PROTO-0-C-FS-READ-FILE",
                     "RES": "PROTO-0-R-FS-READ-DATA",
@@ -283,7 +343,8 @@
                             "Path": "File path to read"
                         },
                         "RES Params": {
-                            "Data": "Data stream of file to read"
+                            "Data": "Data stream of file to read",
+                            "Progress": "Progress of file read (0~100)"
                         },
                         "ERR Params": {
                             "Error": "Error code"
@@ -300,7 +361,8 @@
                             "Data": "Data stream of file to write"
                         },
                         "RES Params": {
-                            "Path": "Path of file written"
+                            "Path": "Path of file written",
+                            "Progress": "Progress of file written (0~100)"
                         },
                         "ERR Params": {
                             "Error": "Error code"
@@ -316,7 +378,10 @@
                             "Path": "File path to append",
                             "Data": "Data stream of file to append"
                         },
-                        "RES Params": {},
+                        "RES Params": {
+                            "Path": "Path of file appended",
+                            "Progress": "Progress of file appended (0~100)"
+                        },
                         "ERR Params": {
                             "Error": "Error code"
                         }

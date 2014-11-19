@@ -59,23 +59,23 @@
                                     alert("Unable to read sorted list");
                                 else {
                                     //try {
-                                    var i;
-                                    var sorted = JSON.parse(data);
+                                        var i;
+                                        var sorted = JSON.parse(data);
 
-                                    /* Build sorted app list directory to speed up merge process */
-                                    var appDirectory = [];
-                                    for (i in sorted)
-                                        appDirectory[sorted[i].Directory] = sorted[i];
+                                        /* Build sorted app list directory to speed up merge process */
+                                        var appDirectory = [];
+                                        for (i in sorted)
+                                            appDirectory[sorted[i].Directory] = sorted[i];
 
-                                    /* Merge sorted list & latest app list */
-                                    for (i in arg.list)
-                                        if (appDirectory[arg.list[i].Directory] === undefined)
-                                            sorted.push(arg.list[i]);
+                                        /* Merge sorted list & latest app list */
+                                        for (i in arg.list)
+                                            if (appDirectory[arg.list[i].Directory] === undefined)
+                                                sorted.push(arg.list[i]);
 
-                                    self.appList = sorted;
+                                        self.appList = sorted;
 
-                                    showApps(self);
-                                    postConfigUI(self);
+                                        showApps(self);
+                                        postConfigUI(self);
                                     //}
                                     //catch (err) {
                                     //    alert("Read appsort.json error: " + err);
@@ -85,7 +85,7 @@
                         }
                         else {
                             var appsort = JSON.stringify(arg.list, null, 4);
-                            self.fileManagerClient.writeFile("appsort.json", appsort, function(path, error) {
+                            self.fileManagerClient.writeFile("appsort.json", appsort, function(path, progress, error) {
                                 if (error)
                                     alert("Unable to write sorted list");
                             });
@@ -108,7 +108,7 @@
 
                     /* Update appsort.json */
                     var appsort = JSON.stringify(self.appList, null, 4);
-                    self.fileManagerClient.writeFile("appsort.json", appsort, function(path, error) {
+                    self.fileManagerClient.writeFile("appsort.json", appsort, function(path, progress, error) {
                         if (error)
                             alert("Unable to write sorted list");
                     });
@@ -148,18 +148,11 @@
                         elementOverlayImg = document.createElement("img");
                         elementOverlayImg.setAttribute("id", "overlay-img-" + app.Directory);
                         elementOverlayImg.setAttribute("src", "img/delete-icon.png");
-                        elementOverlayImg.setAttribute("width", "50%");
-                        elementOverlayImg.setAttribute("height", "50%");
-
-                        elementOverlaySpan = document.createElement("span");
-                        elementOverlaySpan.setAttribute("id", "overlay-span-" + app.Directory);
-                        elementOverlaySpan.setAttribute("class", "delete");
-                        elementOverlaySpan.appendChild(elementOverlayImg);
 
                         elementOverlayDiv = document.createElement("div");
                         elementOverlayDiv.setAttribute("id", "overlay-div-" + app.Directory);
                         elementOverlayDiv.setAttribute("class", "overlay");
-                        elementOverlayDiv.appendChild(elementOverlaySpan);
+                        elementOverlayDiv.appendChild(elementOverlayImg);
 
                         elementIconDiv.appendChild(elementOverlayDiv);
                     }
@@ -190,11 +183,9 @@
 
                     if (appType === "user") {
                         var elementOverlayImg = document.getElementById("overlay-img-" + app.Directory);
-                        var elementOverlaySpan = document.getElementById("overlay-span-" + app.Directory);
                         var elementOverlayDiv = document.getElementById("overlay-div-" + app.Directory);
 
-                        elementOverlaySpan.removeChild(elementOverlayImg);
-                        elementOverlayDiv.removeChild(elementOverlaySpan);
+                        elementOverlayDiv.removeChild(elementOverlayImg);
                         elementIconDiv.removeChild(elementOverlayDiv);
                     }
 
@@ -219,13 +210,13 @@
             if (appType === "unknown")
                 return;
 
-            elementIconImg = document.createElement("img");
+            var elementIconImg = document.createElement("img");
             elementIconImg.setAttribute("id", "icon-img-" + app.Directory);
             elementIconImg.setAttribute("src", "../" + app.Directory + "/img/icon.png");
             elementIconImg.setAttribute("width", "100%");
             elementIconImg.setAttribute("height", "100%");
 
-            elementIconDiv = document.createElement("div");
+            var elementIconDiv = document.createElement("div");
             elementIconDiv.setAttribute("id", "icon-div-" + app.Directory);
             if (appType === "user")
                 elementIconDiv.setAttribute(
@@ -235,14 +226,18 @@
             else
                 elementIconDiv.appendChild(elementIconImg);
 
-            elementA = document.createElement("a");
+            var elementText = document.createElement("span");
+            elementText.setAttribute("id", "icon-text-" + app.Directory);
+            elementText.appendChild(document.createTextNode(app.AppName));
+
+            var elementA = document.createElement("a");
             elementA.setAttribute("id", "icon-a-" + app.Directory);
             elementA.appendChild(elementIconDiv);
-            elementA.appendChild(document.createTextNode(app.AppName));
             elementA.setAttribute("href", "../" + app.Directory + "/" + app.AppEntry);
             elementA.setAttribute("title", app.Description);
+            elementA.appendChild(elementText);
 
-            elementLi = document.createElement("li");
+            var elementLi = document.createElement("li");
             elementLi.setAttribute("id", "icon-li-" + app.Directory);
             elementLi.appendChild(elementA);
             document.getElementById("applist").appendChild(elementLi);
@@ -314,7 +309,7 @@
 
                     /* Update appsort.json */
                     var appsort = JSON.stringify(self.appList, null, 4);
-                    self.fileManagerClient.writeFile("appsort.json", appsort, function(path, error) {
+                    self.fileManagerClient.writeFile("appsort.json", appsort, function(path, progress, error) {
                         if (error)
                             alert("Unable to write sorted list");
                     });
@@ -328,6 +323,7 @@
 </head>
 <body>
     <div id="wrapper">
+        <img class="background-image" src="img/background.jpg" />
         <div id="header"></div>
         <div id="content">
             <div class="apps">

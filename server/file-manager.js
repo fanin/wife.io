@@ -1,5 +1,6 @@
 var fs = require('fs-extra'),
-    ss = require('socket.io-stream');
+    ss = require('socket.io-stream'),
+    child_process = require('child_process');
 var SYSTEM = require('../system');
 
 module.exports = FileManager;
@@ -24,14 +25,31 @@ FileManager.prototype.register = function(_super, socket, protoFS) {
         }
     });
 
+    socket.on(protoFS.StatList.REQ, function(path) {
+        try {
+            var items = fs.readdirSync(security.getUserDataPath(path));
+            var itemStats = [];
+            items.forEach(function(file) {
+                var stat = fs.lstatSync(security.getUserDataPath(path) + '/' + file);
+                itemStats.push(stat);
+            });
+            socket.emit(protoFS.StatList.RES, path, items, itemStats);
+        }
+        catch (err) {
+            console.log('List: ' + err);
+            socket.emit(protoFS.StatList.ERR, path, SYSTEM.ERROR.FSNotExist);
+        }
+    });
+
     socket.on(protoFS.CreateFile.REQ, function(path) {
         fs.createFile(security.getUserDataPath(path), function(err) {
             if (err) {
                 console.log('CreateFile: ' + err);
                 socket.emit(protoFS.CreateFile.ERR, path, SYSTEM.ERROR.FSIOError);
             }
-            else
+            else {
                 socket.emit(protoFS.CreateFile.RES, path);
+            }
         });
     });
 
@@ -41,8 +59,9 @@ FileManager.prototype.register = function(_super, socket, protoFS) {
                 console.log('CreateDirectory: ' + err);
                 socket.emit(protoFS.CreateDirectory.ERR, path, SYSTEM.ERROR.FSIOError);
             }
-            else
+            else {
                 socket.emit(protoFS.CreateDirectory.RES, path);
+            }
         });
     });
 
@@ -129,6 +148,26 @@ FileManager.prototype.register = function(_super, socket, protoFS) {
         socket.emit(protoFS.Exist.RES, path, exist, isDir);
     });
 
+    socket.on(protoFS.Stat.REQ, function(path) {
+        var exist = fs.existsSync(security.getUserDataPath(path));
+        if (exist) {
+            var stat = fs.lstatSync(security.getUserDataPath(path));
+            socket.emit(protoFS.Stat.RES, path, stat);
+        }
+        else
+            socket.emit(protoFS.Stat.ERR, path, SYSTEM.ERROR.FSIOError);
+    });
+
+    socket.on(protoFS.Touch.REQ, function(path, atime, mtime) {
+        var exist = fs.existsSync(security.getUserDataPath(path));
+        if (exist) {
+            fs.utimesSync(security.getUserDataPath(path), new Date(atime), new Date(mtime));
+            socket.emit(protoFS.Touch.RES, path);
+        }
+        else
+            socket.emit(protoFS.Touch.ERR, path, SYSTEM.ERROR.FSIOError);
+    });
+
     socket.on(protoFS.ReadFile.REQ, function(path, encoding) {
         var realPath = security.getUserDataPath(path);
 
@@ -154,7 +193,7 @@ FileManager.prototype.register = function(_super, socket, protoFS) {
                     socket.emit(protoFS.ReadFile.ERR, path, SYSTEM.ERROR.FSIOError);
                 }
                 else {
-                    socket.emit(protoFS.ReadFile.RES, path, { data: data });
+                    socket.emit(protoFS.ReadFile.RES, path, data);
                 }
             });
 
@@ -163,15 +202,27 @@ FileManager.prototype.register = function(_super, socket, protoFS) {
             socket.emit(protoFS.ReadFile.ERR, path, SYSTEM.ERROR.FSNotExist);
     });
 
-    ss(socket).on(protoFS.WriteFile.REQ, function(path, dataStream) {
+    /* TODO: wait lock for writing same file by multiple request */
+    ss(socket).on(protoFS.WriteFile.REQ, function(path, dataStream, dataSize) {
         var realPath = security.getUserDataPath(path);
-
         var writeStream = fs.createWriteStream(realPath);
-        dataStream.pipe(writeStream);
+        var size = 0;
+        var currentProgress = -1;
+
+        dataStream.on('data', function(chunk) {
+            size += chunk.length;
+            /* Normalize progress value to 0~99 */
+            var progress = Math.floor(size / dataSize * 100);
+            progress = (progress > 0) ? progress - 1: 0;
+            if (currentProgress === progress) return;
+            currentProgress = progress;
+            socket.emit(protoFS.WriteFile.RES, path, progress);
+        });
 
         dataStream.on('finish', function() {
-            socket.emit(protoFS.WriteFile.RES, path);
+            socket.emit(protoFS.WriteFile.RES, path, 100);
             dataStream.end();
+            /* TODO: Set file permission to 0666 */
         });
 
         dataStream.on('error', function(err) {
@@ -180,6 +231,8 @@ FileManager.prototype.register = function(_super, socket, protoFS) {
                 socket.emit(protoFS.WriteFile.ERR, path, SYSTEM.ERROR.FSIOError);
             }
         });
+
+        dataStream.pipe(writeStream);
 
         /*
         fs.writeFile(path, data, function(err) {
@@ -191,15 +244,26 @@ FileManager.prototype.register = function(_super, socket, protoFS) {
         */
     });
 
-    ss(socket).on(protoFS.AppendFile.REQ, function(path, dataStream) {
+    ss(socket).on(protoFS.AppendFile.REQ, function(path, dataStream, dataSize) {
         var realPath = security.getUserDataPath(path);
 
         if (fs.existsSync(realPath)) {
             var writeStream = fs.createWriteStream(realPath, {'flags': 'a'});
-            dataStream.pipe(writeStream);
+            var size = 0;
+            var currentProgress = -1;
+
+            dataStream.on('data', function(chunk) {
+                size += chunk.length;
+                /* Normalize progress value to 0~99 */
+                var progress = Math.floor(size / dataSize * 100);
+                progress = (progress > 0) ? progress - 1: 0;
+                if (currentProgress === progress) return;
+                currentProgress = progress;
+                socket.emit(protoFS.AppendFile.RES, path, progress);
+            });
 
             dataStream.on('finish', function() {
-                socket.emit(protoFS.AppendFile.RES, path);
+                socket.emit(protoFS.AppendFile.RES, path, 100);
                 dataStream.end();
             });
 
@@ -209,6 +273,8 @@ FileManager.prototype.register = function(_super, socket, protoFS) {
                     socket.emit(protoFS.AppendFile.ERR, path, SYSTEM.ERROR.FSIOError);
                 }
             });
+
+            dataStream.pipe(writeStream);
         }
         else
             socket.emit(protoFS.AppendFile.ERR, path, SYSTEM.ERROR.FSNotExist);
@@ -226,7 +292,6 @@ FileManager.prototype.register = function(_super, socket, protoFS) {
             socket.emit(protoFS.AppendFile.ERR, path, SYSTEM.ERROR.FSNotExist);
         */
     });
-
 
 
     /**
@@ -308,6 +373,8 @@ FileManager.prototype.unregister = function(socket, protoFS) {
     socket.removeAllListeners(protoFS.Move.REQ);
     socket.removeAllListeners(protoFS.Copy.REQ);
     socket.removeAllListeners(protoFS.Exist.REQ);
+    socket.removeAllListeners(protoFS.Stat.REQ);
+    socket.removeAllListeners(protoFS.Touch.REQ);
     socket.removeAllListeners(protoFS.ReadFile.REQ);
     socket.removeAllListeners(protoFS.WriteFile.REQ);
     socket.removeAllListeners(protoFS.AppendFile.REQ);
