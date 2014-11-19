@@ -4,6 +4,8 @@ var fs = require('fs-extra'),
     randomstring = require('./lib/randomstring'),
     AdmZip = require('adm-zip');
 
+fs.jsonfile.spaces = 4;
+
 var SYSTEM = require('../system');
 var AppPath = path.resolve(__dirname, '../apps');
 var AppInfoFile = 'AppInfo.json';

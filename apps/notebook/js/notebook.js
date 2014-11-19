@@ -2,7 +2,6 @@
  * TODOs:
  * 1) Search
  * 2) Delete confirm dialog
- * 3) Saved indicator
  */
 
 function Notebook(fileManager) {
