@@ -11,7 +11,7 @@ function NoteEditor(fileManager) {
     self.isSavingNote = false;
 
     /* Initialize progress dialog for image uploading */
-    self.progressDialog = new ProgressDialog();
+    self.progressDialog = new Dialog("progress-dialog", "progress");
     self.progressDialog.setTitle("Image Uploader");
 
     /* Initialize note content */
@@ -55,8 +55,8 @@ function NoteEditor(fileManager) {
 
             function upload() {
                 if (index >= files.length) {
-                    self.progressDialog.setButton("Success", function() {});
-                    self.progressDialog.setButtonEnable(false);
+                    self.progressDialog.setButton([{ text: "Success", click: function() {}}]);
+                    self.progressDialog.setButtonEnable(0, false);
                     setTimeout(function() {
                         self.progressDialog.hide();
                     }, 1000);
@@ -109,11 +109,11 @@ function NoteEditor(fileManager) {
                 }
             });
 
-            self.progressDialog.setButton("Cancel", function() {
+            self.progressDialog.setButton([{ text: "Cancel", click: function() {
                 index = -1000; /* Force stopping recursive upload */
                 self.fileManager.stopWriteStream(path + "/" + fileName, stream);
                 self.progressDialog.hide();
-            });
+            }}]);
 
             upload(0);
         }

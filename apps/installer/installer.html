@@ -67,10 +67,13 @@
                         label: "Uploading..."
                     });
 
-                    progressDialog.setButton("Cancel", function() {
-                        var appBundle = $("#app-bundle-to-upload")[0].files[0];
-                        self.appManagerClient.cancelInstall(self.appInstalling.code);
-                    });
+                    progressDialog.setButton([{
+                        text: "Cancel",
+                        click: function() {
+                            var appBundle = $("#app-bundle-to-upload")[0].files[0];
+                            self.appManagerClient.cancelInstall(self.appInstalling.code);
+                        }
+                    }]);
 
                     var appBundle = $("#app-bundle-to-upload")[0].files[0];
                     var size = 0;
@@ -102,16 +105,22 @@
 
                 self.appManagerClient.event.on("app.install#installing", function(event, installationCode) {
                     progressDialog.setMessage("Installing " + self.appInstalling.bundle.name);
-                    progressDialog.setButton("Please wait", function(){});
-                    progressDialog.setButtonEnable(false);
+                    progressDialog.setButton([{
+                        text: "Please wait",
+                        click: function() {}
+                    }]);
+                    progressDialog.setButtonEnable(0, false);
                 });
 
                 self.appManagerClient.event.on("app.install#success", function(event, installationCode) {
                     if (self.appInstalling.code === installationCode) {
                         progressDialog.setMessage(self.appInstalling.bundle.name + " Installed!");
-                        progressDialog.setButton("Close", closeUpload);
-                        progressDialog.setButtonEnable(true);
-                        progressDialog.setButtonFocus(true);
+                        progressDialog.setButton([{
+                            text: "Close",
+                            click: closeUpload
+                        }]);
+                        progressDialog.setButtonEnable(0, true);
+                        progressDialog.setButtonFocus(0, true);
                         self.appInstalling = { bundle: null, code: null };
                     }
                 });
@@ -119,9 +128,12 @@
                 self.appManagerClient.event.on("app.install#cancelled", function(event, installationCode) {
                     if (self.appInstalling.code === installationCode) {
                         progressDialog.setMessage(self.appInstalling.bundle.name + " installation cancelled!");
-                        progressDialog.setButton("Close", closeUpload);
-                        progressDialog.setButtonEnable(true);
-                        progressDialog.setButtonFocus(true);
+                        progressDialog.setButton([{
+                            text: "Close",
+                            click: closeUpload
+                        }]);
+                        progressDialog.setButtonEnable(0, true);
+                        progressDialog.setButtonFocus(0, true);
                         self.appInstalling = { bundle: null, code: null };
                     }
                 });
@@ -129,18 +141,24 @@
                 self.appManagerClient.event.on("app.install#error", function(event, error) {
                     if (self.appInstalling.code) {
                         progressDialog.setMessage("Unable to install " + self.appInstalling.bundle.name + " (Error: " + error + ")");
-                        progressDialog.setButton("Close", closeUpload);
-                        progressDialog.setButtonEnable(true);
-                        progressDialog.setButtonFocus(true);
+                        progressDialog.setButton([{
+                            text: "Close",
+                            click: closeUpload
+                        }]);
+                        progressDialog.setButtonEnable(0, true);
+                        progressDialog.setButtonFocus(0, true);
                     }
                 });
 
                 self.appManagerClient.event.on("app.install#cancel-error", function(event, error) {
                     if (self.appInstalling.code) {
                         progressDialog.setMessage("Unable to cancel install " + self.appInstalling.bundle.name + " (Error: " + error + ")");
-                        progressDialog.setButton("Close", closeUpload);
-                        progressDialog.setButtonEnable(true);
-                        progressDialog.setButtonFocus(true);
+                        progressDialog.setButton([{
+                            text: "Close",
+                            click: closeUpload
+                        }]);
+                        progressDialog.setButtonEnable(0, true);
+                        progressDialog.setButtonFocus(0, true);
                     }
                 });
             });
@@ -172,7 +190,7 @@
         var brandLabel = new NavigationBarLabel("%BRAND%");
         page.navigationBar.rightContainer.pushItem(brandLabel);
 
-        var progressDialog = new ProgressDialog();
+        var progressDialog = new Dialog("progress-dialog", "progress");
         progressDialog.setTitle("APP Installer");
     </script>
 </body>

@@ -1,7 +1,7 @@
 /*
  * TODOs:
  * 1) Search
- * 2) Delete confirm dialog
+ * 2) Bookmarks
  */
 
 function Notebook(fileManager) {

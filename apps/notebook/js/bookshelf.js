@@ -5,6 +5,8 @@ function Bookshelf(fileManager) {
     this.selectedNode = undefined;
     this.fileManager = fileManager;
     this.jqueryElement = $("#bookshelf");
+    this.confirmDialog = new Dialog("confirm-dialog");
+    this.confirmDialog.setTitle("Are you sure?");
 
     /* Initialize Dialogs */
     var checkDuplicateStack = function(name) {
@@ -41,13 +43,30 @@ function Bookshelf(fileManager) {
     }
 
     function showDeleteConfirm(name, type) {
-        var node = $("#notebook-tree").tree("getNodeByName", name);
-        var parent = node.parent;
-        //alert("Delete " + node.name + " at level " + node.getLevel() + " parent " + node.parent.name);
-        remove(node, false);
-        if (parent && parent.children.length === 0) {
-            remove(parent, true);
-        }
+        if (type === "stack")
+            self.confirmDialog.setMessage("Do you want to delete notebook stack '" + name + "' ?");
+        else
+            self.confirmDialog.setMessage("Do you want to delete notebook '" + name + "' ?");
+
+        self.confirmDialog.setButton([
+            {
+                text: "Yes", click: function(event) {
+                    var node = $("#notebook-tree").tree("getNodeByName", name);
+                    var parent = node.parent;
+                    //alert("Delete " + node.name + " at level " + node.getLevel() + " parent " + node.parent.name);
+                    remove(node, false);
+
+                    if (parent && parent.children.length === 0) {
+                        remove(parent, true);
+                    }
+
+                    self.confirmDialog.hide();
+                }
+            },
+            { text: "No", click: function(event) { self.confirmDialog.hide(); } }
+        ]);
+
+        self.confirmDialog.show();
     }
 
     /* Initialize Popup menu */
