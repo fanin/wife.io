@@ -1,8 +1,7 @@
 /*
  * TODOs:
  * 1) Search
- * 2) Bookmarks
- * 3) Image resize by drag
+ * 2) Image resize by drag
  */
 
 function Notebook(fileManager) {
@@ -391,15 +390,14 @@ Notebook.prototype.tableViewCellForRowAtIndex = function(index, appendDivToTable
     if (index >= self.notes.length)
         return;
 
-    /* TODO: read partial file by given filter to reduce traffic */
-    self.fileManager.readFile(self.notes[index].path + "/note.html", "utf8", function(path, data, error) {
+    self.fileManager.grep(self.notes[index].path + "/note.html", "<title>(.*?)<\/title>", null, function(path, data, error) {
         if (error) {
-            console.log("Unable to read " + self.notes[index].path + "/note.html");
+            console.log("Unable to read " + path);
             appendDivToTableRow(tempDiv, index);
             return;
         }
 
-        self.notes[index].title = tempDiv.append(data).find("title").text();
+        self.notes[index].title = tempDiv.append(data[0]).find("title").text();
 
         var mtime = new Date(self.notes[index].stat.mtime);
         var lastModifiedDate = mtime.toLocaleDateString() + " " + mtime.toLocaleTimeString();

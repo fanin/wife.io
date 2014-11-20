@@ -387,6 +387,24 @@
                         }
                     }
                 },
+                "Grep": {
+                    "REQ": "PROTO-0-C-FS-GREP",
+                    "RES": "PROTO-0-R-FS-GREP",
+                    "ERR": "PROTO-0-E-FS-GREP",
+                    "Comment": {
+                        "REQ Args": {
+                            "Path": "File to grep",
+                            "Regex": "Regular expression",
+                            "Option": "Grep options"
+                        },
+                        "RES Params": {
+                            "Result": "Grep result array or string"
+                        },
+                        "ERR Params": {
+                            "Error": "Error code"
+                        }
+                    }
+                },
                 "Open": {
                     "REQ": "PROTO-0-C-FILE-OPEN",
                     "RES": "PROTO-0-R-FILE-OPEN",

@@ -293,6 +293,38 @@ FileManager.prototype.register = function(_super, socket, protoFS) {
         */
     });
 
+    socket.on(protoFS.Grep.REQ, function(path, regex, option) {
+        var realPath = security.getUserDataPath(path);
+        var defaultOption = {
+            encoding: 'utf8',
+            regExpModifiers: 'gi',
+            onlyMatching: true /* Return only the matching part of the lines */
+        };
+
+        option = option || defaultOption;
+        option.encoding = option.encoding || defaultOption.encoding;
+        option.regExpModifiers = option.regExpModifiers || defaultOption.regExpModifiers;
+        option.onlyMatching = option.onlyMatching || defaultOption.onlyMatching;
+
+        if (fs.existsSync(realPath)) {
+            fs.readFile(realPath, option.encoding, function(err, data) {
+                if (err) {
+                    console.log('Grep ReadFile: ' + err);
+                    socket.emit(protoFS.Grep.ERR, path, SYSTEM.ERROR.FSIOError);
+                }
+                else {
+                    var result = data.match(new RegExp(regex, option.regExpModifiers));
+                    if (!option.onlyMatching && result)
+                        result = data; /* Return full content since onlyMatching is set to false */
+                    socket.emit(protoFS.Grep.RES, path, result);
+                }
+            });
+
+        }
+        else
+            socket.emit(protoFS.Grep.ERR, path, SYSTEM.ERROR.FSNotExist);
+    });
+
 
     /**
      * Protocol Listener: File Handle Events
@@ -378,6 +410,7 @@ FileManager.prototype.unregister = function(socket, protoFS) {
     socket.removeAllListeners(protoFS.ReadFile.REQ);
     socket.removeAllListeners(protoFS.WriteFile.REQ);
     socket.removeAllListeners(protoFS.AppendFile.REQ);
+    socket.removeAllListeners(protoFS.Grep.REQ);
     socket.removeAllListeners(protoFS.Open.REQ);
     socket.removeAllListeners(protoFS.Close.REQ);
     socket.removeAllListeners(protoFS.ReadData.REQ);

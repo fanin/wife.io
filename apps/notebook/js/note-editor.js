@@ -148,6 +148,36 @@ function NoteEditor(fileManager) {
             if (editor.readOnly) return;
         }
 
+        /* Note content management */
+        function removeUnusedAssets(notePath) {
+            setTimeout(function() {
+                self.fileManager.iterateList(
+                    dirname(notePath) + "/assets",
+                    function(path, item, stat, i, error) {
+                        if (error) {
+                            console.log("Unable to list " + path + "/" + item);
+                            return;
+                        }
+
+                        self.fileManager.grep(notePath, item, null, function(path, data, error) {
+                            if (error) {
+                                console.log("Unable to read " + path);
+                                return;
+                            }
+
+                            if (!data) {
+                                self.fileManager.remove(dirname(notePath) + "/assets/" + item, function(path, error) {
+                                    if (error) throw new Error("unable to remove " + path);
+                                    console.log("Unused asset '" + item + "' removed");
+                                });
+                            }
+                        });
+                    },
+                    function(path) {}
+                );
+            }, 1000);
+        }
+
         function save(notePath, noteIndex, title, content, callback) {
             if (!notePath) {
                 callback && callback();
@@ -173,6 +203,7 @@ function NoteEditor(fileManager) {
                         self.noteContent = content;
                         self.jqueryElement.trigger("note-editor.save", noteIndex);
                         callback && callback();
+                        removeUnusedAssets(notePath);
                     });
                 }
             });
