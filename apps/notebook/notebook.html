@@ -76,7 +76,8 @@
 
                     /* bookshelf event handling */
                     bookshelf.jqueryElement.on("bookshelf.loaded", function(event, arg) {
-                        //arg.treeData;
+                        //arg.notebookTreeData;
+                        //arg.notebookBookmarkData;
                     });
 
                     bookshelf.jqueryElement.on("bookshelf.select", function(event, arg) {
@@ -103,7 +104,7 @@
                     });
 
                     notebook.jqueryElement.on("notebook.deselect", function(event, arg) {
-                        noteEditor.clearContent();
+                        noteEditor.resetContent();
                     });
 
                     /* Note editor event handling */
@@ -156,19 +157,9 @@
                 <div id="container">
                     <div id="bookshelf">
                         <div id="accordion">
-                            <h3>Bookmarks</h3>
-                            <div id="bookmark-list">
-                                <ul>
-                                    <li>
-                                        <i class="fa fa-bookmark-o"></i>
-                                        <span>Bookmark 1</span>
-                                    </li>
-                                </ul>
-                            </div>
-
                             <h3>
                                 Notebooks
-                                <span id="all-notebook-down-btn" class="action-button">
+                                <span id="all-notebook-down-button" class="action-button">
                                     <a href="#"><i class="fa fa-caret-square-o-down"></i></a>
                                 </span>
                             </h3>
@@ -192,7 +183,7 @@
         <div id="confirm-dialog"></div>
         <div id="progress-dialog"></div>
 
-        <div id="create-nb-dialog" title="Create a new notebook" style="overflow: hidden;">
+        <div id="create-notebook-dialog" title="Create a new notebook" style="overflow: hidden;">
             <form>
                 <fieldset>
                     <label for="name">Notebook Name: </label>
@@ -206,7 +197,7 @@
             </form>
         </div>
 
-        <div id="rename-nb-dialog" title="Rename notebook" style="overflow: hidden;">
+        <div id="rename-notebook-dialog" title="Rename notebook" style="overflow: hidden;">
             <form>
                 <fieldset>
                     <label for="name">Notebook Name: </label>
@@ -220,7 +211,7 @@
             </form>
         </div>
 
-        <div id="create-nb-stack-dialog" title="Create a new stack" style="overflow: hidden;">
+        <div id="create-stack-dialog" title="Create a new stack" style="overflow: hidden;">
             <form>
                 <fieldset>
                     <label for="name">Stack Name: </label>

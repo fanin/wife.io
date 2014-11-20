@@ -18,7 +18,7 @@
 
     <script>
         var closeUpload = function() {
-            progressDialog.hide();
+            progressDialog.close();
             progressDialog.setProgress(false);
             $("#uploadButton").button().focus();
         }
@@ -86,7 +86,7 @@
                         progressDialog.setProgress(Math.floor(size / appBundle.size * 100));
                     });
 
-                    progressDialog.show();
+                    progressDialog.open();
                 });
             });
 

@@ -15,15 +15,15 @@ function NoteEditor(fileManager) {
     self.progressDialog.setTitle("Image Uploader");
 
     /* Initialize note content */
-    $('#note-title-input').prop('disabled', true);
+    $("#note-title-input").prop("disabled", true);
 
     /* Initialize editor */
-    CKEDITOR.replace('note-content-editor');
+    CKEDITOR.replace("note-content-editor");
     CKEDITOR.config.readOnly = true;
     CKEDITOR.config.resize_enabled = false;
-    CKEDITOR.config.extraPlugins = 'customsave';
-    CKEDITOR.config.removePlugins = 'elementspath,about';
-    CKEDITOR.config.skin = 'icy_orange';
+    CKEDITOR.config.extraPlugins = "customsave";
+    CKEDITOR.config.removePlugins = "link,unlink,anchor,elementspath,about";
+    CKEDITOR.config.skin = "icy_orange";
 
     CKEDITOR.on("instanceReady", function(event) {
         var editor = event.editor;
@@ -42,8 +42,10 @@ function NoteEditor(fileManager) {
                 editor.setData(content);
                 self.noteContent = content;
                 /* Set title */
-                $('#note-title-input').val(title);
+                $("#note-title-input").val(title);
                 self.noteTitle = title;
+                /* Reset undo history */
+                editor.undoManager.reset();
             }, 100);
         };
 
@@ -58,7 +60,7 @@ function NoteEditor(fileManager) {
                     self.progressDialog.setButton([{ text: "Success", click: function() {}}]);
                     self.progressDialog.setButtonEnable(0, false);
                     setTimeout(function() {
-                        self.progressDialog.hide();
+                        self.progressDialog.close();
                     }, 1000);
                     return;
                 }
@@ -66,11 +68,11 @@ function NoteEditor(fileManager) {
                 fileName = files[index].name;
 
                 if (files[index].type.toLowerCase().indexOf("image") === 0) {
-                    self.progressDialog.show();
+                    self.progressDialog.open();
 
                     var urlCreator = window.URL || window.webkitURL;
                     var imageUrl = urlCreator.createObjectURL(files[index]);
-                    var img = document.createElement('img');
+                    var img = document.createElement("img");
                     img.onload = function() {
                         var targetWidth = this.width;
                         var targetHeight = this.height;
@@ -112,7 +114,7 @@ function NoteEditor(fileManager) {
             self.progressDialog.setButton([{ text: "Cancel", click: function() {
                 index = -1000; /* Force stopping recursive upload */
                 self.fileManager.stopWriteStream(path + "/" + fileName, stream);
-                self.progressDialog.hide();
+                self.progressDialog.close();
             }}]);
 
             upload(0);
@@ -213,7 +215,7 @@ function NoteEditor(fileManager) {
             editor.focus();
         });
 
-        $('#note-title-input').focusout(function() {
+        $("#note-title-input").focusout(function() {
             self.scheduleAutoSave(0);
         });
 
@@ -263,7 +265,7 @@ NoteEditor.prototype.loadContent = function(path, index) {
             var content = data.match(/\<body[^>]*\>([^]*)\<\/body/m)[1] || "";
             self.setContentNoLagWorkaround(title, content);
 
-            $('#note-title-input').prop('disabled', false);
+            $("#note-title-input").prop("disabled", false);
             CKEDITOR.instances["note-content-editor"].setReadOnly(false);
 
             self.notePath = path;
@@ -272,7 +274,7 @@ NoteEditor.prototype.loadContent = function(path, index) {
     }
 }
 
-NoteEditor.prototype.clearContent = function() {
+NoteEditor.prototype.resetContent = function() {
     var self = this;
 
     /* Stop & clear previous auto save timer */
@@ -286,7 +288,7 @@ NoteEditor.prototype.clearContent = function() {
         self.scheduleAutoSave(0);
     }
 
-    $('#note-title-input').prop('disabled', true);
+    $("#note-title-input").prop("disabled", true);
     CKEDITOR.instances["note-content-editor"].setReadOnly(true);
 
     self.notePath = undefined;

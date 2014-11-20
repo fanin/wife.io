@@ -1,7 +1,7 @@
 function Bookshelf(fileManager) {
     var self = this;
 
-    this.treeData = [];
+    this.notebookTreeData = [];
     this.selectedNode = undefined;
     this.fileManager = fileManager;
     this.jqueryElement = $("#bookshelf");
@@ -23,9 +23,9 @@ function Bookshelf(fileManager) {
         return false;
     };
 
-    var stackCreateDialog = new TextInputDialog("Stack", "#create-nb-stack-dialog", "Create");
-    var notebookCreateDialog = new TextInputDialog("Notebook", "#create-nb-dialog", "Create");
-    var notebookRenameDialog = new TextInputDialog("Notebook", "#rename-nb-dialog", "Rename");
+    var stackCreateDialog = new TextInputDialog("Stack", "#create-stack-dialog", "Create");
+    var notebookCreateDialog = new TextInputDialog("Notebook", "#create-notebook-dialog", "Create");
+    var notebookRenameDialog = new TextInputDialog("Notebook", "#rename-notebook-dialog", "Rename");
 
     stackCreateDialog.addCustomCheck(checkDuplicateStack, "There is already a stack named '#name'");
     notebookCreateDialog.addCustomCheck(checkDuplicateNotebook, "There is already a notebook named '#name'");
@@ -60,13 +60,13 @@ function Bookshelf(fileManager) {
                         remove(parent, true);
                     }
 
-                    self.confirmDialog.hide();
+                    self.confirmDialog.close();
                 }
             },
-            { text: "No", click: function(event) { self.confirmDialog.hide(); } }
+            { text: "No", click: function(event) { self.confirmDialog.close(); } }
         ]);
 
-        self.confirmDialog.show();
+        self.confirmDialog.open();
     }
 
     /* Initialize Popup menu */
@@ -96,7 +96,7 @@ function Bookshelf(fileManager) {
                 $(this).find("span.action-button").remove();
                 $(this).append(
                     $(
-                        "<span id='notebook-down-btn-" + idx + "' class='action-button'>" +
+                        "<span id='notebook-down-button-" + idx + "' class='action-button'>" +
                         "<a href='#'><i class='fa fa-caret-square-o-down'></i>&nbsp;</a>" +
                         "</span>"
                     )
@@ -108,7 +108,7 @@ function Bookshelf(fileManager) {
 
                     var element = event.target;
                     if (element.id === "notebook-tree") {
-                        element = $("#notebook-down-btn-" + idx);
+                        element = $("#notebook-down-button-" + idx);
                     }
 
                     allNotebooksPopupMenu && allNotebooksPopupMenu.hide();
@@ -155,7 +155,7 @@ function Bookshelf(fileManager) {
 
                 $("#notebook-tree").unbind("tree.contextmenu");
                 $("#notebook-tree").bind("tree.contextmenu", popupMenu);
-                $("#notebook-down-btn-" + idx + " a").click(popupMenu);
+                $("#notebook-down-button-" + idx + " a").click(popupMenu);
             },
             function() {
                 $(this).find("span.action-button").remove();
@@ -163,7 +163,7 @@ function Bookshelf(fileManager) {
         );
     }
 
-    $("#all-notebook-down-btn a").click(function(event) {
+    $("#all-notebook-down-button a").click(function(event) {
         event.stopPropagation();
         event.preventDefault();
 
@@ -199,10 +199,10 @@ function Bookshelf(fileManager) {
     $(document).on("click", function(e) {
         var $target = $(e.target);
 
-        if (!$target.attr("id") || $target.attr("id") !== "all-notebook-down-btn")
+        if (!$target.attr("id") || $target.attr("id") !== "all-notebook-down-button")
             allNotebooksPopupMenu.hide();
 
-        if (!$target.attr("id") || $target.attr("id").indexOf("notebook-down-btn-") !== 0)
+        if (!$target.attr("id") || $target.attr("id").indexOf("notebook-down-button-") !== 0)
             lastNotebookPopupMenu && lastNotebookPopupMenu.hide();
     });
 
@@ -222,16 +222,16 @@ function Bookshelf(fileManager) {
     $("#notebook-tree").bind("tree.init", function() {});
 
     $("#notebook-tree").bind("tree.open", function(event) {
-        saveTreeData();
+        saveNotebookTree();
     });
 
     $("#notebook-tree").bind("tree.close", function(event) {
-        saveTreeData();
+        saveNotebookTree();
     });
 
     $("#notebook-tree").bind("tree.refresh", function() {
         updateHoverHandler();
-        self.jqueryElement.trigger("bookshelf.loaded", { treeData: self.treeData });
+        self.jqueryElement.trigger("bookshelf.loaded", { notebookTreeData: self.notebookTreeData });
     });
 
     $("#notebook-tree").bind("tree.select", function(event) {
@@ -305,27 +305,27 @@ function Bookshelf(fileManager) {
             toggleable: false,
             dragAndDrop: true,
             autoOpen: false,
-            data: self.treeData
+            data: self.notebookTreeData
         });
 
         updateHoverHandler();
     }
 
     /*
-     * Save notebook tree to bookshelf-tree.json.
+     * Export tree data to json file.
      * Here we use a wait timer to prevent data corruption by many save tree data calls at a short period of time.
      */
-    var saveTreeDataWaitTimer;
-    function saveTreeData() {
-        if (saveTreeDataWaitTimer)
-            clearTimeout(saveTreeDataWaitTimer);
+    var saveNotebookTreeWaitTimer;
+    function saveNotebookTree() {
+        if (saveNotebookTreeWaitTimer)
+            clearTimeout(saveNotebookTreeWaitTimer);
 
-        saveTreeDataWaitTimer = setTimeout(function() {
-            var treeData = $("#notebook-tree").tree("toJson");
-            self.fileManager.writeFile("bookshelf-tree.json", treeData, function(path, progress, error) {
+        saveNotebookTreeWaitTimer = setTimeout(function() {
+            var notebookTreeData = $("#notebook-tree").tree("toJson");
+            self.fileManager.writeFile("bookshelf-tree.json", notebookTreeData, function(path, progress, error) {
                 if (error) throw new Error("Unable to write bookshelf tree data");
             });
-            saveTreeDataWaitTimer = undefined;
+            saveNotebookTreeWaitTimer = undefined;
         }, 500);
     }
 
@@ -345,13 +345,13 @@ function Bookshelf(fileManager) {
                     /* Select latest appended node */
                     var node = $("#notebook-tree").tree("getNodeByName", name);
                     if (node) $("#notebook-tree").tree("selectNode", node);
-                    saveTreeData();
+                    saveNotebookTree();
                 });
             });
         }
         else {
             $("#notebook-tree").tree("appendNode", { label: name });
-            saveTreeData();
+            saveNotebookTree();
         }
     }
 
@@ -370,13 +370,13 @@ function Bookshelf(fileManager) {
         self.jqueryElement.trigger("bookshelf.update", { node: node });
         $("#notebook-tree").tree("updateNode", node, name);
 
-        saveTreeData();
+        saveNotebookTree();
         updateHoverHandler();
     }
 
     function move(srcNode, dstNode, pos) {
         $("#notebook-tree").tree("moveNode", srcNode, dstNode, pos);
-        saveTreeData();
+        saveNotebookTree();
     }
 
     function remove(node, isEmptyStack) {
@@ -419,14 +419,14 @@ function Bookshelf(fileManager) {
         }
 
         $("#notebook-tree").tree("removeNode", node);
-        saveTreeData();
+        saveNotebookTree();
     }
 
     /* Initialize accordion at final step of UI initializion to fit tree column width */
     $("#accordion").accordion({
         heightStyle: "fill",
-        collapsible: true,
-        active: 1
+        collapsible: false,
+        active: 0
     });
 
     /* Create /bookshelf if necessary */
@@ -458,7 +458,7 @@ function Bookshelf(fileManager) {
                 if (error) throw new Error("Unable to read bookshelf tree data");
 
                 try {
-                    self.treeData = JSON.parse(data);
+                    self.notebookTreeData = JSON.parse(data);
                     initNotebookTree();
                 }
                 catch (err) {
@@ -467,7 +467,7 @@ function Bookshelf(fileManager) {
             });
         }
         else {
-            self.fileManager.writeFile("bookshelf-tree.json", self.treeData, function(path, progress, error) {
+            self.fileManager.writeFile("bookshelf-tree.json", self.notebookTreeData, function(path, progress, error) {
                 if (error) throw new Error("Unable to write bookshelf tree data");
                 initNotebookTree();
             });
@@ -478,14 +478,13 @@ function Bookshelf(fileManager) {
 Bookshelf.prototype.fitSize = function(width, height) {
     this.jqueryElement.width(width * 0.15);
     this.jqueryElement.height(height);
-    $("#bookmark-list").height(height - 86);
-    $("#notebook-tree").height(height - 61);
+    $("#notebook-tree").height(height - 31);
 }
 
 Bookshelf.prototype.selectNotebookAtIndex = function(index) {
-    var treeData = $("#notebook-tree").tree("getTree").getData();
-    if (treeData.length > 0) {
-        var node = $("#notebook-tree").tree("getNodeByName", treeData[index].name);
+    var notebookTreeData = $("#notebook-tree").tree("getTree").getData();
+    if (notebookTreeData.length > 0) {
+        var node = $("#notebook-tree").tree("getNodeByName", notebookTreeData[index].name);
         if (node) $("#notebook-tree").tree("selectNode", node);
     }
 }

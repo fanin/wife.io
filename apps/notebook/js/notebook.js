@@ -2,6 +2,7 @@
  * TODOs:
  * 1) Search
  * 2) Bookmarks
+ * 3) Image resize by drag
  */
 
 function Notebook(fileManager) {
@@ -67,6 +68,7 @@ function Notebook(fileManager) {
                 "<ul style='position:absolute;z-index:9999;'>" +
                 "<li>Copy</li>" +
                 "<li>Delete</li>" +
+                "<li>Bookmark</li>" +
                 "</ul>"
             )
             .menu()
