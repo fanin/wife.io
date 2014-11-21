@@ -1,4 +1,5 @@
-var fs = require('fs-extra'),
+var fs = require('graceful-fs'),
+    fse = require('fs-extra'),
     ss = require('socket.io-stream'),
     child_process = require('child_process');
 var SYSTEM = require('../system');
@@ -54,7 +55,7 @@ FileManager.prototype.register = function(_super, socket, protoFS) {
     });
 
     socket.on(protoFS.CreateDirectory.REQ, function(path) {
-        fs.mkdirp(security.getUserDataPath(path), function(err) {
+        fse.mkdirp(security.getUserDataPath(path), function(err) {
             if (err) {
                 console.log('CreateDirectory: ' + err);
                 socket.emit(protoFS.CreateDirectory.ERR, path, SYSTEM.ERROR.FSIOError);
@@ -93,7 +94,7 @@ FileManager.prototype.register = function(_super, socket, protoFS) {
         var realPath = security.getUserDataPath(path);
 
         if (fs.existsSync(realPath)) {
-            fs.remove(realPath, function(err) {
+            fse.remove(realPath, function(err) {
                 if (err) {
                     console.log('Remove: ' + err);
                     socket.emit(protoFS.Remove.ERR, path, SYSTEM.ERROR.FSIOError);
@@ -111,7 +112,7 @@ FileManager.prototype.register = function(_super, socket, protoFS) {
         var realDstPath = security.getUserDataPath(dstPath);
 
         if (fs.existsSync(realSrcPath)) {
-            fs.move(realSrcPath, realDstPath, function(err) {
+            fse.move(realSrcPath, realDstPath, function(err) {
                 if (err) {
                     console.log('Move: ' + err);
                     socket.emit(protoFS.Move.ERR, srcPath, dstPath, SYSTEM.ERROR.FSIOError);
@@ -129,7 +130,7 @@ FileManager.prototype.register = function(_super, socket, protoFS) {
         var realDstPath = security.getUserDataPath(dstPath);
 
         if (fs.existsSync(realSrcPath)) {
-            fs.copy(realSrcPath, realDstPath, function(err) {
+            fse.copy(realSrcPath, realDstPath, function(err) {
                 if (err) {
                     console.log('Copy: ' + err);
                     socket.emit(protoFS.Copy.ERR, srcPath, dstPath, SYSTEM.ERROR.FSIOError);
@@ -298,13 +299,15 @@ FileManager.prototype.register = function(_super, socket, protoFS) {
         var defaultOption = {
             encoding: 'utf8',
             regExpModifiers: 'gi',
-            onlyMatching: true /* Return only the matching part of the lines */
+            onlyMatching: true, /* Return only the matching part of the lines */
+            onlyTesting: false
         };
 
         option = option || defaultOption;
         option.encoding = option.encoding || defaultOption.encoding;
         option.regExpModifiers = option.regExpModifiers || defaultOption.regExpModifiers;
         option.onlyMatching = option.onlyMatching || defaultOption.onlyMatching;
+        option.onlyTesting = option.onlyTesting || defaultOption.onlyTesting;
 
         if (fs.existsSync(realPath)) {
             fs.readFile(realPath, option.encoding, function(err, data) {
@@ -313,9 +316,19 @@ FileManager.prototype.register = function(_super, socket, protoFS) {
                     socket.emit(protoFS.Grep.ERR, path, SYSTEM.ERROR.FSIOError);
                 }
                 else {
-                    var result = data.match(new RegExp(regex, option.regExpModifiers));
-                    if (!option.onlyMatching && result)
+                    var result;
+                    try {
+                        result = data.match(new RegExp(regex, option.regExpModifiers));
+                    }
+                    catch (e) {}
+
+                    if (option.onlyTesting) {
+                        if (result) result = true;
+                        else result = false;
+                    }
+                    else if (!option.onlyMatching && result)
                         result = data; /* Return full content since onlyMatching is set to false */
+
                     socket.emit(protoFS.Grep.RES, path, result);
                 }
             });
