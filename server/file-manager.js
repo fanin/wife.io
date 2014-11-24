@@ -1,7 +1,8 @@
 var fs = require('graceful-fs'),
     fse = require('fs-extra'),
     ss = require('socket.io-stream'),
-    child_process = require('child_process');
+    child_process = require('child_process'),
+    htmlToText = require('html-to-text');
 var SYSTEM = require('../system');
 
 module.exports = FileManager;
@@ -300,7 +301,8 @@ FileManager.prototype.register = function(_super, socket, protoFS) {
             encoding: 'utf8',
             regExpModifiers: 'gi',
             onlyMatching: true, /* Return only the matching part of the lines */
-            onlyTesting: false
+            onlyTesting: false, /* Return true or false */
+            parseFormat: false /* Parse supported format and grep content text only without format tags */
         };
 
         option = option || defaultOption;
@@ -308,6 +310,7 @@ FileManager.prototype.register = function(_super, socket, protoFS) {
         option.regExpModifiers = option.regExpModifiers || defaultOption.regExpModifiers;
         option.onlyMatching = option.onlyMatching || defaultOption.onlyMatching;
         option.onlyTesting = option.onlyTesting || defaultOption.onlyTesting;
+        option.parseFormat = option.parseFormat || defaultOption.parseFormat;
 
         if (fs.existsSync(realPath)) {
             fs.readFile(realPath, option.encoding, function(err, data) {
@@ -316,6 +319,19 @@ FileManager.prototype.register = function(_super, socket, protoFS) {
                     socket.emit(protoFS.Grep.ERR, path, SYSTEM.ERROR.FSIOError);
                 }
                 else {
+                    if (option.parseFormat) {
+                        var ext = path.split('.').pop();
+                        /* Convert html to text */
+                        if (ext.toLowerCase() === 'htm' || ext.toLowerCase() === 'html') {
+                            var title = data.match(new RegExp(/<title>(.*?)<\/title>/i));
+                            var text = htmlToText.fromString(data);
+                            if (title && title.length > 1)
+                                data = title[1] + '\n' + text;
+                            else
+                                data = text;
+                        }
+                    }
+
                     var result;
                     try {
                         result = data.match(new RegExp(regex, option.regExpModifiers));

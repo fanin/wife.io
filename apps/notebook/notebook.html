@@ -77,16 +77,19 @@
                     /* bookshelf event handling */
                     bookshelf.jqueryElement.on("bookshelf.loaded", function(event, arg) {
                         //arg.notebookTreeData;
-                        //arg.notebookBookmarkData;
                     });
 
                     bookshelf.jqueryElement.on("bookshelf.select", function(event, arg) {
+                        if ($("#search-text-input").val())
+                            resetSearch();
+
                         if (arg.node)
                             notebook.open(arg.node);
                         else
                             notebook.close();
 
-                        if (bookshelf.selectedNode && bookshelf.selectedNode.isFolder())
+                        if (bookshelf.selectedNode &&
+                            (bookshelf.selectedNode.isFolder() || bookshelf.selectedNode.name === "All Notes"))
                             $("#add-note-button").attr("disabled", true);
                         else
                             $("#add-note-button").attr("disabled", false);
@@ -99,6 +102,14 @@
                     });
 
                     /* Notebook list event handling */
+                    notebook.jqueryElement.on("notebook.beforeOpen", function(event) {
+                        modal.open({ content: "<img class='wait-spin-indicator'/><div style='padding-top:5px'>Please wait...</div>" });
+                    });
+
+                    notebook.jqueryElement.on("notebook.afterOpen", function(event) {
+                        modal.close();
+                    });
+
                     notebook.jqueryElement.on("notebook.select", function(event, arg) {
                         noteEditor.loadContent(arg.path, arg.index);
                     });
@@ -145,6 +156,7 @@
                                 <span class="ui-icon ui-icon-search"></span>
                             </span>
                             <input id="search-text-input" type="text" placeholder="Search">
+                            <div id="search-text-overlay"><i class="fa fa-close"></i><span id="search-text"></span></div>
                         </div>
                         <div id="control-bar">
                             <button id="add-note-button">New Note</button>
@@ -167,7 +179,7 @@
                         </div>
                     </div>
                     <div id="notebook">
-                        <div id="notebook-title-bar"><span><i class="fa fa-book"></i>&nbsp;</span></div>
+                        <div id="notebook-title-bar"></div>
                         <div id="note-list" class="tableview"></div>
                         <div id="note-manage-bottom-bar"><span id="note-options"><i class="fa fa-cog"></i>&nbsp;Options</span></div>
                     </div>
@@ -238,6 +250,31 @@
                 catch (err) {}
             }
 
+            function search() {
+                var pattern = $("#search-text-input").val();
+
+                if (pattern) {
+                    notebook.open({ name: "All Notes", isFolder: function(){ return false; } }, pattern);
+                    $("#add-note-button").attr("disabled", true);
+                    $("#search-button").unbind("click");
+                    $("#search-text").text(pattern);
+                    $("#search-text-overlay").show();
+                    $("#search-text-overlay i").unbind("click");
+                    $("#search-text-overlay i").click(function() {
+                        notebook.close();
+                        notebook.open(bookshelf.selectedNode);
+                        resetSearch();
+                    });
+                }
+            }
+
+            function resetSearch() {
+                $("#search-text-input").val("");
+                $("#search-text-overlay").hide();
+                $("#search-button").click(search);
+                $("#add-note-button").attr("disabled", false);
+            }
+
             var page = new Page();
             page.setTitle("Notebook");
             page.createNavigationBar("Notebook");
@@ -256,6 +293,15 @@
             $("#add-note-button").click(function() {
                 notebook.addNote(null, null);
             });
+
+            $("#search-button").click(search);
+            $("#search-text-input").keypress(function(event) {
+                var keycode = (event.keyCode ? event.keyCode : event.which);
+                if (keycode === 13)
+                    search();
+                return true;
+            });
+            $("#search-text-overlay").hide();
         </script>
     </body>
 </html>

@@ -1,7 +1,6 @@
 /*
  * TODOs:
- * 1) Search
- * 2) Image resize by drag
+ * -> Image resize by drag
  */
 
 function Notebook(fileManager) {
@@ -67,7 +66,6 @@ function Notebook(fileManager) {
                 "<ul style='position:absolute;z-index:9999;'>" +
                 "<li>Copy</li>" +
                 "<li>Delete</li>" +
-                "<li>Bookmark</li>" +
                 "</ul>"
             )
             .menu()
@@ -168,6 +166,7 @@ function Notebook(fileManager) {
         self.tableView.view.off("tableview.show");
         self.tableView.view.on("tableview.show", function(event) {
             self.updateTitleBar();
+            self.jqueryElement.trigger("notebook.afterOpen");
         });
 
         self.tableView.view.off("tableview.contextmenu");
@@ -213,20 +212,98 @@ Notebook.prototype.updateTitleBar = function() {
         else
             $("#notebook-title-bar").append("<span class='notebook-title'><i class='fa fa-book'></i>&nbsp;" + self.notebookNode.name + "</span>");
 
-        if (self.notes.length > 0)
+        var titleBarWidth = $("#notebook-title-bar").width();
+        $("#notebook-title-bar .notebook-title").width(titleBarWidth - 72 - 10 - 7);
+
+        if (self.notes.length > 0) {
             $("#notebook-title-bar").append("<span class='notebook-count'>(" + self.notes.length + " notes)</span>");
+            $("#notebook-title-bar .notebook-count").width(72);
+
+        }
+        else {
+            $("#notebook-title-bar .notebook-title").width(titleBarWidth - 7);
+        }
     }
 }
 
-Notebook.prototype.open = function(node) {
+Notebook.prototype.open = function(node, searchPattern) {
     var self = this;
 
     self.notebookNode = node;
     self.notes = [];
 
+    self.jqueryElement.trigger("notebook.beforeOpen");
     self.updateTitleBar();
 
-    if (node.isFolder()) {
+    if (node.name === "All Notes") {
+        self.fileManager.statList(self.getPath(), function(path, items, stats, error) {
+            if (error) throw new Error("File system operation error");
+            var recursiveIterateList = function(notebookIndex) {
+                if (notebookIndex < items.length) {
+                    var waitItems = [];
+                    self.fileManager.iterateStatList(
+                        self.getPath("/" + items[notebookIndex]),
+                        function(path, item, stat, i, error) {
+                            if (error)
+                                console.log("Unable to list " + path + "/" + item);
+                            else {
+                                waitItems.push(i);
+
+                                /* Do search if search pattern exists */
+                                if (searchPattern && searchPattern.length > 0) {
+                                    self.notebookNode.name = "Search result for \"" + searchPattern + "\"";
+                                    self.updateTitleBar();
+
+                                    self.fileManager.grep(
+                                        path + "/" + item + "/note.html",
+                                        searchPattern,
+                                        {
+                                            encoding: 'utf8',
+                                            regExpModifiers: 'gi',
+                                            onlyMatching: false,
+                                            onlyTesting: true,
+                                            parseFormat: true
+                                        },
+                                        function(_path, data, error) {
+                                            if (error) throw new Error("File system operation error");
+                                            if (data) {
+                                                self.notes.unshift({ path: path + "/" + item, stat: stat, title: "" });
+                                                waitItems.pop();
+                                            }
+                                        }
+                                    );
+                                }
+                                else {
+                                    self.notes.unshift({ path: path + "/" + item, stat: stat, title: "" });
+                                    waitItems.pop();
+                                }
+                            }
+                        },
+                        function(path) {
+                            if (notebookIndex === items.length - 1) {
+                                var timer = setInterval(function() {
+                                    if (waitItems.length === 0) {
+                                        /* Sort notes */
+                                        self.notes.sort(self.sortFuncs[self.currentSortMethod]);
+                                        /* Load notes on list */
+                                        self.tableView.show();
+                                        /* Stop timer */
+                                        clearInterval(timer);
+                                    }
+                                }, 200);
+                            }
+                            else
+                                recursiveIterateList(notebookIndex + 1);
+                        }
+                    );
+                }
+            };
+
+            /* Recursively list all notes in all notebook */
+            recursiveIterateList(0);
+        });
+    }
+    else if (node.isFolder()) {
         var recursiveIterateList = function(notebookIndex) {
             if (notebookIndex < node.children.length) {
                 var child = node.children[notebookIndex];
@@ -251,7 +328,7 @@ Notebook.prototype.open = function(node) {
             }
         };
 
-        /* Recursively list all notes in all notebook */
+        /* Recursively list all notes in notebooks in stack */
         recursiveIterateList(0);
     }
     else {
@@ -282,7 +359,6 @@ Notebook.prototype.close = function() {
     self.notes = [];
 
     self.updateTitleBar();
-
     self.tableView.show();
     self.listenToEvents();
 }
@@ -375,7 +451,20 @@ Notebook.prototype.copyNote = function(index, complete) {
 }
 
 Notebook.prototype.reloadNote = function(index) {
-    this.tableView.reloadRowAtIndex(index);
+    var self = this;
+    if (index >= self.notes.length)
+        return;
+
+    /* Reload note state */
+    self.fileManager.stat(self.notes[index].path, function(path, stat, error) {
+        if (error) {
+            console.log("Unable to reload " + path);
+            return;
+        }
+
+        self.notes[index].stat = stat;
+        self.tableView.reloadRowAtIndex(index);
+    });
 }
 
 /* Tableview data source */
@@ -390,22 +479,29 @@ Notebook.prototype.tableViewCellForRowAtIndex = function(index, appendDivToTable
     if (index >= self.notes.length)
         return;
 
-    self.fileManager.grep(self.notes[index].path + "/note.html", "<title>(.*?)<\/title>", null, function(path, data, error) {
-        if (error) {
-            console.log("Unable to read " + path);
-            appendDivToTableRow(tempDiv, index);
-            return;
+    self.fileManager.grep(
+        self.notes[index].path + "/note.html", "<title>(.*?)<\/title>",
+        {
+            regExpModifiers: 'i',
+            onlyMatching: true
+        },
+        function(path, data, error) {
+            if (error) {
+                console.log("Unable to read " + path);
+                appendDivToTableRow(tempDiv, index);
+                return;
+            }
+
+            self.notes[index].title = data[1];
+
+            var mtime = new Date(self.notes[index].stat.mtime);
+            var lastModifiedDate = mtime.toLocaleDateString() + " " + mtime.toLocaleTimeString();
+
+            appendDivToTableRow(
+                "<div><p class='note-title'>" + self.notes[index].title + "</p>" +
+                "<p class='note-last-modified-date'>Modified: " + lastModifiedDate  + "</p></div>",
+                index
+            );
         }
-
-        self.notes[index].title = tempDiv.append(data[0]).find("title").text();
-
-        var mtime = new Date(self.notes[index].stat.mtime);
-        var lastModifiedDate = mtime.toLocaleDateString() + " " + mtime.toLocaleTimeString();
-
-        appendDivToTableRow(
-            "<div><p class='note-title'>" + self.notes[index].title + "</p>" +
-            "<p class='note-last-modified-date'>Modified: " + lastModifiedDate  + "</p></div>",
-            index
-        );
-    });
+    );
 }

@@ -1,7 +1,7 @@
 function Bookshelf(fileManager) {
     var self = this;
 
-    this.notebookTreeData = [];
+    this.notebookTreeData = [{name:"All Notes"}];
     this.selectedNode = undefined;
     this.fileManager = fileManager;
     this.jqueryElement = $("#bookshelf");
@@ -87,13 +87,14 @@ function Bookshelf(fileManager) {
             function() {
                 var idx = $("ul.jqtree-tree li > .jqtree-element").index(this);
                 var name = $(this).find("span.jqtree-title").text();
-                var type;
-                if ($(this).find("span.jqtree-title-folder"))
-                    type = "stack";
-                else
-                    type = "notebook";
+                var type = $(this).find("span.jqtree-title-folder") ? "stack" : "notebook";
 
                 $(this).find("span.action-button").remove();
+                $("#notebook-tree").unbind("tree.contextmenu");
+
+                if (name === "All Notes")
+                    return;
+
                 $(this).append(
                     $(
                         "<span id='notebook-down-button-" + idx + "' class='action-button'>" +
@@ -153,7 +154,6 @@ function Bookshelf(fileManager) {
                     });
                 };
 
-                $("#notebook-tree").unbind("tree.contextmenu");
                 $("#notebook-tree").bind("tree.contextmenu", popupMenu);
                 $("#notebook-down-button-" + idx + " a").click(popupMenu);
             },
@@ -207,7 +207,7 @@ function Bookshelf(fileManager) {
     });
 
     /* Build real path from node or string */
-    var getPath = function(node) {
+    this.getPath = function(node) {
         var path = "";
 
         if (typeof node === "object")
@@ -216,7 +216,7 @@ function Bookshelf(fileManager) {
             path = node;
 
         return "bookshelf" + path;
-    }
+    };
 
     /* Initialize notebook tree */
     $("#notebook-tree").bind("tree.init", function() {});
@@ -246,6 +246,9 @@ function Bookshelf(fileManager) {
         var movedNodeParent = event.move_info.previous_parent;
         var targetNode = event.move_info.target_node;
         var position = event.move_info.position;
+
+        if (movedNode.name === "All Notes" || targetNode.name === "All Notes")
+            return;
 
         if (movedNode.isFolder() && (position === "inside" || (position !== "inside" && targetNode.getLevel() > 1)))
             return;
@@ -299,8 +302,10 @@ function Bookshelf(fileManager) {
             openedIcon: $("<i class='fa fa-caret-down'></i>"),
             nodeIcon: $("<i class='fa fa-book'></i>"),
             onCreateLi: function(node, $li) {
-                if (node.isFolder())
-                    $li.find(".jqtree-title").before("<i class='fa fa-list'></i>&nbsp;");
+                if (node.name === "All Notes")
+                    $li.find(".fa-book").replaceWith("<i class='fa fa-list'></i>");
+                else if (node.isFolder())
+                    $li.find(".jqtree-title").before("<i class='fa fa-list-ul'></i>&nbsp;");
             },
             toggleable: false,
             dragAndDrop: true,
@@ -332,7 +337,7 @@ function Bookshelf(fileManager) {
     /* Notebook management */
     function create(name, type) {
         if (type === "notebook") {
-            var path = getPath("/") + name;
+            var path = self.getPath("/") + name;
             //console.log("create " + path);
 
             self.fileManager.exist(path, function(path, exist, isDir, error) {
@@ -357,8 +362,8 @@ function Bookshelf(fileManager) {
 
     function rename(node, name) {
         if (!node.isFolder()) {
-            var src = getPath(node);
-            var dst = getPath("/") + name;
+            var src = self.getPath(node);
+            var dst = self.getPath("/") + name;
 
             //console.log("move " + src + " to " + dst);
 
@@ -389,7 +394,7 @@ function Bookshelf(fileManager) {
         else if (node.isFolder()) {
             node.iterate(function(node) {
                 if (!node.isFolder()) {
-                    self.fileManager.remove(getPath(node), function(path, error) {
+                    self.fileManager.remove(self.getPath(node), function(path, error) {
                         if (error) throw new Error("unable to remove " + path);
                         if (nextNodeToSelect) {
                             self.selectedNode = nextNodeToSelect;
@@ -405,7 +410,7 @@ function Bookshelf(fileManager) {
             });
         }
         else {
-            self.fileManager.remove(getPath(node), function(path, error) {
+            self.fileManager.remove(self.getPath(node), function(path, error) {
                 if (error) throw new Error("unable to remove " + path);
                 if (nextNodeToSelect) {
                     self.selectedNode = nextNodeToSelect;
@@ -430,19 +435,18 @@ function Bookshelf(fileManager) {
     });
 
     /* Create /bookshelf if necessary */
-    self.fileManager.exist(getPath(), function(path, exist, isDir, error) {
+    self.fileManager.exist(self.getPath(), function(path, exist, isDir, error) {
         if (error) throw new Error("fs operation error");
-
         if (!exist) {
-            self.fileManager.createDirectory(getPath(), function(path, error) {
+            self.fileManager.createDirectory(self.getPath(), function(path, error) {
                 if (error) throw new Error("unable to create /bookshelf");
             });
         }
         else if (exist && !isDir) {
-            self.fileManager.remove(getPath(), function(path, error) {
+            self.fileManager.remove(self.getPath(), function(path, error) {
                 if (error) throw new Error("unable to remove /bookshelf");
 
-                self.fileManager.createDirectory(getPath(), function(path, error) {
+                self.fileManager.createDirectory(self.getPath(), function(path, error) {
                     if (error) throw new Error("unable to create /bookshelf");
                 });
             });
@@ -452,7 +456,6 @@ function Bookshelf(fileManager) {
     /* Load notebook tree data from bookshelf-tree.json */
     self.fileManager.exist("bookshelf-tree.json", function(path, exist, isDir, error) {
         if (error) throw new Error("File system operation error");
-
         if (exist) {
             self.fileManager.readFile("bookshelf-tree.json", "utf8", function(path, data, error) {
                 if (error) throw new Error("Unable to read bookshelf tree data");

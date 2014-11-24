@@ -19,7 +19,7 @@
 .tableview ul li div {
     width: 92%;
     white-space: nowrap;
-    overflow:hidden;
+    overflow: hidden;
     color: #555;
     padding: 5px;
 }

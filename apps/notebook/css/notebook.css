@@ -1,6 +1,6 @@
 /* notebook */
 #notebook {
-    overflow: hidden;
+    /* overflow: hidden; */  /* This makes tableview scroll bar y position shift */
     background-color: white;
 }
 
@@ -17,12 +17,15 @@
 #notebook-title-bar .notebook-title {
     float: left;
     padding: 5px;
+    white-space: nowrap;
 }
 
 #notebook-title-bar .notebook-count {
     float: right;
-    padding: 7px;
+    padding-top: 7px;
+    padding-right: 2px;
     font-size: 14px;
+    text-align: right;
     color: darkgray;
 }
 

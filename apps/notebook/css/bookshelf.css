@@ -36,15 +36,6 @@
     float: right;
 }
 
-/* bookmark */
-#bookmark-list {}
-
-#bookmark-list ul, li {
-    margin: 0;
-    padding: 1px;
-    list-style: none;
-}
-
 /* notebook tree */
 #notebook-tree {
     padding: 0;
