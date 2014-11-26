@@ -52,14 +52,21 @@ function Notebook(fileManager) {
     /* Popup note edit menu */
     var noteEditMenu;
     this.popupEditMenu = function(arg) {
+        arg.event.stopImmediatePropagation();
         arg.event.stopPropagation();
         arg.event.preventDefault();
 
+        var target = arg.event.target || arg.event.srcElement;
+
         if (noteEditMenu) {
-            if (noteEditMenu.is(":visible"))
+            if (noteEditMenu.is(":visible")) {
+                noteEditMenu.target = undefined;
                 noteEditMenu.hide();
-            else
+            }
+            else {
+                noteEditMenu.target = target;
                 noteEditMenu.show();
+            }
         }
         else {
             noteEditMenu = $(
@@ -70,6 +77,7 @@ function Notebook(fileManager) {
             )
             .menu()
             .appendTo("body");
+            noteEditMenu.target = target;
         }
 
         noteEditMenu.off("menuselect");
@@ -78,9 +86,12 @@ function Notebook(fileManager) {
             of: arg.event
         })
         .on("menuselect", function(event, ui) {
+            event.stopImmediatePropagation();
+            event.stopPropagation();
             event.preventDefault();
 
             var selectedOption = ui.item.text();
+            noteEditMenu.target = undefined;
             noteEditMenu.hide();
 
             if (selectedOption === "Copy") {
@@ -101,14 +112,21 @@ function Notebook(fileManager) {
     };
 
     this.popupOptionMenu = function(event) {
+        event.stopImmediatePropagation();
         event.stopPropagation();
         event.preventDefault();
 
+        var target = event.target || event.srcElement;
+
         if (optionMenu) {
-            if (optionMenu.is(":visible"))
+            if (optionMenu.is(":visible")) {
+                optionMenu.target = undefined;
                 optionMenu.hide();
-            else
+            }
+            else {
+                optionMenu.target = target;
                 optionMenu.show();
+            }
         }
         else {
             optionMenu = $(
@@ -122,6 +140,8 @@ function Notebook(fileManager) {
             )
             .menu()
             .appendTo("body");
+
+            optionMenu.target = target;
         }
 
         optionMenu.off("menuselect");
@@ -131,8 +151,11 @@ function Notebook(fileManager) {
         })
         .on("menuselect", function(event, ui) {
             event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
 
             var selectedOption = ui.item.text();
+            optionMenu.target = undefined;
             optionMenu.hide();
 
             if (selectedOption === "Sort by last modified date") {
@@ -186,9 +209,17 @@ function Notebook(fileManager) {
     };
 
     $(document).on("click", function(e) {
-        var $target = $(e.target);
-        if (noteEditMenu) noteEditMenu.hide();
-        if (optionMenu) optionMenu.hide();
+        var target = e.target || e.srcElement;
+
+        if (noteEditMenu && noteEditMenu.target !== target) {
+            noteEditMenu.target = undefined;
+            noteEditMenu.hide();
+        }
+
+        if (optionMenu && optionMenu.target !== target) {
+            optionMenu.target = undefined;
+            optionMenu.hide();
+        }
     });
 }
 

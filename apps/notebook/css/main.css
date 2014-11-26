@@ -18,9 +18,11 @@ a { text-decoration: none; }
     display: -webkit-box;
     -moz-box-orient: vertical;
     -webkit-box-orient: vertical;
+    width: 100%;
 }
 
 #bar-container {
+    width: 100%;
     display: inline-block;
     display: -moz-box;
     display: -webkit-box;
@@ -29,11 +31,11 @@ a { text-decoration: none; }
 }
 
 #toolbar {
-    width: 90%;
+    width: auto;
     height: 40px;
     border: 0;
     padding: 0;
-    background-color: #BBB;
+    white-space:nowrap;
     display: inline-block;
     display: -moz-box;
     display: -webkit-box;
@@ -42,35 +44,36 @@ a { text-decoration: none; }
 }
 
 #search-bar {
-    width: 494px;
+    width: 400px;
     height: 40px;
-    padding: 5px;
-}
-
-#search-button {
-    position: relative;
-    padding: 5px;
-    cursor: pointer;
-    float: right;
+    line-height: 40px;
+    padding: 0px 0px 0px 5px;
+    text-align: left;
+    white-space:nowrap;
+    display: inline-block;
+    display: -moz-box;
+    display: -webkit-box;
+    -moz-box-orient: horizontal;
+    -webkit-box-orient: horizontal;
 }
 
 #search-text-input {
-    width: 452px;
-    height: 25px;
-    padding: 1px 6px 0;
+    position: absolute;
+    width: 370px;
+    height: 26px;
+    top: 6px;
+    padding: 0px 5px;
     border: 1px solid #BBB;
-    float: left;
 }
 
 #search-text-overlay {
-    position: relative;
-    top: -28px;
-    width: 452px;
-    height: 25px;
+    position: absolute;
+    width: 370px;
+    height: 26px;
+    top: 6px;
     line-height: 25px;
-    padding: 1px 6px 0;
+    padding: 0px 5px;
     border: 1px solid #BBB;
-    float: left;
     text-align: left;
     background-color: white;
 }
@@ -84,14 +87,32 @@ a { text-decoration: none; }
     color: #555;
 }
 
+#search-button {
+    position: absolute;
+    top: 0px;
+    left: 365px;
+    cursor: pointer;
+}
+
+#search-button i {
+    width: 16px;
+    height: 16px;
+}
+
 #control-bar {
     width: 200px;
     height: 40px;
-    padding: 5px;
+    line-height: 40px;
+    text-align: left;
 }
 
 #add-note-button {
-    float: left;
+    position: absolute;
+    top: 6px;
+    height: 28px;
+    -webkit-border-radius: 0px;
+    -moz-border-radius: 0px;
+    border-radius: 0px;
 }
 
 #add-note-button:disabled {
@@ -100,7 +121,7 @@ a { text-decoration: none; }
 }
 
 #status-bar {
-    width: 10%;
+    min-width: 100px;
     height: 40px;
     border: 0;
     padding: 0;
@@ -113,6 +134,11 @@ a { text-decoration: none; }
     font-size: 14px;
     padding: 0 10px 0 0;
     text-align: right;
+}
+
+#flexible-bar {
+    border: 0;
+    padding: 0;
 }
 
 #container {

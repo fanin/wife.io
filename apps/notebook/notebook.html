@@ -152,16 +152,17 @@
                 <div id="bar-container">
                     <div id="toolbar" class="ui-toolbar ui-widget-header ui-helper-clearfix">
                         <div id="search-bar">
-                            <span id="search-button" class="ui-state-default" title="search">
-                                <span class="ui-icon ui-icon-search"></span>
-                            </span>
                             <input id="search-text-input" type="text" placeholder="Search">
+                            <span id="search-button" title="search">
+                                <i class="fa fa-search"></i>
+                            </span>
                             <div id="search-text-overlay"><i class="fa fa-close"></i><span id="search-text"></span></div>
                         </div>
                         <div id="control-bar">
                             <button id="add-note-button">New Note</button>
                         </div>
                     </div>
+                    <div id="flexible-bar" class="ui-toolbar ui-widget-header ui-helper-clearfix"></div>
                     <div id="status-bar" class="ui-toolbar ui-widget-header ui-helper-clearfix">
                         <div id="status-msg"></div>
                     </div>
@@ -169,9 +170,7 @@
                 <div id="container">
                     <div id="bookshelf">
                         <div id="accordion">
-                            <h3>
-                                Notebooks
-                                <span id="all-notebook-down-button" class="action-button">
+                            <h3>Notebooks<span id="all-notebook-down-button" class="action-button">
                                     <a href="#"><i class="fa fa-caret-square-o-down"></i></a>
                                 </span>
                             </h3>
@@ -242,6 +241,9 @@
                 var newWidth = $("html").width();
                 var newHeight = $("html").height() - $("#header").height() - $("#control-bar").height() - $("#footer").height();
                 $("#container").height(newHeight);
+                var flexibleWidth = newWidth - $("#toolbar").width() - $("#status-bar").width();
+                $("#flexible-bar").width((flexibleWidth > 0) ? flexibleWidth : 0);
+
                 try {
                     bookshelf.fitSize(newWidth, newHeight);
                     notebook.fitSize(newWidth, newHeight);

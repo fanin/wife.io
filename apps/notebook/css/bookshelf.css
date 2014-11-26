@@ -13,7 +13,8 @@
 }
 
 #accordion .ui-accordion-header {
-    margin: 0px;
+    width: auto;
+    margin: 0;
     border-right: 0;
     border-top: 0;
     border-top-left-radius: 0px !important;
@@ -34,6 +35,7 @@
 
 .action-button {
     float: right;
+    -moz-margin-start: -15px !important;
 }
 
 /* notebook tree */
