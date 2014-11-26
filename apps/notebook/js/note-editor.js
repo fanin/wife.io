@@ -21,7 +21,7 @@ function NoteEditor(fileManager) {
     CKEDITOR.replace("note-content-editor");
     CKEDITOR.config.readOnly = true;
     CKEDITOR.config.resize_enabled = false;
-    CKEDITOR.config.extraPlugins = "customsave";
+    CKEDITOR.config.extraPlugins = "customsave,dragresize";
     CKEDITOR.config.removePlugins = "link,unlink,anchor,elementspath,about";
     CKEDITOR.config.skin = "icy_orange";
 
