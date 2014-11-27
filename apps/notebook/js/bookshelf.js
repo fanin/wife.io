@@ -479,7 +479,7 @@ function Bookshelf(fileManager) {
 }
 
 Bookshelf.prototype.fitSize = function(width, height) {
-    this.jqueryElement.width(width * 0.15);
+    this.jqueryElement.width(width);
     this.jqueryElement.height(height);
     $("#notebook-tree").height(height - 31);
 }

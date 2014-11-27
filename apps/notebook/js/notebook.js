@@ -226,10 +226,10 @@ function Notebook(fileManager) {
 extend(Notebook.prototype, TableViewDataSource.prototype);
 
 Notebook.prototype.fitSize = function(width, height) {
-    $("#notebook-title-bar").width(width * 0.2);
-    $("#note-list").width(width * 0.2);
+    $("#notebook-title-bar").width(width);
+    $("#note-list").width(width);
     $("#note-list").height(height - 30 - 30);
-    $("#note-manage-bottom-bar").width(width * 0.2);
+    $("#note-manage-bottom-bar").width(width);
 }
 
 Notebook.prototype.updateTitleBar = function() {
@@ -406,7 +406,7 @@ Notebook.prototype.addNote = function(title, content, complete) {
                 if (error) throw new Error("unable to create directory");
                 title = title || "Untitled";
                 content = content || "";
-                var emptyNote = "<html><head><title>" + title + "</title></head><body>" + content + "</body></html>";
+                var emptyNote = "<html><head><title>" + title + "</title></head><body style='width:800px;margin:0 auto;'>" + content + "</body></html>";
 
                 self.fileManager.writeFile(path + "/note.html", emptyNote, function(path, progress, error) {
                     if (error) throw new Error("unable to write note.html");
@@ -418,6 +418,11 @@ Notebook.prototype.addNote = function(title, content, complete) {
                             self.tableView.selectRowAtIndex(0);
                         });
                         self.updateTitleBar();
+
+                        $("#note-snapshot").empty();
+                        $("#note-snapshot").append(content);
+                        takeNoteSnapshot(self.fileManager, dirname(path) + "/note.png");
+
                         if (complete) complete(path);
                     });
                 });

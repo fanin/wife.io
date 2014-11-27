@@ -22,7 +22,6 @@ FileManager.prototype.register = function(_super, socket, protoFS) {
             socket.emit(protoFS.List.RES, path, items);
         }
         catch (err) {
-            console.log('List: ' + err);
             socket.emit(protoFS.List.ERR, path, SYSTEM.ERROR.FSNotExist);
         }
     });
@@ -38,7 +37,6 @@ FileManager.prototype.register = function(_super, socket, protoFS) {
             socket.emit(protoFS.StatList.RES, path, items, itemStats);
         }
         catch (err) {
-            console.log('List: ' + err);
             socket.emit(protoFS.StatList.ERR, path, SYSTEM.ERROR.FSNotExist);
         }
     });

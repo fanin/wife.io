@@ -27,3 +27,19 @@
     -moz-box-shadow: 10px;
     -webkit-box-shadow: 10px;
 }
+
+#note-snapshot {
+    z-index: -9999;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 800px;
+    height: auto;
+    color: black;
+    background-color: white;
+    /* Set border-box for not to increase width after padding */
+    padding: 10px;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+}

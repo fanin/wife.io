@@ -21,15 +21,16 @@ function NoteEditor(fileManager) {
     CKEDITOR.replace("note-content-editor");
     CKEDITOR.config.readOnly = true;
     CKEDITOR.config.resize_enabled = false;
-    CKEDITOR.config.extraPlugins = "customsave,dragresize";
-    CKEDITOR.config.removePlugins = "link,unlink,anchor,elementspath,about";
+    CKEDITOR.config.extraPlugins = "font,customsave,dragresize";
+    CKEDITOR.config.removePlugins = "format,link,unlink,anchor,elementspath,about";
     CKEDITOR.config.skin = "icy_orange";
 
     CKEDITOR.on("instanceReady", function(event) {
         var editor = event.editor;
+
         var setDataDelayTimeout;
+        /* This is an workaround to avoid laggy setData */
         self.setContentNoLagWorkaround = function(title, content) {
-            /* This is an workaround to avoid laggy setData */
             if (setDataDelayTimeout) clearTimeout(setDataDelayTimeout);
             setDataDelayTimeout = setTimeout(function() {
                 setDataDelayTimeout = undefined;
@@ -48,6 +49,37 @@ function NoteEditor(fileManager) {
                 editor.undoManager.reset();
             }, 100);
         };
+
+        /* When user upload an image and remove it from the note, the image file is still under assets folder.
+           We scan note and remove unused assets after user complete editing note */
+        self.removeUnusedAssets = function(notePath) {
+            setTimeout(function() {
+                self.fileManager.iterateList(
+                    dirname(notePath) + "/assets",
+                    function(path, item, stat, i, error) {
+                        if (error) {
+                            console.log("Unable to list " + path + "/" + item);
+                            return;
+                        }
+
+                        self.fileManager.grep(notePath, item, null, function(path, data, error) {
+                            if (error) {
+                                console.log("Unable to read " + path);
+                                return;
+                            }
+
+                            if (!data) {
+                                self.fileManager.remove(dirname(notePath) + "/assets/" + item, function(path, error) {
+                                    if (error) throw new Error("unable to remove " + path);
+                                    console.log("Unused asset '" + item + "' removed");
+                                });
+                            }
+                        });
+                    },
+                    function(path) {}
+                );
+            }, 1000);
+        }
 
         /* Recursive images upload */
         function uploadImages(path, files) {
@@ -123,7 +155,6 @@ function NoteEditor(fileManager) {
         /* Image drag & drop */
         function dropFiles(e) {
             e.data.preventDefault();
-            e.data.stopPropagation();
 
             if (editor.readOnly) return;
 
@@ -148,43 +179,16 @@ function NoteEditor(fileManager) {
             if (editor.readOnly) return;
         }
 
-        /* Note content management */
-        function removeUnusedAssets(notePath) {
-            setTimeout(function() {
-                self.fileManager.iterateList(
-                    dirname(notePath) + "/assets",
-                    function(path, item, stat, i, error) {
-                        if (error) {
-                            console.log("Unable to list " + path + "/" + item);
-                            return;
-                        }
-
-                        self.fileManager.grep(notePath, item, null, function(path, data, error) {
-                            if (error) {
-                                console.log("Unable to read " + path);
-                                return;
-                            }
-
-                            if (!data) {
-                                self.fileManager.remove(dirname(notePath) + "/assets/" + item, function(path, error) {
-                                    if (error) throw new Error("unable to remove " + path);
-                                    console.log("Unused asset '" + item + "' removed");
-                                });
-                            }
-                        });
-                    },
-                    function(path) {}
-                );
-            }, 1000);
-        }
-
+        /*
+         * Note content management
+         */
         function save(notePath, noteIndex, title, content, callback) {
             if (!notePath) {
                 callback && callback();
                 return;
             }
 
-            var doc = "<html><head><title>" + title + "</title></head><body>" + content + "</body></html>";
+            var doc = "<html><head><title>" + title + "</title></head><body style='width:800px;margin:0 auto;'>" + content + "</body></html>";
 
             if (self.noteTitle === title && self.noteContent === content) {
                 callback && callback();
@@ -195,17 +199,27 @@ function NoteEditor(fileManager) {
                 if (error) {
                     callback && callback();
                     alert("Unable to write " + path);
+                    return;
                 }
-                else {
-                    /* Update last modified time */
-                    self.fileManager.touch(dirname(notePath), function() {
-                        self.noteTitle = title;
-                        self.noteContent = content;
-                        self.jqueryElement.trigger("note-editor.save", noteIndex);
+
+                /* Update last modified time */
+                self.fileManager.touch(dirname(notePath), function(path, error) {
+                    if (error) {
                         callback && callback();
-                        removeUnusedAssets(notePath);
-                    });
-                }
+                        console.log("Unable to touch " + path);
+                        return;
+                    }
+
+                    self.noteTitle = title;
+                    self.noteContent = content;
+
+                    $("#note-snapshot").empty();
+                    $("#note-snapshot").append(content);
+                    takeNoteSnapshot(self.fileManager, path + "/note.png");
+
+                    self.jqueryElement.trigger("note-editor.save", noteIndex);
+                    callback && callback();
+                });
             });
         }
 
@@ -271,7 +285,7 @@ function NoteEditor(fileManager) {
 
 NoteEditor.prototype.fitSize = function(width, height) {
     try {
-        CKEDITOR.instances["note-content-editor"].resize("100%", height - 28);
+        CKEDITOR.instances["note-content-editor"].resize(width, height - 28);
     } catch (e) {}
 }
 
@@ -317,13 +331,14 @@ NoteEditor.prototype.resetContent = function() {
     /* Auto save unsaved content to previous doc immediately */
     if (self.notePath) {
         self.scheduleAutoSave(0);
+        self.removeUnusedAssets(self.notePath);
     }
-
-    $("#note-title-input").prop("disabled", true);
-    CKEDITOR.instances["note-content-editor"].setReadOnly(true);
 
     self.notePath = undefined;
     self.noteIndex = -1;
 
     self.setContentNoLagWorkaround("", "");
+
+    $("#note-title-input").prop("disabled", true);
+    CKEDITOR.instances["note-content-editor"].setReadOnly(true);
 }

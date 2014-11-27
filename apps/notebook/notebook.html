@@ -23,8 +23,9 @@
         <link href="http://%SYSIP%:8001/lib/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
 
         <!-- Import 3rd party frameworks -->
-        <script src="lib/ckeditor/ckeditor.js"></script>
         <script src="lib/jqTree/tree.jquery.js"></script>
+        <script src="lib/ckeditor/ckeditor.js"></script>
+        <script src="lib/html2canvas/html2canvas.js"></script>
 
         <!-- Import note style -->
         <link href="lib/jqTree/jqtree.css" rel="stylesheet">
@@ -34,7 +35,26 @@
         <link href="css/notebook.css" rel="stylesheet">
         <link href="css/note-editor.css" rel="stylesheet">
 
-        <!-- Import bookshelf -->
+        <script>
+            function takeNoteSnapshot(fileManager, saveTo) {
+                //$(".cke_wysiwyg_frame").contents().find("body")
+                html2canvas($("#note-snapshot"), {
+                    allowTaint: true,
+                    taintTest: false,
+                    onrendered: function(canvas) {
+                        var dataUrl = canvas.toDataURL("image/png");
+                        var data = dataUrl.replace(/^data:image\/png;base64,/,'');
+
+                        fileManager.writeFile(saveTo, base64ToBlob(data), function(path, progress, error) {
+                            if (error) {
+                                callback && callback();
+                                alert("Unable to write snapshot " + path);
+                            }
+                        });
+                    }
+                });
+            }
+        </script>
         <script src="js/text-input-dialog.js"></script>
         <script src="js/bookshelf.js"></script>
         <script src="js/notebook.js"></script>
@@ -191,6 +211,7 @@
             </div>
         </div>
 
+        <div id="note-snapshot" class="cke_contents cke_reset"></div>
         <div id="confirm-dialog"></div>
         <div id="progress-dialog"></div>
 
@@ -245,9 +266,19 @@
                 $("#flexible-bar").width((flexibleWidth > 0) ? flexibleWidth : 0);
 
                 try {
-                    bookshelf.fitSize(newWidth, newHeight);
-                    notebook.fitSize(newWidth, newHeight);
-                    noteEditor.fitSize(newWidth, newHeight);
+                    var bookshelfWidth = newWidth  * 0.15;
+                    var notebookWidth = newWidth * 0.2;
+                    var editorWidth = newWidth - bookshelfWidth - notebookWidth;
+
+                    if (editorWidth > 800) {
+                        bookshelfWidth += (editorWidth - 800) / 2;
+                        notebookWidth += (editorWidth - 800) / 2;
+                        editorWidth = 800;
+                    }
+
+                    bookshelf.fitSize(bookshelfWidth, newHeight);
+                    notebook.fitSize(notebookWidth, newHeight);
+                    noteEditor.fitSize(editorWidth, newHeight);
                 }
                 catch (err) {}
             }
