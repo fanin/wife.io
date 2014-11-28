@@ -470,7 +470,7 @@ function Bookshelf(fileManager) {
             });
         }
         else {
-            self.fileManager.writeFile("bookshelf-tree.json", self.notebookTreeData, function(path, progress, error) {
+            self.fileManager.writeFile("bookshelf-tree.json", JSON.stringify(self.notebookTreeData), function(path, progress, error) {
                 if (error) throw new Error("Unable to write bookshelf tree data");
                 initNotebookTree();
             });

@@ -328,6 +328,10 @@ Notebook.prototype.open = function(node, searchPattern) {
                         }
                     );
                 }
+                else {
+                    /* No item, just show empty table */
+                    self.tableView.show();
+                }
             };
 
             /* Recursively list all notes in all notebook */
