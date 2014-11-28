@@ -81,7 +81,7 @@ function NoteEditor(fileManager) {
             }, 1000);
         }
 
-        /* Recursive images upload */
+        /* Recursive image upload */
         function uploadImages(path, files) {
             var index = 0;
             var fileName;
@@ -108,7 +108,7 @@ function NoteEditor(fileManager) {
                     img.onload = function() {
                         var targetWidth = this.width;
                         var targetHeight = this.height;
-                        var maxWidth = $(".cke_wysiwyg_frame").width() / 2;
+                        var maxWidth = $(".cke_wysiwyg_frame").width() * 0.75;
                         if (this.width > maxWidth) {
                             targetHeight = (this.height / this.width) * maxWidth;
                             targetWidth = maxWidth;
@@ -116,12 +116,14 @@ function NoteEditor(fileManager) {
 
                         stream = self.fileManager.writeFile(
                             path + "/" + fileName, files[index],
+                            /* onComplete */
                             function(path, progress, error) {
                                 if (error) throw new Error("unable to write " + path);
                                 self.progressDialog.setProgress(100);
                                 editor.insertHtml("<img src='userdata/" + path + "' style='width:" + targetWidth + "px; height:" + targetHeight + "px'/>");
                                 upload(++index);
                             },
+                            /* onProgress */
                             function(path, progress, error) {
                                 self.progressDialog.setProgress(progress);
                             }
@@ -254,8 +256,8 @@ function NoteEditor(fileManager) {
             editor.document.on("drop", dropFiles);
             editor.document.on("dragover", dragoverEffect);
             // For IE
-            editor.document.getBody().on("drop", dropFiles);
-            editor.document.getBody().on("dragover", dragoverEffect);
+            //editor.document.getBody().on("drop", dropFiles);
+            //editor.document.getBody().on("dragover", dragoverEffect);
 
             editor.focus();
         });

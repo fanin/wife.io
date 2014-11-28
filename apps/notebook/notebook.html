@@ -37,6 +37,7 @@
 
         <script>
             function takeNoteSnapshot(fileManager, saveTo) {
+                $("#note-snapshot").fadeTo(0, 1);
                 //$(".cke_wysiwyg_frame").contents().find("body")
                 html2canvas($("#note-snapshot"), {
                     allowTaint: true,
@@ -50,6 +51,7 @@
                                 callback && callback();
                                 alert("Unable to write snapshot " + path);
                             }
+                            $("#note-snapshot").fadeTo(0, 0);
                         });
                     }
                 });
@@ -211,7 +213,7 @@
             </div>
         </div>
 
-        <div id="note-snapshot" class="cke_contents cke_reset"></div>
+        <div id="note-snapshot"></div>
         <div id="confirm-dialog"></div>
         <div id="progress-dialog"></div>
 
