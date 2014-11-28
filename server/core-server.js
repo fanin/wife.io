@@ -23,6 +23,7 @@ function CoreServer(http) {
     this.error = null;
 
     this.loadProtoSpec = function(name, version) {
+        var self = this;
         var protoSpec = name + '-v' + version;
 
         var jsonString = fs.readFileSync(path.resolve(__dirname, '../protocol/' + protoSpec + '.json'));
@@ -34,13 +35,13 @@ function CoreServer(http) {
             }
             catch (err) {
                 //console.log('Protocol error: ' + err);
-                this.error = SYSTEM.ERROR.ProtoParse;
+                self.error = SYSTEM.ERROR.ProtoParse;
                 return null;
             }
         }
         else {
             //console.log('Protocol not specified');
-            this.error = SYSTEM.ERROR.ProtoRead;
+            self.error = SYSTEM.ERROR.ProtoRead;
             return null;
         }
     }
