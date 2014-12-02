@@ -10,6 +10,18 @@ function NoteEditor(fileManager) {
     self.autoSaveTimer = undefined;
     self.isSavingNote = false;
 
+    /* Build time code */
+    self.getTimecode = function() {
+        var now = new Date();
+        return now.getFullYear()
+        + ("0" + (now.getMonth() + 1)).slice(-2)
+        + ("0" + now.getDate()).slice(-2)
+        + ("0" + now.getHours()).slice(-2)
+        + ("0" + now.getMinutes()).slice(-2)
+        + ("0" + now.getSeconds()).slice(-2)
+        + ("0" + now.getMilliseconds()).slice(-2);
+    };
+
     /* Initialize progress dialog for image uploading */
     self.progressDialog = new Dialog("progress-dialog", "progress");
     self.progressDialog.setTitle("Image Uploader");
@@ -97,7 +109,9 @@ function NoteEditor(fileManager) {
                     return;
                 }
 
-                fileName = files[index].name;
+                var ext = files[index].name.split(".").pop();
+                if (ext) ext = "." + ext;
+                fileName = self.getTimecode() + ext;
 
                 if (files[index].type.toLowerCase().indexOf("image") === 0) {
                     self.progressDialog.open();
@@ -138,10 +152,10 @@ function NoteEditor(fileManager) {
 
             self.progressDialog.onProgressEvent({
                 change: function() {
-                    self.progressDialog.setMessage("Uploading " + fileName + ": " + self.progressDialog.progress() + "%");
+                    self.progressDialog.setMessage("Uploading " + files[index].name + ": " + self.progressDialog.progress() + "%");
                 },
                 complete: function() {
-                    self.progressDialog.setMessage(fileName + " uploaded!");
+                    self.progressDialog.setMessage(files[index].name + " uploaded!");
                 }
             });
 

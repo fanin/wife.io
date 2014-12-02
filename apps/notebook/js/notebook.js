@@ -30,7 +30,7 @@ function Notebook(fileManager) {
         var path = "";
 
         if (typeof node === "object")
-            path = "/" + node.name;
+            path = "/" + node.id;
         else if (typeof node === "string")
             path = node;
 

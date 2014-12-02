@@ -8,6 +8,18 @@ function Bookshelf(fileManager) {
     this.confirmDialog = new Dialog("confirm-dialog");
     this.confirmDialog.setTitle("Are you sure?");
 
+    /* Build time code */
+    this.getTimecode = function() {
+        var now = new Date();
+        return now.getFullYear()
+        + ("0" + (now.getMonth() + 1)).slice(-2)
+        + ("0" + now.getDate()).slice(-2)
+        + ("0" + now.getHours()).slice(-2)
+        + ("0" + now.getMinutes()).slice(-2)
+        + ("0" + now.getSeconds()).slice(-2)
+        + ("0" + now.getMilliseconds()).slice(-2);
+    };
+
     /* Initialize Dialogs */
     var checkDuplicateStack = function(name) {
         var node = $("#notebook-tree").tree("getNodeByName", name);
@@ -211,7 +223,7 @@ function Bookshelf(fileManager) {
         var path = "";
 
         if (typeof node === "object")
-            path = "/" + node.name;
+            path = "/" + node.id;
         else if (typeof node === "string")
             path = node;
 
@@ -337,7 +349,8 @@ function Bookshelf(fileManager) {
     /* Notebook management */
     function create(name, type) {
         if (type === "notebook") {
-            var path = self.getPath("/") + name;
+            var code = self.getTimecode();
+            var path = self.getPath("/") + code;
             //console.log("create " + path);
 
             self.fileManager.exist(path, function(path, exist, isDir, error) {
@@ -346,7 +359,7 @@ function Bookshelf(fileManager) {
 
                 self.fileManager.createDirectory(path, function(path, error) {
                     if (error) throw new Error("unable to create " + path);
-                    $("#notebook-tree").tree("appendNode", { label: name });
+                    $("#notebook-tree").tree("appendNode", { label: name, id: parseInt(code) });
                     /* Select latest appended node */
                     var node = $("#notebook-tree").tree("getNodeByName", name);
                     if (node) $("#notebook-tree").tree("selectNode", node);
@@ -355,7 +368,7 @@ function Bookshelf(fileManager) {
             });
         }
         else {
-            $("#notebook-tree").tree("appendNode", { label: name });
+            $("#notebook-tree").tree("appendNode", { label: name, id: 1 });
             saveNotebookTree();
         }
     }
