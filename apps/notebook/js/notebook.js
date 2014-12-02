@@ -431,9 +431,9 @@ Notebook.prototype.addNote = function(title, content, complete) {
                     });
                 });
 
-                //self.fileManager.createDirectory(path + "/assets", function(path, error) {
-                //    if (error) throw new Error("unable to create assets directory");
-                //});
+                self.fileManager.createDirectory(path + "/assets", function(path, error) {
+                    if (error) throw new Error("unable to create assets directory");
+                });
             });
         }
         else {

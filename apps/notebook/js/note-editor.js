@@ -64,7 +64,7 @@ function NoteEditor(fileManager) {
 
         /* When user upload an image and remove it from the note, the image file is still under assets folder.
            We scan note and remove unused assets after user complete editing note */
-        self.removeUnusedAssets = function(notePath) {
+        self.removeUselessAssets = function(notePath) {
             setTimeout(function() {
                 self.fileManager.iterateList(
                     dirname(notePath) + "/assets",
@@ -177,18 +177,8 @@ function NoteEditor(fileManager) {
             var path = dirname(self.notePath);
             var files = e.data.$.target.files || e.data.$.dataTransfer.files;
 
-            self.fileManager.exist(path + "/assets", function(path, exist, isDir, error) {
-                if (!exist) {
-                    self.fileManager.createDirectory(path, function(path, error) {
-                        if (error) throw new Error("unable to create assets directory");
-                        uploadImages(path, files);
-                    });
-                }
-                else
-                    uploadImages(path, files);
-
-                self.fileManager.touch(path, function() {});
-            });
+            uploadImages(path, files);
+            self.fileManager.touch(path, function() {});
         }
 
         function dragoverEffect(e) {
@@ -201,6 +191,7 @@ function NoteEditor(fileManager) {
         function save(notePath, noteIndex, title, content, callback) {
             if (!notePath) {
                 callback && callback();
+                self.jqueryElement.trigger("note-editor.save-error", noteIndex);
                 return;
             }
 
@@ -208,6 +199,7 @@ function NoteEditor(fileManager) {
 
             if (self.noteTitle === title && self.noteContent === content) {
                 callback && callback();
+                self.jqueryElement.trigger("note-editor.nochange", noteIndex);
                 return;
             }
 
@@ -233,10 +225,58 @@ function NoteEditor(fileManager) {
                     $("#note-snapshot").append(content);
                     takeNoteSnapshot(self.fileManager, path + "/note.png");
 
-                    self.jqueryElement.trigger("note-editor.save", noteIndex);
                     callback && callback();
+                    self.jqueryElement.trigger("note-editor.saved", noteIndex);
                 });
             });
+        }
+
+        /*
+         * Grab HTML resources procedure:
+         * 1) Find resources with absolute src path on other site (<img src='http://www.somewhere.com/image.jpg'>)
+         * 2) Download them to our assets folder
+         * 3) Replace resource URL with our assets URL
+         */
+        function grabResourcesAndSave(notePath, noteIndex, title, content, callback) {
+            var re = /<img[^>]+src="?([^"\s]+)"?[^>]*\/>/gi;
+            var imgs = content.match(re);
+
+            if (imgs && imgs.length > 0) {
+                var imgName = self.getTimecode();
+
+                function replaceResource(i) {
+                    var src = $(imgs[i]).attr('src');
+                    var ext = src.split(".").pop();
+                    if (ext) ext = "." + ext;
+                    var fileName = (parseInt(imgName) + i).toString() + ext;
+
+                    if (!(new RegExp(/^(userdata)/)).test(src)) {
+                        self.fileManager.saveUrlAs(dirname(notePath) + "/assets/" + fileName, src, function(path, error) {
+                            if (error) {
+                                console.log("Unable to save file from URL " + src);
+                                return;
+                            }
+
+                            content = content.replace(src, "userdata/" + path);
+
+                            if (i === imgs.length - 1)
+                                save(notePath, noteIndex, title, content, callback);
+                            else
+                                replaceResource(i + 1);
+                        });
+                    }
+                    else {
+                        if (i === imgs.length - 1)
+                            save(notePath, noteIndex, title, content, callback);
+                        else
+                            replaceResource(i + 1);
+                    }
+                }
+
+                replaceResource(0);
+            }
+            else
+                save(notePath, noteIndex, title, content, callback);
         }
 
         self.scheduleAutoSave = function(wait) {
@@ -245,7 +285,7 @@ function NoteEditor(fileManager) {
                 self.autoSaveTimer = undefined;
             }
 
-            /* Take snapshot of current doc */
+            /* Preserve doc info which is going to save */
             var notePath = self.notePath;
             var noteIndex = self.noteIndex;
             var title = $("#note-title-input").val();
@@ -254,12 +294,18 @@ function NoteEditor(fileManager) {
             if (wait > 0) {
                 self.autoSaveTimer = setTimeout(function() {
                     self.autoSaveTimer = undefined;
-                    save(notePath, noteIndex, title, content);
+                    self.isSavingNote = true;
+                    self.jqueryElement.trigger("note-editor.saving");
+                    grabResourcesAndSave(notePath, noteIndex, title, content, function() {
+                        self.isSavingNote = false;
+                    });
                 }, wait);
             }
             else {
+                /* Rise isSavingNote to to force coming loadContent()/resetContent() calls to wait */
                 self.isSavingNote = true;
-                save(notePath, noteIndex, title, content, function() {
+                self.jqueryElement.trigger("note-editor.saving");
+                grabResourcesAndSave(notePath, noteIndex, title, content, function() {
                     self.isSavingNote = false;
                 });
             }
@@ -338,23 +384,30 @@ NoteEditor.prototype.loadContent = function(path, index) {
 NoteEditor.prototype.resetContent = function() {
     var self = this;
 
-    /* Stop & clear previous auto save timer */
-    if (self.autoSaveTimer) {
-        clearTimeout(self.autoSaveTimer);
-        self.autoSaveTimer = undefined;
+    /* Check if last edited note is saved */
+    if (self.isSavingNote) {
+        /* Last edited note is being saved, defer readFile() work after 500ms and see if it is done */
+        setTimeout(function() { self.resetContent(); }, 500);
     }
+    else {
+        /* Stop & clear previous auto save timer */
+        if (self.autoSaveTimer) {
+            clearTimeout(self.autoSaveTimer);
+            self.autoSaveTimer = undefined;
+        }
 
-    /* Auto save unsaved content to previous doc immediately */
-    if (self.notePath) {
-        self.scheduleAutoSave(0);
-        self.removeUnusedAssets(self.notePath);
+        /* Auto save unsaved content to previous doc immediately */
+        if (self.notePath) {
+            self.scheduleAutoSave(0);
+            self.removeUselessAssets(self.notePath);
+        }
+
+        self.notePath = undefined;
+        self.noteIndex = -1;
+
+        self.setContentNoLagWorkaround("", "");
+
+        $("#note-title-input").prop("disabled", true);
+        CKEDITOR.instances["note-content-editor"].setReadOnly(true);
     }
-
-    self.notePath = undefined;
-    self.noteIndex = -1;
-
-    self.setContentNoLagWorkaround("", "");
-
-    $("#note-title-input").prop("disabled", true);
-    CKEDITOR.instances["note-content-editor"].setReadOnly(true);
 }

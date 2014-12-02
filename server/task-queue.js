@@ -15,10 +15,10 @@ function TaskQueue(taskHandler) {
         if (queue.length > 0) {
             var task = queue[0];
 
-            if (task.status == 'WAITING') {
+            if (task.status === 'WAITING') {
                 task.status = 'RUNNING';
                 //console.log('Running ' + task.context.data);
-                if (taskHandler(task) == true) {
+                if (taskHandler(task) === true) {
                     task = null;
                     task = queue.shift();
                     delete task;
@@ -27,12 +27,12 @@ function TaskQueue(taskHandler) {
                     task.status = 'PENDING';
                 }
             }
-            else if (task.status == 'PENDING') {
+            else if (task.status === 'PENDING') {
                 /* Wait a while and check task status again */
                 //console.log('Pending ' + task.context.data);
                 return;
             }
-            else if (task.status == 'RUNNING') {
+            else if (task.status === 'RUNNING') {
                 /* There is a running task being interrupted, just return and let the task finish */
                 return;
             }

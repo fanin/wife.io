@@ -1,4 +1,4 @@
-var http = require('http').createServer(handler),
+var server = require('http').createServer(handler),
     fs = require('fs'),
     path = require('path'),
     ip = require('ip'),
@@ -20,10 +20,10 @@ catch (err) {
     process.exit(1);
 }
 
-http.listen(8001, function() {
+server.listen(8001, function() {
     var CoreServer = require('./server/' + SYSTEM.SETTINGS.CoreServer);
     if (!SYSTEM.SERVER) {
-        SYSTEM.SERVER = new CoreServer(http);
+        SYSTEM.SERVER = new CoreServer(server);
         SYSTEM.SERVER.listen();
     }
 });

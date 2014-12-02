@@ -387,6 +387,23 @@
                         }
                     }
                 },
+                "SaveURLAs": {
+                    "REQ": "PROTO-0-C-FS-SAVE-URL-FILE",
+                    "RES": "PROTO-0-R-FS-SAVE-URL-FILE",
+                    "ERR": "PROTO-0-E-FS-SAVE-URL-FILE",
+                    "Comment": {
+                        "REQ Args": {
+                            "Path": "File path to write",
+                            "URL": "HTTP URL of file to save"
+                        },
+                        "RES Params": {
+                            "Path": "Path of file written"
+                        },
+                        "ERR Params": {
+                            "Error": "Error code"
+                        }
+                    }
+                },
                 "Grep": {
                     "REQ": "PROTO-0-C-FS-GREP",
                     "RES": "PROTO-0-R-FS-GREP",

@@ -1,6 +1,9 @@
 var fs = require('graceful-fs'),
     fse = require('fs-extra'),
+    path = require('path'),
     ss = require('socket.io-stream'),
+    url = require('url'),
+    http = require('http'),
     child_process = require('child_process'),
     ReadWriteLock = require('rwlock'),
     htmlToText = require('html-to-text');
@@ -282,6 +285,42 @@ FileManager.prototype.register = function(_super, socket, protoFS) {
         });
     });
 
+    socket.on(protoFS.SaveURLAs.REQ, function(_path, fileURL) {
+        var realPath = security.getUserDataPath(_path);
+
+        if (fs.existsSync(path.dirname(realPath))) {
+            var fileStream;
+
+            if (fs.existsSync(realPath)) {
+                var isDir = fs.lstatSync(realPath).isDirectory();
+
+                if (isDir) {
+                    var fileName = url.parse(fileURL).pathname.split('/').pop();
+                    fileStream = fs.createWriteStream(realPath + '/' + fileName);
+                }
+                else
+                    fileStream = fs.createWriteStream(realPath);
+            }
+            else
+                fileStream = fs.createWriteStream(realPath);
+
+            var options = {
+                host: url.parse(fileURL).host,
+                port: url.parse(fileURL).port || 80,
+                path: url.parse(fileURL).pathname
+            };
+
+            http.get(options, function(res) {
+                res.on('data', function(data) {
+                    fileStream.write(data);
+                }).on('end', function() {
+                    fileStream.end();
+                    socket.emit(protoFS.SaveURLAs.RES, _path);
+                });
+            });
+        }
+    });
+
     socket.on(protoFS.Grep.REQ, function(path, regex, option) {
         var realPath = security.getUserDataPath(path);
         var defaultOption = {
@@ -426,6 +465,7 @@ FileManager.prototype.unregister = function(socket, protoFS) {
     socket.removeAllListeners(protoFS.ReadFile.REQ);
     socket.removeAllListeners(protoFS.WriteFile.REQ);
     socket.removeAllListeners(protoFS.AppendFile.REQ);
+    socket.removeAllListeners(protoFS.SaveURLAs.REQ);
     socket.removeAllListeners(protoFS.Grep.REQ);
     socket.removeAllListeners(protoFS.Open.REQ);
     socket.removeAllListeners(protoFS.Close.REQ);

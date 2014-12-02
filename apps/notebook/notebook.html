@@ -40,7 +40,7 @@
                 $("#note-snapshot").fadeTo(0, 1);
                 //$(".cke_wysiwyg_frame").contents().find("body")
                 html2canvas($("#note-snapshot"), {
-                    allowTaint: true,
+                    allowTaint: false,
                     taintTest: false,
                     onrendered: function(canvas) {
                         var dataUrl = canvas.toDataURL("image/png");
@@ -148,11 +148,24 @@
                         bookshelf.selectNotebookAtIndex(0);
                     });
 
-                    noteEditor.jqueryElement.on("note-editor.save", function(event, index) {
+                    noteEditor.jqueryElement.on("note-editor.saving", function(event) {
+                        modal.open({ content: "<img class='wait-spin-indicator'/><div style='padding-top:5px'>Saving note...</div>" });
+                    });
+
+                    noteEditor.jqueryElement.on("note-editor.nochange", function(event) {
+                        modal.close();
+                    });
+
+                    noteEditor.jqueryElement.on("note-editor.saved", function(event, index) {
                         $("#status-msg").text("Saved!");
                         $("#status-msg").fadeIn(500);
                         $("#status-msg").fadeOut(2000, function() {});
                         notebook.reloadNote(index);
+                        modal.close();
+                    });
+
+                    noteEditor.jqueryElement.on("note-editor.save-error", function(event) {
+                        modal.close();
                     });
                 });
 
