@@ -3,21 +3,26 @@
     -webkit-box-flex:1;
     margin: 0;
     border: 0;
+    text-align: left;
 }
 
 #note-title-input {
-    width: 99%;
-    height: 28px;
+    height: 27px;
     font-size: 16px;
     color: #555;
     border: 0;
-    padding: 0;
+    border-right: 1px solid lightgray;
+    border-bottom: 1px solid lightgray;
+    padding-left: 5px;
+}
+
+#note-title-input:disabled {
+    background-color: white;
 }
 
 #cke_note-content-editor {
     border: 0;
-    -moz-box-shadow: none;
-    -webkit-box-shadow: none;
+    border-right: 1px solid lightgray;
 }
 
 .glowing-border {
@@ -29,18 +34,24 @@
 }
 
 #note-snapshot {
-    z-index: -9999;
-    opacity: 0;
-    position: absolute;
-    top: 0px;
-    left: 0px;
     width: 800px;
     height: auto;
-    color: black;
-    background-color: white;
-    /* Set border-box for not to increase width after padding */
-    padding: 10px;
-    -moz-box-sizing: border-box;
-    -webkit-box-sizing: border-box;
-    box-sizing: border-box;
+    background-color: #fff;
+    /* Make sure this is not visible while taking snapshot */
+    opacity: 0;
+    position: absolute;
+    top: 1000px;
+    left: 1000px;
+    z-index: -9999;
+}
+
+#note-snapshot-body {
+    /* copy from ckeditor/contents.css */
+    font-family: sans-serif, Arial, Verdana, "Trebuchet MS";
+    color: #333;
+    background-color: #fff;
+    margin: 20px;
+    font-size: 13px;
+    line-height: 1.6;
+    word-wrap: break-word;
 }

@@ -1,6 +1,6 @@
 {
-    "SysName": "Wife.IO",
-    "Brand": "Bowie!",
+    "SysName": "wife.io",
+    "Brand": "Mac!",
     "CoreServer": "core-server",
     "UserAppPath": "/tmp/wife.io/apps",
     "TempPath": "/tmp",

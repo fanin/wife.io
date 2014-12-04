@@ -36,6 +36,7 @@ function NoteEditor(fileManager) {
     CKEDITOR.config.extraPlugins = "font,customsave,dragresize";
     CKEDITOR.config.removePlugins = "format,link,unlink,anchor,elementspath,about";
     CKEDITOR.config.skin = "icy_orange";
+    CKEDITOR.addCss(".cke_editable { word-wrap: break-word }");
 
     CKEDITOR.on("instanceReady", function(event) {
         var editor = event.editor;
@@ -195,7 +196,7 @@ function NoteEditor(fileManager) {
                 return;
             }
 
-            var doc = "<html><head><title>" + title + "</title></head><body style='width:800px;margin:0 auto;'>" + content + "</body></html>";
+            var doc = "<html><head><title>" + title + "</title></head><body>" + content + "</body></html>";
 
             if (self.noteTitle === title && self.noteContent === content) {
                 callback && callback();
@@ -221,8 +222,8 @@ function NoteEditor(fileManager) {
                     self.noteTitle = title;
                     self.noteContent = content;
 
-                    $("#note-snapshot").empty();
-                    $("#note-snapshot").append(content);
+                    $("#note-snapshot-body").empty();
+                    $("#note-snapshot-body").append(content);
                     takeNoteSnapshot(self.fileManager, path + "/note.png");
 
                     callback && callback();
@@ -347,7 +348,8 @@ function NoteEditor(fileManager) {
 
 NoteEditor.prototype.fitSize = function(width, height) {
     try {
-        CKEDITOR.instances["note-content-editor"].resize(width, height - 28);
+        $("#note-title-input").width(width - 6);
+        CKEDITOR.instances["note-content-editor"].resize(width, height - 30);
     } catch (e) {}
 }
 

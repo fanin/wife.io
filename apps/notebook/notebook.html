@@ -37,8 +37,12 @@
 
         <script>
             function takeNoteSnapshot(fileManager, saveTo) {
+                /* Adjust body width & height while body size in $(".cke_wysiwyg_frame") may be changed by vertical scroll bar */
+                $("#note-snapshot-body").css("width", $(".cke_wysiwyg_frame").contents().find("body").css("width"));
+                $("#note-snapshot-body").css("height", $(".cke_wysiwyg_frame").contents().find("body").css("height"));
+
                 $("#note-snapshot").fadeTo(0, 1);
-                //$(".cke_wysiwyg_frame").contents().find("body")
+
                 html2canvas($("#note-snapshot"), {
                     allowTaint: false,
                     taintTest: false,
@@ -173,6 +177,18 @@
 
                 notebookViewController.initiate();
                 setContentSizeFit();
+
+                /*
+                $("#bookshelf").resizable({
+                    handles: 'e, w'
+                });
+                $("#notebook").resizable({
+                    handles: 'e, w'
+                });
+                $("#note-editor").resizable({
+                    handles: 'e, w'
+                });
+                */
             });
 
             $(window).resize(function() {
@@ -226,7 +242,7 @@
             </div>
         </div>
 
-        <div id="note-snapshot"></div>
+        <div id="note-snapshot"><div id="note-snapshot-body"></div></div>
         <div id="confirm-dialog"></div>
         <div id="progress-dialog"></div>
 
@@ -282,13 +298,14 @@
 
                 try {
                     var bookshelfWidth = newWidth  * 0.15;
+                    if (bookshelfWidth > 300) bookshelfWidth = 300;
                     var notebookWidth = newWidth * 0.2;
+                    if (notebookWidth > 400) notebookWidth = 400;
                     var editorWidth = newWidth - bookshelfWidth - notebookWidth;
 
-                    if (editorWidth > 800) {
-                        bookshelfWidth += (editorWidth - 800) / 2;
-                        notebookWidth += (editorWidth - 800) / 2;
-                        editorWidth = 800;
+                    if (editorWidth > 801) {
+                        /* Set width to 801 instead of 800 due to there's a 1-pixel width right border */
+                        editorWidth = 801;
                     }
 
                     bookshelf.fitSize(bookshelfWidth, newHeight);
