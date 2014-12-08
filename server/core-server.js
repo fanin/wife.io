@@ -2,12 +2,14 @@ var sio = require('socket.io'),
     util = require('util'),
     fs = require('fs-extra'),
     path = require('path'),
+    EventEmitter = require('events').EventEmitter,
     randomstring = require('./lib/randomstring'),
     ExtensionManager = require('./extension-manager'),
     SecurityManager = require('./security-manager'),
+    NotificationCenter = require('./notification-center'),
     AppManager = require('./app-manager'),
     FileManager = require('./file-manager'),
-    StorageMonitor = require('./storage-monitor');
+    StorageManager = require('./storage-manager');
 
 var SYSTEM = require('../system');
 
@@ -15,9 +17,11 @@ module.exports = CoreServer;
 
 function CoreServer(http) {
     this.ioServer = sio(http, { 'pingTimeout': 300000 });
+    this.emitter = new EventEmitter();
     this.extensionManager = new ExtensionManager();
+    this.notificationCenter = new NotificationCenter();
     this.appManager = new AppManager();
-    this.storageMonitor = new StorageMonitor();
+    this.storageManager = new StorageManager();
     this.fileManager = new FileManager();
     this.securityManager = [];
     this.error = null;
@@ -70,8 +74,9 @@ CoreServer.prototype.listen = function() {
 
                 /* Register protocols for this app */
                 self.extensionManager.register(self, socket, self.protocol[0].Extension);
+                self.notificationCenter.register(self, socket, self.protocol[0].Notification);
                 self.appManager.register(self, socket, self.protocol[0].APP);
-                self.storageMonitor.register(self, socket, self.protocol[0].Storage);
+                self.storageManager.register(self, socket, self.protocol[0].Storage);
                 self.fileManager.register(self, socket, self.protocol[0].FileSystem);
             }
             else
@@ -81,8 +86,9 @@ CoreServer.prototype.listen = function() {
         socket.on('disconnect', function() {
             /* Unregister protocols for this app */
             self.extensionManager.unregister(socket, self.protocol[0].Extension);
+            self.notificationCenter.unregister(socket, self.protocol[0].Notification);
             self.appManager.unregister(socket, self.protocol[0].APP);
-            self.storageMonitor.unregister(socket, self.protocol[0].Storage);
+            self.storageManager.unregister(socket, self.protocol[0].Storage);
             self.fileManager.unregister(socket, self.protocol[0].FileSystem);
 
             socket.removeAllListeners(self.protocol[0].Base.GetInfo.REQ);

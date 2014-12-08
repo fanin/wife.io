@@ -24,7 +24,7 @@ SecurityManager.prototype.isExtensionAllowed = function(name) {
 }
 
 SecurityManager.prototype.isAppManageable = function() {
-    if (this.appInfo.Directory == 'launcher' || this.appInfo.Directory == 'installer')
+    if (this.appInfo.Directory === 'launcher' || this.appInfo.Directory === 'installer')
         return true;
     else
         return false;

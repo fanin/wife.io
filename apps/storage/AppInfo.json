@@ -15,7 +15,7 @@
         "IE": "*",
         "Safari": "*"
     },
-    "Description": "DSO storage information",
+    "Description": "Storage information",
     "ShowInLauncher": true,
     "AppIdentifier": "BAPPiBelWizY"
 }

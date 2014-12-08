@@ -348,7 +348,7 @@ function NoteEditor(fileManager) {
 
 NoteEditor.prototype.fitSize = function(width, height) {
     try {
-        $("#note-title-input").width(width - 6);
+        $("#note-title-input").width(width - 7);
         CKEDITOR.instances["note-content-editor"].resize(width, height - 30);
     } catch (e) {}
 }

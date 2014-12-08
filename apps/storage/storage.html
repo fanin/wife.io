@@ -39,7 +39,7 @@
             $('#content').width(maxBoxPerRow * blockWidth);
         }
 
-        $(window).resize(function(){
+        $(window).resize(function() {
             setContentWidth();
         });
 
@@ -63,44 +63,69 @@
                 self.storageClient.event.on("storage.localdisk#list#success", function(event, disks) {
                     if (disks.system) {
                         $("#content").append(
-                            "<div id='system-container' class='storage-container'> \
-                                <h3 id='system-title' align='left'></h3> \
-                                <div id='system-placeholder' class='storage-placeholder'></div> \
-                            </div>"
+                            "<div id='system-container' class='storage-container'>" +
+                            "<h3 id='system-title' align='left'></h3>" +
+                            "<div id='system-placeholder' class='storage-placeholder'></div>" +
+                            "</div>"
                         );
 
-                        $("#system-title").text("System (" + disks.system.mountpoint + ") (" + disks.system.total + ")");
+                        $("#system-title").html("System Disk (" + disks.system.total + ")<br>Mount at " + disks.system.mountpoint);
                         plotPieChart($("#system-placeholder"), disks.system);
                     }
 
                     if (disks.user) {
                         $("#content").append(
-                            "<div id='user-container' class='storage-container'> \
-                                <h3 id='user-title' align='left'></h3> \
-                                <div id='user-placeholder' class='storage-placeholder'></div> \
-                            </div>"
+                            "<div id='user-container' class='storage-container'>" +
+                            "<h3 id='user-title' align='left'></h3>" +
+                            "<div id='user-placeholder' class='storage-placeholder'></div>" +
+                            "</div>"
                         );
 
-                        $("#user-title").text("User (" + disks.user.mountpoint + ") (" + disks.user.total + ")");
+                        $("#user-title").html("User Disk (" + disks.user.total + ")<br>Mount at " + disks.user.mountpoint);
                         plotPieChart($("#user-placeholder"), disks.user);
                     }
 
                     for (var i = 0; i  < disks.removable.length; i++) {
+                        var disk = disks.removable[i];
+                        var diskId = disk.mountpoint.replace(/\//g, "__slash__");
+
                         $("#content").append(
-                            "<div id='removable-container[" + i + "]' class='storage-container'> \
-                                <h3 id='removable-title[" + i + "]' align='left'></h3> \
-                                <div id='removable-placeholder[" + i + "]' class='storage-placeholder'></div> \
-                            </div>"
+                            "<div id='removable-container-" + diskId + "' class='storage-container'>" +
+                            "<h3 id='removable-title-" + diskId + "' align='left'></h3>" +
+                            "<div id='removable-placeholder-" + diskId + "' class='storage-placeholder'></div>" +
+                            "</div>"
                         );
 
-                        $("#removable-title\\[" + i + "\\]").text("Removable (" + disks.removable[i].mountpoint + ") (" + disks.removable[i].total + ")");
-                        plotPieChart($("#removable-placeholder\\[" + i + "\\]"), disks.removable[i]);
+                        $("#removable-title-" + diskId).html(
+                            "Removable Disk (" + disk.total + ")<br>Mount at " + disk.mountpoint
+                        );
+                        plotPieChart($("#removable-placeholder-" + diskId), disk);
                     }
 
                     setContentWidth();
                 });
 
                 self.storageClient.event.on("storage.localdisk#list#error", function(event, error) {});
+
+                self.storageClient.event.on("storage.notification#diskadded", function(event, disk) {
+                    var diskId = disk.mountpoint.replace(/\//g, "__slash__");
+
+                    $("#content").append(
+                        "<div id='removable-container-" + diskId + "' class='storage-container'>" +
+                        "<h3 id='removable-title-" + diskId + "' align='left'></h3>" +
+                        "<div id='removable-placeholder-" + diskId + "' class='storage-placeholder'></div>" +
+                        "</div>"
+                    );
+
+                    $("#removable-title-" + diskId).html(
+                        "Removable Disk (" + disk.total + ")<br>Mount at " + disk.mountpoint
+                    );
+                    plotPieChart($("#removable-placeholder-" + diskId), disk);
+                });
+
+                self.storageClient.event.on("storage.notification#diskremoved", function(event, disk) {
+                    $("#removable-container-" + disk.mountpoint.replace(/\//g, "__slash__")).remove();
+                });
             });
 
             storageViewController.event.on("core.protospec#error", function(event, error) {});
@@ -132,12 +157,10 @@
                             show: true,
                             radius: 3/5,
                             formatter: function (label, series) {
-                                var divStyleBegin = "<div style='text-align:center; padding:2px; color:white;'>";
-                                var divStyleEnd = "</div>";
-                                if (label == "Used")
-                                    return divStyleBegin + disk.used + " Used<br/>" + disk.usedPer + "%" + divStyleEnd;
+                                if (label === "Used")
+                                    return "<div>" + disk.used + " Used<br/>" + disk.usedPer + "%" + "</div>";
                                 else
-                                    return divStyleBegin + disk.available + " Available<br/>" + disk.freePer + "%" + divStyleEnd;
+                                    return "<div>" + disk.available + " Available<br/>" + disk.freePer + "%" + "</div>";
                             },
                             background: {
                                 opacity: 0.5
@@ -146,7 +169,8 @@
                     }
                 },
                 legend: {
-                    show: true
+                    show: true,
+                    backgroundOpacity: 0
                 }
             });
         };
@@ -154,7 +178,7 @@
 </head>
 <body>
     <div id="wrapper">
-        <img class="background-image" src="img/background.jpg" />
+        <img class="background-image" />
         <div id="header"></div>
         <div id="content"></div>
         <div id="footer"></div>

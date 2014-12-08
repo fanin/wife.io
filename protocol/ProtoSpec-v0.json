@@ -60,6 +60,18 @@
                     }
                 }
             },
+            "Notification": {
+                "Post": {
+                    "RES": "PROTO-0-R-NOTIF-POST",
+                    "Comment": {
+                        "RES Params": {
+                            "Category": "Notification category",
+                            "Name": "Notification name",
+                            "Args": "Notification arguments"
+                        }
+                    }
+                }
+            },
             "APP": {
                 "List": {
                     "REQ": "PROTO-0-C-APP-LIST",
@@ -126,7 +138,7 @@
             "Storage": {
                 "GetLocalDisks": {
                     "REQ": "PROTO-0-C-STOR-GET-LOCAL-DISKS",
-                    "RES": "PROTO-0-R-STOR-LOCAL-DISKS",
+                    "RES": "PROTO-0-R-STOR-GET-LOCAL-DISKS",
                     "ERR": "PROTO-0-E-STOR-GET-LOCAL-DISKS",
                     "Comment": {
                         "REQ Args": {},
