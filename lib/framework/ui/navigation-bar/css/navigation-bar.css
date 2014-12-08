@@ -4,7 +4,7 @@
     height: 40px;
     position: fixed;
     border: 0 0;
-    z-index: 10000;
+    z-index: 9998;
     background-color: rgba(0, 0, 0, .6);
     -moz-box-shadow: 0 0 5px #999;
     -webkit-box-shadow: 0 0 5px #999;

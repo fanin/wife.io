@@ -135,12 +135,18 @@ function detail(drive, callback) {
         },
         function (err, results) {
             if (err) return callback(err);
-            results.freePer = numeral(results.available / (results.used + results.available) * 100).format('0')
-            results.usedPer = numeral(results.used / (results.used + results.available) * 100).format('0')
-            results.total = numeral(results.used + results.available).format('0.00 b');
-            results.used = numeral(results.used).format('0.00 b');
-            results.available = numeral(results.available).format('0.00 b');
-            results.drive = drive;
+
+            try {
+                results.freePer = numeral(results.available / (results.used + results.available) * 100).format('0')
+                results.usedPer = numeral(results.used / (results.used + results.available) * 100).format('0')
+                results.total = numeral(results.used + results.available).format('0.00 b');
+                results.used = numeral(results.used).format('0.00 b');
+                results.available = numeral(results.available).format('0.00 b');
+                results.drive = drive;
+            }
+            catch (error) {
+                console.log("disks.js error: " + error);
+            }
 
             callback(null, results);
         }

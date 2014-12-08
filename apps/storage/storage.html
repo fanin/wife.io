@@ -22,10 +22,7 @@
 
     <script>
         /* StorageViewController Constructor */
-        function StorageViewController() {
-            this._super = CoreClient;
-            this.storageClient = new StorageClient();
-        };
+        function StorageViewController() {};
 
         /* Inherit CoreClient */
         StorageViewController.prototype = new CoreClient();
@@ -46,13 +43,9 @@
         $(function() {
             var storageViewController = new StorageViewController();
 
-            storageViewController.event.on("core.connection#established", function(event) {
-                storageViewController.storageClient.attach(storageViewController);
-            });
+            storageViewController.event.on("core.connection#established", function(event) {});
 
-            storageViewController.event.on("core.connection#closed", function(event) {
-                storageViewController.storageClient.detach();
-            });
+            storageViewController.event.on("core.connection#closed", function(event) {});
 
             storageViewController.event.on("core.connection#error", function(event, error) {});
 
