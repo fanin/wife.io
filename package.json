@@ -1,8 +1,16 @@
 {
     "name": "Wife.IO",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "private": true,
-    "description": "Web Interface For Embedded",
+    "description": "Web Interface For Embedded devices",
+    "config" : { "port" : "8001" },
+    "scripts": {
+        "start": "node --expose-gc index.js"
+    },
+    "repository": {
+        "type" : "git",
+        "url" : "https://github.com/knych/wife.io.git"
+    },
     "dependencies": {
         "ip": "*",
         "mime": "*",

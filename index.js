@@ -20,7 +20,7 @@ catch (err) {
     process.exit(1);
 }
 
-server.listen(8001, function() {
+server.listen(process.env.npm_package_config_port, function() {
     var CoreServer = require('./server/' + SYSTEM.SETTINGS.CoreServer);
     if (!SYSTEM.SERVER) {
         SYSTEM.SERVER = new CoreServer(server);
@@ -89,6 +89,7 @@ function handler(req, res) {
 
             if (ctype.indexOf('text') > -1 || ctype.indexOf('javascript') > -1) {
                 var contentString = content.toString().replace(/%SYSIP%/g, ip.address());
+                contentString = contentString.replace(/%SYSPORT%/g, process.env.npm_package_config_port);
                 contentString = contentString.replace(/%SYSNAME%/g, SYSTEM.SETTINGS.SysName);
                 contentString = contentString.replace(/%BRAND%/g, SYSTEM.SETTINGS.Brand);
                 contentString = contentString.replace(/%COPYRIGHT%/g, SYSTEM.SETTINGS.Copyright);
