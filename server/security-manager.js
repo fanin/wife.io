@@ -5,7 +5,7 @@ module.exports = SecurityManager;
 
 function SecurityManager(appInfo) {
     this.appInfo = appInfo;
-    this.userDataDirectory = './apps/' + appInfo.Directory + '/userdata';
+    this.userDataDirectory = 'apps/' + appInfo.Directory + '/userdata';
 
     if (!fs.existsSync(this.userDataDirectory))
         fs.mkdirSync(this.userDataDirectory);
