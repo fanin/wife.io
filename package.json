@@ -19,6 +19,7 @@
         "adm-zip": "*",
         "graceful-fs": "*",
         "fs-extra": "*",
+        "fs-extended": "*",
         "async": "*",
         "numeral": "*",
         "rwlock": "*",

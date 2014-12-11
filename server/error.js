@@ -15,6 +15,7 @@ exports.ExtensionNotAllow = 'ERROR-EXTENSION-NOT-ALLOW';
 
 /* Security errors */
 exports.SecurityAccessDenied = 'ERROR-SECURITY-ACCESS-DENIED';
+exports.SecurityExternalNotAllowed = 'ERROR-SECURITY-EXT-NOTALLOW';
 
 /* File system errors */
 exports.FSNotExist = 'ERROR-FS-NOT-EXIST';
@@ -31,5 +32,7 @@ exports.APPExtractFail = 'ERROR-APP-EXTRACT';
 exports.APPInstallFail = 'ERROR-APP-INSTALL';
 
 /* Storage errors */
+exports.StorDiskApiError = 'ERROR-STOR-DISK-API';
 exports.StorSystemDiskNotFound = 'ERROR-STOR-NO-SYS-DISK';
 exports.StorUserDiskNotFound = 'ERROR-STOR-NO-USER-DISK';
+exports.StorBadDiskInfo = 'ERROR-STOR-DISK-INFO';

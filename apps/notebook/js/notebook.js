@@ -1,8 +1,3 @@
-/*
- * TODOs:
- * -> Image resize by drag
- */
-
 function Notebook(fileManager) {
     var self = this;
     this.node = undefined;

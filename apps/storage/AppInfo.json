@@ -17,5 +17,6 @@
     },
     "Description": "Storage information",
     "ShowInLauncher": true,
+    "AllowExternalUserData": false,
     "AppIdentifier": "BAPPiBelWizY"
 }

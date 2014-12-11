@@ -55,7 +55,7 @@
                         if (exist) {
                             self.fileManagerClient.readFile("appsort.json", "utf8", function(path, data, error) {
                                 if (error)
-                                    alert("Unable to read sorted list");
+                                    page.notifier.add("Launcher Error", "Unable to read APP list (" + error + ")", "img/icon.png", 10000);
                                 else {
                                     //try {
                                         var i;
@@ -86,7 +86,7 @@
                             var appsort = JSON.stringify(arg.list, null, 4);
                             self.fileManagerClient.writeFile("appsort.json", appsort, function(path, progress, error) {
                                 if (error)
-                                    alert("Unable to write sorted list");
+                                    page.notifier.add("Launcher Error", "Unable to write APP list", "img/icon.png", 10000);
                             });
 
                             self.appList = arg.list;
@@ -109,7 +109,7 @@
                     var appsort = JSON.stringify(self.appList, null, 4);
                     self.fileManagerClient.writeFile("appsort.json", appsort, function(path, progress, error) {
                         if (error)
-                            alert("Unable to write sorted list");
+                            page.notifier.add("Launcher Error", "Unable to write APP list", "img/icon.png", 10000);
                     });
 
                     /* Remove app icon */
@@ -119,7 +119,7 @@
                 });
 
                 self.appManagerClient.event.on("app.uninstall#error", function(event, error) {
-                    alert("Uninstall error: " + error);
+                    page.notifier.add("Installer Error", "Unable to uninstall APP: " + error, "/apps/b/installer/img/icon.png", 10000);
                 });
 
                 self.appManagerClient.list();
@@ -186,9 +186,12 @@
 
                         elementOverlayDiv.removeChild(elementOverlayImg);
                         elementIconDiv.removeChild(elementOverlayDiv);
-                    }
 
-                    elementA.setAttribute("href", "../" + app.Directory + "/" + app.AppEntry);
+                        elementA.setAttribute("href", "/apps/u/" + app.Directory + "/" + app.AppEntry);
+                    }
+                    else
+                        elementA.setAttribute("href", "/apps/b/" + app.Directory + "/" + app.AppEntry);
+
                     elementA.setAttribute("title", app.Description);
 
                     elementIconDiv.removeAttribute("class");
@@ -211,19 +214,22 @@
 
             var elementIconImg = document.createElement("img");
             elementIconImg.setAttribute("id", "icon-img-" + app.Directory);
-            elementIconImg.setAttribute("src", "../" + app.Directory + "/img/icon.png");
             elementIconImg.setAttribute("width", "100%");
             elementIconImg.setAttribute("height", "100%");
 
             var elementIconDiv = document.createElement("div");
             elementIconDiv.setAttribute("id", "icon-div-" + app.Directory);
-            if (appType === "user")
+            if (appType === "user") {
+                elementIconImg.setAttribute("src", "/apps/u/" + app.Directory + "/img/icon.png");
                 elementIconDiv.setAttribute(
                     "style",
-                    "background:url(../" + app.Directory + "/img/icon.png) no-repeat; background-size: contain;"
+                    "background:url(/apps/u/" + app.Directory + "/img/icon.png) no-repeat; background-size: contain;"
                 );
-            else
+            }
+            else {
+                elementIconImg.setAttribute("src", "/apps/b/" + app.Directory + "/img/icon.png");
                 elementIconDiv.appendChild(elementIconImg);
+            }
 
             var elementText = document.createElement("span");
             elementText.setAttribute("id", "icon-text-" + app.Directory);
@@ -232,7 +238,10 @@
             var elementA = document.createElement("a");
             elementA.setAttribute("id", "icon-a-" + app.Directory);
             elementA.appendChild(elementIconDiv);
-            elementA.setAttribute("href", "../" + app.Directory + "/" + app.AppEntry);
+            if (appType === "user")
+                elementA.setAttribute("href", "/apps/u/" + app.Directory + "/" + app.AppEntry);
+            else
+                elementA.setAttribute("href", "/apps/b/" + app.Directory + "/" + app.AppEntry);
             elementA.setAttribute("title", app.Description);
             elementA.appendChild(elementText);
 
@@ -310,7 +319,7 @@
                     var appsort = JSON.stringify(self.appList, null, 4);
                     self.fileManagerClient.writeFile("appsort.json", appsort, function(path, progress, error) {
                         if (error)
-                            alert("Unable to write sorted list");
+                            page.notifier.add("Launcher Error", "Unable to write APP list", "img/icon.png", 10000);
                     });
 
                 }
@@ -326,27 +335,7 @@
         <div id="header"></div>
         <div id="content">
             <div class="apps">
-                <ul id="applist">
-    <!--
-                    <li><a href="#"><i class="fa fa-facebook-square fa-4x"></i>Facebook</a></li>
-                    <li><a href="#"><i class="fa fa-twitter-square fa-4x"></i>Twitter</a></li>
-                    <li><a href="#"><i class="fa fa-youtube-square fa-4x"></i>Youtube</a></li>
-                    <li><a href="#"><i class="fa fa-skype fa-4x"></i>Skype</a></li>
-                    <li><a href="#"><i class="fa fa-windows fa-4x"></i>Windows</a></li>
-                    <li><a href="#"><i class="fa fa-linkedin fa-4x"></i>Linkedin</a></li>
-                    <li><a href="#"><i class="fa fa-apple fa-4x"></i>Apple</a></li>
-                    <li><a href="#"><i class="fa fa-android fa-4x"></i>Android</a></li>
-                    <li><a href="#"><i class="fa fa-dribbble fa-4x"></i>Dribbble</a></li>
-                    <li><a href="#"><i class="fa fa-html5 fa-4x"></i>HTML5</a></li>
-                    <li><a href="#"><i class="fa fa-linux fa-4x"></i>Linux</a></li>
-                    <li><a href="#"><i class="fa fa-css3 fa-4x"></i>CSS3</a></li>
-                    <li><a href="#"><i class="fa fa-github fa-4x"></i>Github</a></li>
-                    <li><a href="#"><i class="fa fa-pinterest fa-4x"></i>Pinterest</a></li>
-                    <li><a href="#"><i class="fa fa-tumblr-square fa-4x"></i>Tumblr</a></li>
-                    <li><a href="#"><i class="fa fa-dropbox fa-4x"></i>Dropbox</a></li>
-                    <li><a href="#"><i class="fa fa-instagram fa-4x"></i>Instagram</a></li>
-    -->
-                </ul>
+                <ul id="applist"></ul>
             </div>
         </div>
         <div id="footer"></div>

@@ -6,7 +6,7 @@ function ExtensionManager() {
     this.extensions = new Array();
 }
 
-ExtensionManager.prototype.register = function(_super, socket, protoExtension) {
+ExtensionManager.prototype.register = function(_super, socket, protoExtension, complete) {
     var self = this;
     var security = _super.securityManager[socket];
 
@@ -68,6 +68,8 @@ ExtensionManager.prototype.register = function(_super, socket, protoExtension) {
                 socket.emit(protoExtension.Unload.RES, name, "InUse");
         }
     });
+
+    complete && complete();
 }
 
 ExtensionManager.prototype.unregister = function(socket, protoExtension) {

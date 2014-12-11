@@ -1,4 +1,5 @@
 var fs = require('fs-extra'),
+    fse = require('fs-extended'),
     ss = require('socket.io-stream'),
     path = require('path'),
     randomstring = require('./lib/randomstring'),
@@ -7,8 +8,9 @@ var fs = require('fs-extra'),
 fs.jsonfile.spaces = 4;
 
 var SYSTEM = require('../system');
-var AppPath = path.resolve(__dirname, '../apps');
-var AppInfoFile = 'AppInfo.json';
+var USER_APP_PATH = SYSTEM.SETTINGS.UserStorageMountpoint + "/wife.io/apps";
+var BUILTIN_APP_PATH = path.resolve(__dirname, '../apps');
+var APP_INFO_FILE = 'AppInfo.json';
 
 module.exports = AppManager;
 
@@ -43,7 +45,7 @@ function AppManager() {
             appBundle.getEntries().every(function(zipEntry, index, zipEntries) {
                 if (zipEntry.isDirectory)
                     appDirs.push(path.join(zipEntry.entryName, '.'));
-                else if (path.basename(zipEntry.entryName) == AppInfoFile) {
+                else if (path.basename(zipEntry.entryName) === APP_INFO_FILE) {
                     try {
                         var info = JSON.parse(appBundle.readAsText(zipEntry, 'utf8'));
                         if (self.verifyAppInfo(info)) {
@@ -67,99 +69,39 @@ function AppManager() {
         return appInfo;
     };
 
-    this.buildAppSymlink = function(directory) {
-        fs.symlinkSync(SYSTEM.SETTINGS.UserAppPath + '/' + directory, AppPath + '/' + directory);
-    };
-
-    this.destroyAppSymlink = function(directory) {
-        if (fs.existsSync(AppPath + '/' + directory)) {
-            fs.unlinkSync(AppPath + '/' + directory);
-        }
-    };
-
-    this.rebuildAppsSymlink = function() {
-        try {
-            var appList = fs.readdirSync(AppPath).filter(function (file) {
-                if (file.lastIndexOf('.backup') == (file.length - '.backup'.length))
-                    return false;
-
-                var currAppPath = AppPath + '/' + file;
-                var stat = fs.lstatSync(currAppPath);
-                if (stat.isDirectory() || stat.isSymbolicLink())
-                    if (fs.existsSync(currAppPath + '/' + AppInfoFile))
-                        return true;
-                return false;
-            });
-
-            var userAppList = fs.readdirSync(SYSTEM.SETTINGS.UserAppPath).filter(function (file) {
-                if (file.lastIndexOf('.backup') == (file.length - '.backup'.length))
-                    return false;
-
-                var currUserAppPath = SYSTEM.SETTINGS.UserAppPath + '/' + file;
-                var stat = fs.lstatSync(currUserAppPath);
-                if (stat.isDirectory() || stat.isSymbolicLink())
-                    if (fs.existsSync(currUserAppPath + '/' + AppInfoFile))
-                        return true;
-                return false;
-            });
-
-            for (var i in appList) {
-                var currAppPath = AppPath + '/' + appList[i];
-                var stat = fs.lstatSync(currAppPath);
-                if (stat.isSymbolicLink())
-                    if (!fs.existsSync(fs.readlinkSync(currAppPath))) {
-                        /* Destroy symbolic links of removed APPs */
-                        self.destroyAppSymlink(appList[i]);
-                    }
-            }
-
-            for (i in userAppList) {
-                if (appList.indexOf(userAppList[i]) < 0) {
-                    /* Rebuild symbolic links for existing APPs */
-                    self.buildAppSymlink(userAppList[i]);
-                }
-            }
-        }
-        catch (err) { console.log(err); }
-    };
-
     this.loadApps = function(path, list) {
-        var builtinApps = [];
-        var userApps = [];
-
-        this.apps = [];
+        var appList = [];
 
         for (var i in list) {
-            var stat = fs.lstatSync(path + '/' + list[i]);
-            var jsonAppInfo = fs.readFileSync(path + '/' + list[i] + '/' + AppInfoFile);
+            var jsonAppInfo = fs.readFileSync(path + '/' + list[i] + '/' + APP_INFO_FILE);
             if (jsonAppInfo) {
                 try {
                     var appInfo = JSON.parse(jsonAppInfo);
                     if (this.verifyAppInfo(appInfo)) {
-                        if (stat.isSymbolicLink()) {
+                        if (path === USER_APP_PATH) {
                             if (appInfo.AppIdentifier) {
                                 this.apps[appInfo.AppIdentifier] = appInfo;
 
-                                /* Do not export AppIdentifier digits to client and preserve app type only */
+                                /* Erase AppIdentifier digits */
                                 appInfo.AppIdentifier = 'UAPP00000000';
-                                userApps.push(appInfo);
+                                appList.push(appInfo);
                             }
                             else
                                 console.log('Invalid App: No identifier');
                         }
                         else {
                             /* FIXME: Builtin App Indentifier should be generated at build time */
-                            /* Generate builtin APPs indentifier for first time running */
                             if (appInfo.AppIdentifier === undefined) {
+                                /* Generate builtin APPs indentifier for first time running */
                                 appInfo.AppIdentifier = randomstring.generate('BAPPXXXXXXXX');
-                                fs.writeJsonSync(path + '/' + list[i] + '/' + AppInfoFile, appInfo);
+                                fs.writeJsonSync(path + '/' + list[i] + '/' + APP_INFO_FILE, appInfo);
                             }
 
                             this.apps[appInfo.AppIdentifier] = appInfo;
 
-                            /* Do not export AppIdentifier digits to client and preserve app type only */
+                            /* Erase AppIdentifier digits for security reason, we only return APP type 'BAPP/UAPP' to client */
                             appInfo.AppIdentifier = 'BAPP00000000';
-                            builtinApps.push(appInfo);
+                            appList.push(appInfo);
                         }
                     }
                     else
@@ -171,31 +113,17 @@ function AppManager() {
             }
         }
 
-        return { builtin: builtinApps, user: userApps };
+        return appList;
     };
-
-    /* Create user app path if not exist */
-    if (!fs.existsSync(SYSTEM.SETTINGS.UserAppPath)) {
-        var dirs = SYSTEM.SETTINGS.UserAppPath.split('/');
-        var p = '';
-
-        /* Remove first '/' */
-        dirs.shift();
-
-        for (var i in dirs) {
-            p += '/' + dirs[i];
-            if (!fs.existsSync(p))
-                fs.mkdirSync(p);
-        }
-    }
-
-    /* Check user app symbolic links at startup time */
-    this.rebuildAppsSymlink();
 }
 
-AppManager.prototype.register = function(_super, socket, protoAPP) {
+AppManager.prototype.register = function(_super, socket, protoAPP, complete) {
     var self = this;
     var security = _super.securityManager[socket];
+
+    /* Create user app path if not exist */
+    if (!fs.existsSync(USER_APP_PATH))
+        fs.mkdirsSync(USER_APP_PATH);
 
     /**
      * Protocol Listener: App Management Events
@@ -205,7 +133,7 @@ AppManager.prototype.register = function(_super, socket, protoAPP) {
     });
 
     ss(socket).on(protoAPP.Install.REQ, function(appBundleDataStream) {
-        if (!security.isAppManageable()) {
+        if (!security.canManageApps()) {
             socket.emit(protoAPP.Install.ERR, SYSTEM.ERROR.SecurityAccessDenied);
             return;
         }
@@ -240,7 +168,7 @@ AppManager.prototype.register = function(_super, socket, protoAPP) {
     });
 
     socket.on(protoAPP.CancelInstall.REQ, function(installationCode) {
-        if (!security.isAppManageable()) {
+        if (!security.canManageApps()) {
             socket.emit(protoAPP.CancelInstall.ERR, SYSTEM.ERROR.SecurityAccessDenied);
             return;
         }
@@ -261,7 +189,7 @@ AppManager.prototype.register = function(_super, socket, protoAPP) {
     });
 
     socket.on(protoAPP.Uninstall.REQ, function(appInfo) {
-        if (!security.isAppManageable()) {
+        if (!security.canManageApps()) {
             socket.emit(protoAPP.Uninstall.ERR, SYSTEM.ERROR.SecurityAccessDenied);
             return;
         }
@@ -272,6 +200,8 @@ AppManager.prototype.register = function(_super, socket, protoAPP) {
         else
             socket.emit(protoAPP.Uninstall.ERR, result);
     });
+
+    complete && complete();
 }
 
 AppManager.prototype.unregister = function(socket, protoAPP) {
@@ -282,7 +212,7 @@ AppManager.prototype.unregister = function(socket, protoAPP) {
 }
 
 AppManager.prototype.getAppInfo = function(appDirectory) {
-    var file = AppPath + '/' + appDirectory + '/' + AppInfoFile;
+    var file = BUILTIN_APP_PATH + '/' + appDirectory + '/' + APP_INFO_FILE;
 
     if (fs.existsSync(file)) {
         var appInfo = fs.readJsonSync(file);
@@ -297,18 +227,31 @@ AppManager.prototype.getAppInfo = function(appDirectory) {
 }
 
 AppManager.prototype.listApps = function() {
+    this.apps = [];
+
     try {
-        var appList = fs.readdirSync(AppPath).filter(function (file) {
-            var stat = fs.lstatSync(AppPath + '/' + file);
-            if (stat.isDirectory() || stat.isSymbolicLink())
-                if (fs.existsSync(AppPath + '/' + file + '/' + AppInfoFile))
+        var builtinApps = this.loadApps(BUILTIN_APP_PATH, fs.readdirSync(BUILTIN_APP_PATH).filter(function (file) {
+            var stat = fs.lstatSync(BUILTIN_APP_PATH + '/' + file);
+            if (stat.isDirectory())
+                if (fs.existsSync(BUILTIN_APP_PATH + '/' + file + '/' + APP_INFO_FILE))
                     return true;
             return false;
-        });
+        }));
 
-        return this.loadApps(AppPath, appList);
+        var userApps = this.loadApps(USER_APP_PATH, fs.readdirSync(USER_APP_PATH).filter(function (file) {
+            var stat = fs.lstatSync(USER_APP_PATH + '/' + file);
+            if (stat.isDirectory())
+                if (fs.existsSync(USER_APP_PATH + '/' + file + '/' + APP_INFO_FILE))
+                    return true;
+            return false;
+        }));
+
+        return { builtin: builtinApps, user: userApps };
     }
-    catch (err) { console.log(err); }
+    catch (err) {
+        console.log("listApps: " + err);
+        return { builtin: [], user: [] };
+    }
 }
 
 AppManager.prototype.install = function(appBundlePath) {
@@ -331,9 +274,6 @@ AppManager.prototype.install = function(appBundlePath) {
     if (!appInfo)
         return { result: SYSTEM.ERROR.APPBadContentStruct };
 
-    var sysAppPath = AppPath + '/' + appInfo.Directory;
-    var userAppPath = SYSTEM.SETTINGS.UserAppPath + '/' + appInfo.Directory;
-
     /* Extract APP bundle */
     try {
         appBundle.extractAllTo(SYSTEM.SETTINGS.TempPath, true);
@@ -342,119 +282,96 @@ AppManager.prototype.install = function(appBundlePath) {
         return { result: SYSTEM.ERROR.APPExtractFail };
     }
 
-    if (fs.existsSync(sysAppPath)) {
-        /* Handle APP upgrade */
-        var jsonAppInfo = fs.readFileSync(sysAppPath + '/' + AppInfoFile);
+    if (appInfo.AppIdentifier === undefined)
+        appInfo.AppIdentifier = 'UAPP00000000';
+
+    if (appInfo.AppIdentifier.indexOf('BAPP') === 0) {
+        var builtinAppPath = BUILTIN_APP_PATH + '/' + appInfo.Directory;
+
+        if (fs.existsSync(builtinAppPath)) {
+            upgradeApp(builtinAppPath, appInfo, true);
+        }
+        else {
+            installApp(builtinAppPath, appInfo);
+        }
+    }
+    else if (appInfo.AppIdentifier.indexOf('UAPP') === 0) {
+        var userAppPath = USER_APP_PATH + '/' + appInfo.Directory;
+
+        if (fs.existsSync(userAppPath)) {
+            upgradeApp(userAppPath, appInfo, false);
+        }
+        else {
+            installApp(userAppPath, appInfo);
+
+            /* Generate user APP indentifier */
+            if (appInfo.AppIdentifier === 'UAPP00000000') {
+                while (1) {
+                    appInfo.AppIdentifier = randomstring.generate('UAPPXXXXXXXX');
+                    if (this.apps[appInfo.AppIdentifier])
+                        continue;
+
+                    fs.writeJsonSync(userAppPath + '/' + APP_INFO_FILE, appInfo);
+                    break;
+                }
+            }
+        }
+    }
+    else {
+        return { result: SYSTEM.ERROR.APPBadIdentifier };
+    }
+
+    function installApp(appPath, appInfo) {
+        try {
+            /* Install extracted APP */
+            fse.moveSync(SYSTEM.SETTINGS.TempPath + '/' + appInfo.Directory, appPath);
+        }
+        catch (error) {
+            console.log("installApp: " + error);
+            return { result: SYSTEM.ERROR.APPInstall };
+        }
+    }
+
+    function upgradeApp(appPath, appInfo, backupOrig) {
+        var jsonAppInfo = fs.readFileSync(appPath + '/' + APP_INFO_FILE);
         oldAppInfo = JSON.parse(jsonAppInfo);
 
         if (appInfo.Directory != oldAppInfo.Directory)
             return { result: SYSTEM.ERROR.APPUpgradeFail };
 
-        if (appInfo.AppIdentifier === undefined)
-            appInfo.AppIdentifier = 'UAPP00000000';
-        else if (appInfo.AppIdentifier === oldAppInfo.AppIdentifier)
+        if (appInfo.AppIdentifier === oldAppInfo.AppIdentifier)
             officialUpgrade = true;
 
-        if (appInfo.AppIdentifier.indexOf('BAPP') == 0) {
-            /* Upgrade builtin APP */
-
+        if (backupOrig) {
             /* First make a backup of first builtin version */
-            if (!fs.existsSync(sysAppPath + '.backup'))
-                fs.renameSync(sysAppPath, sysAppPath + '.backup');
-
-            try {
-                /* Install extracted APP */
-                fs.copySync(SYSTEM.SETTINGS.TempPath + '/' + appInfo.Directory, sysAppPath);
-            }
-            catch (error) {
-                console.log(error);
-                return { result: SYSTEM.ERROR.APPInstall };
-            }
-
-            /* Copy APP identifier if this is not an official upgrade */
-            if (!officialUpgrade) {
-                appInfo.AppIdentifier = oldAppInfo.AppIdentifier;
-                fs.writeJsonSync(sysAppPath + '/' + AppInfoFile, appInfo);
-            }
-
-            /* Remove tmp path */
-            fs.removeSync(SYSTEM.SETTINGS.TempPath + '/' + appInfo.Directory);
+            if (!fs.existsSync(appPath + '.backup'))
+                fse.moveSync(appPath, appPath + '.backup');
         }
-        else if (appInfo.AppIdentifier.indexOf('UAPP') == 0) {
-            /* Upgrade user APP */
 
-            if (officialUpgrade) {
-                /* We assume the official APP will work correctly, so no need to backup */
-            }
-            else {
-                /* This is unofficial upgrade, make a backup of latest version */
-                if (fs.existsSync(userAppPath + '.backup'))
-                    fs.removeSync(userAppPath + '.backup');
-                fs.renameSync(userAppPath, userAppPath + '.backup');
-            }
-
-            try {
-                /* Install extracted APP */
-                fs.copySync(SYSTEM.SETTINGS.TempPath + '/' + appInfo.Directory, userAppPath);
-
-                /* Remove existing APP symbolic link */
-                this.destroyAppSymlink(appInfo.Directory);
-
-                /* Build APP symbolic link */
-                this.buildAppSymlink(appInfo.Directory);
-            }
-            catch (error) {
-                console.log(error);
-                return { result: SYSTEM.ERROR.APPInstall };
-            }
-
-            /* Copy APP identifier if this is not an official upgrade */
-            if (!officialUpgrade) {
-                appInfo.AppIdentifier = oldAppInfo.AppIdentifier;
-                fs.writeJsonSync(userAppPath + '/' + AppInfoFile, appInfo);
-            }
-
-            /* Remove tmp path */
-            fs.removeSync(SYSTEM.SETTINGS.TempPath + '/' + appInfo.Directory);
-        }
-        else {
-            return { result: SYSTEM.ERROR.APPBadIdentifier };
-        }
-    }
-    else {
         try {
             /* Install extracted APP */
-            fs.renameSync(SYSTEM.SETTINGS.TempPath + '/' + appInfo.Directory, userAppPath);
-
-            /* Remove existing APP symbolic link */
-            this.destroyAppSymlink(appInfo.Directory);
-
-            /* Build APP symbolic link */
-            this.buildAppSymlink(appInfo.Directory);
+            fs.copySync(SYSTEM.SETTINGS.TempPath + '/' + appInfo.Directory, appPath);
         }
         catch (error) {
-            console.log(error);
+            console.log("upgradeApp: " + error);
             return { result: SYSTEM.ERROR.APPInstall };
         }
 
-        /* Generate user APP indentifier */
-        if (appInfo.AppIdentifier === undefined) {
-            while (1) {
-                appInfo.AppIdentifier = randomstring.generate('UAPPXXXXXXXX');
-                if (this.apps[appInfo.AppIdentifier])
-                    continue;
-
-                fs.writeJsonSync(userAppPath + '/' + AppInfoFile, appInfo);
-                break;
-            }
+        /* Copy APP identifier if this is not an official upgrade */
+        if (!officialUpgrade) {
+            appInfo.AppIdentifier = oldAppInfo.AppIdentifier;
+            fs.writeJsonSync(appPath + '/' + APP_INFO_FILE, appInfo);
         }
+
+        /* Remove tmp path */
+        fs.removeSync(SYSTEM.SETTINGS.TempPath + '/' + appInfo.Directory);
     }
 
     return { result: 'OK' };
 }
 
 AppManager.prototype.uninstall = function(appInfo) {
-    var appPath = SYSTEM.SETTINGS.UserAppPath + '/' + appInfo.Directory;
+    var appPath = USER_APP_PATH + '/' + appInfo.Directory;
 
     if (!fs.existsSync(appPath))
         return { result: SYSTEM.ERROR.FSNotExist };
@@ -462,9 +379,6 @@ AppManager.prototype.uninstall = function(appInfo) {
     try {
         /* Remove from app list */
         this.apps[appInfo.AppIdentifier] = undefined;
-
-        /* Remove APP symbolic link */
-        this.destroyAppSymlink(appInfo.Directory);
 
         /* Remove APP in user storage */
         fs.removeSync(appPath);

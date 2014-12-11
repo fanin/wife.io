@@ -143,8 +143,36 @@
                     "Comment": {
                         "REQ Args": {},
                         "RES Params": {
-                            "Disks": "Local disks information returned"
+                            "Disks": "Local disk info objects returned"
                         },
+                        "ERR Params": {
+                            "Error": "Error code"
+                        }
+                    }
+                },
+                "SetUserDisk": {
+                    "REQ": "PROTO-0-C-STOR-SET-USER-DISK",
+                    "RES": "PROTO-0-R-STOR-SET-USER-DISK",
+                    "ERR": "PROTO-0-E-STOR-SET-USER-DISK",
+                    "Comment": {
+                        "REQ Args": {
+                            "Disk": "Disk info object"
+                        },
+                        "RES Params": {},
+                        "ERR Params": {
+                            "Error": "Error code"
+                        }
+                    }
+                },
+                "SetUserDataDisk": {
+                    "REQ": "PROTO-0-C-STOR-SET-USER-DATA-DISK",
+                    "RES": "PROTO-0-R-STOR-SET-USER-DATA-DISK",
+                    "ERR": "PROTO-0-E-STOR-SET-USER-DATA-DISK",
+                    "Comment": {
+                        "REQ Args": {
+                            "Disk": "Disk info object"
+                        },
+                        "RES Params": {},
                         "ERR Params": {
                             "Error": "Error code"
                         }

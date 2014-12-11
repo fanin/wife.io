@@ -17,5 +17,6 @@
     },
     "Description": "APP launcher",
     "ShowInLauncher": false,
+    "AllowExternalUserData": false,
     "AppIdentifier": "BAPPXAOpFRGD"
 }

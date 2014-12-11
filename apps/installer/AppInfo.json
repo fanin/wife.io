@@ -17,5 +17,6 @@
     },
     "Description": "APP installer",
     "ShowInLauncher": true,
+    "AllowExternalUserData": false,
     "AppIdentifier": "BAPPNPPZlk1Y"
 }

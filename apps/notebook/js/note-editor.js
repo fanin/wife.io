@@ -175,7 +175,7 @@ function NoteEditor(fileManager) {
 
             if (editor.readOnly) return;
 
-            var path = dirname(self.notePath);
+            var path = dirname(self.notePath) + "/assets";
             var files = e.data.$.target.files || e.data.$.dataTransfer.files;
 
             uploadImages(path, files);

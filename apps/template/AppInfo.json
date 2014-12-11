@@ -19,5 +19,6 @@
     },
     "Description": "APP template codes",
     "ShowInLauncher": true,
+    "AllowExternalUserData": false,
     "AppIdentifier": "BAPPSjoBcXEe"
 }

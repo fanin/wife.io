@@ -17,5 +17,6 @@
     },
     "Description": "Write and manage notes",
     "ShowInLauncher": true,
+    "AllowExternalUserData": true,
     "AppIdentifier": "BAPPnbwWbNnD"
 }
