@@ -39,6 +39,6 @@
 }
 
 /* notebook tree */
-#notebook-tree {
-    padding: 0;
+.notebook-tree {
+    padding: 0 !important;
 }

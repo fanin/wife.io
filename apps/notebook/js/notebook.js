@@ -329,8 +329,11 @@ Notebook.prototype.open = function(node, searchPattern) {
                 }
             };
 
-            /* Recursively list all notes in all notebook */
-            recursiveIterateList(0);
+            if (items > 0)
+                /* Recursively list all notes in all notebook */
+                recursiveIterateList(0);
+            else
+                self.jqueryElement.trigger("notebook.afterOpen");
         });
     }
     else if (node.isFolder()) {

@@ -67,14 +67,31 @@
         <script src="js/note-editor.js"></script>
 
         <script>
+            var page;
             var bookshelf;
             var notebook;
             var noteEditor;
+            var userStorage;
+            var externalStorages = [];
+
+            function addExternalStorage(disk) {
+                var diskId = basename(disk.mountpoint).replace(" ", "");
+                $('#accordion').prepend(
+                    "<h3 id='h3-"+ diskId + "'>" +
+                    "<span class='storage-name'>" + disk.mountpoint + "</span>" +
+                    "<span id='action-button-storage-" + diskId + "' class='action-button'>" +
+                    "<a href='#'><i class='fa fa-caret-square-o-down'></i></a>" +
+                    "</span></h3>" +
+                    "<div id='notebook-tree-" + diskId +"' class='notebook-tree'></div>"
+                );
+                $('#accordion').accordion("refresh");
+                externalStorages[disk.mountpoint] = disk;
+            }
 
             /* NotebookViewController Constructor */
             function NotebookViewController() {
                 this.fileManagerClient = new FileManagerClient();
-            };
+            }
 
             /* Inherit CoreClient */
             NotebookViewController.prototype = new CoreClient();
@@ -126,6 +143,20 @@
                         }
                     });
 
+                    bookshelf.jqueryElement.on("bookshelf.switch-storage", function(event, mountpoint) {
+                        if (mountpoint === "Internal User Storage") {
+                            notebookViewController.storageClient.setUserDataDisk(userStorage);
+                        }
+                        else {
+                            if (externalStorages[mountpoint]) {
+                                notebookViewController.storageClient.setUserDataDisk(externalStorages[mountpoint]);
+                            }
+                            else {
+                                page.notifier.add("Storage Error", "Selected storage is not available", "/apps/b/notebook/img/icon.png", 0);
+                            }
+                        }
+                    });
+
                     /* Notebook list event handling */
                     notebook.jqueryElement.on("notebook.beforeOpen", function(event) {
                         modal.open({ content: "<img class='wait-spin-indicator'/><div style='padding-top:5px'>Please wait...</div>" });
@@ -145,10 +176,10 @@
 
                     /* Note editor event handling */
                     noteEditor.jqueryElement.on("note-editor.ready", function(event, arg) {
+                        /* Load notebook tree */
+                        bookshelf.load();
                         /* Resize editor after loaded */
                         setContentSizeFit();
-                        /* Select first stack or notebook by default */
-                        bookshelf.selectNotebookAtIndex(0);
                     });
 
                     noteEditor.jqueryElement.on("note-editor.saving", function(event) {
@@ -169,6 +200,15 @@
 
                     noteEditor.jqueryElement.on("note-editor.save-error", function(event) {
                         modal.close();
+                    });
+
+                    notebookViewController.storageClient.event.on("storage.localdisk#list#success", function(event, disks) {
+                        userStorage = disks.user;
+                        for (var i in disks.removable) {
+                            addExternalStorage(disks.removable[i]);
+                        }
+
+                        setContentSizeFit();
                     });
                 });
 
@@ -221,11 +261,13 @@
                 <div id="container">
                     <div id="bookshelf">
                         <div id="accordion">
-                            <h3>Notebooks<span id="all-notebook-down-button" class="action-button">
+                            <h3 id="h3-internal">
+                                <span class="storage-name">Internal User Storage</span>
+                                <span id="action-button-storage-internal" class="action-button">
                                     <a href="#"><i class="fa fa-caret-square-o-down"></i></a>
                                 </span>
                             </h3>
-                            <div id="notebook-tree"></div>
+                            <div id="notebook-tree-internal" class="notebook-tree"></div>
                         </div>
                     </div>
                     <div id="notebook">
@@ -238,7 +280,6 @@
                         <textarea id="note-content-editor" name="note-content-editor"></textarea>
                     </div>
                 </div>
-                <div id="footer"></div>
             </div>
         </div>
 
@@ -291,7 +332,7 @@
         <script>
             function setContentSizeFit() {
                 var newWidth = $("html").width();
-                var newHeight = $("html").height() - $("#header").height() - $("#control-bar").height() - $("#footer").height();
+                var newHeight = $("html").height() - $("#header").height() - $("#control-bar").height();
                 $("#container").height(newHeight);
                 var flexibleWidth = newWidth - $("#toolbar").width() - $("#status-bar").width();
                 $("#flexible-bar").width((flexibleWidth > 0) ? flexibleWidth : 0);
@@ -340,13 +381,38 @@
                 $("#add-note-button").attr("disabled", false);
             }
 
-            var page = new Page();
+            page = new Page();
             page.setTitle("Notebook");
             page.createNavigationBar("Notebook");
             page.setFooterText("%COPYRIGHT%");
 
             var brandLabel = new NavigationBarLabel("%BRAND%");
             page.navigationBar.rightContainer.pushItem(brandLabel);
+
+            /* Handle user data disk add/remove event */
+            page.event.on("storage.notification#diskinsert", function(event, disk) {
+                addExternalStorage(disk);
+                setContentSizeFit();
+            });
+
+            page.event.on("storage.notification#diskremove", function(event, disk) {
+                if (externalStorages[disk.mountpoint]) {
+                    var diskId = basename(disk.mountpoint).replace(" ", "");
+                    if ($("#h3-" + diskId)) {
+                        $("#h3-" + diskId).remove();
+                        $("#notebook-tree-" + diskId).remove();
+                        $("#accordion").accordion("refresh");
+                        $("#accordion").accordion("option", "active", 0);
+                    }
+                    externalStorages[disk.mountpoint] = undefined;
+                    setContentSizeFit();
+                }
+            });
+
+            page.event.on("storage.notification#userdatadiskchange", function(event, disk) {
+                notebook.close();
+                bookshelf.load();
+            });
 
             /* Initialize control bar */
             $("#add-note-button").button({

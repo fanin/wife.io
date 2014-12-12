@@ -100,7 +100,7 @@
 
                 self.storageClient.event.on("storage.localdisk#list#error", function(event, error) {});
 
-                self.storageClient.event.on("storage.notification#diskadded", function(event, disk) {
+                self.storageClient.event.on("storage.notification#diskinsert", function(event, disk) {
                     var diskId = disk.mountpoint.replace(/\//g, "__slash__");
 
                     $("#content").append(
@@ -116,7 +116,7 @@
                     plotPieChart($("#removable-placeholder-" + diskId), disk);
                 });
 
-                self.storageClient.event.on("storage.notification#diskremoved", function(event, disk) {
+                self.storageClient.event.on("storage.notification#diskremove", function(event, disk) {
                     $("#removable-container-" + disk.mountpoint.replace(/\//g, "__slash__")).remove();
                 });
             });

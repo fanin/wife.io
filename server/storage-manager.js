@@ -5,16 +5,15 @@ var SYSTEM = require('../system');
 
 module.exports = StorageManager;
 
-function StorageManager() {
-    this.systemDisk = null;
-    this.userDisk = null;
-    this.userDataDisk = null;
-    this.removableDisk = [];
-}
+function StorageManager() {}
 
 StorageManager.prototype.register = function(_super, socket, protoStorage, complete) {
     var self = this;
 
+    self.systemDisk = null;
+    self.userDisk = null;
+    self.userDataDisk = null;
+    self.removableDisk = [];
     self.socket = socket;
     self.protoStorage = protoStorage;
     self.notificationCenter = _super.notificationCenter;
@@ -43,16 +42,28 @@ StorageManager.prototype.register = function(_super, socket, protoStorage, compl
     });
 
     socket.on(protoStorage.SetUserDisk.REQ, function(disk) {
-        if (self.verifyDiskInfo(disk) && disk.type !== "System")
-            self.userDisk = disk;
+        if (self.verifyDiskInfo(disk) && disk.type !== "System") {
+            if (self.userDisk.mountpoint !== disk.mountpoint) {
+                self.userDisk = disk;
+                self.notificationCenter.post("Storage", "UserDiskChange", disk);
+            }
+            else
+                self.userDisk = disk;
+        }
         else
             socket.emit(protoStorage.SetUserDisk.ERR, SYSTEM.ERROR.StorBadDiskInfo);
     });
 
     socket.on(protoStorage.SetUserDataDisk.REQ, function(disk) {
         if (self.securityManager.isExternalUserDataAllowed()) {
-            if (self.verifyDiskInfo(disk) && disk.type !== "System")
-                self.userDataDisk = disk;
+            if (self.verifyDiskInfo(disk) && disk.type !== "System") {
+                if (self.userDataDisk.mountpoint !== disk.mountpoint) {
+                    self.userDataDisk = disk;
+                    self.notificationCenter.post("Storage", "UserDataDiskChange", disk);
+                }
+                else
+                    self.userDataDisk = disk;
+            }
             else
                 socket.emit(protoStorage.SetUserDataDisk.ERR, SYSTEM.ERROR.StorBadDiskInfo);
         }
@@ -148,38 +159,39 @@ StorageManager.prototype.getLocalDisks = function(callback) {
                 var _oldDisk = self.removableDisk;
                 self.removableDisk = removableDisk;
 
+                /* Set disk type */
+                if (self.systemDisk)
+                    self.systemDisk.type = "System";
+                if (self.userDisk)
+                    self.userDisk.type = "User";
+                for (i = 0; i < self.removableDisk.length; i++)
+                    self.removableDisk[i].type = "Removable";
+
                 /* Reset present flag */
                 for (var i = 0; i < _oldDisk.length; i++) {
                     _oldDisk[i].present = false;
                 }
 
                 /* Examine if removable disk array changes */
-                for (i = 0; i < removableDisk.length; i++) {
+                for (i = 0; i < self.removableDisk.length; i++) {
                     for (var j = 0; j < _oldDisk.length; j++) {
-                        if (removableDisk[i].mountpoint === _oldDisk[j].mountpoint && removableDisk[i].total === _oldDisk[j].total) {
-                            removableDisk[i].present = true;
+                        if (self.removableDisk[i].mountpoint === _oldDisk[j].mountpoint && self.removableDisk[i].total === _oldDisk[j].total) {
+                            self.removableDisk[i].present = true;
                             _oldDisk[j].present = true;
                         }
                     }
                 }
 
-                for (i = 0; i < removableDisk.length; i++) {
-                    if (!removableDisk[i].present)
-                        self.notificationCenter.post("Storage", "DiskAdded", removableDisk[i]);
+                for (i = 0; i < self.removableDisk.length; i++) {
+                    if (!self.removableDisk[i].present)
+                        self.notificationCenter.post("Storage", "DiskInsert", self.removableDisk[i]);
                 }
 
                 for (i = 0; i < _oldDisk.length; i++) {
                     if (!_oldDisk[i].present)
-                        self.notificationCenter.post("Storage", "DiskRemoved", _oldDisk[i]);
+                        self.notificationCenter.post("Storage", "DiskRemove", _oldDisk[i]);
                 }
             }
-
-            if (self.systemDisk)
-                self.systemDisk.type = "System";
-            if (self.userDisk)
-                self.userDisk.type = "User";
-            for (i = 0; i < self.removableDisk.length; i++)
-                self.removableDisk[i].type = "Removable";
 
             callback && callback({ system: self.systemDisk, user: self.userDisk, removable: self.removableDisk });
         });
@@ -189,7 +201,7 @@ StorageManager.prototype.getLocalDisks = function(callback) {
 StorageManager.prototype.buildUserDataPath = function(path) {
     var userDataPath;
 
-    if (this.userDisk)
+    if (this.userDataDisk)
         userDataPath = this.userDataDisk.mountpoint + this.securityManager.appUserDataDirectory();
     else
         return SYSTEM.ERROR.StorUserDiskNotFound;
