@@ -130,8 +130,9 @@
                         else
                             notebook.close();
 
-                        if (bookshelf.selectedNode &&
-                            (bookshelf.selectedNode.isFolder() || bookshelf.selectedNode.name === "All Notes"))
+                        var selectedNode = bookshelf.notebookTree[bookshelf.storageName].selectedNode;
+                        if (selectedNode &&
+                            (selectedNode.isFolder() || selectedNode.name === "All Notes"))
                             $("#add-note-button").attr("disabled", true);
                         else
                             $("#add-note-button").attr("disabled", false);
@@ -368,7 +369,7 @@
                     $("#search-text-overlay i").unbind("click");
                     $("#search-text-overlay i").click(function() {
                         notebook.close();
-                        notebook.open(bookshelf.selectedNode);
+                        notebook.open(bookshelf.notebookTree[bookshelf.storageName].selectedNode);
                         resetSearch();
                     });
                 }

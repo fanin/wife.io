@@ -296,6 +296,11 @@ Notebook.prototype.open = function(node, searchPattern) {
                                                 self.notes.unshift({ path: path + "/" + item, stat: stat, title: "" });
                                                 waitItems.pop();
                                             }
+                                            else {
+                                                self.notebookNode.name = "No result found for \"" + searchPattern + "\"";
+                                                self.updateTitleBar();
+                                                self.tableView.show();
+                                            }
                                         }
                                     );
                                 }
@@ -329,7 +334,7 @@ Notebook.prototype.open = function(node, searchPattern) {
                 }
             };
 
-            if (items > 0)
+            if (items.length > 0)
                 /* Recursively list all notes in all notebook */
                 recursiveIterateList(0);
             else
