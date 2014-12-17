@@ -12,12 +12,12 @@ StorageManager.prototype.register = function(_super, socket, protoStorage, compl
 
     self.systemDisk = null;
     self.userDisk = null;
-    self.userDataDisk = null;
+    self.userDataDisk = [];
     self.removableDisk = [];
     self.socket = socket;
     self.protoStorage = protoStorage;
     self.notificationCenter = _super.notificationCenter;
-    self.securityManager = _super.securityManager[socket];
+    self.securityManager = _super.securityManager;
 
     /**
      * Protocol Listener: Storage Events
@@ -55,14 +55,12 @@ StorageManager.prototype.register = function(_super, socket, protoStorage, compl
     });
 
     socket.on(protoStorage.SetUserDataDisk.REQ, function(disk) {
-        if (self.securityManager.isExternalUserDataAllowed()) {
+        if (self.securityManager.isExternalUserDataAllowed(socket)) {
             if (self.verifyDiskInfo(disk) && disk.type !== "System") {
-                if (self.userDataDisk.mountpoint !== disk.mountpoint) {
-                    self.userDataDisk = disk;
+                if (!self.userDataDisk[socket] || self.userDataDisk[socket].mountpoint !== disk.mountpoint) {
+                    self.userDataDisk[socket] = disk;
                     self.notificationCenter.post("Storage", "UserDataDiskChange", disk);
                 }
-                else
-                    self.userDataDisk = disk;
             }
             else
                 socket.emit(protoStorage.SetUserDataDisk.ERR, SYSTEM.ERROR.StorBadDiskInfo);
@@ -86,7 +84,7 @@ StorageManager.prototype.register = function(_super, socket, protoStorage, compl
 
     /*
      * Start disk monitor
-     * TODO: Integrate with system disk event instead of polling
+     * FIXME: Integrate with system disk event instead of polling
      */
     self.diskMonitorTimer = setInterval(function() {
         self.getLocalDisks();
@@ -96,6 +94,8 @@ StorageManager.prototype.register = function(_super, socket, protoStorage, compl
 StorageManager.prototype.unregister = function(socket, protoStorage) {
     clearInterval(this.diskMonitorTimer);
     socket.removeAllListeners(protoStorage.GetLocalDisks.REQ);
+    if (this.userDataDisk[socket])
+        this.userDataDisk[socket] = undefined;
 }
 
 StorageManager.prototype.verifyDiskInfo = function(disk) {
@@ -144,7 +144,7 @@ StorageManager.prototype.getLocalDisks = function(callback) {
             if (self.systemDisk === null) {
                 self.systemDisk = systemDisk;
                 self.userDisk = userDisk;
-                self.userDataDisk = userDisk;
+                self.userDataDisk[self.socket] = userDisk;
                 self.removableDisk = removableDisk;
             }
             else {
@@ -153,8 +153,8 @@ StorageManager.prototype.getLocalDisks = function(callback) {
                 if (self.userDisk && !userDisk)
                     self.notificationCenter.post("Storage", "Error", SYSTEM.ERROR.StorUserDiskNotFound);
                 self.userDisk = userDisk;
-                if (!self.userDataDisk)
-                    self.userDataDisk = self.userDisk;
+                if (!self.userDataDisk[self.socket])
+                    self.userDataDisk[self.socket] = self.userDisk;
 
                 var _oldDisk = self.removableDisk;
                 self.removableDisk = removableDisk;
@@ -198,11 +198,11 @@ StorageManager.prototype.getLocalDisks = function(callback) {
     });
 }
 
-StorageManager.prototype.buildUserDataPath = function(path) {
+StorageManager.prototype.getUserDataPath = function(path) {
     var userDataPath;
 
-    if (this.userDataDisk)
-        userDataPath = this.userDataDisk.mountpoint + this.securityManager.appUserDataDirectory();
+    if (this.userDataDisk[this.socket])
+        userDataPath = this.userDataDisk[this.socket].mountpoint + this.securityManager.appUserDataDirectory(this.socket);
     else
         return SYSTEM.ERROR.StorUserDiskNotFound;
 

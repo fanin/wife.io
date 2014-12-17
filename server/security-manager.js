@@ -2,30 +2,49 @@ var SYSTEM = require('../system');
 
 module.exports = SecurityManager;
 
-function SecurityManager(_super, appInfo) {
-    this.appInfo = appInfo;
+function SecurityManager() {
+    this.appInfo = [];
 }
 
-SecurityManager.prototype.isExtensionAllowed = function(name) {
-    for (var i in this.appInfo.Extensions) {
-        if (this.appInfo.Extensions[i] === name)
+SecurityManager.prototype.register = function(_super, socket, appInfo, complete) {
+    this.appInfo[socket] = appInfo;
+    complete && complete();
+}
+
+SecurityManager.prototype.unregister = function(socket) {
+    this.appInfo[socket] = undefined;
+}
+
+SecurityManager.prototype.isExtensionAllowed = function(socket, name) {
+    if (!this.appInfo[socket])
+        return false;
+
+    for (var i in this.appInfo[socket].Extensions) {
+        if (this.appInfo[socket].Extensions[i] === name)
             return true;
     }
     return false;
 }
 
-SecurityManager.prototype.canManageApps = function() {
-    if (this.appInfo.Directory === 'launcher' || this.appInfo.Directory === 'installer')
+SecurityManager.prototype.canManageApps = function(socket) {
+    if (!this.appInfo[socket])
+        return false;
+
+    if (this.appInfo[socket].Directory === 'launcher' || this.appInfo[socket].Directory === 'installer')
         return true;
     else
         return false;
 }
 
-SecurityManager.prototype.appUserDataDirectory = function() {
+SecurityManager.prototype.appUserDataDirectory = function(socket) {
+    if (!this.appInfo[socket])
+        return '';
     return '/' + SYSTEM.SETTINGS.SysName.replace(/\s/g, '').toLocaleLowerCase()
-               + '/apps/' + this.appInfo.Directory + '/userdata';
+    + '/apps/' + this.appInfo[socket].Directory + '/userdata';
 }
 
-SecurityManager.prototype.isExternalUserDataAllowed = function() {
-    return this.appInfo.AllowExternalUserData;
+SecurityManager.prototype.isExternalUserDataAllowed = function(socket) {
+    if (!this.appInfo[socket])
+        return false;
+    return this.appInfo[socket].AllowExternalUserData;
 }

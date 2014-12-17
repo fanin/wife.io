@@ -8,13 +8,13 @@ function ExtensionManager() {
 
 ExtensionManager.prototype.register = function(_super, socket, protoExtension, complete) {
     var self = this;
-    var security = _super.securityManager[socket];
+    var securityManager = _super.securityManager;
 
     /**
      * Protocol Listener: Extension Management Events
      */
     socket.on(protoExtension.Load.REQ, function(name, majorVersion) {
-        if (!security.isExtensionAllowed(name)) {
+        if (!securityManager.isExtensionAllowed(socket, name)) {
             console.log('Extension module [' + name + '] not allowed');
             socket.emit(protoExtension.Load.ERR, name, SYSTEM.ERROR.ExtensionNotAllow);
             return;
@@ -51,7 +51,7 @@ ExtensionManager.prototype.register = function(_super, socket, protoExtension, c
     });
 
     socket.on(protoExtension.Unload.REQ, function(name, majorVersion) {
-        if (!security.isExtensionAllowed(name)) {
+        if (!securityManager.isExtensionAllowed(socket, name)) {
             console.log('Extension module [' + name + '] not allowed');
             socket.emit(protoExtension.Unload.ERR, name, SYSTEM.ERROR.ExtensionNotAllow);
             return;

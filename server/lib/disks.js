@@ -131,6 +131,32 @@ function detail(drive, callback) {
                             callback(e, d);
                         });
                 }
+            },
+            uuid: function (callback) {
+                switch (os.platform().toLowerCase()) {
+                    case 'darwin':
+                        getDetailNaN('diskutil info ' + drive + ' | grep \'Volume UUID\' | tr -d \' \' | awk -F \':\' \'{print $2}\'', function(e, d){
+                            if (d) d = d.trim();
+                            callback(e, d);
+                        });
+                        break;
+                    case 'linux':
+                    default:
+                        break;// TODO
+                }
+            },
+            name: function (callback) {
+                switch (os.platform().toLowerCase()) {
+                    case 'darwin':
+                        getDetailNaN('diskutil info ' + drive + ' | grep \'Volume Name\' | tr -d \' \' | awk -F \':\' \'{print $2}\'', function(e, d){
+                            if (d) d = d.trim();
+                            callback(e, d);
+                        });
+                        break;
+                    case 'linux':
+                    default:
+                        break;// TODO
+                }
             }
         },
         function (err, results) {

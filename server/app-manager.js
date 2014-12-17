@@ -119,7 +119,7 @@ function AppManager() {
 
 AppManager.prototype.register = function(_super, socket, protoAPP, complete) {
     var self = this;
-    var security = _super.securityManager[socket];
+    var securityManager = _super.securityManager;
 
     /* Create user app path if not exist */
     if (!fs.existsSync(USER_APP_PATH))
@@ -133,7 +133,7 @@ AppManager.prototype.register = function(_super, socket, protoAPP, complete) {
     });
 
     ss(socket).on(protoAPP.Install.REQ, function(appBundleDataStream) {
-        if (!security.canManageApps()) {
+        if (!securityManager.canManageApps(socket)) {
             socket.emit(protoAPP.Install.ERR, SYSTEM.ERROR.SecurityAccessDenied);
             return;
         }
@@ -168,7 +168,7 @@ AppManager.prototype.register = function(_super, socket, protoAPP, complete) {
     });
 
     socket.on(protoAPP.CancelInstall.REQ, function(installationCode) {
-        if (!security.canManageApps()) {
+        if (!securityManager.canManageApps(socket)) {
             socket.emit(protoAPP.CancelInstall.ERR, SYSTEM.ERROR.SecurityAccessDenied);
             return;
         }
@@ -189,7 +189,7 @@ AppManager.prototype.register = function(_super, socket, protoAPP, complete) {
     });
 
     socket.on(protoAPP.Uninstall.REQ, function(appInfo) {
-        if (!security.canManageApps()) {
+        if (!securityManager.canManageApps(socket)) {
             socket.emit(protoAPP.Uninstall.ERR, SYSTEM.ERROR.SecurityAccessDenied);
             return;
         }

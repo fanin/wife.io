@@ -31,7 +31,7 @@ function CoreServer(http) {
     this.appManager = new AppManager();
     this.storageManager = new StorageManager();
     this.fileManager = new FileManager();
-    this.securityManager = [];
+    this.securityManager = new SecurityManager();
     this.error = null;
 
     this.loadProtoSpec = function(name, version) {
@@ -76,9 +76,10 @@ CoreServer.prototype.listen = function() {
             if (!SYSTEM.ERROR.HasError(appInfo)) {
                 async.series([
                     function(callback) {
-                        /* Create security manager for this app */
-                        self.securityManager[socket] = new SecurityManager(self, appInfo);
-                        callback(null, true);
+                        /* Create security manager for this app (connection) */
+                        self.securityManager.register(self, socket, appInfo, function() {
+                            callback(null, true);
+                        });
                     },
                     function(callback) {
                         /* Register extension manager */
@@ -127,11 +128,10 @@ CoreServer.prototype.listen = function() {
             self.notificationCenter.unregister(socket, self.protocol[0].Notification);
             self.extensionManager.unregister(socket, self.protocol[0].Extension);
             self.storageManager.unregister(socket, self.protocol[0].Storage);
+            self.securityManager.unregister(socket);
 
             socket.removeAllListeners(self.protocol[0].Base.GetInfo.REQ);
             socket.removeAllListeners('disconnect');
-
-            self.securityManager[socket] = undefined;
         });
     });
 }
