@@ -196,6 +196,9 @@ function NoteEditor(fileManager) {
                 return;
             }
 
+            if (!title || title.trim() === "")
+                title = "Untitled";
+
             var doc = "<html><head><title>" + title + "</title></head><body>" + content + "</body></html>";
 
             if (self.noteTitle === title && self.noteContent === content) {
@@ -251,26 +254,26 @@ function NoteEditor(fileManager) {
                     if (ext) ext = "." + ext;
                     var fileName = (parseInt(imgName) + i).toString() + ext;
 
-                    if (!(new RegExp(/^(userdata)/)).test(src)) {
-                        self.fileManager.saveUrlAs(dirname(notePath) + "/assets/" + fileName, src, function(path, error) {
-                            if (error) {
-                                console.log("Unable to save file from URL " + src);
-                                return;
-                            }
-
-                            content = content.replace(src, "userdata/" + path);
-
-                            if (i === imgs.length - 1)
-                                save(notePath, noteIndex, title, content, callback);
-                            else
-                                replaceResource(i + 1);
-                        });
-                    }
-                    else {
+                    function handleNextOrSave() {
                         if (i === imgs.length - 1)
                             save(notePath, noteIndex, title, content, callback);
                         else
                             replaceResource(i + 1);
+                    }
+
+                    /* Test if resource is from local URL */
+                    if (!(new RegExp(/^(userdata)/)).test(src) && !(new RegExp(/^(\/apps\/[bc]\/)/)).test(src)) {
+                        self.fileManager.saveUrlAs(dirname(notePath) + "/assets/" + fileName, src, function(path, error) {
+                            if (error)
+                                console.log("Unable to save file from URL " + src);
+                            else
+                                content = content.replace(src, "userdata/" + path);
+
+                            handleNextOrSave();
+                        });
+                    }
+                    else {
+                        handleNextOrSave();
                     }
                 }
 

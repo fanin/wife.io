@@ -364,7 +364,7 @@ FileManager.prototype.register = function(_super, socket, protoFS, complete) {
         var realPath = storage.buildUserDataPath(_path);
 
         if (SYSTEM.ERROR.HasError(realPath))
-            socket.emit(protoFS.SaveURLAs.ERR, path, realPath);
+            socket.emit(protoFS.SaveURLAs.ERR, _path, realPath);
         else {
             if (fs.existsSync(path.dirname(realPath))) {
                 var fileStream;
@@ -388,14 +388,19 @@ FileManager.prototype.register = function(_super, socket, protoFS, complete) {
                     path: url.parse(fileURL).pathname
                 };
 
-                http.get(options, function(res) {
-                    res.on('data', function(data) {
-                        fileStream.write(data);
-                    }).on('end', function() {
-                        fileStream.end();
-                        socket.emit(protoFS.SaveURLAs.RES, _path);
+                if (!options.host || !options.path) {
+                    socket.emit(protoFS.SaveURLAs.ERR, _path, SYSTEM.ERROR.FSInvalidURL);
+                }
+                else {
+                    http.get(options, function(res) {
+                        res.on('data', function(data) {
+                            fileStream.write(data);
+                        }).on('end', function() {
+                            fileStream.end();
+                            socket.emit(protoFS.SaveURLAs.RES, _path);
+                        });
                     });
-                });
+                }
             }
         }
     });

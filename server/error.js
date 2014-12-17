@@ -22,6 +22,7 @@ exports.FSNotExist = 'ERROR-FS-NOT-EXIST';
 exports.FSIOError = 'ERROR-FS-IO-ERROR';
 exports.FSRemoveItem = 'ERROR-FS-REMOVE';
 exports.FSBrokenPipe = 'ERROR-FS-BROKEN-PIPE';
+exports.FSInvalidURL = 'ERROR-FS-INVALID-URL';
 
 /* APP manager errors */
 exports.APPBadFileFormat = 'ERROR-APP-FORMAT';

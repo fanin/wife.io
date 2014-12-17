@@ -411,7 +411,8 @@ Notebook.prototype.addNote = function(title, content, complete) {
         if (!exist) {
             self.fileManager.createDirectory(path, function(path, error) {
                 if (error) throw new Error("unable to create directory");
-                title = title || "Untitled";
+                if (!title || title.trim() === "")
+                    title = "Untitled";
                 content = content || "";
                 var emptyNote = "<html><head><title>" + title + "</title></head><body style='width:800px;margin:0 auto;'>" + content + "</body></html>";
 
