@@ -364,7 +364,7 @@ function Bookshelf(fileManager) {
      * Here we use a wait timer to prevent data corruption by many save tree data calls at a short period of time.
      */
     var saveNotebookTreeWaitTimer;
-    function saveNotebookTree(wait) {
+    function saveNotebookTree(wait, cb) {
         if (saveNotebookTreeWaitTimer)
             clearTimeout(saveNotebookTreeWaitTimer);
 
@@ -373,6 +373,7 @@ function Bookshelf(fileManager) {
         saveNotebookTreeWaitTimer = setTimeout(function() {
             var notebookTreeData = self.notebookTree[self.storageUUID].tree("toJson");
             self.fileManager.writeFile("bookshelf-tree.json", notebookTreeData, function(path, progress, error) {
+                cb && cb(error);
                 if (error) throw new Error("Unable to write bookshelf tree data");
             });
             saveNotebookTreeWaitTimer = undefined;
@@ -406,11 +407,10 @@ function Bookshelf(fileManager) {
     }
 
     function rename(node, name) {
-        self.jqueryElement.trigger("bookshelf.update", { node: node });
         self.notebookTree[self.storageUUID].tree("updateNode", node, name);
-
         saveNotebookTree();
         updateHoverHandler();
+        self.jqueryElement.trigger("bookshelf.update", { node: node });
     }
 
     function move(srcNode, dstNode, pos) {
@@ -479,7 +479,7 @@ function Bookshelf(fileManager) {
         saveNotebookTree();
     }
 
-    this.loadTreeData = function(callback) {
+    this.loadTreeData = function(cb) {
         /* Reset tree data */
         self.notebookTreeData = [{ name: "All Notes" }];
         //self.notebookTree[self.storageUUID].selectedNode = undefined;
@@ -487,14 +487,14 @@ function Bookshelf(fileManager) {
         /* Create /bookshelf if necessary */
         self.fileManager.exist(self.getPath(), function(path, exist, isDir, error) {
             if (error) {
-                callback && callback(error);
+                cb && cb(error);
                 throw new Error("fs operation error");
             }
 
             if (!exist) {
                 self.fileManager.createDirectory(self.getPath(), function(path, error) {
                     if (error) {
-                        callback && callback(error);
+                        cb && cb(error);
                         throw new Error("unable to create /bookshelf");
                     }
                 });
@@ -502,13 +502,13 @@ function Bookshelf(fileManager) {
             else if (exist && !isDir) {
                 self.fileManager.remove(self.getPath(), function(path, error) {
                     if (error) {
-                        callback && callback(error);
+                        cb && cb(error);
                         throw new Error("unable to remove /bookshelf");
                     }
 
                     self.fileManager.createDirectory(self.getPath(), function(path, error) {
                         if (error) {
-                            callback && callback(error);
+                            cb && cb(error);
                             throw new Error("unable to create /bookshelf");
                         }
                     });
@@ -519,14 +519,14 @@ function Bookshelf(fileManager) {
         /* Load notebook tree data from bookshelf-tree.json */
         self.fileManager.exist("bookshelf-tree.json", function(path, exist, isDir, error) {
             if (error) {
-                callback && callback(error);
+                cb && cb(error);
                 throw new Error("File system operation error");
             }
 
             if (exist) {
                 self.fileManager.readFile("bookshelf-tree.json", "utf8", function(path, data, error) {
                     if (error) {
-                        callback && callback(error);
+                        cb && cb(error);
                         throw new Error("Unable to read bookshelf tree data");
                     }
 
@@ -535,20 +535,20 @@ function Bookshelf(fileManager) {
                     }
                     catch (error) {
                         self.notebookTreeData = [];
-                        callback && callback(error);
+                        cb && cb(error);
                         throw new Error("Parse tree data error" + error + "\ndata:\n" + data);
                     }
 
-                    callback && callback();
+                    cb && cb();
                 });
             }
             else {
                 self.fileManager.writeFile("bookshelf-tree.json", JSON.stringify(self.notebookTreeData), function(path, progress, error) {
                     if (error) {
-                        callback && callback(error);
+                        cb && cb(error);
                         throw new Error("Unable to write bookshelf tree data");
                     }
-                    callback && callback();
+                    cb && cb();
                 });
             }
         });
@@ -604,7 +604,7 @@ Bookshelf.prototype.removeStorage = function(disk) {
     }
 }
 
-Bookshelf.prototype.load = function(uuid, callback) {
+Bookshelf.prototype.load = function(uuid, cb) {
     var self = this;
     self.storageUUID = uuid;
     self.loadTreeData(function(error) {
@@ -615,7 +615,7 @@ Bookshelf.prototype.load = function(uuid, callback) {
             self.initNotebookTree();
             self.registerStorageActionClick();
         }
-        callback && callback(error);
+        cb && cb(error);
     });
 }
 

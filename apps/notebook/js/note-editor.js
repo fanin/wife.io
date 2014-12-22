@@ -1,4 +1,4 @@
-function NoteEditor(fileManager, settings) {
+function NoteEditor(fileManager, config) {
     var self = this;
 
     self.noteTitle = "";
@@ -6,10 +6,17 @@ function NoteEditor(fileManager, settings) {
     self.notePath = undefined;
     self.noteIndex = -1;
     self.fileManager = fileManager;
-    self.settings = settings;
     self.jqueryElement = $("#note-editor");
     self.autoSaveTimer = undefined;
-    self.isSavingNote = false;
+    self.status = {
+        editorReady: false,
+        savingNote: false,
+        flushingNote: false,
+    };
+    self.config = {
+        maxWidth: (config.maxWidth !== undefined) ? config.maxWidth : 0,
+        snapshot: (config.snapshot !== undefined) ? config.snapshot : false,
+    };
 
     /* Build time code */
     self.getTimecode = function() {
@@ -44,7 +51,7 @@ function NoteEditor(fileManager, settings) {
 
         var setDataDelayTimeout;
         /* This is an workaround to avoid laggy setData */
-        self.setContentNoLagWorkaround = function(title, content, callback) {
+        self.setContentNoLagWorkaround = function(title, content, cb) {
             if (setDataDelayTimeout) clearTimeout(setDataDelayTimeout);
             setDataDelayTimeout = setTimeout(function() {
                 setDataDelayTimeout = undefined;
@@ -62,7 +69,7 @@ function NoteEditor(fileManager, settings) {
                 /* Reset undo history */
                 editor.undoManager.reset();
                 /* callback */
-                callback && callback();
+                cb && cb();
             }, 100);
         };
 
@@ -70,14 +77,14 @@ function NoteEditor(fileManager, settings) {
          * When user upload an image and remove it from the note, the image file is still under assets folder.
          * We scan note and remove unused assets after user complete editing note.
          */
-        self.removeUselessAssets = function(notePath, after, callback) {
+        self.removeUselessAssets = function(notePath, after, cb) {
             setTimeout(function() {
                 self.fileManager.list(
                     dirname(notePath) + "/assets",
                     function(path, items, error) {
                         if (error) {
                             console.log("Unable to list " + path);
-                            callback && callback(error);
+                            cb && cb(error);
                             return;
                         }
 
@@ -85,7 +92,7 @@ function NoteEditor(fileManager, settings) {
                             self.fileManager.grep(notePath, items[i], null, function(path, data, error) {
                                 if (error) {
                                     console.log("Unable to read " + path);
-                                    callback && callback(error);
+                                    cb && cb(error);
                                     return;
                                 }
 
@@ -93,12 +100,12 @@ function NoteEditor(fileManager, settings) {
                                     self.fileManager.remove(dirname(notePath) + "/assets/" + items[i], function(path, error) {
                                         if (error) {
                                             console.log("unable to remove " + path);
-                                            callback && callback(error);
+                                            cb && cb(error);
                                         }
                                         else {
                                             //console.log("Unused asset '" + items[i] + "' removed");
                                             if (i === items.length - 1)
-                                                callback && callback();
+                                                cb && cb();
                                             else
                                                 removeUseless(i + 1);
                                         }
@@ -106,7 +113,7 @@ function NoteEditor(fileManager, settings) {
                                 }
                                 else {
                                     if (i === items.length - 1)
-                                        callback && callback();
+                                        cb && cb();
                                     else
                                         removeUseless(i + 1);
                                 }
@@ -116,7 +123,7 @@ function NoteEditor(fileManager, settings) {
                         if (items.length > 0)
                             removeUseless(0);
                         else
-                            callback && callback();
+                            cb && cb();
                     }
                 );
             }, after);
@@ -223,9 +230,9 @@ function NoteEditor(fileManager, settings) {
         /**
          * Save note content
          */
-        function save(notePath, noteIndex, title, content, callback) {
+        function save(notePath, noteIndex, title, content, cb) {
             if (!notePath) {
-                callback && callback("Inavlid Path");
+                cb && cb("Inavlid Path");
                 self.jqueryElement.trigger("note-editor.save-error", noteIndex);
                 return;
             }
@@ -237,13 +244,13 @@ function NoteEditor(fileManager, settings) {
 
             if (self.noteTitle === title && self.noteContent === content) {
                 self.jqueryElement.trigger("note-editor.nochange", noteIndex);
-                callback && callback();
+                cb && cb();
                 return;
             }
 
             self.fileManager.writeFile(notePath, doc, function(path, progress, error) {
                 if (error) {
-                    callback && callback(error);
+                    cb && cb(error);
                     console.log("Unable to write " + path);
                     return;
                 }
@@ -251,7 +258,7 @@ function NoteEditor(fileManager, settings) {
                 /* Update last modified time */
                 self.fileManager.touch(dirname(notePath), function(path, error) {
                     if (error) {
-                        callback && callback(error);
+                        cb && cb(error);
                         console.log("Unable to touch " + path);
                         return;
                     }
@@ -259,17 +266,17 @@ function NoteEditor(fileManager, settings) {
                     self.noteTitle = title;
                     self.noteContent = content;
 
-                    $("#note-snapshot-body").empty();
-                    $("#note-snapshot-body").append(content);
+                    if (self.config.snapshot) {
+                        $("#note-snapshot-body").empty();
+                        $("#note-snapshot-body").append(content);
 
-                    if (self.settings.snapshot) {
                         takeNoteSnapshot(path + "/note.png", function() {
-                            callback && callback();
+                            cb && cb();
                             self.jqueryElement.trigger("note-editor.saved", noteIndex);
                         });
                     }
                     else {
-                        callback && callback();
+                        cb && cb();
                     }
                 });
             });
@@ -280,7 +287,7 @@ function NoteEditor(fileManager, settings) {
          */
         include("apps/b/notebook/lib/html2canvas/html2canvas.js");
 
-        function takeNoteSnapshot(saveTo, callback) {
+        function takeNoteSnapshot(saveTo, cb) {
             /* Adjust body width & height while body size in $(".cke_wysiwyg_frame") may be changed by vertical scroll bar */
             $("#note-snapshot-body").css("width", $(".cke_wysiwyg_frame").contents().find("body").css("width"));
             $("#note-snapshot-body").css("height", $(".cke_wysiwyg_frame").contents().find("body").css("height"));
@@ -300,14 +307,14 @@ function NoteEditor(fileManager, settings) {
                                 alert("Unable to write snapshot " + path + "(" + error + ")");
                             else
                                 $("#note-snapshot").fadeTo(0, 0);
-                            callback && callback();
+                            cb && cb();
                         });
                     }
                 });
             }
             catch (error) {
                 alert("html2canvas: " + error);
-                callback && callback();
+                cb && cb();
             }
         }
 
@@ -317,7 +324,7 @@ function NoteEditor(fileManager, settings) {
          * 2) Download them to our assets folder
          * 3) Replace resource URL with our assets URL
          */
-        function grabResourcesAndSave(notePath, noteIndex, title, content, callback) {
+        function grabResourcesAndSave(notePath, noteIndex, title, content, cb) {
             var re = /<img[^>]+src="?([^"\s]+)"?[^>]*\/>/gi;
             var imgs = content.match(re);
 
@@ -332,7 +339,7 @@ function NoteEditor(fileManager, settings) {
 
                     function handleNextOrSave() {
                         if (i === imgs.length - 1)
-                            save(notePath, noteIndex, title, content, callback);
+                            save(notePath, noteIndex, title, content, cb);
                         else
                             replaceResource(i + 1);
                     }
@@ -356,10 +363,10 @@ function NoteEditor(fileManager, settings) {
                 replaceResource(0);
             }
             else
-                save(notePath, noteIndex, title, content, callback);
+                save(notePath, noteIndex, title, content, cb);
         }
 
-        self.scheduleAutoSave = function(wait, callback) {
+        self.scheduleAutoSave = function(wait, cb) {
             if (self.autoSaveTimer) {
                 clearTimeout(self.autoSaveTimer);
                 self.autoSaveTimer = undefined;
@@ -374,21 +381,21 @@ function NoteEditor(fileManager, settings) {
             if (wait > 0) {
                 self.autoSaveTimer = setTimeout(function() {
                     self.autoSaveTimer = undefined;
-                    self.isSavingNote = true;
+                    self.status.savingNote = true;
                     self.jqueryElement.trigger("note-editor.saving");
                     grabResourcesAndSave(notePath, noteIndex, title, content, function() {
-                        self.isSavingNote = false;
-                        callback && callback();
+                        self.status.savingNote = false;
+                        cb && cb();
                     });
                 }, wait);
             }
             else {
-                /* Rise isSavingNote to to force coming loadContent()/resetContent() calls to wait */
-                self.isSavingNote = true;
+                /* Rise savingNote to to force coming loadContent()/resetContent() calls to wait */
+                self.status.savingNote = true;
                 self.jqueryElement.trigger("note-editor.saving");
                 grabResourcesAndSave(notePath, noteIndex, title, content, function() {
-                    self.isSavingNote = false;
-                    callback && callback();
+                    self.status.savingNote = false;
+                    cb && cb();
                 });
             }
         }
@@ -423,13 +430,20 @@ function NoteEditor(fileManager, settings) {
                 page.navigationBar.show();
         });
 
-        self.editorReady = true;
+        self.status.editorReady = true;
         self.jqueryElement.trigger("note-editor.ready");
     });
 }
 
 NoteEditor.prototype.fitSize = function(width, height) {
     try {
+        if (this.config.maxWidth > 0 && width > this.config.maxWidth + 1) {
+            /* Set width to (noteEditorMaxWidth + 1) instead of noteEditorMaxWidth due to there's a 1-pixel width right border */
+            width = this.config.maxWidth + 1;
+            /* Set snapshot width */
+            $("#note-snapshot").width(this.config.maxWidth);
+        }
+
         $("#note-title-input").width(width - 7);
         CKEDITOR.instances["note-content-editor"].resize(width, height - 30);
     } catch (e) {}
@@ -438,11 +452,11 @@ NoteEditor.prototype.fitSize = function(width, height) {
 NoteEditor.prototype.loadContent = function(path, index) {
     var self = this;
 
-    if (!self.editorReady)
+    if (!self.status.editorReady)
         return;
 
     /* Wait if we are saving the note */
-    if (self.isSavingNote || self.isFlushingNote) {
+    if (self.status.savingNote || self.status.flushingNote) {
         /* Last edited note is being saved, defer readFile() work after 500ms and see if it is done */
         setTimeout(function() { self.loadContent(path, index); }, 100);
     }
@@ -471,11 +485,11 @@ NoteEditor.prototype.loadContent = function(path, index) {
 NoteEditor.prototype.resetContent = function() {
     var self = this;
 
-    if (!self.editorReady)
+    if (!self.status.editorReady)
         return;
 
     /* Wait if we are saving the note */
-    if (self.isSavingNote) {
+    if (self.status.savingNote) {
         /* Last edited note is being saved, defer readFile() work after 500ms and see if it is done */
         setTimeout(function() { self.resetContent(); }, 100);
     }
@@ -493,20 +507,20 @@ NoteEditor.prototype.resetContent = function() {
     }
 }
 
-NoteEditor.prototype.flushContent = function(callback) {
+NoteEditor.prototype.flushContent = function(cb) {
     var self = this;
 
-    if (!self.editorReady)
+    if (!self.status.editorReady)
         return;
 
     /* Wait if we are saving the note */
-    if (self.isSavingNote) {
+    if (self.status.savingNote) {
         /* Last edited note is being saved, defer readFile() work after 500ms and see if it is done */
-        setTimeout(function() { self.flushContent(callback); }, 100);
+        setTimeout(function() { self.flushContent(cb); }, 100);
     }
     else {
         if (self.notePath) {
-            self.isFlushingNote = true;
+            self.status.flushingNote = true;
 
             /* Stop & clear previous auto save timer */
             if (self.autoSaveTimer) {
@@ -514,19 +528,19 @@ NoteEditor.prototype.flushContent = function(callback) {
                 self.autoSaveTimer = undefined;
                 self.scheduleAutoSave(0, function() {
                     self.removeUselessAssets(self.notePath, 0, function(error) {
-                        self.isFlushingNote = false;
-                        callback && callback();
+                        self.status.flushingNote = false;
+                        cb && cb();
                     });
                 });
             }
             else {
                 self.removeUselessAssets(self.notePath, 0, function(error) {
-                    self.isFlushingNote = false;
-                    callback && callback();
+                    self.status.flushingNote = false;
+                    cb && cb();
                 });
             }
         }
         else
-            callback && callback();
+            cb && cb();
     }
 }
