@@ -452,6 +452,25 @@ function NoteEditor(fileManager, config) {
             self.scheduleAutoSave(0);
         });
 
+        editor.on("hardcopyarea", function(event) {
+            var margin = event.data;
+
+            /* Copy hardcopy-area.png to userdata storage and rename to file name with margin-top & margin-left encoded */
+            self.fileManager.copy(
+                "/apps/b/notebook/img/hardcopy-area.png",
+                dirname(self.notePath) + "/assets/hardcopyarea-" + margin.top + "-" + margin.left + ".png",
+                function(src, dst, error) {
+                    if (error)
+                        console.log("Unable to copy " + src + " to " + dst + " (error = " + error + ")");
+                    else {
+                        var hardcopyarea = editor.document.getElementById("hardcopy-area");
+                        hardcopyarea.setAttribute("src", "userdata/" + dst);
+                        hardcopyarea.setAttribute("id", "");
+                    }
+                }
+            );
+        });
+
         editor.on("maximize", function(state) {
             if (state.data === CKEDITOR.TRISTATE_ON)
                 page.navigationBar.hide();
