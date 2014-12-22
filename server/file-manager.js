@@ -399,6 +399,8 @@ FileManager.prototype.register = function(_super, socket, protoFS, complete) {
                             fileStream.end();
                             socket.emit(protoFS.SaveURLAs.RES, _path);
                         });
+                    }).on('error', function(e) {
+                        console.log("http.get got error: " + e.message);
                     });
                 }
             }

@@ -1,5 +1,5 @@
 exports.HasError = function(arg) {
-    if (arg instanceof String && arg.indexOf('ERROR-') == 0)
+    if (arg instanceof String && arg.indexOf('ERROR-') === 0)
         return true;
     else
         return false;
@@ -15,7 +15,7 @@ exports.ExtensionNotAllow = 'ERROR-EXTENSION-NOT-ALLOW';
 
 /* Security errors */
 exports.SecurityAccessDenied = 'ERROR-SECURITY-ACCESS-DENIED';
-exports.SecurityExternalNotAllowed = 'ERROR-SECURITY-EXT-NOTALLOW';
+exports.SecurityExternalNotAllowed = 'ERROR-SECURITY-EXT-NOT-ALLOW';
 
 /* File system errors */
 exports.FSNotExist = 'ERROR-FS-NOT-EXIST';
@@ -33,6 +33,7 @@ exports.APPExtractFail = 'ERROR-APP-EXTRACT';
 exports.APPInstallFail = 'ERROR-APP-INSTALL';
 
 /* Storage errors */
+exports.StorUnknownError = 'ERROR-STOR-UNKNOWN';
 exports.StorDiskApiError = 'ERROR-STOR-DISK-API';
 exports.StorSystemDiskNotFound = 'ERROR-STOR-NO-SYS-DISK';
 exports.StorUserDiskNotFound = 'ERROR-STOR-NO-USER-DISK';

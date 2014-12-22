@@ -25,7 +25,6 @@
         <!-- Import 3rd party frameworks -->
         <script src="lib/jqTree/tree.jquery.js"></script>
         <script src="lib/ckeditor/ckeditor.js"></script>
-        <script src="lib/html2canvas/html2canvas.js"></script>
 
         <!-- Import note style -->
         <link href="lib/jqTree/jqtree.css" rel="stylesheet">
@@ -35,32 +34,6 @@
         <link href="css/notebook.css" rel="stylesheet">
         <link href="css/note-editor.css" rel="stylesheet">
 
-        <script>
-            function takeNoteSnapshot(fileManager, saveTo) {
-                /* Adjust body width & height while body size in $(".cke_wysiwyg_frame") may be changed by vertical scroll bar */
-                $("#note-snapshot-body").css("width", $(".cke_wysiwyg_frame").contents().find("body").css("width"));
-                $("#note-snapshot-body").css("height", $(".cke_wysiwyg_frame").contents().find("body").css("height"));
-
-                $("#note-snapshot").fadeTo(0, 1);
-
-                html2canvas($("#note-snapshot"), {
-                    allowTaint: false,
-                    taintTest: false,
-                    onrendered: function(canvas) {
-                        var dataUrl = canvas.toDataURL("image/png");
-                        var data = dataUrl.replace(/^data:image\/png;base64,/,'');
-
-                        fileManager.writeFile(saveTo, base64ToBlob(data), function(path, progress, error) {
-                            if (error) {
-                                callback && callback();
-                                alert("Unable to write snapshot " + path);
-                            }
-                            $("#note-snapshot").fadeTo(0, 0);
-                        });
-                    }
-                });
-            }
-        </script>
         <script src="js/text-input-dialog.js"></script>
         <script src="js/bookshelf.js"></script>
         <script src="js/notebook.js"></script>
@@ -71,22 +44,9 @@
             var bookshelf;
             var notebook;
             var noteEditor;
-            var userStorage;
-            var externalStorages = [];
-
-            function addExternalStorage(disk) {
-                var diskId = basename(disk.mountpoint).replace(" ", "");
-                $('#accordion').prepend(
-                    "<h3 id='h3-"+ diskId + "'>" +
-                    "<span class='storage-name'>" + disk.mountpoint + "</span>" +
-                    "<span id='action-button-storage-" + diskId + "' class='action-button'>" +
-                    "<a href='#'><i class='fa fa-caret-square-o-down'></i></a>" +
-                    "</span></h3>" +
-                    "<div id='notebook-tree-" + diskId +"' class='notebook-tree'></div>"
-                );
-                $('#accordion').accordion("refresh");
-                externalStorages[disk.mountpoint] = disk;
-            }
+            var noteEditorMaxWidth = 0;
+            var noteEditorTakeSnapshot = true;
+            var noteSaveDelayTimer;
 
             /* NotebookViewController Constructor */
             function NotebookViewController() {
@@ -114,7 +74,7 @@
                     /* Initialize bookshelf and load notebooks */
                     bookshelf = new Bookshelf(notebookViewController.fileManagerClient);
                     notebook = new Notebook(notebookViewController.fileManagerClient);
-                    noteEditor = new NoteEditor(notebookViewController.fileManagerClient);
+                    noteEditor = new NoteEditor(notebookViewController.fileManagerClient, { snapshot: noteEditorTakeSnapshot });
 
                     /* bookshelf event handling */
                     bookshelf.jqueryElement.on("bookshelf.loaded", function(event, arg) {
@@ -130,9 +90,7 @@
                         else
                             notebook.close();
 
-                        var selectedNode = bookshelf.notebookTree[bookshelf.storageName].selectedNode;
-                        if (selectedNode &&
-                            (selectedNode.isFolder() || selectedNode.name === "All Notes"))
+                        if (arg.node && (arg.node.isFolder() || arg.node.name === "All Notes"))
                             $("#add-note-button").attr("disabled", true);
                         else
                             $("#add-note-button").attr("disabled", false);
@@ -144,26 +102,32 @@
                         }
                     });
 
-                    bookshelf.jqueryElement.on("bookshelf.switch-storage", function(event, mountpoint) {
-                        if (mountpoint === "Internal User Storage") {
-                            notebookViewController.storageClient.setUserDataDisk(userStorage);
-                        }
-                        else {
-                            if (externalStorages[mountpoint]) {
-                                notebookViewController.storageClient.setUserDataDisk(externalStorages[mountpoint]);
+                    bookshelf.jqueryElement.on("bookshelf.switch-storage", function(event, uuid) {
+                        noteEditor.flushContent(function() {
+                            if (bookshelf.storages[uuid]) {
+                                notebookViewController.storageClient.setUserDataDisk(bookshelf.storages[uuid]);
                             }
                             else {
-                                page.notifier.add("Storage Error", "Selected storage is not available", "/apps/b/notebook/img/icon.png", 0);
+                                page.notifier.add(
+                                    "Storage Error",
+                                    "Selected storage is not available",
+                                    "/apps/b/notebook/img/icon.png",
+                                    0
+                                );
                             }
-                        }
+                        });
                     });
 
                     /* Notebook list event handling */
                     notebook.jqueryElement.on("notebook.beforeOpen", function(event) {
-                        modal.open({ content: "<img class='wait-spin-indicator'/><div style='padding-top:5px'>Please wait...</div>" });
+                        modal.timer = setTimeout(modalTimeoutHandler, 30000);
+                        modal.open({
+                            content: "<img class='wait-spin-indicator'/><div style='padding-top:5px'>Please wait...</div>"
+                        });
                     });
 
                     notebook.jqueryElement.on("notebook.afterOpen", function(event) {
+                        clearTimeout(modal.timer);
                         modal.close();
                     });
 
@@ -177,38 +141,55 @@
 
                     /* Note editor event handling */
                     noteEditor.jqueryElement.on("note-editor.ready", function(event, arg) {
-                        /* Load notebook tree */
-                        bookshelf.load();
                         /* Resize editor after loaded */
                         setContentSizeFit();
                     });
 
                     noteEditor.jqueryElement.on("note-editor.saving", function(event) {
-                        modal.open({ content: "<img class='wait-spin-indicator'/><div style='padding-top:5px'>Saving note...</div>" });
+                        noteSaveDelayTimer = setTimeout(function() {
+                            modal.timer = setTimeout(modalTimeoutHandler, 30000);
+                            modal.open({
+                                content: "<img class='wait-spin-indicator'/><div style='padding-top:5px'>Saving note...</div>"
+                            });
+                        }, 500);
                     });
 
                     noteEditor.jqueryElement.on("note-editor.nochange", function(event) {
+                        clearTimeout(noteSaveDelayTimer);
+                        clearTimeout(modal.timer);
                         modal.close();
+                        $("#status-msg").text("Saved!");
+                        $("#status-msg").fadeIn(500);
+                        $("#status-msg").fadeOut(2000, function() {});
                     });
 
                     noteEditor.jqueryElement.on("note-editor.saved", function(event, index) {
+                        clearTimeout(noteSaveDelayTimer);
+                        clearTimeout(modal.timer);
+                        modal.close();
                         $("#status-msg").text("Saved!");
                         $("#status-msg").fadeIn(500);
                         $("#status-msg").fadeOut(2000, function() {});
                         notebook.reloadNote(index);
-                        modal.close();
                     });
 
-                    noteEditor.jqueryElement.on("note-editor.save-error", function(event) {
+                    noteEditor.jqueryElement.on("note-editor.save-error", function(event, index) {
+                        clearTimeout(noteSaveDelayTimer);
+                        clearTimeout(modal.timer);
                         modal.close();
+                        page.notifier.add(
+                            "Notebook Error",
+                            "Unable to save note. Please backup your changes, relaunch this app and try again",
+                            "/apps/b/notebook/img/icon.png",
+                            5000
+                        );
                     });
 
                     notebookViewController.storageClient.event.on("storage.localdisk#list#success", function(event, disks) {
-                        userStorage = disks.user;
+                        bookshelf.addStorage(disks.user);
                         for (var i in disks.removable) {
-                            addExternalStorage(disks.removable[i]);
+                            bookshelf.addStorage(disks.removable[i]);
                         }
-
                         setContentSizeFit();
                     });
                 });
@@ -234,6 +215,18 @@
             $(window).resize(function() {
                 setContentSizeFit();
             });
+
+            function modalTimeoutHandler() {
+                if (modal.isOpen()) {
+                    modal.close();
+                    page.notifier.add(
+                        "Timeout",
+                        "Operation timed out, please try again",
+                        "/apps/b/notebook/img/icon.png",
+                        3000
+                    );
+                }
+            }
         </script>
     </head>
     <body>
@@ -261,15 +254,7 @@
                 </div>
                 <div id="container">
                     <div id="bookshelf">
-                        <div id="accordion">
-                            <h3 id="h3-internal">
-                                <span class="storage-name">Internal User Storage</span>
-                                <span id="action-button-storage-internal" class="action-button">
-                                    <a href="#"><i class="fa fa-caret-square-o-down"></i></a>
-                                </span>
-                            </h3>
-                            <div id="notebook-tree-internal" class="notebook-tree"></div>
-                        </div>
+                        <div id="accordion"></div>
                     </div>
                     <div id="notebook">
                         <div id="notebook-title-bar"></div>
@@ -345,9 +330,11 @@
                     if (notebookWidth > 400) notebookWidth = 400;
                     var editorWidth = newWidth - bookshelfWidth - notebookWidth;
 
-                    if (editorWidth > 801) {
-                        /* Set width to 801 instead of 800 due to there's a 1-pixel width right border */
-                        editorWidth = 801;
+                    if (noteEditorMaxWidth > 0 && editorWidth > noteEditorMaxWidth + 1) {
+                        /* Set width to (noteEditorMaxWidth + 1) instead of noteEditorMaxWidth due to there's a 1-pixel width right border */
+                        editorWidth = noteEditorMaxWidth + 1;
+                        /* Set snapshot width */
+                        $("#note-snapshot").width(noteEditorMaxWidth);
                     }
 
                     bookshelf.fitSize(bookshelfWidth, newHeight);
@@ -369,7 +356,7 @@
                     $("#search-text-overlay i").unbind("click");
                     $("#search-text-overlay i").click(function() {
                         notebook.close();
-                        notebook.open(bookshelf.notebookTree[bookshelf.storageName].selectedNode);
+                        notebook.open(bookshelf.notebookTree[bookshelf.storageUUID].selectedNode);
                         resetSearch();
                     });
                 }
@@ -385,34 +372,35 @@
             page = new Page();
             page.setTitle("Notebook");
             page.createNavigationBar("Notebook");
-            page.setFooterText("%COPYRIGHT%");
 
             var brandLabel = new NavigationBarLabel("%BRAND%");
             page.navigationBar.rightContainer.pushItem(brandLabel);
 
             /* Handle user data disk add/remove event */
             page.event.on("storage.notification#diskinsert", function(event, disk) {
-                addExternalStorage(disk);
-                setContentSizeFit();
+                addStorage(disk);
             });
 
             page.event.on("storage.notification#diskremove", function(event, disk) {
-                if (externalStorages[disk.mountpoint]) {
-                    var diskId = basename(disk.mountpoint).replace(" ", "");
-                    if ($("#h3-" + diskId)) {
-                        $("#h3-" + diskId).remove();
-                        $("#notebook-tree-" + diskId).remove();
-                        $("#accordion").accordion("refresh");
-                        $("#accordion").accordion("option", "active", 0);
-                    }
-                    externalStorages[disk.mountpoint] = undefined;
-                    setContentSizeFit();
-                }
+                bookshelf.unload(disk.uuid);
+                bookshelf.removeStorage(disk);
             });
 
-            page.event.on("storage.notification#userdatadiskchange", function(event, disk) {
+            page.event.on("storage.notification#userdatadiskset", function(event, disk) {
                 notebook.close();
-                bookshelf.load();
+                bookshelf.load(disk.uuid, function(error) {
+                    if (error)
+                        page.notifier.add(
+                            "Storage Error",
+                            "Error occurs while loading notebooks (error = " + error + ")",
+                            "/apps/b/notebook/img/icon.png",
+                            3000
+                        );
+                    else
+                        noteEditor.storageUUID = disk.uuid;
+
+                    setContentSizeFit();
+                });
             });
 
             /* Initialize control bar */
@@ -424,6 +412,13 @@
 
             $("#add-note-button").click(function() {
                 notebook.addNote(null, null);
+                /* Temporarily disable add-note-button to prevent high frequence click that cause problems */
+                $("#add-note-button").attr("disabled", true);
+                setTimeout(function() {
+                    var node = bookshelf.notebookTree[bookshelf.storageUUID].selectedNode;
+                    if (node.name !== "All Notes")
+                        $("#add-note-button").attr("disabled", false);
+                }, 500);
             });
 
             $("#search-button").click(search);

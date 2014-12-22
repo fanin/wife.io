@@ -1,4 +1,4 @@
-function NoteEditor(fileManager) {
+function NoteEditor(fileManager, settings) {
     var self = this;
 
     self.noteTitle = "";
@@ -6,6 +6,7 @@ function NoteEditor(fileManager) {
     self.notePath = undefined;
     self.noteIndex = -1;
     self.fileManager = fileManager;
+    self.settings = settings;
     self.jqueryElement = $("#note-editor");
     self.autoSaveTimer = undefined;
     self.isSavingNote = false;
@@ -30,20 +31,20 @@ function NoteEditor(fileManager) {
     $("#note-title-input").prop("disabled", true);
 
     /* Initialize editor */
-    CKEDITOR.replace("note-content-editor");
     CKEDITOR.config.readOnly = true;
     CKEDITOR.config.resize_enabled = false;
     CKEDITOR.config.extraPlugins = "font,customsave,dragresize";
     CKEDITOR.config.removePlugins = "format,link,unlink,anchor,elementspath,about";
     CKEDITOR.config.skin = "icy_orange";
     CKEDITOR.addCss(".cke_editable { word-wrap: break-word }");
+    CKEDITOR.replace("note-content-editor");
 
     CKEDITOR.on("instanceReady", function(event) {
         var editor = event.editor;
 
         var setDataDelayTimeout;
         /* This is an workaround to avoid laggy setData */
-        self.setContentNoLagWorkaround = function(title, content) {
+        self.setContentNoLagWorkaround = function(title, content, callback) {
             if (setDataDelayTimeout) clearTimeout(setDataDelayTimeout);
             setDataDelayTimeout = setTimeout(function() {
                 setDataDelayTimeout = undefined;
@@ -60,38 +61,65 @@ function NoteEditor(fileManager) {
                 self.noteTitle = title;
                 /* Reset undo history */
                 editor.undoManager.reset();
+                /* callback */
+                callback && callback();
             }, 100);
         };
 
-        /* When user upload an image and remove it from the note, the image file is still under assets folder.
-           We scan note and remove unused assets after user complete editing note */
-        self.removeUselessAssets = function(notePath) {
+        /**
+         * When user upload an image and remove it from the note, the image file is still under assets folder.
+         * We scan note and remove unused assets after user complete editing note.
+         */
+        self.removeUselessAssets = function(notePath, after, callback) {
             setTimeout(function() {
-                self.fileManager.iterateList(
+                self.fileManager.list(
                     dirname(notePath) + "/assets",
-                    function(path, item, stat, i, error) {
+                    function(path, items, error) {
                         if (error) {
-                            console.log("Unable to list " + path + "/" + item);
+                            console.log("Unable to list " + path);
+                            callback && callback(error);
                             return;
                         }
 
-                        self.fileManager.grep(notePath, item, null, function(path, data, error) {
-                            if (error) {
-                                console.log("Unable to read " + path);
-                                return;
-                            }
+                        function removeUseless(i) {
+                            self.fileManager.grep(notePath, items[i], null, function(path, data, error) {
+                                if (error) {
+                                    console.log("Unable to read " + path);
+                                    callback && callback(error);
+                                    return;
+                                }
 
-                            if (!data) {
-                                self.fileManager.remove(dirname(notePath) + "/assets/" + item, function(path, error) {
-                                    if (error) throw new Error("unable to remove " + path);
-                                    console.log("Unused asset '" + item + "' removed");
-                                });
-                            }
-                        });
-                    },
-                    function(path) {}
+                                if (!data) {
+                                    self.fileManager.remove(dirname(notePath) + "/assets/" + items[i], function(path, error) {
+                                        if (error) {
+                                            console.log("unable to remove " + path);
+                                            callback && callback(error);
+                                        }
+                                        else {
+                                            //console.log("Unused asset '" + items[i] + "' removed");
+                                            if (i === items.length - 1)
+                                                callback && callback();
+                                            else
+                                                removeUseless(i + 1);
+                                        }
+                                    });
+                                }
+                                else {
+                                    if (i === items.length - 1)
+                                        callback && callback();
+                                    else
+                                        removeUseless(i + 1);
+                                }
+                            });
+                        }
+
+                        if (items.length > 0)
+                            removeUseless(0);
+                        else
+                            callback && callback();
+                    }
                 );
-            }, 1000);
+            }, after);
         }
 
         /* Recursive image upload */
@@ -123,7 +151,7 @@ function NoteEditor(fileManager) {
                     img.onload = function() {
                         var targetWidth = this.width;
                         var targetHeight = this.height;
-                        var maxWidth = $(".cke_wysiwyg_frame").width() * 0.75;
+                        var maxWidth = $(".cke_wysiwyg_frame").width() * 0.8;
                         if (this.width > maxWidth) {
                             targetHeight = (this.height / this.width) * maxWidth;
                             targetWidth = maxWidth;
@@ -133,9 +161,15 @@ function NoteEditor(fileManager) {
                             path + "/" + fileName, files[index],
                             /* onComplete */
                             function(path, progress, error) {
-                                if (error) throw new Error("unable to write " + path);
+                                if (error) {
+                                    console.log("Error occurs while writting " + path + " (error: " + error + ")");
+                                }
+
                                 self.progressDialog.setProgress(100);
-                                editor.insertHtml("<img src='userdata/" + path + "' style='width:" + targetWidth + "px; height:" + targetHeight + "px'/>");
+                                editor.insertHtml(
+                                    "<img src='userdata/" + path + (self.storageUUID ? "?s=" + self.storageUUID : "") +
+                                    "' style='width:" + targetWidth + "px; height:" + targetHeight + "px'/>"
+                                );
                                 upload(++index);
                             },
                             /* onProgress */
@@ -172,7 +206,6 @@ function NoteEditor(fileManager) {
         /* Image drag & drop */
         function dropFiles(e) {
             e.data.preventDefault();
-
             if (editor.readOnly) return;
 
             var path = dirname(self.notePath) + "/assets";
@@ -183,15 +216,16 @@ function NoteEditor(fileManager) {
         }
 
         function dragoverEffect(e) {
+            e.data.preventDefault();
             if (editor.readOnly) return;
         }
 
-        /*
-         * Note content management
+        /**
+         * Save note content
          */
         function save(notePath, noteIndex, title, content, callback) {
             if (!notePath) {
-                callback && callback();
+                callback && callback("Inavlid Path");
                 self.jqueryElement.trigger("note-editor.save-error", noteIndex);
                 return;
             }
@@ -202,22 +236,22 @@ function NoteEditor(fileManager) {
             var doc = "<html><head><title>" + title + "</title></head><body>" + content + "</body></html>";
 
             if (self.noteTitle === title && self.noteContent === content) {
-                callback && callback();
                 self.jqueryElement.trigger("note-editor.nochange", noteIndex);
+                callback && callback();
                 return;
             }
 
             self.fileManager.writeFile(notePath, doc, function(path, progress, error) {
                 if (error) {
-                    callback && callback();
-                    alert("Unable to write " + path);
+                    callback && callback(error);
+                    console.log("Unable to write " + path);
                     return;
                 }
 
                 /* Update last modified time */
                 self.fileManager.touch(dirname(notePath), function(path, error) {
                     if (error) {
-                        callback && callback();
+                        callback && callback(error);
                         console.log("Unable to touch " + path);
                         return;
                     }
@@ -227,12 +261,54 @@ function NoteEditor(fileManager) {
 
                     $("#note-snapshot-body").empty();
                     $("#note-snapshot-body").append(content);
-                    takeNoteSnapshot(self.fileManager, path + "/note.png");
 
-                    callback && callback();
-                    self.jqueryElement.trigger("note-editor.saved", noteIndex);
+                    if (self.settings.snapshot) {
+                        takeNoteSnapshot(path + "/note.png", function() {
+                            callback && callback();
+                            self.jqueryElement.trigger("note-editor.saved", noteIndex);
+                        });
+                    }
+                    else {
+                        callback && callback();
+                    }
                 });
             });
+        }
+
+        /**
+         * Take note content snapshot using html2canvas.js and save as png
+         */
+        include("apps/b/notebook/lib/html2canvas/html2canvas.js");
+
+        function takeNoteSnapshot(saveTo, callback) {
+            /* Adjust body width & height while body size in $(".cke_wysiwyg_frame") may be changed by vertical scroll bar */
+            $("#note-snapshot-body").css("width", $(".cke_wysiwyg_frame").contents().find("body").css("width"));
+            $("#note-snapshot-body").css("height", $(".cke_wysiwyg_frame").contents().find("body").css("height"));
+
+            $("#note-snapshot").fadeTo(0, 1);
+
+            try {
+                html2canvas($("#note-snapshot"), {
+                    allowTaint: false,
+                    taintTest: false,
+                    onrendered: function(canvas) {
+                        var dataUrl = canvas.toDataURL("image/png");
+                        var data = dataUrl.replace(/^data:image\/png;base64,/,'');
+
+                        self.fileManager.writeFile(saveTo, base64ToBlob(data), function(path, progress, error) {
+                            if (error)
+                                alert("Unable to write snapshot " + path + "(" + error + ")");
+                            else
+                                $("#note-snapshot").fadeTo(0, 0);
+                            callback && callback();
+                        });
+                    }
+                });
+            }
+            catch (error) {
+                alert("html2canvas: " + error);
+                callback && callback();
+            }
         }
 
         /*
@@ -283,7 +359,7 @@ function NoteEditor(fileManager) {
                 save(notePath, noteIndex, title, content, callback);
         }
 
-        self.scheduleAutoSave = function(wait) {
+        self.scheduleAutoSave = function(wait, callback) {
             if (self.autoSaveTimer) {
                 clearTimeout(self.autoSaveTimer);
                 self.autoSaveTimer = undefined;
@@ -302,6 +378,7 @@ function NoteEditor(fileManager) {
                     self.jqueryElement.trigger("note-editor.saving");
                     grabResourcesAndSave(notePath, noteIndex, title, content, function() {
                         self.isSavingNote = false;
+                        callback && callback();
                     });
                 }, wait);
             }
@@ -311,6 +388,7 @@ function NoteEditor(fileManager) {
                 self.jqueryElement.trigger("note-editor.saving");
                 grabResourcesAndSave(notePath, noteIndex, title, content, function() {
                     self.isSavingNote = false;
+                    callback && callback();
                 });
             }
         }
@@ -331,7 +409,7 @@ function NoteEditor(fileManager) {
         });
 
         editor.on("change", function() {
-            self.scheduleAutoSave(3000);
+            self.scheduleAutoSave(10000);
         });
 
         editor.on("customsave", function() {
@@ -345,6 +423,7 @@ function NoteEditor(fileManager) {
                 page.navigationBar.show();
         });
 
+        self.editorReady = true;
         self.jqueryElement.trigger("note-editor.ready");
     });
 }
@@ -359,10 +438,13 @@ NoteEditor.prototype.fitSize = function(width, height) {
 NoteEditor.prototype.loadContent = function(path, index) {
     var self = this;
 
-    /* Check if last edited note is saved */
-    if (self.isSavingNote) {
+    if (!self.editorReady)
+        return;
+
+    /* Wait if we are saving the note */
+    if (self.isSavingNote || self.isFlushingNote) {
         /* Last edited note is being saved, defer readFile() work after 500ms and see if it is done */
-        setTimeout(function() { self.loadContent(path, index); }, 500);
+        setTimeout(function() { self.loadContent(path, index); }, 100);
     }
     else {
         self.fileManager.readFile(path, "utf8", function(path, data, error) {
@@ -375,13 +457,13 @@ NoteEditor.prototype.loadContent = function(path, index) {
             var title = $("<div></div>").append(data).find("title").text() || "";
             /* Extract and show contents inside <body></body> on CKEDITOR */
             var content = data.match(/\<body[^>]*\>([^]*)\<\/body/m)[1] || "";
-            self.setContentNoLagWorkaround(title, content);
+            self.setContentNoLagWorkaround(title, content, function() {
+                $("#note-title-input").prop("disabled", false);
+                CKEDITOR.instances["note-content-editor"].setReadOnly(false);
 
-            $("#note-title-input").prop("disabled", false);
-            CKEDITOR.instances["note-content-editor"].setReadOnly(false);
-
-            self.notePath = path;
-            self.noteIndex = index;
+                self.notePath = path;
+                self.noteIndex = index;
+            });
         });
     }
 }
@@ -389,30 +471,62 @@ NoteEditor.prototype.loadContent = function(path, index) {
 NoteEditor.prototype.resetContent = function() {
     var self = this;
 
-    /* Check if last edited note is saved */
+    if (!self.editorReady)
+        return;
+
+    /* Wait if we are saving the note */
     if (self.isSavingNote) {
         /* Last edited note is being saved, defer readFile() work after 500ms and see if it is done */
-        setTimeout(function() { self.resetContent(); }, 500);
+        setTimeout(function() { self.resetContent(); }, 100);
     }
     else {
-        /* Stop & clear previous auto save timer */
-        if (self.autoSaveTimer) {
-            clearTimeout(self.autoSaveTimer);
-            self.autoSaveTimer = undefined;
-        }
+        /* Flush unsaved content immediately */
+        self.flushContent(function() {
+            self.notePath = undefined;
+            self.noteIndex = -1;
 
-        /* Auto save unsaved content to previous doc immediately */
+            self.setContentNoLagWorkaround("", "");
+
+            $("#note-title-input").prop("disabled", true);
+            CKEDITOR.instances["note-content-editor"].setReadOnly(true);
+        });
+    }
+}
+
+NoteEditor.prototype.flushContent = function(callback) {
+    var self = this;
+
+    if (!self.editorReady)
+        return;
+
+    /* Wait if we are saving the note */
+    if (self.isSavingNote) {
+        /* Last edited note is being saved, defer readFile() work after 500ms and see if it is done */
+        setTimeout(function() { self.flushContent(callback); }, 100);
+    }
+    else {
         if (self.notePath) {
-            self.scheduleAutoSave(0);
-            self.removeUselessAssets(self.notePath);
+            self.isFlushingNote = true;
+
+            /* Stop & clear previous auto save timer */
+            if (self.autoSaveTimer) {
+                clearTimeout(self.autoSaveTimer);
+                self.autoSaveTimer = undefined;
+                self.scheduleAutoSave(0, function() {
+                    self.removeUselessAssets(self.notePath, 0, function(error) {
+                        self.isFlushingNote = false;
+                        callback && callback();
+                    });
+                });
+            }
+            else {
+                self.removeUselessAssets(self.notePath, 0, function(error) {
+                    self.isFlushingNote = false;
+                    callback && callback();
+                });
+            }
         }
-
-        self.notePath = undefined;
-        self.noteIndex = -1;
-
-        self.setContentNoLagWorkaround("", "");
-
-        $("#note-title-input").prop("disabled", true);
-        CKEDITOR.instances["note-content-editor"].setReadOnly(true);
+        else
+            callback && callback();
     }
 }

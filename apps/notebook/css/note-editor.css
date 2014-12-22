@@ -20,6 +20,12 @@
     background-color: white;
 }
 
+#note-content-editor {
+    resize: none;
+    height: 200px;
+    max-height: 200px;
+}
+
 #cke_note-content-editor {
     border: 0;
     border-right: 1px solid lightgray;
@@ -34,13 +40,12 @@
 }
 
 #note-snapshot {
-    width: 800px;
     height: auto;
     background-color: #fff;
     /* Make sure this is not visible while taking snapshot */
     opacity: 0;
     position: absolute;
-    top: 1000px;
+    top: 40px;
     left: 1000px;
     z-index: -9999;
 }

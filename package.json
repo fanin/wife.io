@@ -23,6 +23,7 @@
         "async": "*",
         "numeral": "*",
         "rwlock": "*",
+        "node-uuid": "*",
         "html-to-text": "*"
     }
 }

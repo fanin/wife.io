@@ -69,6 +69,7 @@ CoreServer.prototype.listen = function() {
     var self = this;
 
     this.ioServer.on('connection', function(socket) {
+        self.socket = socket;//FIXME
         /* Handle protocol handshaking */
         socket.on(self.protocol[0].Base.GetInfo.REQ, function(appDirectory) {
             var appInfo = self.appManager.getAppInfo(appDirectory);
@@ -110,6 +111,22 @@ CoreServer.prototype.listen = function() {
                         self.fileManager.register(self, socket, self.protocol[0].FileSystem, function() {
                             callback(null, true);
                         });
+                    },
+                    function(callback) {
+                        socket.on('disconnect', function() {
+                            /* Unregister protocols for this app */
+                            self.fileManager.unregister(socket, self.protocol[0].FileSystem);
+                            self.appManager.unregister(socket, self.protocol[0].APP);
+                            self.notificationCenter.unregister(socket, self.protocol[0].Notification);
+                            self.extensionManager.unregister(socket, self.protocol[0].Extension);
+                            self.storageManager.unregister(socket, self.protocol[0].Storage);
+                            self.securityManager.unregister(socket);
+
+                            socket.removeAllListeners(self.protocol[0].Base.GetInfo.REQ);
+                            socket.removeAllListeners('disconnect');
+                        });
+
+                        callback(null, true);
                     }
                 ],
                 function(err, results) {
@@ -120,19 +137,6 @@ CoreServer.prototype.listen = function() {
             else
                 socket.emit(self.protocol[0].Base.GetInfo.ERR, appInfo);
         });
-
-        socket.on('disconnect', function() {
-            /* Unregister protocols for this app */
-            self.fileManager.unregister(socket, self.protocol[0].FileSystem);
-            self.appManager.unregister(socket, self.protocol[0].APP);
-            self.notificationCenter.unregister(socket, self.protocol[0].Notification);
-            self.extensionManager.unregister(socket, self.protocol[0].Extension);
-            self.storageManager.unregister(socket, self.protocol[0].Storage);
-            self.securityManager.unregister(socket);
-
-            socket.removeAllListeners(self.protocol[0].Base.GetInfo.REQ);
-            socket.removeAllListeners('disconnect');
-        });
     });
 }
 
@@ -142,8 +146,6 @@ CoreServer.prototype.handleRequest = function(req, res) {
     var filename = url.pathname;
     var rootdir = path.dirname(__dirname);
     var filepath = path.join(rootdir, filename);
-
-    //console.log('handle ' + filename);
 
     function backToLauncher() {
         // Redirect to launcher
@@ -193,7 +195,7 @@ CoreServer.prototype.handleRequest = function(req, res) {
                 filepath = path.join(rootdir, filename);
             }
             else if (filename.indexOf('userdata') > 0 && filename.indexOf('assets') > 0) {
-                filepath = self.storageManager.userDisk.mountpoint + '/' +
+                filepath = self.storageManager.userDataDisk[self.socket].mountpoint + '/' +
                     SYSTEM.SETTINGS.SysName.replace(/\s/g, '').toLocaleLowerCase() + filename;
             }
             else if (path.basename(filename).match(/^ui/) && path.basename(filename).match(/png$/)) {
@@ -202,6 +204,12 @@ CoreServer.prototype.handleRequest = function(req, res) {
                 filepath = path.join(rootdir, filename);
             }
             else {
+                res.writeHead(404, {'Content-Type': 'text/plain'});
+                res.end('Not Found\n');
+                return;
+            }
+
+            if (!fs.existsSync(filepath)) {
                 res.writeHead(404, {'Content-Type': 'text/plain'});
                 res.end('Not Found\n');
                 return;

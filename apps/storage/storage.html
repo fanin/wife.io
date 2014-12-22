@@ -62,7 +62,7 @@
                             "</div>"
                         );
 
-                        $("#system-title").html("System Disk (" + disks.system.total + ")<br>Mount at " + disks.system.mountpoint);
+                        $("#system-title").html("System Disk (" + disks.system.total + ")<br>Mount on " + disks.system.mountpoint);
                         plotPieChart($("#system-placeholder"), disks.system);
                     }
 
@@ -74,7 +74,7 @@
                             "</div>"
                         );
 
-                        $("#user-title").html("User Disk (" + disks.user.total + ")<br>Mount at " + disks.user.mountpoint);
+                        $("#user-title").html("User Disk (" + disks.user.total + ")<br>Mount on " + disks.user.mountpoint);
                         plotPieChart($("#user-placeholder"), disks.user);
                     }
 
@@ -90,7 +90,7 @@
                         );
 
                         $("#removable-title-" + diskId).html(
-                            "Removable Disk (" + disk.total + ")<br>Mount at " + disk.mountpoint
+                            "Removable Disk (" + disk.total + ")<br>Mount on " + disk.mountpoint
                         );
                         plotPieChart($("#removable-placeholder-" + diskId), disk);
                     }
@@ -111,7 +111,7 @@
                     );
 
                     $("#removable-title-" + diskId).html(
-                        "Removable Disk (" + disk.total + ")<br>Mount at " + disk.mountpoint
+                        "Removable Disk (" + disk.total + ")<br>Mount on " + disk.mountpoint
                     );
                     plotPieChart($("#removable-placeholder-" + diskId), disk);
                 });

@@ -142,7 +142,10 @@ function detail(drive, callback) {
                         break;
                     case 'linux':
                     default:
-                        break;// TODO
+                        getDetailNaN('ls -l /dev/disk/by-uuid/ | grep ' + drive.replace('/dev/', '') + ' | awk \'{print $9}\'', function(e, d){
+                            if (d) d = d.trim();
+                            callback(e, d);
+                        });
                 }
             },
             name: function (callback) {
@@ -155,7 +158,10 @@ function detail(drive, callback) {
                         break;
                     case 'linux':
                     default:
-                        break;// TODO
+                        getDetailNaN('ls -l /dev/disk/by-label/ | grep ' + drive.replace('/dev/', '') + ' | awk \'{print $9}\'', function(e, d){
+                            if (d) d = d.trim();
+                            callback(e, d);
+                        });
                 }
             }
         },

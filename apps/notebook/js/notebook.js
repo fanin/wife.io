@@ -291,16 +291,14 @@ Notebook.prototype.open = function(node, searchPattern) {
                                             parseFormat: true
                                         },
                                         function(_path, data, error) {
-                                            if (error) throw new Error("File system operation error");
-                                            if (data) {
-                                                self.notes.unshift({ path: path + "/" + item, stat: stat, title: "" });
+                                            if (error) {
                                                 waitItems.pop();
+                                                throw new Error("File system operation error");
                                             }
-                                            else {
-                                                self.notebookNode.name = "No result found for \"" + searchPattern + "\"";
-                                                self.updateTitleBar();
-                                                self.tableView.show();
-                                            }
+
+                                            if (data)
+                                                self.notes.unshift({ path: path + "/" + item, stat: stat, title: "" });
+                                            waitItems.pop();
                                         }
                                     );
                                 }
@@ -314,31 +312,42 @@ Notebook.prototype.open = function(node, searchPattern) {
                             if (notebookIndex === items.length - 1) {
                                 var timer = setInterval(function() {
                                     if (waitItems.length === 0) {
+                                        /* Stop timer */
+                                        clearInterval(timer);
+
+                                        if (searchPattern && searchPattern.length > 0) {
+                                            /* Update title bar for search result */
+                                            if (self.notes.length === 0) {
+                                                self.notebookNode.name = "No result found for \"" + searchPattern + "\"";
+                                                self.updateTitleBar();
+                                            }
+                                            else {
+                                                self.notebookNode.name = "Search result for \"" + searchPattern + "\"";
+                                                self.updateTitleBar();
+                                            }
+                                        }
+
                                         /* Sort notes */
                                         self.notes.sort(self.sortFuncs[self.currentSortMethod]);
                                         /* Load notes on list */
                                         self.tableView.show();
-                                        /* Stop timer */
-                                        clearInterval(timer);
                                     }
-                                }, 200);
+                                }, 100);
                             }
                             else
                                 recursiveIterateList(notebookIndex + 1);
                         }
                     );
                 }
-                else {
-                    /* No item, just show empty table */
-                    self.tableView.show();
-                }
             };
 
             if (items.length > 0)
                 /* Recursively list all notes in all notebook */
                 recursiveIterateList(0);
-            else
-                self.jqueryElement.trigger("notebook.afterOpen");
+            else {
+                /* No item, just show empty table */
+                self.tableView.show();
+            }
         });
     }
     else if (node.isFolder()) {
@@ -413,7 +422,7 @@ Notebook.prototype.addNote = function(title, content, complete) {
                 if (error) throw new Error("unable to create directory");
                 if (!title || title.trim() === "")
                     title = "Untitled";
-                content = content || "";
+                content = content || "<p></p>";
                 var emptyNote = "<html><head><title>" + title + "</title></head><body style='width:800px;margin:0 auto;'>" + content + "</body></html>";
 
                 self.fileManager.writeFile(path + "/note.html", emptyNote, function(path, progress, error) {
@@ -426,10 +435,6 @@ Notebook.prototype.addNote = function(title, content, complete) {
                             self.tableView.selectRowAtIndex(0);
                         });
                         self.updateTitleBar();
-
-                        $("#note-snapshot").empty();
-                        $("#note-snapshot").append(content);
-                        takeNoteSnapshot(self.fileManager, dirname(path) + "/note.png");
 
                         if (complete) complete(path);
                     });
