@@ -44,8 +44,6 @@
             var bookshelf;
             var notebook;
             var noteEditor;
-            var noteEditorMaxWidth = 0;
-            var noteEditorTakeSnapshot = true;
             var noteSaveDelayTimer;
 
             /* NotebookViewController Constructor */
@@ -74,7 +72,13 @@
                     /* Initialize bookshelf and load notebooks */
                     bookshelf = new Bookshelf(notebookViewController.fileManagerClient);
                     notebook = new Notebook(notebookViewController.fileManagerClient);
-                    noteEditor = new NoteEditor(notebookViewController.fileManagerClient, { snapshot: noteEditorTakeSnapshot });
+                    noteEditor = new NoteEditor(
+                        notebookViewController.fileManagerClient,
+                        {
+                            maxWidth: 0,
+                            snapshot: true
+                        }
+                    );
 
                     /* bookshelf event handling */
                     bookshelf.jqueryElement.on("bookshelf.loaded", function(event, arg) {
@@ -108,7 +112,7 @@
                                 notebookViewController.storageClient.setUserDataDisk(bookshelf.storages[uuid]);
                             }
                             else {
-                                page.notifier.add(
+                                page.notifier.add (
                                     "Storage Error",
                                     "Selected storage is not available",
                                     "/apps/b/notebook/img/icon.png",
@@ -177,7 +181,7 @@
                         clearTimeout(noteSaveDelayTimer);
                         clearTimeout(modal.timer);
                         modal.close();
-                        page.notifier.add(
+                        page.notifier.add (
                             "Notebook Error",
                             "Unable to save note. Please backup your changes, relaunch this app and try again",
                             "/apps/b/notebook/img/icon.png",
@@ -219,7 +223,7 @@
             function modalTimeoutHandler() {
                 if (modal.isOpen()) {
                     modal.close();
-                    page.notifier.add(
+                    page.notifier.add (
                         "Timeout",
                         "Operation timed out, please try again",
                         "/apps/b/notebook/img/icon.png",
@@ -330,13 +334,6 @@
                     if (notebookWidth > 400) notebookWidth = 400;
                     var editorWidth = newWidth - bookshelfWidth - notebookWidth;
 
-                    if (noteEditorMaxWidth > 0 && editorWidth > noteEditorMaxWidth + 1) {
-                        /* Set width to (noteEditorMaxWidth + 1) instead of noteEditorMaxWidth due to there's a 1-pixel width right border */
-                        editorWidth = noteEditorMaxWidth + 1;
-                        /* Set snapshot width */
-                        $("#note-snapshot").width(noteEditorMaxWidth);
-                    }
-
                     bookshelf.fitSize(bookshelfWidth, newHeight);
                     notebook.fitSize(notebookWidth, newHeight);
                     noteEditor.fitSize(editorWidth, newHeight);
@@ -390,7 +387,7 @@
                 notebook.close();
                 bookshelf.load(disk.uuid, function(error) {
                     if (error)
-                        page.notifier.add(
+                        page.notifier.add (
                             "Storage Error",
                             "Error occurs while loading notebooks (error = " + error + ")",
                             "/apps/b/notebook/img/icon.png",
