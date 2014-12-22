@@ -33,7 +33,7 @@ function NoteEditor(fileManager, settings) {
     /* Initialize editor */
     CKEDITOR.config.readOnly = true;
     CKEDITOR.config.resize_enabled = false;
-    CKEDITOR.config.extraPlugins = "font,customsave,dragresize";
+    CKEDITOR.config.extraPlugins = "font,customsave,hardcopyarea,dragresize";
     CKEDITOR.config.removePlugins = "format,link,unlink,anchor,elementspath,about";
     CKEDITOR.config.skin = "icy_orange";
     CKEDITOR.addCss(".cke_editable { word-wrap: break-word }");
@@ -220,6 +220,32 @@ function NoteEditor(fileManager, settings) {
             if (editor.readOnly) return;
         }
 
+        /*
+         * course-info.json management
+         */
+        function updateCourseInfo(path, teachingMaterial, callback) {
+            self.fileManager.readFile(path + "/course-info.json", "utf8", function(path, data, error) {
+                if (error) {
+                    console.log("Unable to read " + path);
+                    return;
+                }
+
+                try {
+                    var courseInfo = JSON.parse(data);
+                    if (teachingMaterial) courseInfo.teaching_material = teachingMaterial;
+
+                    self.fileManager.writeFile(path, JSON.stringify(courseInfo), function(path, progress, error) {
+                        if (error) {
+                            alert("FATAL ERROR: Unable to update " + path);
+                        }
+                    });
+                }
+                catch (err) {
+                    alert("FATAL ERROR: Parse course info error" + err + "\ndata:\n" + data);
+                }
+            });
+        }
+
         /**
          * Save note content
          */
@@ -247,6 +273,9 @@ function NoteEditor(fileManager, settings) {
                     console.log("Unable to write " + path);
                     return;
                 }
+
+                /* Update course-info.json */
+                updateCourseInfo(dirname(notePath), { title: title }, null);
 
                 /* Update last modified time */
                 self.fileManager.touch(dirname(notePath), function(path, error) {
