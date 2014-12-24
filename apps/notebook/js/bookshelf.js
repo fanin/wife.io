@@ -1,7 +1,7 @@
-function Bookshelf(fileManager) {
+function Bookshelf(viewController) {
     var self = this;
 
-    this.fileManager = fileManager;
+    this.fileManager = viewController.fileManagerClient;
     this.jqueryElement = $("#bookshelf");
     this.storages = [];
     this.storageUUID = undefined;
