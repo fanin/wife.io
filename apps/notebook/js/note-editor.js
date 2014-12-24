@@ -40,8 +40,9 @@ function NoteEditor(viewController, config) {
     /* Initialize editor */
     CKEDITOR.config.readOnly = true;
     CKEDITOR.config.resize_enabled = false;
-    CKEDITOR.config.extraPlugins = "font,customsave,hardcopyarea,dragresize";
+    CKEDITOR.config.extraPlugins = "font,customsave,screenshotarea,dragresize";
     CKEDITOR.config.removePlugins = "format,link,unlink,anchor,elementspath,about";
+    CKEDITOR.config.allowedContent = "img[!*]";
     CKEDITOR.config.skin = "icy_orange";
     CKEDITOR.addCss(".cke_editable { word-wrap: break-word }");
     CKEDITOR.replace("note-content-editor");
@@ -232,28 +233,39 @@ function NoteEditor(viewController, config) {
         }
 
         /*
-         * course-info.json management
+         * note-summary.json management
          */
-        function updateCourseInfo(path, teachingMaterial, callback) {
-            self.fileManager.readFile(path + "/course-info.json", "utf8", function(path, data, error) {
+        function updateNoteSummary(path, title, content, cb) {
+            var summary = { title: title };
+            var screenshotAreas = content.match(/screenshot-(................).png/gm);
+
+            if (screenshotAreas) {
+                summary.screenshot_area = [];
+                for (var i in screenshotAreas) {
+                    var area = screenshotAreas[i].match(/screenshot-(................).png/m);
+                    var screenshotId = "screenshot-" + area[1];
+                    var element = editor.document.getById(screenshotId);
+
+                    if (element) {
+                        summary.screenshot_area.push({
+                            file: screenshotId + ".png",
+                            x: element.$.offsetLeft,
+                            y: element.$.offsetTop,
+                            width: element.$.offsetWidth,
+                            height: element.$.offsetHeight
+                        });
+                    }
+                }
+
+                /* Sort screenshot_area ascending by their y position */
+                summary.screenshot_area.sort(function(a, b) { return a.y - b.y });
+            }
+
+            self.fileManager.writeFile(path + "/note-summary.json", JSON.stringify(summary), function(path, progress, error) {
                 if (error) {
-                    console.log("Unable to read " + path);
-                    return;
+                    alert("FATAL ERROR: Unable to update " + path);
                 }
-
-                try {
-                    var courseInfo = JSON.parse(data);
-                    if (teachingMaterial) courseInfo.teaching_material = teachingMaterial;
-
-                    self.fileManager.writeFile(path, JSON.stringify(courseInfo), function(path, progress, error) {
-                        if (error) {
-                            alert("FATAL ERROR: Unable to update " + path);
-                        }
-                    });
-                }
-                catch (err) {
-                    alert("FATAL ERROR: Parse course info error" + err + "\ndata:\n" + data);
-                }
+                cb && cb(error);
             });
         }
 
@@ -285,8 +297,8 @@ function NoteEditor(viewController, config) {
                     return;
                 }
 
-                /* Update course-info.json */
-                updateCourseInfo(dirname(notePath), { title: title }, null);
+                /* Update note-summary.json */
+                updateNoteSummary(dirname(notePath), title, content);
 
                 /* Update last modified time */
                 self.fileManager.touch(dirname(notePath), function(path, error) {
@@ -456,20 +468,21 @@ function NoteEditor(viewController, config) {
             self.scheduleAutoSave(0);
         });
 
-        editor.on("hardcopyarea", function(event) {
-            var margin = event.data;
+        editor.on("screenshotarea", function(event) {
+            var area = event.data;
+            var screenshotId = "screenshot-" + self.getTimecode();
 
-            /* Copy hardcopy-area.png to userdata storage and rename to file name with margin-top & margin-left encoded */
-            self.fileManager.copy(
-                "/apps/b/notebook/img/hardcopy-area.png",
-                dirname(self.notePath) + "/assets/hardcopyarea-" + margin.top + "-" + margin.left + ".png",
-                function(src, dst, error) {
+            /* Save a screenshot-area.png copy for this screenshot area in userdata storage */
+            self.fileManager.writeFile(
+                dirname(self.notePath) + "/assets/" + screenshotId + ".png",
+                base64ToBlob(area.image),
+                function(path, progress, error) {
                     if (error)
-                        console.log("Unable to copy " + src + " to " + dst + " (error = " + error + ")");
+                        console.log("Unable to write screenshot-area.png to " + path + " (error = " + error + ")");
                     else {
-                        var hardcopyarea = editor.document.getElementById("hardcopy-area");
-                        hardcopyarea.setAttribute("src", "userdata/" + dst);
-                        hardcopyarea.setAttribute("id", "");
+                        var screenshotarea = editor.document.getById("new-screenshot-area");
+                        screenshotarea.setAttribute("src", "userdata/" + path + (self.storageUUID ? "?sid=" + self.storageUUID : ""));
+                        screenshotarea.setAttribute("id", screenshotId);
                     }
                 }
             );
