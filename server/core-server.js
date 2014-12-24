@@ -69,7 +69,6 @@ CoreServer.prototype.listen = function() {
     var self = this;
 
     this.ioServer.on('connection', function(socket) {
-        self.socket = socket;//FIXME
         /* Handle protocol handshaking */
         socket.on(self.protocol[0].Base.GetInfo.REQ, function(appDirectory) {
             var appInfo = self.appManager.getAppInfo(appDirectory);
@@ -142,8 +141,9 @@ CoreServer.prototype.listen = function() {
 
 CoreServer.prototype.handleRequest = function(req, res) {
     var self = this;
-    var url = require('url').parse(req.url);
+    var url = require('url').parse(req.url, true);
     var filename = url.pathname;
+    var query = url.query;
     var rootdir = path.dirname(__dirname);
     var filepath = path.join(rootdir, filename);
 
@@ -195,8 +195,21 @@ CoreServer.prototype.handleRequest = function(req, res) {
                 filepath = path.join(rootdir, filename);
             }
             else if (filename.indexOf('userdata') > 0 && filename.indexOf('assets') > 0) {
-                filepath = self.storageManager.userDataDisk[self.socket].mountpoint + '/' +
-                    SYSTEM.SETTINGS.SysName.replace(/\s/g, '').toLocaleLowerCase() + filename;
+                /* Set user disk as default storage where requested userdata is on */
+                var disk = self.storageManager.userDisk;
+
+                if (query.sid) {
+                    disk = self.storageManager.getDiskByUUID(query.sid);
+
+                    if (SYSTEM.ERROR.HasError(disk))
+                        /* Inavlid disk uuid specified, ignore this request */
+                        disk = null;
+                }
+
+                if (disk)
+                    filepath = disk.mountpoint + '/' + SYSTEM.SETTINGS.SysName.replace(/\s/g, '').toLocaleLowerCase() + filename;
+                else
+                    filepath = '';
             }
             else if (path.basename(filename).match(/^ui/) && path.basename(filename).match(/png$/)) {
                 /* Rebuild jquery-ui images path */
@@ -209,7 +222,7 @@ CoreServer.prototype.handleRequest = function(req, res) {
                 return;
             }
 
-            if (!fs.existsSync(filepath)) {
+            if (!filepath || !fs.existsSync(filepath)) {
                 res.writeHead(404, {'Content-Type': 'text/plain'});
                 res.end('Not Found\n');
                 return;

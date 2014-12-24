@@ -111,6 +111,7 @@ StorageManager.prototype.verifyDiskInfo = function(disk) {
     if (!disk) return false;
     if (!disk.type) return false;
     if (!disk.mountpoint) return false;
+    if (!disk.uuid) return false;
     if (disk.total === undefined) return false;
     if (disk.available === undefined) return false;
     if (disk.used === undefined) return false;
@@ -227,6 +228,7 @@ StorageManager.prototype.getLocalDisks = function(callback) {
 
                 for (i = 0; i < _oldDisk.length; i++) {
                     if (!_oldDisk[i].present) {
+                        /* If removed disk is user data disk, reset user data disk to user disk */
                         if (self.userDataDisk[self.socket] === _oldDisk[i]) {
                             self.userDataDisk[self.socket] = self.userDisk;
                         }
@@ -240,7 +242,18 @@ StorageManager.prototype.getLocalDisks = function(callback) {
     });
 }
 
-StorageManager.prototype.getUserDataPath = function(path) {
+StorageManager.prototype.getDiskByUUID = function(uuid) {
+    if (this.systemDisk.uuid === uuid)
+        return SYSTEM.ERROR.SecurityAccessDenied;
+    if (this.userDisk.uuid === uuid)
+        return this.userDisk;
+    for (var i = 0; i < this.removableDisk.length; i++)
+        if (this.removableDisk[i].uuid === uuid)
+            return this.removableDisk[i];
+    return SYSTEM.ERROR.StorBadDiskInfo;
+}
+
+StorageManager.prototype.getUserDataPath = function(_path) {
     var userDataPath;
 
     if (this.userDataDisk[this.socket]) {
@@ -262,5 +275,5 @@ StorageManager.prototype.getUserDataPath = function(path) {
             return SYSTEM.ERROR.StorUnknownError;
     }
 
-    return userDataPath + '/' + path;
+    return userDataPath + '/' + path.normalize(_path);
 }

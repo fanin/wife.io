@@ -70,10 +70,10 @@
 
                 notebookViewController.event.on("core.protospec#loaded", function(event) {
                     /* Initialize bookshelf and load notebooks */
-                    bookshelf = new Bookshelf(notebookViewController.fileManagerClient);
-                    notebook = new Notebook(notebookViewController.fileManagerClient);
+                    bookshelf = new Bookshelf(notebookViewController);
+                    notebook = new Notebook(notebookViewController);
                     noteEditor = new NoteEditor(
-                        notebookViewController.fileManagerClient,
+                        notebookViewController,
                         {
                             maxWidth: 0,
                             snapshot: true
@@ -375,7 +375,7 @@
 
             /* Handle user data disk add/remove event */
             page.event.on("storage.notification#diskinsert", function(event, disk) {
-                addStorage(disk);
+                bookshelf.addStorage(disk);
             });
 
             page.event.on("storage.notification#diskremove", function(event, disk) {

@@ -19,12 +19,16 @@ FileManager.prototype.register = function(_super, socket, protoFS, complete) {
     var self = this;
     var storage = _super.storageManager;
 
+    self.resolvePath = function(_path, appName) {
+        return storage.getUserDataPath(_path);
+    };
+
     /**
      * Protocol Listener: File System Events
      */
     socket.on(protoFS.List.REQ, function(path) {
         try {
-            var realPath = storage.getUserDataPath(path);
+            var realPath = self.resolvePath(path);
 
             if (SYSTEM.ERROR.HasError(realPath))
                 socket.emit(protoFS.List.ERR, path, realPath);
@@ -40,7 +44,7 @@ FileManager.prototype.register = function(_super, socket, protoFS, complete) {
 
     socket.on(protoFS.StatList.REQ, function(path) {
         try {
-            var realPath = storage.getUserDataPath(path);
+            var realPath = self.resolvePath(path);
 
             if (SYSTEM.ERROR.HasError(realPath))
                 socket.emit(protoFS.StatList.ERR, path, realPath);
@@ -60,7 +64,7 @@ FileManager.prototype.register = function(_super, socket, protoFS, complete) {
     });
 
     socket.on(protoFS.CreateFile.REQ, function(path) {
-        var realPath = storage.getUserDataPath(path);
+        var realPath = self.resolvePath(path);
 
         if (SYSTEM.ERROR.HasError(realPath))
             socket.emit(protoFS.CreateFile.ERR, path, realPath);
@@ -77,7 +81,7 @@ FileManager.prototype.register = function(_super, socket, protoFS, complete) {
     });
 
     socket.on(protoFS.CreateDirectory.REQ, function(path) {
-        var realPath = storage.getUserDataPath(path);
+        var realPath = self.resolvePath(path);
 
         if (SYSTEM.ERROR.HasError(realPath))
             socket.emit(protoFS.CreateDirectory.ERR, path, realPath);
@@ -94,8 +98,8 @@ FileManager.prototype.register = function(_super, socket, protoFS, complete) {
     });
 
     socket.on(protoFS.CreateHardLink.REQ, function(srcPath, dstPath) {
-        var realSrcPath = storage.getUserDataPath(srcPath);
-        var realDstPath = storage.getUserDataPath(dstPath);
+        var realSrcPath = self.resolvePath(srcPath);
+        var realDstPath = self.resolvePath(dstPath);
 
         if (SYSTEM.ERROR.HasError(realSrcPath))
             socket.emit(protoFS.CreateHardLink.ERR, srcPath, dstPath, realSrcPath);
@@ -112,8 +116,8 @@ FileManager.prototype.register = function(_super, socket, protoFS, complete) {
     });
 
     socket.on(protoFS.CreateSymbolicLink.REQ, function(srcPath, dstPath) {
-        var realSrcPath = storage.getUserDataPath(srcPath);
-        var realDstPath = storage.getUserDataPath(dstPath);
+        var realSrcPath = self.resolvePath(srcPath);
+        var realDstPath = self.resolvePath(dstPath);
 
         if (SYSTEM.ERROR.HasError(realSrcPath))
             socket.emit(protoFS.CreateSymbolicLink.ERR, srcPath, dstPath, realSrcPath);
@@ -130,7 +134,7 @@ FileManager.prototype.register = function(_super, socket, protoFS, complete) {
     });
 
     socket.on(protoFS.Remove.REQ, function(path) {
-        var realPath = storage.getUserDataPath(path);
+        var realPath = self.resolvePath(path);
 
         if (SYSTEM.ERROR.HasError(realPath))
             socket.emit(protoFS.Remove.ERR, path, realPath);
@@ -150,8 +154,8 @@ FileManager.prototype.register = function(_super, socket, protoFS, complete) {
     });
 
     socket.on(protoFS.Move.REQ, function(srcPath, dstPath) {
-        var realSrcPath = storage.getUserDataPath(srcPath);
-        var realDstPath = storage.getUserDataPath(dstPath);
+        var realSrcPath = self.resolvePath(srcPath);
+        var realDstPath = self.resolvePath(dstPath);
 
         if (SYSTEM.ERROR.HasError(realSrcPath))
             socket.emit(protoFS.Move.ERR, srcPath, dstPath, realSrcPath);
@@ -173,8 +177,8 @@ FileManager.prototype.register = function(_super, socket, protoFS, complete) {
     });
 
     socket.on(protoFS.Copy.REQ, function(srcPath, dstPath) {
-        var realSrcPath = storage.getUserDataPath(srcPath);
-        var realDstPath = storage.getUserDataPath(dstPath);
+        var realSrcPath = self.resolvePath(srcPath);
+        var realDstPath = self.resolvePath(dstPath);
 
         if (SYSTEM.ERROR.HasError(realSrcPath))
             socket.emit(protoFS.Copy.ERR, srcPath, dstPath, realSrcPath);
@@ -196,7 +200,7 @@ FileManager.prototype.register = function(_super, socket, protoFS, complete) {
     });
 
     socket.on(protoFS.Exist.REQ, function(path) {
-        var realPath = storage.getUserDataPath(path);
+        var realPath = self.resolvePath(path);
 
         if (SYSTEM.ERROR.HasError(realPath))
             socket.emit(protoFS.Exist.ERR, path, realPath);
@@ -208,7 +212,7 @@ FileManager.prototype.register = function(_super, socket, protoFS, complete) {
     });
 
     socket.on(protoFS.Stat.REQ, function(path) {
-        var realPath = storage.getUserDataPath(path);
+        var realPath = self.resolvePath(path);
 
         if (SYSTEM.ERROR.HasError(realPath))
             socket.emit(protoFS.Stat.ERR, path, realPath);
@@ -224,7 +228,7 @@ FileManager.prototype.register = function(_super, socket, protoFS, complete) {
     });
 
     socket.on(protoFS.Touch.REQ, function(path, atime, mtime) {
-        var realPath = storage.getUserDataPath(path);
+        var realPath = self.resolvePath(path);
 
         if (SYSTEM.ERROR.HasError(realPath))
             socket.emit(protoFS.Touch.ERR, path, realPath);
@@ -240,7 +244,7 @@ FileManager.prototype.register = function(_super, socket, protoFS, complete) {
     });
 
     socket.on(protoFS.ReadFile.REQ, function(path, encoding) {
-        var realPath = storage.getUserDataPath(path);
+        var realPath = self.resolvePath(path);
 
         if (SYSTEM.ERROR.HasError(realPath))
             socket.emit(protoFS.ReadFile.ERR, path, realPath);
@@ -277,7 +281,7 @@ FileManager.prototype.register = function(_super, socket, protoFS, complete) {
     });
 
     ss(socket).on(protoFS.WriteFile.REQ, function(path, dataStream, dataSize) {
-        var realPath = storage.getUserDataPath(path);
+        var realPath = self.resolvePath(path);
 
         if (SYSTEM.ERROR.HasError(realPath))
             socket.emit(protoFS.WriteFile.ERR, path, realPath);
@@ -316,7 +320,7 @@ FileManager.prototype.register = function(_super, socket, protoFS, complete) {
     });
 
     ss(socket).on(protoFS.AppendFile.REQ, function(path, dataStream, dataSize) {
-        var realPath = storage.getUserDataPath(path);
+        var realPath = self.resolvePath(path);
 
         if (SYSTEM.ERROR.HasError(realPath))
             socket.emit(protoFS.AppendFile.ERR, path, realPath);
@@ -361,7 +365,7 @@ FileManager.prototype.register = function(_super, socket, protoFS, complete) {
     });
 
     socket.on(protoFS.SaveURLAs.REQ, function(_path, fileURL) {
-        var realPath = storage.getUserDataPath(_path);
+        var realPath = self.resolvePath(_path);
 
         if (SYSTEM.ERROR.HasError(realPath))
             socket.emit(protoFS.SaveURLAs.ERR, _path, realPath);
@@ -408,7 +412,7 @@ FileManager.prototype.register = function(_super, socket, protoFS, complete) {
     });
 
     socket.on(protoFS.Grep.REQ, function(path, regex, option) {
-        var realPath = storage.getUserDataPath(path);
+        var realPath = self.resolvePath(path);
 
         if (SYSTEM.ERROR.HasError(realPath))
             socket.emit(protoFS.Grep.ERR, path, realPath);
@@ -475,7 +479,7 @@ FileManager.prototype.register = function(_super, socket, protoFS, complete) {
      * Protocol Listener: File Handle Events
      */
     socket.on(protoFS.Open.REQ, function(path, flag, mode) {
-        var realPath = storage.getUserDataPath(path);
+        var realPath = self.resolvePath(path);
 
         if (SYSTEM.ERROR.HasError(realPath))
             socket.emit(protoFS.Open.ERR, path, realPath);

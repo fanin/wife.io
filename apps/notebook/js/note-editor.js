@@ -1,11 +1,11 @@
-function NoteEditor(fileManager, config) {
+function NoteEditor(viewController, config) {
     var self = this;
 
     self.noteTitle = "";
     self.noteContent = "";
     self.notePath = undefined;
     self.noteIndex = -1;
-    self.fileManager = fileManager;
+    self.fileManager = viewController.fileManagerClient;
     self.jqueryElement = $("#note-editor");
     self.autoSaveTimer = undefined;
     self.status = {
@@ -174,7 +174,11 @@ function NoteEditor(fileManager, config) {
 
                                 self.progressDialog.setProgress(100);
                                 editor.insertHtml(
-                                    "<img src='userdata/" + path + (self.storageUUID ? "?s=" + self.storageUUID : "") +
+                                    /*
+                                     * To access file in userdata, the url must contain a query string 'sid=uuid'
+                                     * to specify the storage where the file is laid on.
+                                     */
+                                    "<img src='userdata/" + path + (self.storageUUID ? "?sid=" + self.storageUUID : "") +
                                     "' style='width:" + targetWidth + "px; height:" + targetHeight + "px'/>"
                                 );
                                 upload(++index);
@@ -379,7 +383,7 @@ function NoteEditor(fileManager, config) {
                             if (error)
                                 console.log("Unable to save file from URL " + src);
                             else
-                                content = content.replace(src, "userdata/" + path);
+                                content = content.replace(src, "userdata/" + path + (self.storageUUID ? "?sid=" + self.storageUUID : ""));
 
                             handleNextOrSave();
                         });

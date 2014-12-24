@@ -1,8 +1,8 @@
-function Notebook(fileManager) {
+function Notebook(viewController) {
     var self = this;
     this.node = undefined;
     this.notes = undefined;
-    this.fileManager = fileManager;
+    this.fileManager = viewController.fileManagerClient;
     this.jqueryElement = $("#notebook");
     this.tableView = new TableView($("#note-list"));
     this.tableView.dataSource = this;
