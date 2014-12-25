@@ -399,7 +399,7 @@ function NoteEditor(viewController, config) {
                             replaceResource(i + 1);
                     }
 
-                    /* Test if resource is from local URL */
+                    /* Test if resource is from local URL, if note, download it to userdata */
                     if (!(new RegExp(/^(userdata)/)).test(src) && !(new RegExp(/^(\/apps\/[bc]\/)/)).test(src)) {
                         self.fileManager.saveUrlAs(dirname(notePath) + "/assets/" + fileName, src, function(path, error) {
                             if (error)

@@ -455,18 +455,28 @@ Notebook.prototype.addNote = function(title, content, complete) {
 Notebook.prototype.deleteNote = function(index, complete) {
     var self = this;
 
-    if (index >= self.notes.length)
+    if (index >= self.notes.length) {
+        complete && complete("Invalid index");
         return;
+    }
 
     self.fileManager.exist(self.notes[index].path, function(path, exist, isDir, error) {
-        if (error) throw new Error("fs operation error");
+        if (error) {
+            complete && complete(error);
+            throw new Error("fs operation error");
+        }
+
         if (exist) {
             self.fileManager.remove(path, function(path, error) {
-                if (error) throw new Error("unable to remove " + path);
+                if (error) {
+                    complete && complete(error);
+                    throw new Error("unable to remove " + path);
+                }
+
                 self.notes.splice(index, 1);
                 self.tableView.removeRowAtIndex(index);
                 self.updateTitleBar();
-                if (complete) complete(path);
+                if (complete) complete();
             });
         }
     });
@@ -475,8 +485,10 @@ Notebook.prototype.deleteNote = function(index, complete) {
 Notebook.prototype.copyNote = function(index, complete) {
     var self = this;
 
-    if (index >= self.notes.length)
+    if (index >= self.notes.length) {
+        complete && complete("Invalid index");
         return;
+    }
 
     self.fileManager.exist(self.notes[index].path, function(path, exist, isDir, error) {
         if (error) throw new Error("fs operation error");
@@ -484,15 +496,39 @@ Notebook.prototype.copyNote = function(index, complete) {
             var timecode = self.getTimecode();
             var copyPath = dirname(path) + "/" + timecode;
             self.fileManager.copy(path, copyPath, function(srcPath, dstPath, error) {
-                if (error) throw new Error("unable to copy " + path);
-                self.fileManager.stat(dstPath, function(path, stat, error) {
-                    if (error) throw new Error("unable to get stat of " + path);
-                    self.notes.unshift({ path: path, stat: stat, title: self.notes[index].title });
-                    self.tableView.insertRowAtIndex(0, function() {
-                        self.tableView.selectRowAtIndex(0);
+                if (error) {
+                    complete && complete(error);
+                    throw new Error("unable to copy " + path);
+                }
+
+                /* Update URLs for all assets in copied note */
+                self.fileManager.readFile(srcPath + "/note.html", "utf8", function(path, data, error) {
+                    if (error) {
+                        complete && complete(error);
+                        throw new Error("unable to read " + path);
+                    }
+
+                    var re = new RegExp(srcPath, "g");
+                    self.fileManager.writeFile(dstPath + "/note.html", data.replace(re, dstPath), function(path, progress, error) {
+                        if (error) {
+                            complete && complete(error);
+                            throw new Error("unable to write " + path);
+                        }
+
+                        self.fileManager.stat(dstPath, function(path, stat, error) {
+                            if (error) {
+                                complete && complete(error);
+                                throw new Error("unable to get stat of " + path);
+                            }
+
+                            self.notes.unshift({ path: path, stat: stat, title: self.notes[index].title });
+                            self.tableView.insertRowAtIndex(0, function() {
+                                self.tableView.selectRowAtIndex(0);
+                            });
+                            self.updateTitleBar();
+                            if (complete) complete();
+                        });
                     });
-                    self.updateTitleBar();
-                    if (complete) complete();
                 });
             });
         }
