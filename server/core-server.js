@@ -247,6 +247,7 @@ CoreServer.prototype.handleRequest = function(req, res) {
                 contentString = contentString.replace(/%SYSNAME%/g, SYSTEM.SETTINGS.SysName);
                 contentString = contentString.replace(/%BRAND%/g, SYSTEM.SETTINGS.Brand);
                 contentString = contentString.replace(/%COPYRIGHT%/g, SYSTEM.SETTINGS.Copyright);
+                contentString = contentString.replace(/%APPBACKGROUND%/g, SYSTEM.SETTINGS.AppBackground || '/resources/img/background.jpg');
                 res.end(contentString);
             }
             else {
