@@ -9,7 +9,7 @@
 
 
     var addScreenshotArea = {
-        allowedContent: 'img[!*]',
+        allowedContent: 'img[*]',
         exec: function( editor ) {
             var fragment = editor.getSelection().getRanges()[0].extractContents();
             var container = CKEDITOR.dom.element.createFromHtml(

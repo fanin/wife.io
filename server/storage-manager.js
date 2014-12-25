@@ -159,7 +159,7 @@ StorageManager.prototype.getLocalDisks = function(callback) {
                     self.systemDisk.uuid = uuid.v4();
 
                 self.userDisk = userDisk;
-                if (!self.userDisk.uuid)
+                if (self.userDisk && !self.userDisk.uuid)
                     self.userDisk.uuid = uuid.v4();
 
                 self.userDataDisk[self.socket] = userDisk;
