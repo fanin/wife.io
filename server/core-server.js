@@ -198,8 +198,8 @@ CoreServer.prototype.handleRequest = function(req, res) {
                 /* Set user disk as default storage where requested userdata is on */
                 var disk = self.storageManager.userDisk;
 
-                if (query.sid) {
-                    disk = self.storageManager.getDiskByUUID(query.sid);
+                if (query.uuid) {
+                    disk = self.storageManager.getDiskByUUID(query.uuid);
 
                     if (SYSTEM.ERROR.HasError(disk))
                         /* Inavlid disk uuid specified, ignore this request */
