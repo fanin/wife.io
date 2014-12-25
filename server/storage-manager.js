@@ -180,7 +180,7 @@ StorageManager.prototype.getLocalDisks = function(callback) {
                     self.notificationCenter.post("Storage", "Error", SYSTEM.ERROR.StorUserDiskNotFound);
 
                 /* Create a fake uuid if there's no uuid found for the disk */
-                if (!userDisk.uuid)
+                if (userDisk && !userDisk.uuid)
                     userDisk.uuid = self.userDisk.uuid;
                 self.userDisk = userDisk;
 

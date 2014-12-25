@@ -8,7 +8,7 @@ var fs = require('fs-extra'),
 fs.jsonfile.spaces = 4;
 
 var SYSTEM = require('../system');
-var USER_APP_PATH = SYSTEM.SETTINGS.UserStorageMountpoint + "/wife.io/apps";
+var USER_APP_PATH = SYSTEM.SETTINGS.UserStorageMountpoint + "/" + SYSTEM.SETTINGS.SysName + "/apps";
 var BUILTIN_APP_PATH = path.resolve(__dirname, '../apps');
 var APP_INFO_FILE = 'AppInfo.json';
 
