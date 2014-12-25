@@ -42,7 +42,6 @@ function NoteEditor(viewController, config) {
     CKEDITOR.config.resize_enabled = false;
     CKEDITOR.config.extraPlugins = "font,customsave,screenshotarea,dragresize";
     CKEDITOR.config.removePlugins = "format,link,unlink,anchor,elementspath,about";
-    CKEDITOR.config.allowedContent = "img[*]";
     CKEDITOR.config.skin = "icy_orange";
     CKEDITOR.addCss(".cke_editable { word-wrap: break-word }");
     CKEDITOR.replace("note-content-editor");
@@ -469,8 +468,8 @@ function NoteEditor(viewController, config) {
         editor.on("paste", function(event) {
             event.stop();
             var data = event.data.dataValue;
-            /* Remove &nbsp; on paste to prevent problems from ckeditor parsing the html content */
-            event.editor.insertHtml(data.replace(/&nbsp;/gi,''));
+            /* Remove &nbsp; between tags on paste to prevent problems from ckeditor parsing the html content */
+            event.editor.insertHtml(data.replace(/>&nbsp;/gi,'>'));
         });
 
         $("#note-title-input").focusout(function() {
@@ -551,8 +550,8 @@ NoteEditor.prototype.loadContent = function(path, index) {
 
             /* Extract and show title text */
             var title = $("<div></div>").append(data).find("title").text() || "";
-            /* Remove all &nbsp and extract and show contents inside <body></body> on CKEDITOR */
-            var content = data.replace(/&nbsp;/gi,'').match(/\<body[^>]*\>([^]*)\<\/body/m)[1] || "";
+            /* Remove all &nbsp between tags and extract and show contents inside <body></body> on CKEDITOR */
+            var content = data.replace(/>&nbsp;/gi,'>').match(/\<body[^>]*\>([^]*)\<\/body/m)[1] || "";
             self.setContentNoLagWorkaround(title, content, function() {
                 $("#note-title-input").prop("disabled", false);
                 CKEDITOR.instances["note-content-editor"].setReadOnly(false);
