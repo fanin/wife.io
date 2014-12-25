@@ -155,11 +155,6 @@ CoreServer.prototype.handleRequest = function(req, res) {
         res.end();
     }
 
-    if (filename === '/' || filename === '/%SYSNAME%'.toLocaleLowerCase()) {
-        backToLauncher();
-        return;
-    }
-
     /* Route allowed URL to real path */
     var urlComponent = filename.split(path.sep);
     if (urlComponent[1] === 'apps') {
@@ -179,7 +174,7 @@ CoreServer.prototype.handleRequest = function(req, res) {
             return;
         }
     }
-    else if (urlComponent[1] === 'lib' || urlComponent[1] === 'resources' || urlComponent[1] === 'protocol') {
+    else if (urlComponent[1] === 'lib' || urlComponent[1] === 'resources' || urlComponent[1] === 'protocol' || urlComponent[1] === 'device') {
         if (path.basename(filename) === 'jquery-ui.min.css')
             this.jqueryuiPath = path.dirname(filename);
     }
