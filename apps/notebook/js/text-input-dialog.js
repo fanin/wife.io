@@ -108,8 +108,9 @@ function TextInputDialog(name, dialog, okayText, cancelText) {
     }
 }
 
-TextInputDialog.prototype.open = function() {
+TextInputDialog.prototype.open = function(text) {
     this.dialog.dialog("open");
+    if (text) this.input.focus().val(text);
 };
 
 TextInputDialog.prototype.close = function() {

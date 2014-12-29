@@ -126,7 +126,8 @@
                     notebook.jqueryElement.on("notebook.beforeOpen", function(event) {
                         modal.timer = setTimeout(modalTimeoutHandler, 30000);
                         modal.open({
-                            content: "<img class='wait-spin-indicator'/><div style='padding-top:5px'>Please wait...</div>"
+                            content: "<img class='wait-spin-indicator' src='/apps/b/notebook/img/circle-arrow.png'/>" +
+                                     "<div style='padding-top:5px'>Please wait...</div>"
                         });
                     });
 
@@ -153,7 +154,8 @@
                         noteSaveDelayTimer = setTimeout(function() {
                             modal.timer = setTimeout(modalTimeoutHandler, 30000);
                             modal.open({
-                                content: "<img class='wait-spin-indicator'/><div style='padding-top:5px'>Saving...</div>"
+                                content: "<img class='wait-spin-indicator' src='/apps/b/notebook/img/circle-arrow.png'/>" +
+                                         "<div style='padding-top:5px'>Saving...</div>"
                             });
                         }, 500);
                     });

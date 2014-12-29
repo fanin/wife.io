@@ -51,7 +51,7 @@ function Bookshelf(viewController) {
             rename(node, newName);
         });
 
-        notebookRenameDialog.open();
+        notebookRenameDialog.open(name);
     }
 
     function showDeleteConfirm(name, type) {
