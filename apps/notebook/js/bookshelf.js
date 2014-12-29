@@ -582,7 +582,7 @@ Bookshelf.prototype.fitSize = function(width, height) {
 Bookshelf.prototype.addStorage = function(disk) {
     $('#accordion').prepend(
         "<h3 id='h3-"+ disk.uuid + "'>" +
-        "<span class='storage-name'>" + disk.name + "</span>" +
+        "<span class='storage-name'>" + (disk.name ? disk.name : disk.mountpoint) + "</span>" +
         "<span style='display:none'>::" + disk.uuid + "</span>" +
         "<span id='action-button-storage-" + disk.uuid + "' class='action-button'>" +
         "<a href='#'><i class='fa fa-caret-square-o-down'></i></a>" +

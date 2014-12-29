@@ -190,10 +190,13 @@
                     });
 
                     notebookViewController.storageClient.event.on("storage.localdisk#list#success", function(event, disks) {
-                        bookshelf.addStorage(disks.user);
+                        if (disks.user)
+                            bookshelf.addStorage(disks.user);
+
                         for (var i in disks.removable) {
                             bookshelf.addStorage(disks.removable[i]);
                         }
+
                         setContentSizeFit();
                     });
                 });

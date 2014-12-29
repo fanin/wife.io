@@ -50,7 +50,7 @@ function NoteEditor(viewController, config) {
         var editor = event.editor;
 
         function replaceQueryString(url, param, value) {
-            var re = new RegExp("([?|&])" + param + "=.*?(&|$)","ig");
+            var re = new RegExp("([?|&])" + param + "=.*?(&|$|\")","ig");
             if (url.match(re))
                 return url.replace(re,'$1' + param + "=" + value + '$2');
             else
