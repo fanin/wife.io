@@ -238,7 +238,7 @@ CoreServer.prototype.handleRequest = function(req, res) {
 
             if (ctype.indexOf('text') > -1 || ctype.indexOf('javascript') > -1) {
                 var contentString = content.toString().replace(/%SYSIP%/g, ip.address());
-                contentString = contentString.replace(/%SYSPORT%/g, process.env.npm_package_config_port);
+                contentString = contentString.replace(/%SYSPORT%/g, process.env.npm_package_config_port || '8001');
                 contentString = contentString.replace(/%SYSNAME%/g, SYSTEM.SETTINGS.SysName);
                 contentString = contentString.replace(/%BRAND%/g, SYSTEM.SETTINGS.Brand);
                 contentString = contentString.replace(/%COPYRIGHT%/g, SYSTEM.SETTINGS.Copyright);

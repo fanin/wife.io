@@ -22,7 +22,7 @@ catch (err) {
     process.exit(1);
 }
 
-server.listen(process.env.npm_package_config_port, function() {
+server.listen(process.env.npm_package_config_port || 8001, function() {
     var CoreServer = require('./server/' + SYSTEM.SETTINGS.CoreServer);
     if (!SYSTEM.SERVER) {
         SYSTEM.SERVER = new CoreServer(server);
@@ -30,13 +30,15 @@ server.listen(process.env.npm_package_config_port, function() {
     }
 });
 
-setInterval(function() {
-    var rss = (process.memoryUsage().rss / (1024 * 1024));
-    if (rss > 32) {
-        global.gc();
-        //console.log("[Force GC] RSS: " + rss.toFixed(2) + "MB");
-    }
-}, 2000);
+if (global.gc) {
+    setInterval(function() {
+        var rss = (process.memoryUsage().rss / (1024 * 1024));
+        if (rss > 32) {
+            global.gc();
+            //console.log("[Force GC] RSS: " + rss.toFixed(2) + "MB");
+        }
+    }, 2000);
+}
 
 function handler(req, res) {
     if (SYSTEM.SERVER)
