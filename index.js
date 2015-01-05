@@ -2,25 +2,26 @@ var server = require('http').createServer(handler),
     fs = require('fs'),
     path = require('path');
 
+var SYSTEM = require('./system');
 var settingsFile = 'settings.json';
+
 try {
     if (process.argv.length == 3)
         settingsFile = process.argv[2];
 
     var jsonString = fs.readFileSync(path.resolve(__dirname, settingsFile));
 
-    var SYSTEM = require('./system');
     SYSTEM.SETTINGS = JSON.parse(jsonString);
-
-    /* Set default settings if needed */
-    if (!SYSTEM.SETTINGS.CoreServer) SYSTEM.SETTINGS.CoreServer = "core-server";
-    if (!SYSTEM.SETTINGS.UserStorageMountpoint) SYSTEM.SETTINGS.UserStorageMountpoint = "/home";
-    if (!SYSTEM.SETTINGS.TempPath) SYSTEM.SETTINGS.TempPath = "/tmp";
 }
 catch (err) {
     console.log('Read ' + settingsFile + ' error: ' + err.toString());
     process.exit(1);
 }
+
+/* Set default settings if needed */
+if (!SYSTEM.SETTINGS.CoreServer) SYSTEM.SETTINGS.CoreServer = "core-server";
+if (!SYSTEM.SETTINGS.SystemDataPath) throw new Error('Missing system setting "SystemDataPath" in the settings.json');
+if (!SYSTEM.SETTINGS.TempPath) SYSTEM.SETTINGS.TempPath = "/tmp";
 
 server.listen(process.env.npm_package_config_port || 8001, function() {
     var CoreServer = require('./server/' + SYSTEM.SETTINGS.CoreServer);

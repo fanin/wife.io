@@ -142,7 +142,7 @@ CoreServer.prototype.listen = function() {
 CoreServer.prototype.handleRequest = function(req, res) {
     var self = this;
     var url = require('url').parse(req.url, true);
-    var filename = url.pathname;
+    var filename = path.normalize(url.pathname);
     var query = url.query;
     var rootdir = path.dirname(__dirname);
     var filepath = path.join(rootdir, filename);
@@ -161,20 +161,23 @@ CoreServer.prototype.handleRequest = function(req, res) {
         var appType = urlComponent[2];
 
         if (appType === 'b') {
-            filename = filename.replace('b/', '');
+            filename = filename.replace('b' + path.sep, '');
             filepath = path.join(rootdir, filename);
         }
         else if (appType === 'u') {
-            filename = filename.replace('u/', '');
-            filepath = self.storageManager.userDisk.mountpoint + '/' +
-                SYSTEM.SETTINGS.SysName.replace(/\s/g, '').toLocaleLowerCase() + filename;
+            filename = filename.replace('u' + path.sep, '');
+            filepath = SYSTEM.SETTINGS.SystemDataPath + path.sep +
+                SYSTEM.SETTINGS.SystemName.replace(/\s/g, '').toLocaleLowerCase() + filename;
         }
         else {
             backToLauncher();
             return;
         }
     }
-    else if (urlComponent[1] === 'lib' || urlComponent[1] === 'resources' || urlComponent[1] === 'protocol' || urlComponent[1] === 'device') {
+    else if (urlComponent[1] === 'lib' ||
+             urlComponent[1] === 'resources' ||
+             urlComponent[1] === 'protocol' ||
+             urlComponent[1] === 'device') {
         if (path.basename(filename) === 'jquery-ui.min.css')
             this.jqueryuiPath = path.dirname(filename);
     }
@@ -186,29 +189,35 @@ CoreServer.prototype.handleRequest = function(req, res) {
     fs.exists(filepath, function(exists) {
         if (!exists) {
             if (path.basename(filename) === 'icon.png') {
-                filename = '/resources/img/unknown-icon.png';
+                filename = path.normalize('/resources/img/unknown-icon.png');
                 filepath = path.join(rootdir, filename);
             }
             else if (filename.indexOf('userdata') > 0 && filename.indexOf('assets') > 0) {
-                /* Set user disk as default storage where requested userdata is on */
-                var disk = self.storageManager.userDisk;
+                var dataPath = null;
 
                 if (query.uuid) {
-                    disk = self.storageManager.getDiskByUUID(query.uuid);
+                    var disk = self.storageManager.getDiskByUUID(query.uuid);
 
                     if (SYSTEM.ERROR.HasError(disk))
                         /* Inavlid disk uuid specified, ignore this request */
-                        disk = null;
+                        dataPath = null;
+                    else if (disk.mountpoint === self.storageManager.systemDisk.mountpoint)
+                        dataPath = SYSTEM.SETTINGS.SystemDataPath;
+                    else
+                        dataPath = disk.mountpoint;
+                }
+                else {
+                    dataPath = SYSTEM.SETTINGS.SystemDataPath;
                 }
 
-                if (disk)
-                    filepath = disk.mountpoint + '/' + SYSTEM.SETTINGS.SysName.replace(/\s/g, '').toLocaleLowerCase() + filename;
+                if (dataPath)
+                    filepath = dataPath + path.sep + SYSTEM.SETTINGS.SystemName.replace(/\s/g, '').toLocaleLowerCase() + filename;
                 else
                     filepath = '';
             }
             else if (path.basename(filename).match(/^ui/) && path.basename(filename).match(/png$/)) {
                 /* Rebuild jquery-ui images path */
-                filename = self.jqueryuiPath + '/images/' + path.basename(filename);
+                filename = self.jqueryuiPath + path.normalize('/images/') + path.basename(filename);
                 filepath = path.join(rootdir, filename);
             }
             else {
@@ -217,7 +226,7 @@ CoreServer.prototype.handleRequest = function(req, res) {
                 return;
             }
 
-            if (!filepath || !fs.existsSync(filepath)) {
+            if (!filepath || !fs.existsSync(path.normalize(filepath))) {
                 res.writeHead(404, {'Content-Type': 'text/plain'});
                 res.end('Not Found\n');
                 return;
@@ -225,7 +234,7 @@ CoreServer.prototype.handleRequest = function(req, res) {
         }
 
         if (fs.lstatSync(filepath).isDirectory())
-            filepath += '/' + path.basename(filepath) + '.html';
+            filepath += path.sep + path.basename(filepath) + '.html';
 
         fs.readFile(filepath, function(err, content) {
             if (err) {
@@ -239,7 +248,7 @@ CoreServer.prototype.handleRequest = function(req, res) {
             if (ctype.indexOf('text') > -1 || ctype.indexOf('javascript') > -1) {
                 var contentString = content.toString().replace(/%SYSIP%/g, ip.address());
                 contentString = contentString.replace(/%SYSPORT%/g, process.env.npm_package_config_port || '8001');
-                contentString = contentString.replace(/%SYSNAME%/g, SYSTEM.SETTINGS.SysName);
+                contentString = contentString.replace(/%SYSNAME%/g, SYSTEM.SETTINGS.SystemName);
                 contentString = contentString.replace(/%BRAND%/g, SYSTEM.SETTINGS.Brand);
                 contentString = contentString.replace(/%COPYRIGHT%/g, SYSTEM.SETTINGS.Copyright);
                 contentString = contentString.replace(/%APPBACKGROUND%/g, SYSTEM.SETTINGS.AppBackground || '/resources/img/background.jpg');

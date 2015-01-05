@@ -1,8 +1,13 @@
 exports.HasError = function(arg) {
-    if (arg instanceof String && arg.indexOf('ERROR-') === 0)
-        return true;
-    else
+    try {
+        if (arg.indexOf('ERROR-') === 0)
+            return true;
+        else
+            return false;
+    }
+    catch (err) {
         return false;
+    }
 }
 
 /* Protocol errors */
@@ -35,6 +40,5 @@ exports.APPInstallFail = 'ERROR-APP-INSTALL';
 /* Storage errors */
 exports.StorUnknownError = 'ERROR-STOR-UNKNOWN';
 exports.StorDiskApiError = 'ERROR-STOR-DISK-API';
-exports.StorSystemDiskNotFound = 'ERROR-STOR-NO-SYS-DISK';
-exports.StorUserDiskNotFound = 'ERROR-STOR-NO-USER-DISK';
+exports.StorDiskNotFound = 'ERROR-STOR-DISK-NOTFOUND';
 exports.StorBadDiskInfo = 'ERROR-STOR-DISK-INFO';

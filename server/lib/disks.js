@@ -15,10 +15,13 @@ var async = require('async'),
  */
 exports.drives = function (callback) {
     switch (os.platform().toLowerCase()) {
-        case'darwin':
+        case 'win32':
+            getDrivesWin32('wmic logicaldisk get caption', callback);
+            break;
+        case 'darwin':
             getDrives('df -k | awk \'{print $1}\'', callback);
             break;
-        case'linux':
+        case 'linux':
         default:
             getDrives('df | awk \'{print $1}\'', callback);
     }
@@ -45,6 +48,35 @@ function getDrives(command, callback) {
             // Removes map drives
             drives = drives.filter(function(item){ return item != "map"});
             callback(null, drives);
+        }
+    );
+}
+
+function getDrivesWin32(command, callback) {
+    var child = exec(
+        command,
+        function (err, stdout, stderr) {
+            if (err) return callback(err);
+            var drives = stdout.split('\r\r\n');
+
+            drives.splice(0, 1);
+            drives.splice(-2, 2);
+
+            for (var i in drives)
+                drives[i] = drives[i].trim();
+
+            // Removes drives without disk
+            function removeDrives(i) {
+                getDetailWin32('wmic logicaldisk where "DeviceID=\'' + drives[i] + '\'" get Size', function(e, s) {
+                    if (e || s === 0) drives.splice(i, 1);
+                    if (--i >= 0)
+                        removeDrives(i);
+                    else
+                        callback(null, drives);
+                });
+            }
+
+            removeDrives(drives.length - 1);
         }
     );
 }
@@ -98,33 +130,50 @@ function detail(drive, callback) {
         {
             used: function (callback) {
                 switch (os.platform().toLowerCase()) {
-                    case'darwin':
+                    case 'win32':
+                        getDetailWin32('wmic logicaldisk where "DeviceID=\'' + drive + '\'" get Size', function(e, s) {
+                            if (e) callback(e, 0);
+                            else if (s === 0) callback(null, 0);
+                            else
+                                getDetailWin32('wmic logicaldisk where "DeviceID=\'' + drive + '\'" get FreeSpace', function(e, a) {
+                                    if (e) callback(e, 0);
+                                    else callback(null, s - a);
+                                });
+                        });
+                        break;
+                    case 'darwin':
                         getDetail('df -k | grep ' + drive + ' | awk \'{print $3}\'', callback);
                         break;
-                    case'linux':
+                    case 'linux':
                     default:
                         getDetail('df | grep ' + drive + ' | awk \'{print $3}\'', callback);
                 }
             },
             available: function (callback) {
                 switch (os.platform().toLowerCase()) {
-                    case'darwin':
+                    case 'win32':
+                        getDetailWin32('wmic logicaldisk where "DeviceID=\'' + drive + '\'" get FreeSpace', callback);
+                        break;
+                    case 'darwin':
                         getDetail('df -k | grep ' + drive + ' | awk \'{print $4}\'', callback);
                         break;
-                    case'linux':
+                    case 'linux':
                     default:
                         getDetail('df | grep ' + drive + ' | awk \'{print $4}\'', callback);
                 }
             },
             mountpoint: function (callback) {
                 switch (os.platform().toLowerCase()) {
-                    case'darwin':
+                    case 'win32':
+                        callback(null, drive);
+                        break;
+                    case 'darwin':
                         getDetailNaN('df -k | grep ' + drive + ' |  awk -F \'%\' \'{ print $3 }\' | sed \'s/^ *//\' | sed \'1{/^$/d}\'', function(e, d){
                             if (d) d = d.trim();
                             callback(e, d);
                         });
                         break;
-                    case'linux':
+                    case 'linux':
                     default:
                         getDetailNaN('df | grep ' + drive + ' | awk \'{print $6}\'', function(e, d){
                             if (d) d = d.trim();
@@ -134,6 +183,9 @@ function detail(drive, callback) {
             },
             uuid: function (callback) {
                 switch (os.platform().toLowerCase()) {
+                    case 'win32':
+                        getDetailNaNWin32('wmic logicaldisk where "DeviceID=\'' + drive + '\'" get VolumeSerialNumber', callback);
+                        break;
                     case 'darwin':
                         getDetailNaN('diskutil info ' + drive + ' | grep \'Volume UUID\' | tr -d \' \' | awk -F \':\' \'{print $2}\'', function(e, d){
                             if (d) d = d.trim();
@@ -150,6 +202,25 @@ function detail(drive, callback) {
             },
             name: function (callback) {
                 switch (os.platform().toLowerCase()) {
+                    case 'win32':
+                        getDetailNaNWin32('wmic logicaldisk where "DeviceID=\'' + drive + '\'" get VolumeName', function(e, n){
+                            if (!n) {
+                                getDetailNaNWin32('wmic logicaldisk where "DeviceID=\'' + drive + '\'" get Description', function(e, d){
+                                    if (d) {
+                                        if (d.indexOf('Local') === 0)
+                                            n = 'Local Disk (' + drive + ')';
+                                        else if (d.indexOf('Network') === 0)
+                                            n = 'Network Disk (' + drive + ')';
+                                        else if (d.indexOf('CD-ROM') === 0)
+                                            n = 'CD-ROM Drive';
+                                    }
+                                    callback(e, n);
+                                });
+                            }
+                            else callback(e, n);
+
+                        });
+                        break;
                     case 'darwin':
                         getDetailNaN('diskutil info ' + drive + ' | grep \'Volume Name\' | tr -d \' \' | awk -F \':\' \'{print $2}\'', function(e, d){
                             if (d) d = d.trim();
@@ -201,6 +272,21 @@ function getDetail(command, callback) {
     );
 }
 
+function getDetailWin32(command, callback) {
+    var child = exec(
+        command,
+        function (err, stdout, stderr) {
+            if (err) return callback(err);
+            if (stdout) {
+                stdout = stdout.split('\r\r\n');
+                stdout = stdout[1].trim();
+                if (stdout === '') stdout = 0;
+            }
+            callback(null, parseInt(stdout));
+        }
+    );
+}
+
 /**
  * Execute a command.
  *
@@ -212,6 +298,20 @@ function getDetailNaN(command, callback) {
         command,
         function (err, stdout, stderr) {
             if (err) return callback(err);
+            callback(null, stdout.trim());
+        }
+    );
+}
+
+function getDetailNaNWin32(command, callback) {
+    var child = exec(
+        command,
+        function (err, stdout, stderr) {
+            if (err) return callback(err);
+            if (stdout) {
+                stdout = stdout.split('\r\r\n');
+                stdout = stdout[1].trim();
+            }
             callback(null, stdout);
         }
     );

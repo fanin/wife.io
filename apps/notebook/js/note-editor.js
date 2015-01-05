@@ -3,15 +3,14 @@ function NoteEditor(viewController, config) {
 
     self.noteTitle = "";
     self.noteContent = "";
-    self.notePath = undefined;
-    self.noteIndex = -1;
+    self.noteObject = undefined;
     self.fileManager = viewController.fileManagerClient;
     self.jqueryElement = $("#note-editor");
     self.autoSaveTimer = undefined;
     self.status = {
         editorReady: false,
-        savingNote: false,
-        flushingNote: false,
+        dirty: false,
+        busy: false,
     };
     self.config = {
         maxWidth: (config.maxWidth !== undefined) ? config.maxWidth : 0,
@@ -82,62 +81,6 @@ function NoteEditor(viewController, config) {
                 cb && cb();
             }, 100);
         };
-
-        /**
-         * When user upload an image and remove it from the note, the image file is still under assets folder.
-         * We scan note and remove unused assets after user complete editing note.
-         */
-        self.removeUselessAssets = function(notePath, after, cb) {
-            setTimeout(function() {
-                self.fileManager.list(
-                    dirname(notePath) + "/assets",
-                    function(path, items, error) {
-                        if (error) {
-                            console.log("Unable to list " + path);
-                            cb && cb(error);
-                            return;
-                        }
-
-                        function removeUseless(i) {
-                            self.fileManager.grep(notePath, items[i], null, function(path, data, error) {
-                                if (error) {
-                                    console.log("Unable to read " + path);
-                                    cb && cb(error);
-                                    return;
-                                }
-
-                                if (!data) {
-                                    self.fileManager.remove(dirname(notePath) + "/assets/" + items[i], function(path, error) {
-                                        if (error) {
-                                            console.log("unable to remove " + path);
-                                            cb && cb(error);
-                                        }
-                                        else {
-                                            //console.log("Unused asset '" + items[i] + "' removed");
-                                            if (i === items.length - 1)
-                                                cb && cb();
-                                            else
-                                                removeUseless(i + 1);
-                                        }
-                                    });
-                                }
-                                else {
-                                    if (i === items.length - 1)
-                                        cb && cb();
-                                    else
-                                        removeUseless(i + 1);
-                                }
-                            });
-                        }
-
-                        if (items.length > 0)
-                            removeUseless(0);
-                        else
-                            cb && cb();
-                    }
-                );
-            }, after);
-        }
 
         /* Recursive image upload */
         function uploadImages(path, files) {
@@ -229,7 +172,7 @@ function NoteEditor(viewController, config) {
             e.data.preventDefault();
             if (editor.readOnly) return;
 
-            var path = dirname(self.notePath) + "/assets";
+            var path = dirname(self.noteObject.path) + "/assets";
             var files = e.data.$.target.files || e.data.$.dataTransfer.files;
 
             uploadImages(path, files);
@@ -241,8 +184,79 @@ function NoteEditor(viewController, config) {
             if (editor.readOnly) return;
         }
 
-        /*
-         * note-summary.json management
+        /**
+         * The last step of saving note procedure:
+         * 1) Build full note document with title and content
+         * 2) Write note to file
+         * 3) Generate latest note summary
+         * 4) Update latest modified date (touch)
+         * 5) Take note snapshot image if snapshot function enabled
+         */
+        function __save(noteObject, title, content, cb) {
+            if (!noteObject || !noteObject.path) {
+                cb && cb("Inavlid Path");
+                self.jqueryElement.trigger("noteEditor.saveWithError", noteObject);
+                return;
+            }
+
+            if (!title || title.trim() === "")
+                title = "Untitled";
+
+            var doc = "<html><head><title>" + title + "</title></head><body>" + content + "</body></html>";
+
+            if (self.noteTitle === title && self.noteContent === content) {
+                self.status.dirty = false;
+                self.jqueryElement.trigger("noteEditor.saveWithoutChange", noteObject);
+                cb && cb();
+                return;
+            }
+
+            self.fileManager.writeFile(noteObject.path, doc, function(path, progress, error) {
+                if (error) {
+                    cb && cb(error);
+                    console.log("Unable to write " + path);
+                    return;
+                }
+
+                /* Update note-summary.json */
+                updateNoteSummary(dirname(noteObject.path), title, content);
+
+                /* Update last modified time */
+                self.fileManager.touch(dirname(noteObject.path), function(path, error) {
+                    if (error) {
+                        cb && cb(error);
+                        console.log("Unable to touch " + path);
+                        return;
+                    }
+
+                    self.noteTitle = title;
+                    self.noteContent = content;
+
+                    if (self.config.snapshot) {
+                        $("#note-snapshot-body").empty();
+                        $("#note-snapshot-body").append(content);
+
+                        takeNoteSnapshot(path + "/note.png", function() {
+                            self.status.dirty = false;
+                            cb && cb();
+                            self.jqueryElement.trigger("noteEditor.afterSave", noteObject);
+                        });
+                    }
+                    else {
+                        self.status.dirty = false;
+                        cb && cb();
+                        self.jqueryElement.trigger("noteEditor.afterSave", noteObject);
+                    }
+                });
+            });
+        }
+
+        /**
+         * Overwrite note-summary.json
+         * 1) Add basic info into summary (i.e: title)
+         * 2) Find screenshot area in the note if any, and get the area info into summary
+         * 3) Sort screenshot area info by y-position
+         * 4) Write summary to note-summary.json
          */
         function updateNoteSummary(path, title, content, cb) {
             var summary = { title: title };
@@ -275,64 +289,6 @@ function NoteEditor(viewController, config) {
                     alert("FATAL ERROR: Unable to update " + path);
                 }
                 cb && cb(error);
-            });
-        }
-
-        /**
-         * Save note content
-         */
-        function save(notePath, noteIndex, title, content, cb) {
-            if (!notePath) {
-                cb && cb("Inavlid Path");
-                self.jqueryElement.trigger("note-editor.save-error", noteIndex);
-                return;
-            }
-
-            if (!title || title.trim() === "")
-                title = "Untitled";
-
-            var doc = "<html><head><title>" + title + "</title></head><body>" + content + "</body></html>";
-
-            if (self.noteTitle === title && self.noteContent === content) {
-                self.jqueryElement.trigger("note-editor.nochange", noteIndex);
-                cb && cb();
-                return;
-            }
-
-            self.fileManager.writeFile(notePath, doc, function(path, progress, error) {
-                if (error) {
-                    cb && cb(error);
-                    console.log("Unable to write " + path);
-                    return;
-                }
-
-                /* Update note-summary.json */
-                updateNoteSummary(dirname(notePath), title, content);
-
-                /* Update last modified time */
-                self.fileManager.touch(dirname(notePath), function(path, error) {
-                    if (error) {
-                        cb && cb(error);
-                        console.log("Unable to touch " + path);
-                        return;
-                    }
-
-                    self.noteTitle = title;
-                    self.noteContent = content;
-
-                    if (self.config.snapshot) {
-                        $("#note-snapshot-body").empty();
-                        $("#note-snapshot-body").append(content);
-
-                        takeNoteSnapshot(path + "/note.png", function() {
-                            cb && cb();
-                            self.jqueryElement.trigger("note-editor.saved", noteIndex);
-                        });
-                    }
-                    else {
-                        cb && cb();
-                    }
-                });
             });
         }
 
@@ -378,7 +334,7 @@ function NoteEditor(viewController, config) {
          * 2) Download them to our assets folder
          * 3) Replace resource URL with our assets URL
          */
-        function grabResourcesAndSave(notePath, noteIndex, title, content, cb) {
+        function grabResources(noteObject, content, cb) {
             var re = /<img[^>]+src="?([^"\s]+)"?[^>]*\/>/gi;
             var imgs = content.match(re);
 
@@ -387,72 +343,143 @@ function NoteEditor(viewController, config) {
 
                 function replaceResource(i) {
                     var src = $(imgs[i]).attr('src');
-                    var ext = src.split(".").pop();
+                    var ext = src.split(".").pop().split("?")[0];
                     if (ext) ext = "." + ext;
                     var fileName = (parseInt(imgName) + i).toString() + ext;
 
-                    function handleNextOrSave() {
+                    function grabNext() {
                         if (i === imgs.length - 1)
-                            save(notePath, noteIndex, title, content, cb);
+                            cb && cb(content);
                         else
                             replaceResource(i + 1);
                     }
 
                     /* Test if resource is from local URL, if note, download it to userdata */
                     if (!(new RegExp(/^(userdata)/)).test(src) && !(new RegExp(/^(\/apps\/[bc]\/)/)).test(src)) {
-                        self.fileManager.saveUrlAs(dirname(notePath) + "/assets/" + fileName, src, function(path, error) {
+                        self.jqueryElement.trigger("noteEditor.grabResources", fileName);
+                        self.fileManager.saveUrlAs(dirname(noteObject.path) + "/assets/" + fileName, src, function(path, error) {
                             if (error)
                                 console.log("Unable to save file from URL " + src);
                             else
-                                content = content.replace(src, "userdata/" + path + (self.storageUUID ? "?uuid=" + self.storageUUID : ""));
+                                content = content.replace(new RegExp(src, 'g'), "userdata/" + path + (self.storageUUID ? "?uuid=" + self.storageUUID : ""));
 
-                            handleNextOrSave();
+                            grabNext();
                         });
                     }
                     else {
-                        handleNextOrSave();
+                        grabNext();
                     }
                 }
 
                 replaceResource(0);
             }
             else
-                save(notePath, noteIndex, title, content, cb);
+                cb && cb(content);
         }
 
-        self.scheduleAutoSave = function(wait, cb) {
+        /**
+         * The common entry of save function
+         */
+        self.save = function(cb) {
+            self.jqueryElement.trigger("noteEditor.beforeSave");
+
+            var title = $("#note-title-input").val();
+            var content = editor.getData();
+
+            grabResources(self.noteObject, content, function(replacement) {
+                __save(self.noteObject, title, replacement, cb);
+            });
+        }
+
+        /**
+         * When user upload an image and remove it from the note, the image file is still under assets folder.
+         * We scan note and remove unused assets after user complete editing note.
+         */
+        self.removeUselessAssets = function(noteObject, after, cb) {
+            setTimeout(function() {
+                self.fileManager.list(
+                    dirname(noteObject.path) + "/assets",
+                    function(path, items, error) {
+                        if (error) {
+                            console.log("Unable to list " + path);
+                            cb && cb(error);
+                            return;
+                        }
+
+                        function removeUseless(i) {
+                            self.fileManager.grep(noteObject.path, items[i], null, function(path, data, error) {
+                                if (error) {
+                                    console.log("Unable to read " + path);
+                                    cb && cb(error);
+                                    return;
+                                }
+
+                                if (!data) {
+                                    self.fileManager.remove(dirname(noteObject.path) + "/assets/" + items[i], function(path, error) {
+                                        if (error) {
+                                            console.log("unable to remove " + path);
+                                            cb && cb(error);
+                                        }
+                                        else {
+                                            //console.log("Unused asset '" + items[i] + "' removed");
+                                            if (i === items.length - 1)
+                                                cb && cb();
+                                            else
+                                                removeUseless(i + 1);
+                                        }
+                                    });
+                                }
+                                else {
+                                    if (i === items.length - 1)
+                                        cb && cb();
+                                    else
+                                        removeUseless(i + 1);
+                                }
+                            });
+                        }
+
+                        if (items.length > 0)
+                            removeUseless(0);
+                        else
+                            cb && cb();
+                    }
+                );
+            }, after);
+        }
+
+        var editorChangeHandler = function() {
+            self.status.dirty = true;
+
             if (self.autoSaveTimer) {
                 clearTimeout(self.autoSaveTimer);
                 self.autoSaveTimer = undefined;
             }
 
-            /* Preserve doc info which is going to save */
-            var notePath = self.notePath;
-            var noteIndex = self.noteIndex;
-            var title = $("#note-title-input").val();
-            var content = editor.getData();
-
-            if (wait > 0) {
-                self.autoSaveTimer = setTimeout(function() {
-                    self.autoSaveTimer = undefined;
-                    self.status.savingNote = true;
-                    self.jqueryElement.trigger("note-editor.saving");
-                    grabResourcesAndSave(notePath, noteIndex, title, content, function() {
-                        self.status.savingNote = false;
-                        cb && cb();
-                    });
-                }, wait);
-            }
-            else {
-                /* Rise savingNote to to force coming loadContent()/resetContent() calls to wait */
-                self.status.savingNote = true;
-                self.jqueryElement.trigger("note-editor.saving");
-                grabResourcesAndSave(notePath, noteIndex, title, content, function() {
-                    self.status.savingNote = false;
-                    cb && cb();
-                });
-            }
+            self.autoSaveTimer = setTimeout(function() {
+                self.autoSaveTimer = undefined;
+                self.status.busy = true;
+                self.save(function() { self.status.busy = false; });
+            }, 10000);
         }
+
+        var editorSaveHandler = function() {
+            if (self.autoSaveTimer) {
+                clearTimeout(self.autoSaveTimer);
+                self.autoSaveTimer = undefined;
+            }
+            self.status.busy = true;
+            self.save(function() { self.status.busy = false; });
+        }
+
+        $("#note-title-input").on('change keyup paste', function() {
+            /* Ignore the change event which is fired by setContentNoLagWorkaround */
+            if (!self.status.busy)
+                editorChangeHandler();
+        });
+
+        $("#note-title-input").focusout(function() {
+            editorSaveHandler();
+        });
 
         editor.on("contentDom", function() {
             // For Firefox/Chrome
@@ -468,20 +495,19 @@ function NoteEditor(viewController, config) {
         editor.on("paste", function(event) {
             event.stop();
             var data = event.data.dataValue;
-            /* Remove &nbsp; between tags on paste to prevent problems from ckeditor parsing the html content */
-            event.editor.insertHtml(data.replace(/>&nbsp;/gi,'>'));
-        });
-
-        $("#note-title-input").focusout(function() {
-            self.scheduleAutoSave(0);
+            /* Remove single &nbsp; between tags on paste to prevent problems from ckeditor parsing the html content */
+            event.editor.insertHtml(data.replace(/\>&nbsp;\</gi,'\>\<'));
+            editorChangeHandler();
         });
 
         editor.on("change", function() {
-            self.scheduleAutoSave(10000);
+            /* Ignore the change event which is fired by setContentNoLagWorkaround */
+            if (!self.status.busy)
+                editorChangeHandler();
         });
 
         editor.on("customsave", function() {
-            self.scheduleAutoSave(0);
+            editorSaveHandler();
         });
 
         editor.on("screenshotarea", function(event) {
@@ -490,7 +516,7 @@ function NoteEditor(viewController, config) {
 
             /* Save a screenshot-area.png copy for this screenshot area in userdata storage */
             self.fileManager.writeFile(
-                dirname(self.notePath) + "/assets/" + screenshotId + ".png",
+                dirname(self.noteObject.path) + "/assets/" + screenshotId + ".png",
                 base64ToBlob(area.image),
                 function(path, progress, error) {
                     if (error)
@@ -506,13 +532,13 @@ function NoteEditor(viewController, config) {
 
         editor.on("maximize", function(state) {
             if (state.data === CKEDITOR.TRISTATE_ON)
-                page.navigationBar.hide();
+                self.jqueryElement.trigger("noteEditor.uiMaximize");
             else
-                page.navigationBar.show();
+                self.jqueryElement.trigger("noteEditor.uiNormalize");
         });
 
         self.status.editorReady = true;
-        self.jqueryElement.trigger("note-editor.ready");
+        self.jqueryElement.trigger("noteEditor.uiReady");
     });
 }
 
@@ -530,34 +556,37 @@ NoteEditor.prototype.fitSize = function(width, height) {
     } catch (e) {}
 }
 
-NoteEditor.prototype.loadContent = function(path, index) {
+NoteEditor.prototype.loadContent = function(noteObject) {
     var self = this;
 
     if (!self.status.editorReady)
         return;
 
-    /* Wait if we are saving the note */
-    if (self.status.savingNote || self.status.flushingNote) {
+    /* Wait if editor is busy loading or saving the note */
+    if (self.status.busy) {
         /* Last edited note is being saved, defer readFile() work after 500ms and see if it is done */
-        setTimeout(function() { self.loadContent(path, index); }, 100);
+        setTimeout(function() { self.loadContent(noteObject); }, 100);
     }
     else {
-        self.fileManager.readFile(path, "utf8", function(path, data, error) {
+        self.status.busy = true;
+
+        self.fileManager.readFile(noteObject.path, "utf8", function(path, data, error) {
             if (error) {
                 console.log("Unable to read " + path);
+                self.status.busy = false;
                 return;
             }
 
             /* Extract and show title text */
             var title = $("<div></div>").append(data).find("title").text() || "";
-            /* Remove all &nbsp between tags and extract and show contents inside <body></body> on CKEDITOR */
-            var content = data.replace(/>&nbsp;/gi,'>').match(/\<body[^>]*\>([^]*)\<\/body/m)[1] || "";
+            /* Remove all single &nbsp between tags and extract and show contents inside <body></body> on CKEDITOR */
+            var content = data.replace(/\>&nbsp;\</gi,'\>\<').match(/\<body[^>]*\>([^]*)\<\/body/m)[1] || "";
             self.setContentNoLagWorkaround(title, content, function() {
                 $("#note-title-input").prop("disabled", false);
                 CKEDITOR.instances["note-content-editor"].setReadOnly(false);
 
-                self.notePath = path;
-                self.noteIndex = index;
+                self.noteObject = noteObject;
+                self.status.busy = false;
             });
         });
     }
@@ -569,21 +598,21 @@ NoteEditor.prototype.resetContent = function() {
     if (!self.status.editorReady)
         return;
 
-    /* Wait if we are saving the note */
-    if (self.status.savingNote) {
+    /* Wait if editor is busy loading or saving the note */
+    if (self.status.busy) {
         /* Last edited note is being saved, defer readFile() work after 500ms and see if it is done */
         setTimeout(function() { self.resetContent(); }, 100);
     }
     else {
-        /* Flush unsaved content immediately */
-        self.flushContent(function() {
-            self.notePath = undefined;
-            self.noteIndex = -1;
+        self.status.busy = true;
+        self.status.dirty = false;
+        self.noteObject = null;
 
-            self.setContentNoLagWorkaround("", "");
+        $("#note-title-input").prop("disabled", true);
+        CKEDITOR.instances["note-content-editor"].setReadOnly(true);
 
-            $("#note-title-input").prop("disabled", true);
-            CKEDITOR.instances["note-content-editor"].setReadOnly(true);
+        self.setContentNoLagWorkaround("", "", function() {
+            self.status.busy = false;
         });
     }
 }
@@ -594,34 +623,42 @@ NoteEditor.prototype.flushContent = function(cb) {
     if (!self.status.editorReady)
         return;
 
-    /* Wait if we are saving the note */
-    if (self.status.savingNote) {
+    /* Wait if editor is busy loading or saving the note */
+    if (self.status.busy) {
         /* Last edited note is being saved, defer readFile() work after 500ms and see if it is done */
         setTimeout(function() { self.flushContent(cb); }, 100);
     }
     else {
-        if (self.notePath) {
-            self.status.flushingNote = true;
+        self.status.busy = true;
 
+        if (self.status.dirty && self.noteObject) {
             /* Stop & clear previous auto save timer */
             if (self.autoSaveTimer) {
                 clearTimeout(self.autoSaveTimer);
                 self.autoSaveTimer = undefined;
-                self.scheduleAutoSave(0, function() {
-                    self.removeUselessAssets(self.notePath, 0, function(error) {
-                        self.status.flushingNote = false;
+                self.save(function() {
+                    self.removeUselessAssets(self.noteObject, 0, function(error) {
                         cb && cb();
+                        self.status.busy = false;
                     });
                 });
             }
             else {
-                self.removeUselessAssets(self.notePath, 0, function(error) {
-                    self.status.flushingNote = false;
+                self.removeUselessAssets(self.noteObject, 0, function(error) {
+                    self.status.busy = false;
                     cb && cb();
                 });
             }
         }
-        else
+        else if (self.noteObject) {
+            self.removeUselessAssets(self.noteObject, 0, function(error) {
+                self.status.busy = false;
+                cb && cb();
+            });
+        }
+        else {
+            self.status.busy = false;
             cb && cb();
+        }
     }
 }

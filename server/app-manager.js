@@ -8,8 +8,8 @@ var fs = require('fs-extra'),
 fs.jsonfile.spaces = 4;
 
 var SYSTEM = require('../system');
-var USER_APP_PATH = SYSTEM.SETTINGS.UserStorageMountpoint + "/" + SYSTEM.SETTINGS.SysName + "/apps";
-var BUILTIN_APP_PATH = path.resolve(__dirname, '../apps');
+var USER_APP_PATH = SYSTEM.SETTINGS.SystemDataPath + path.sep + SYSTEM.SETTINGS.SystemName + path.sep + 'apps';
+var BUILTIN_APP_PATH = path.resolve(__dirname, '..' + path.sep + 'apps');
 var APP_INFO_FILE = 'AppInfo.json';
 
 module.exports = AppManager;
@@ -49,7 +49,7 @@ function AppManager() {
                     try {
                         var info = JSON.parse(appBundle.readAsText(zipEntry, 'utf8'));
                         if (self.verifyAppInfo(info)) {
-                            if (appBundle.getEntry(info.Directory + '/' + info.AppEntry)) {
+                            if (appBundle.getEntry(info.Directory + path.sep + info.AppEntry)) {
                                 if (appDirs.indexOf(info.Directory) >= 0) {
                                     appInfo = info;
                                     return false;
@@ -69,16 +69,16 @@ function AppManager() {
         return appInfo;
     };
 
-    this.loadApps = function(path, list) {
+    this.loadApps = function(_path, list) {
         var appList = [];
 
         for (var i in list) {
-            var jsonAppInfo = fs.readFileSync(path + '/' + list[i] + '/' + APP_INFO_FILE);
+            var jsonAppInfo = fs.readFileSync(_path + path.sep + list[i] + path.sep + APP_INFO_FILE);
             if (jsonAppInfo) {
                 try {
                     var appInfo = JSON.parse(jsonAppInfo);
                     if (this.verifyAppInfo(appInfo)) {
-                        if (path === USER_APP_PATH) {
+                        if (_path === USER_APP_PATH) {
                             if (appInfo.AppIdentifier) {
                                 this.apps[appInfo.AppIdentifier] = appInfo;
 
@@ -94,7 +94,7 @@ function AppManager() {
                             if (appInfo.AppIdentifier === undefined) {
                                 /* Generate builtin APPs indentifier for first time running */
                                 appInfo.AppIdentifier = randomstring.generate('BAPPXXXXXXXX');
-                                fs.writeJsonSync(path + '/' + list[i] + '/' + APP_INFO_FILE, appInfo);
+                                fs.writeJsonSync(_path + path.sep + list[i] + path.sep + APP_INFO_FILE, appInfo);
                             }
 
                             this.apps[appInfo.AppIdentifier] = appInfo;
@@ -139,7 +139,7 @@ AppManager.prototype.register = function(_super, socket, protoAPP, complete) {
         }
 
         var installationCode = randomstring.generate('XXXXXXXX');
-        var filename = SYSTEM.SETTINGS.TempPath + '/' + installationCode + '.zip';
+        var filename = SYSTEM.SETTINGS.TempPath + path.sep + installationCode + '.zip';
         var appWriteStream = fs.createWriteStream(filename);
         self.appBundleDataStream = appBundleDataStream;
         appBundleDataStream.pipe(appWriteStream);
@@ -173,7 +173,7 @@ AppManager.prototype.register = function(_super, socket, protoAPP, complete) {
             return;
         }
 
-        var filename = SYSTEM.SETTINGS.TempPath + '/' + installationCode + '.zip';
+        var filename = SYSTEM.SETTINGS.TempPath + path.sep + installationCode + '.zip';
 
         if (fs.existsSync(filename))
             fs.removeSync(filename);
@@ -212,7 +212,7 @@ AppManager.prototype.unregister = function(socket, protoAPP) {
 }
 
 AppManager.prototype.getAppInfo = function(appDirectory) {
-    var file = BUILTIN_APP_PATH + '/' + appDirectory + '/' + APP_INFO_FILE;
+    var file = BUILTIN_APP_PATH + path.sep + appDirectory + path.sep + APP_INFO_FILE;
 
     if (fs.existsSync(file)) {
         var appInfo = fs.readJsonSync(file);
@@ -231,17 +231,17 @@ AppManager.prototype.listApps = function() {
 
     try {
         var builtinApps = this.loadApps(BUILTIN_APP_PATH, fs.readdirSync(BUILTIN_APP_PATH).filter(function (file) {
-            var stat = fs.lstatSync(BUILTIN_APP_PATH + '/' + file);
+            var stat = fs.lstatSync(BUILTIN_APP_PATH + path.sep + file);
             if (stat.isDirectory())
-                if (fs.existsSync(BUILTIN_APP_PATH + '/' + file + '/' + APP_INFO_FILE))
+                if (fs.existsSync(BUILTIN_APP_PATH + path.sep + file + path.sep + APP_INFO_FILE))
                     return true;
             return false;
         }));
 
         var userApps = this.loadApps(USER_APP_PATH, fs.readdirSync(USER_APP_PATH).filter(function (file) {
-            var stat = fs.lstatSync(USER_APP_PATH + '/' + file);
+            var stat = fs.lstatSync(USER_APP_PATH + path.sep + file);
             if (stat.isDirectory())
-                if (fs.existsSync(USER_APP_PATH + '/' + file + '/' + APP_INFO_FILE))
+                if (fs.existsSync(USER_APP_PATH + path.sep + file + path.sep + APP_INFO_FILE))
                     return true;
             return false;
         }));
@@ -286,7 +286,7 @@ AppManager.prototype.install = function(appBundlePath) {
         appInfo.AppIdentifier = 'UAPP00000000';
 
     if (appInfo.AppIdentifier.indexOf('BAPP') === 0) {
-        var builtinAppPath = BUILTIN_APP_PATH + '/' + appInfo.Directory;
+        var builtinAppPath = BUILTIN_APP_PATH + path.sep + appInfo.Directory;
 
         if (fs.existsSync(builtinAppPath)) {
             upgradeApp(builtinAppPath, appInfo, true);
@@ -296,7 +296,7 @@ AppManager.prototype.install = function(appBundlePath) {
         }
     }
     else if (appInfo.AppIdentifier.indexOf('UAPP') === 0) {
-        var userAppPath = USER_APP_PATH + '/' + appInfo.Directory;
+        var userAppPath = USER_APP_PATH + path.sep + appInfo.Directory;
 
         if (fs.existsSync(userAppPath)) {
             upgradeApp(userAppPath, appInfo, false);
@@ -311,7 +311,7 @@ AppManager.prototype.install = function(appBundlePath) {
                     if (this.apps[appInfo.AppIdentifier])
                         continue;
 
-                    fs.writeJsonSync(userAppPath + '/' + APP_INFO_FILE, appInfo);
+                    fs.writeJsonSync(userAppPath + path.sep + APP_INFO_FILE, appInfo);
                     break;
                 }
             }
@@ -324,7 +324,7 @@ AppManager.prototype.install = function(appBundlePath) {
     function installApp(appPath, appInfo) {
         try {
             /* Install extracted APP */
-            fse.moveSync(SYSTEM.SETTINGS.TempPath + '/' + appInfo.Directory, appPath);
+            fse.moveSync(SYSTEM.SETTINGS.TempPath + path.sep + appInfo.Directory, appPath);
         }
         catch (error) {
             console.log("installApp: " + error);
@@ -333,7 +333,7 @@ AppManager.prototype.install = function(appBundlePath) {
     }
 
     function upgradeApp(appPath, appInfo, backupOrig) {
-        var jsonAppInfo = fs.readFileSync(appPath + '/' + APP_INFO_FILE);
+        var jsonAppInfo = fs.readFileSync(appPath + path.sep + APP_INFO_FILE);
         oldAppInfo = JSON.parse(jsonAppInfo);
 
         if (appInfo.Directory != oldAppInfo.Directory)
@@ -350,7 +350,7 @@ AppManager.prototype.install = function(appBundlePath) {
 
         try {
             /* Install extracted APP */
-            fs.copySync(SYSTEM.SETTINGS.TempPath + '/' + appInfo.Directory, appPath);
+            fs.copySync(SYSTEM.SETTINGS.TempPath + path.sep + appInfo.Directory, appPath);
         }
         catch (error) {
             console.log("upgradeApp: " + error);
@@ -360,18 +360,18 @@ AppManager.prototype.install = function(appBundlePath) {
         /* Copy APP identifier if this is not an official upgrade */
         if (!officialUpgrade) {
             appInfo.AppIdentifier = oldAppInfo.AppIdentifier;
-            fs.writeJsonSync(appPath + '/' + APP_INFO_FILE, appInfo);
+            fs.writeJsonSync(appPath + path.sep + APP_INFO_FILE, appInfo);
         }
 
         /* Remove tmp path */
-        fs.removeSync(SYSTEM.SETTINGS.TempPath + '/' + appInfo.Directory);
+        fs.removeSync(SYSTEM.SETTINGS.TempPath + path.sep + appInfo.Directory);
     }
 
     return { result: 'OK' };
 }
 
 AppManager.prototype.uninstall = function(appInfo) {
-    var appPath = USER_APP_PATH + '/' + appInfo.Directory;
+    var appPath = USER_APP_PATH + path.sep + appInfo.Directory;
 
     if (!fs.existsSync(appPath))
         return { result: SYSTEM.ERROR.FSNotExist };

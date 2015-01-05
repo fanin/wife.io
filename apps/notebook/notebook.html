@@ -56,6 +56,11 @@
             NotebookViewController.prototype.constructor = NotebookViewController;
 
             $(function() {
+                modal.open({
+                    content: "<img class='wait-spin-indicator' src='/apps/b/notebook/img/circle-arrow.png'/>" +
+                             "<div style='padding-top:5px'>Loading...</div>"
+                });
+
                 var notebookViewController = new NotebookViewController();
 
                 notebookViewController.event.on("core.connection#established", function(event) {
@@ -86,27 +91,31 @@
                     });
 
                     bookshelf.jqueryElement.on("bookshelf.select", function(event, arg) {
-                        if ($("#search-text-input").val())
-                            resetSearch();
+                        noteEditor.flushContent(function() {
+                            if ($("#search-text-input").val())
+                                resetSearch();
 
-                        if (arg.node)
-                            notebook.open(arg.node);
-                        else
-                            notebook.close();
+                            if (arg.node) {
+                                notebook.close();
+                                notebook.open(arg.node);
+                            }
+                            else
+                                notebook.close();
 
-                        if (arg.node && (arg.node.isFolder() || arg.node.name === "All Notes"))
-                            $("#add-note-button").attr("disabled", true);
-                        else
-                            $("#add-note-button").attr("disabled", false);
+                            if (arg.node && (arg.node.isFolder() || arg.node.name === "All Notes"))
+                                $("#add-note-button").attr("disabled", true);
+                            else
+                                $("#add-note-button").attr("disabled", false);
+                        });
                     });
 
-                    bookshelf.jqueryElement.on("bookshelf.update", function(event, arg) {
+                    bookshelf.jqueryElement.on("bookshelf.notebookModified", function(event, arg) {
                         if (arg.node === notebook.notebookNode) {
                             setTimeout(function() { notebook.updateTitleBar(); }, 500);
                         }
                     });
 
-                    bookshelf.jqueryElement.on("bookshelf.switch-storage", function(event, uuid) {
+                    bookshelf.jqueryElement.on("bookshelf.switchStorage", function(event, uuid) {
                         noteEditor.flushContent(function() {
                             if (bookshelf.storages[uuid]) {
                                 notebookViewController.storageClient.setUserDataDisk(bookshelf.storages[uuid]);
@@ -132,35 +141,72 @@
                     });
 
                     notebook.jqueryElement.on("notebook.afterOpen", function(event) {
+                        if (notebook.isEmpty())
+                            noteEditor.resetContent();
                         clearTimeout(modal.timer);
                         modal.close();
                     });
 
-                    notebook.jqueryElement.on("notebook.select", function(event, arg) {
-                        noteEditor.loadContent(arg.path, arg.index);
-                    });
-
-                    notebook.jqueryElement.on("notebook.deselect", function(event, arg) {
+                    notebook.jqueryElement.on("notebook.afterClose", function(event) {
                         noteEditor.resetContent();
                     });
 
+                    notebook.jqueryElement.on("notebook.afterDelete", function(event, noteObject) {
+                        if (notebook.isEmpty() || (noteEditor.noteObject && noteObject.path === noteEditor.noteObject.path))
+                            noteEditor.resetContent();
+                    });
+
+                    notebook.jqueryElement.on("notebook.select", function(event, noteObject) {
+                        noteEditor.loadContent(noteObject);
+                    });
+
+                    notebook.jqueryElement.on("notebook.deselect", function(event, noteObject) {
+                        if (noteObject)
+                            noteEditor.flushContent();
+                    });
+
                     /* Note editor event handling */
-                    noteEditor.jqueryElement.on("note-editor.ready", function(event, arg) {
+                    noteEditor.jqueryElement.on("noteEditor.uiReady", function(event, arg) {
                         /* Resize editor after loaded */
                         setContentSizeFit();
                     });
 
-                    noteEditor.jqueryElement.on("note-editor.saving", function(event) {
+                    noteEditor.jqueryElement.on("noteEditor.uiMaximize", function(event) {
+                        page.navigationBar.hide();
+                    });
+
+                    noteEditor.jqueryElement.on("noteEditor.uiNormalize", function(event) {
+                        page.navigationBar.show();
+                    });
+
+                    noteEditor.jqueryElement.on("noteEditor.beforeSave", function(event) {
                         noteSaveDelayTimer = setTimeout(function() {
                             modal.timer = setTimeout(modalTimeoutHandler, 30000);
                             modal.open({
                                 content: "<img class='wait-spin-indicator' src='/apps/b/notebook/img/circle-arrow.png'/>" +
                                          "<div style='padding-top:5px'>Saving...</div>"
                             });
-                        }, 500);
+                        }, 300);
                     });
 
-                    noteEditor.jqueryElement.on("note-editor.nochange", function(event) {
+                    noteEditor.jqueryElement.on("noteEditor.afterSave", function(event, noteObject) {
+                        clearTimeout(noteSaveDelayTimer);
+                        clearTimeout(modal.timer);
+                        modal.close();
+                        $("#status-msg").text("Saved!");
+                        $("#status-msg").fadeIn(500);
+                        $("#status-msg").fadeOut(2000, function() {});
+                        notebook.refreshNote(noteObject.index);
+                    });
+
+                    noteEditor.jqueryElement.on("noteEditor.grabResources", function(event) {
+                        modal.open({
+                            content: "<img class='wait-spin-indicator' src='/apps/b/notebook/img/circle-arrow.png'/>" +
+                                     "<div style='padding-top:5px'>Grabbing resources...</div>"
+                        });
+                    });
+
+                    noteEditor.jqueryElement.on("noteEditor.saveWithoutChange", function(event, noteObject) {
                         clearTimeout(noteSaveDelayTimer);
                         clearTimeout(modal.timer);
                         modal.close();
@@ -169,17 +215,7 @@
                         $("#status-msg").fadeOut(2000, function() {});
                     });
 
-                    noteEditor.jqueryElement.on("note-editor.saved", function(event, index) {
-                        clearTimeout(noteSaveDelayTimer);
-                        clearTimeout(modal.timer);
-                        modal.close();
-                        $("#status-msg").text("Saved!");
-                        $("#status-msg").fadeIn(500);
-                        $("#status-msg").fadeOut(2000, function() {});
-                        notebook.reloadNote(index);
-                    });
-
-                    noteEditor.jqueryElement.on("note-editor.save-error", function(event, index) {
+                    noteEditor.jqueryElement.on("noteEditor.saveWithError", function(event, noteObject) {
                         clearTimeout(noteSaveDelayTimer);
                         clearTimeout(modal.timer);
                         modal.close();
@@ -192,8 +228,10 @@
                     });
 
                     notebookViewController.storageClient.event.on("storage.localdisk#list#success", function(event, disks) {
-                        if (disks.user)
-                            bookshelf.addStorage(disks.user);
+                        if (disks.data)
+                            bookshelf.addStorage(disks.data);
+                        else
+                            bookshelf.addStorage(disks.system);
 
                         for (var i in disks.removable) {
                             bookshelf.addStorage(disks.removable[i]);
@@ -347,28 +385,32 @@
             }
 
             function search() {
-                var pattern = $("#search-text-input").val();
+                noteEditor.flushContent(function() {
+                    var pattern = $("#search-text-input").val();
 
-                if (pattern) {
-                    notebook.open({ name: "All Notes", isFolder: function(){ return false; } }, pattern);
-                    $("#add-note-button").attr("disabled", true);
-                    $("#search-button").unbind("click");
-                    $("#search-text").text(pattern);
-                    $("#search-text-overlay").show();
-                    $("#search-text-overlay i").unbind("click");
-                    $("#search-text-overlay i").click(function() {
-                        notebook.close();
-                        notebook.open(bookshelf.notebookTree[bookshelf.storageUUID].selectedNode);
-                        resetSearch();
-                    });
-                }
+                    if (pattern) {
+                        notebook.open({ name: "All Notes", isFolder: function(){ return false; } }, pattern);
+                        $("#add-note-button").attr("disabled", true);
+                        $("#search-button").unbind("click");
+                        $("#search-text").text(pattern);
+                        $("#search-text-overlay").show();
+                        $("#search-text-overlay i").unbind("click");
+                        $("#search-text-overlay i").click(function() {
+                            notebook.close();
+                            notebook.open(bookshelf.notebookTree[bookshelf.storageUUID].selectedNode);
+                            resetSearch();
+                        });
+                    }
+                });
             }
 
             function resetSearch() {
-                $("#search-text-input").val("");
-                $("#search-text-overlay").hide();
-                $("#search-button").click(search);
-                $("#add-note-button").attr("disabled", false);
+                noteEditor.flushContent(function() {
+                    $("#search-text-input").val("");
+                    $("#search-text-overlay").hide();
+                    $("#search-button").click(search);
+                    $("#add-note-button").attr("disabled", false);
+                });
             }
 
             page = new Page();
@@ -389,7 +431,6 @@
             });
 
             page.event.on("storage.notification#userdatadiskset", function(event, disk) {
-                notebook.close();
                 bookshelf.load(disk.uuid, function(error) {
                     if (error)
                         page.notifier.add (
@@ -413,14 +454,16 @@
             });
 
             $("#add-note-button").click(function() {
-                notebook.addNote(null, null);
-                /* Temporarily disable add-note-button to prevent high frequence click that cause problems */
-                $("#add-note-button").attr("disabled", true);
-                setTimeout(function() {
-                    var node = bookshelf.notebookTree[bookshelf.storageUUID].selectedNode;
-                    if (node.name !== "All Notes")
-                        $("#add-note-button").attr("disabled", false);
-                }, 500);
+                noteEditor.flushContent(function() {
+                    notebook.addNote(null, null);
+                    /* Temporarily disable add-note-button to prevent high frequence click that cause problems */
+                    $("#add-note-button").attr("disabled", true);
+                    setTimeout(function() {
+                        var node = bookshelf.notebookTree[bookshelf.storageUUID].selectedNode;
+                        if (node.name !== "All Notes")
+                            $("#add-note-button").attr("disabled", false);
+                    }, 500);
+                });
             });
 
             $("#search-button").click(search);

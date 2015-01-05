@@ -410,7 +410,7 @@ function Bookshelf(viewController) {
         self.notebookTree[self.storageUUID].tree("updateNode", node, name);
         saveNotebookTree();
         updateHoverHandler();
-        self.jqueryElement.trigger("bookshelf.update", { node: node });
+        self.jqueryElement.trigger("bookshelf.notebookModified", { node: node });
     }
 
     function move(srcNode, dstNode, pos) {
@@ -566,7 +566,7 @@ function Bookshelf(viewController) {
             self.unregisterStorageActionClick();
 
             var uuid = ui.newHeader.text().trim().split("::")[1];
-            self.jqueryElement.trigger("bookshelf.switch-storage", uuid);
+            self.jqueryElement.trigger("bookshelf.switchStorage", uuid);
         }
     })
     .accordion("option", "active", 0) /* Active internal user storage */
@@ -630,6 +630,7 @@ Bookshelf.prototype.selectNotebookAtIndex = function(index) {
     var notebookTreeData = this.notebookTree[this.storageUUID].tree("getTree").getData();
     if (notebookTreeData.length > 0) {
         var node = this.notebookTree[this.storageUUID].tree("getNodeByName", notebookTreeData[index].name);
+        console.log(node);
         if (node) this.notebookTree[this.storageUUID].tree("selectNode", node);
     }
 }

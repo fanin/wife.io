@@ -42,24 +42,24 @@ FileManager.prototype.register = function(_super, socket, protoFS, complete) {
         }
     });
 
-    socket.on(protoFS.StatList.REQ, function(path) {
+    socket.on(protoFS.StatList.REQ, function(_path) {
         try {
-            var realPath = self.resolvePath(path);
+            var realPath = self.resolvePath(_path);
 
             if (SYSTEM.ERROR.HasError(realPath))
-                socket.emit(protoFS.StatList.ERR, path, realPath);
+                socket.emit(protoFS.StatList.ERR, _path, realPath);
             else {
                 var items = fs.readdirSync(realPath);
                 var itemStats = [];
                 items.forEach(function(file) {
-                    var stat = fs.lstatSync(realPath + '/' + file);
+                    var stat = fs.lstatSync(realPath + path.sep + file);
                     itemStats.push(stat);
                 });
-                socket.emit(protoFS.StatList.RES, path, items, itemStats);
+                socket.emit(protoFS.StatList.RES, _path, items, itemStats);
             }
         }
         catch (err) {
-            socket.emit(protoFS.StatList.ERR, path, SYSTEM.ERROR.FSNotExist);
+            socket.emit(protoFS.StatList.ERR, _path, SYSTEM.ERROR.FSNotExist);
         }
     });
 
@@ -377,8 +377,8 @@ FileManager.prototype.register = function(_super, socket, protoFS, complete) {
                     var isDir = fs.lstatSync(realPath).isDirectory();
 
                     if (isDir) {
-                        var fileName = url.parse(fileURL).pathname.split('/').pop();
-                        fileStream = fs.createWriteStream(realPath + '/' + fileName);
+                        var fileName = url.parse(fileURL).pathname.split(path.sep).pop();
+                        fileStream = fs.createWriteStream(realPath + path.sep + fileName);
                     }
                     else
                         fileStream = fs.createWriteStream(realPath);

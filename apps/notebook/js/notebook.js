@@ -1,3 +1,5 @@
+// TODO: handle note data well after remove
+
 function Notebook(viewController) {
     var self = this;
     this.node = undefined;
@@ -184,7 +186,11 @@ function Notebook(viewController) {
         self.tableView.view.off("tableview.show");
         self.tableView.view.on("tableview.show", function(event) {
             self.updateTitleBar();
-            self.jqueryElement.trigger("notebook.afterOpen");
+            if (self.status === "opening")
+                self.jqueryElement.trigger("notebook.afterOpen");
+            else if (self.status === "closing")
+                self.jqueryElement.trigger("notebook.afterClose");
+            self.status = "";
         });
 
         self.tableView.view.off("tableview.contextmenu");
@@ -194,12 +200,33 @@ function Notebook(viewController) {
 
         self.tableView.view.off("tableview.select");
         self.tableView.view.on("tableview.select", function(event, index) {
-            self.jqueryElement.trigger("notebook.select", { path: self.notes[index].path + "/note.html", index: index });
+            if (self.notes.length > index) {
+                /* Exporting a note object for note editor */
+                self.jqueryElement.trigger("notebook.select", {
+                    path: self.notes[index].path + "/note.html",
+                    stat: self.notes[index].stat,
+                    title: self.notes[index].title,
+                    index: index
+                });
+            }
+            else {
+                self.jqueryElement.trigger("notebook.select");
+            }
         });
 
         self.tableView.view.off("tableview.deselect");
         self.tableView.view.on("tableview.deselect", function(event, index) {
-            self.jqueryElement.trigger("notebook.deselect", { index: index });
+            if (self.notes.length > index) {
+                self.jqueryElement.trigger("notebook.deselect", {
+                    path: self.notes[index].path + "/note.html",
+                    stat: self.notes[index].stat,
+                    title: self.notes[index].title,
+                    index: index
+                });
+            }
+            else {
+                self.jqueryElement.trigger("notebook.deselect");
+            }
         });
     };
 
@@ -255,6 +282,11 @@ Notebook.prototype.updateTitleBar = function() {
 Notebook.prototype.open = function(node, searchPattern) {
     var self = this;
 
+    /* Ignore opening the same notebook as we just opened */
+    if (self.notebookNode && self.notebookNode.name === node.name && !searchPattern)
+        return;
+
+    self.status = "opening";
     self.notebookNode = node;
     self.notes = [];
 
@@ -263,7 +295,7 @@ Notebook.prototype.open = function(node, searchPattern) {
 
     if (node.name === "All Notes") {
         self.fileManager.statList(self.getPath(), function(path, items, stats, error) {
-            if (error) throw new Error("File system operation error");
+            if (error) throw new Error("File system operation error (path = " + path + ", error = " + error + ")");
             var recursiveIterateList = function(notebookIndex) {
                 if (notebookIndex < items.length) {
                     var waitItems = [];
@@ -402,11 +434,17 @@ Notebook.prototype.open = function(node, searchPattern) {
 Notebook.prototype.close = function() {
     var self = this;
 
+    self.status = "closing";
+    self.jqueryElement.trigger("notebook.beforeClose");
+
     self.notebookNode = undefined;
     self.notes = [];
 
+    /* Clear title bar */
     self.updateTitleBar();
+    /* Empty table view */
     self.tableView.show();
+    /* Reinstall event listeners */
     self.listenToEvents();
 }
 
@@ -467,16 +505,25 @@ Notebook.prototype.deleteNote = function(index, complete) {
         }
 
         if (exist) {
+            self.jqueryElement.trigger("notebook.beforeDelete");
+
             self.fileManager.remove(path, function(path, error) {
                 if (error) {
                     complete && complete(error);
                     throw new Error("unable to remove " + path);
                 }
 
-                self.notes.splice(index, 1);
+                var deletedNote = self.notes.splice(index, 1);
                 self.tableView.removeRowAtIndex(index);
                 self.updateTitleBar();
                 if (complete) complete();
+
+                self.jqueryElement.trigger("notebook.afterDelete", {
+                    path: deletedNote.path + "/note.html",
+                    stat: deletedNote.stat,
+                    title: deletedNote.title,
+                    index: index
+                });
             });
         }
     });
@@ -493,6 +540,8 @@ Notebook.prototype.copyNote = function(index, complete) {
     self.fileManager.exist(self.notes[index].path, function(path, exist, isDir, error) {
         if (error) throw new Error("fs operation error");
         if (exist) {
+            self.jqueryElement.trigger("notebook.beforeCopy");
+
             var timecode = self.getTimecode();
             var copyPath = dirname(path) + "/" + timecode;
             self.fileManager.copy(path, copyPath, function(srcPath, dstPath, error) {
@@ -527,6 +576,8 @@ Notebook.prototype.copyNote = function(index, complete) {
                             });
                             self.updateTitleBar();
                             if (complete) complete();
+
+                            self.jqueryElement.trigger("notebook.afterCopy");
                         });
                     });
                 });
@@ -535,7 +586,7 @@ Notebook.prototype.copyNote = function(index, complete) {
     });
 }
 
-Notebook.prototype.reloadNote = function(index) {
+Notebook.prototype.refreshNote = function(index) {
     var self = this;
     if (index >= self.notes.length)
         return;
@@ -552,6 +603,10 @@ Notebook.prototype.reloadNote = function(index) {
     });
 }
 
+Notebook.prototype.isEmpty = function() {
+    return (this.notes.length === 0);
+}
+
 /* Tableview data source */
 Notebook.prototype.tableViewNumberOfRows = function() {
     return this.notes.length;
@@ -559,10 +614,11 @@ Notebook.prototype.tableViewNumberOfRows = function() {
 
 Notebook.prototype.tableViewCellForRowAtIndex = function(index, appendDivToTableRow) {
     var self = this;
-    var tempDiv = $("<div></div>");
 
-    if (index >= self.notes.length)
+    if (index >= self.notes.length) {
+        appendDivToTableRow(null, index);
         return;
+    }
 
     self.fileManager.grep(
         self.notes[index].path + "/note.html", "<title>(.*?)<\/title>",
@@ -573,7 +629,13 @@ Notebook.prototype.tableViewCellForRowAtIndex = function(index, appendDivToTable
         function(path, data, error) {
             if (error) {
                 console.log("Unable to read " + path);
-                appendDivToTableRow(tempDiv, index);
+                appendDivToTableRow(null, index);
+                return;
+            }
+
+            /* Check if this notebook is closed */
+            if (index >= self.notes.length) {
+                appendDivToTableRow(null, index);
                 return;
             }
 

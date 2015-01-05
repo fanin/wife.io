@@ -1,3 +1,4 @@
+var path = require('path');
 var SYSTEM = require('../system');
 
 module.exports = SecurityManager;
@@ -39,8 +40,8 @@ SecurityManager.prototype.canManageApps = function(socket) {
 SecurityManager.prototype.appUserDataDirectory = function(socket) {
     if (!this.appInfo[socket])
         return '';
-    return '/' + SYSTEM.SETTINGS.SysName.replace(/\s/g, '').toLocaleLowerCase()
-    + '/apps/' + this.appInfo[socket].Directory + '/userdata';
+    return path.normalize('/' + SYSTEM.SETTINGS.SystemName.replace(/\s/g, '').toLocaleLowerCase() +
+                          '/apps/' + this.appInfo[socket].Directory + '/userdata');
 }
 
 SecurityManager.prototype.isExternalUserDataAllowed = function(socket) {
