@@ -1,14 +1,11 @@
 function NoteEditor(viewController, config) {
     var self = this;
-
-    self.noteTitle = "";
-    self.noteContent = "";
     self.noteObject = undefined;
     self.fileManager = viewController.fileManagerClient;
     self.jqueryElement = $("#note-editor");
     self.autoSaveTimer = undefined;
     self.status = {
-        editorReady: false,
+        ready: false,
         dirty: false,
         busy: false,
     };
@@ -21,12 +18,12 @@ function NoteEditor(viewController, config) {
     self.getTimecode = function() {
         var now = new Date();
         return now.getFullYear()
-        + ("0" + (now.getMonth() + 1)).slice(-2)
-        + ("0" + now.getDate()).slice(-2)
-        + ("0" + now.getHours()).slice(-2)
-        + ("0" + now.getMinutes()).slice(-2)
-        + ("0" + now.getSeconds()).slice(-2)
-        + ("0" + now.getMilliseconds()).slice(-2);
+                + ("0" + (now.getMonth() + 1)).slice(-2)
+                + ("0" + now.getDate()).slice(-2)
+                + ("0" + now.getHours()).slice(-2)
+                + ("0" + now.getMinutes()).slice(-2)
+                + ("0" + now.getSeconds()).slice(-2)
+                + ("0" + now.getMilliseconds()).slice(-2);
     };
 
     /* Initialize progress dialog for image uploading */
@@ -71,10 +68,8 @@ function NoteEditor(viewController, config) {
                 content = replaceQueryString(content, "uuid", self.storageUUID);
                 /* Set content data */
                 editor.setData(content);
-                self.noteContent = content;
                 /* Set title */
                 $("#note-title-input").val(title);
-                self.noteTitle = title;
                 /* Reset undo history */
                 editor.undoManager.reset();
                 /* callback */
@@ -204,7 +199,7 @@ function NoteEditor(viewController, config) {
 
             var doc = "<html><head><title>" + title + "</title></head><body>" + content + "</body></html>";
 
-            if (self.noteTitle === title && self.noteContent === content) {
+            if (self.noteObject.title === title && self.noteObject.content === content) {
                 self.status.dirty = false;
                 self.jqueryElement.trigger("noteEditor.saveWithoutChange", noteObject);
                 cb && cb();
@@ -229,8 +224,8 @@ function NoteEditor(viewController, config) {
                         return;
                     }
 
-                    self.noteTitle = title;
-                    self.noteContent = content;
+                    self.noteObject.title = title;
+                    self.noteObject.content = content;
 
                     if (self.config.snapshot) {
                         $("#note-snapshot-body").empty();
@@ -478,7 +473,8 @@ function NoteEditor(viewController, config) {
         });
 
         $("#note-title-input").focusout(function() {
-            editorSaveHandler();
+            if (self.status.dirty)
+                editorSaveHandler();
         });
 
         editor.on("contentDom", function() {
@@ -537,7 +533,7 @@ function NoteEditor(viewController, config) {
                 self.jqueryElement.trigger("noteEditor.uiNormalize");
         });
 
-        self.status.editorReady = true;
+        self.status.ready = true;
         self.jqueryElement.trigger("noteEditor.uiReady");
     });
 }
@@ -556,57 +552,22 @@ NoteEditor.prototype.fitSize = function(width, height) {
     } catch (e) {}
 }
 
-NoteEditor.prototype.loadContent = function(noteObject) {
+NoteEditor.prototype.reset = function() {
     var self = this;
 
-    if (!self.status.editorReady)
+    if (!self.status.ready)
         return;
 
     /* Wait if editor is busy loading or saving the note */
     if (self.status.busy) {
         /* Last edited note is being saved, defer readFile() work after 500ms and see if it is done */
-        setTimeout(function() { self.loadContent(noteObject); }, 100);
-    }
-    else {
-        self.status.busy = true;
-
-        self.fileManager.readFile(noteObject.path, "utf8", function(path, data, error) {
-            if (error) {
-                console.log("Unable to read " + path);
-                self.status.busy = false;
-                return;
-            }
-
-            /* Extract and show title text */
-            var title = $("<div></div>").append(data).find("title").text() || "";
-            /* Remove all single &nbsp between tags and extract and show contents inside <body></body> on CKEDITOR */
-            var content = data.replace(/\>&nbsp;\</gi,'\>\<').match(/\<body[^>]*\>([^]*)\<\/body/m)[1] || "";
-            self.setContentNoLagWorkaround(title, content, function() {
-                $("#note-title-input").prop("disabled", false);
-                CKEDITOR.instances["note-content-editor"].setReadOnly(false);
-
-                self.noteObject = noteObject;
-                self.status.busy = false;
-            });
-        });
-    }
-}
-
-NoteEditor.prototype.resetContent = function() {
-    var self = this;
-
-    if (!self.status.editorReady)
-        return;
-
-    /* Wait if editor is busy loading or saving the note */
-    if (self.status.busy) {
-        /* Last edited note is being saved, defer readFile() work after 500ms and see if it is done */
-        setTimeout(function() { self.resetContent(); }, 100);
+        setTimeout(function() { self.reset(); }, 100);
     }
     else {
         self.status.busy = true;
         self.status.dirty = false;
         self.noteObject = null;
+        self.storageUUID = null;
 
         $("#note-title-input").prop("disabled", true);
         CKEDITOR.instances["note-content-editor"].setReadOnly(true);
@@ -617,10 +578,46 @@ NoteEditor.prototype.resetContent = function() {
     }
 }
 
+NoteEditor.prototype.loadContent = function(storageUUID, noteObject) {
+    var self = this;
+
+    if (!self.status.ready)
+        return;
+
+    /* Wait if editor is busy loading or saving the note */
+    if (self.status.busy) {
+        /* Last edited note is being saved, defer readFile() work after 500ms and see if it is done */
+        setTimeout(function() { self.loadContent(storageUUID, noteObject); }, 100);
+    }
+    else {
+        self.status.busy = true;
+        self.storageUUID = storageUUID;
+
+        self.fileManager.readFile(noteObject.path, "utf8", function(path, data, error) {
+            if (error) {
+                console.log("Unable to read " + path);
+                self.status.busy = false;
+                return;
+            }
+
+            /* Remove all single &nbsp between tags and extract and show contents inside <body></body> on CKEDITOR */
+            noteObject.content = data.replace(/\>&nbsp;\</gi,'\>\<').match(/\<body[^>]*\>([^]*)\<\/body/m)[1] || "";
+
+            self.setContentNoLagWorkaround(noteObject.title, noteObject.content, function() {
+                $("#note-title-input").prop("disabled", false);
+                CKEDITOR.instances["note-content-editor"].setReadOnly(false);
+
+                self.noteObject = noteObject;
+                self.status.busy = false;
+            });
+        });
+    }
+}
+
 NoteEditor.prototype.flushContent = function(cb) {
     var self = this;
 
-    if (!self.status.editorReady)
+    if (!self.status.ready)
         return;
 
     /* Wait if editor is busy loading or saving the note */
@@ -638,8 +635,8 @@ NoteEditor.prototype.flushContent = function(cb) {
                 self.autoSaveTimer = undefined;
                 self.save(function() {
                     self.removeUselessAssets(self.noteObject, 0, function(error) {
-                        cb && cb();
                         self.status.busy = false;
+                        cb && cb();
                     });
                 });
             }

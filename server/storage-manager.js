@@ -62,8 +62,16 @@ StorageManager.prototype.register = function(_super, socket, protoStorage, compl
             self.notificationCenter.post("Storage", "Error", error);
         }
 
-        self.pausePolling = false;
+        /* Examine SystemDataPath */
+        if (!fs.existsSync(SYSTEM.SETTINGS.SystemDataPath)) {
+            error = SYSTEM.ERROR.StorSysDiskNotFound;
+            self.notificationCenter.post("Storage", "Error", error);
+        }
+
         complete && complete(error);
+
+        if (!error)
+            self.pausePolling = false;
     });
 
     /*

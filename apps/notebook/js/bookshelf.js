@@ -5,7 +5,6 @@ function Bookshelf(viewController) {
     this.jqueryElement = $("#bookshelf");
     this.storages = [];
     this.storageUUID = undefined;
-    this.notebookTree = [];
     this.confirmDialog = new Dialog("confirm-dialog");
     this.confirmDialog.setTitle("Are you sure?");
 
@@ -13,24 +12,24 @@ function Bookshelf(viewController) {
     this.getTimecode = function() {
         var now = new Date();
         return now.getFullYear()
-        + ("0" + (now.getMonth() + 1)).slice(-2)
-        + ("0" + now.getDate()).slice(-2)
-        + ("0" + now.getHours()).slice(-2)
-        + ("0" + now.getMinutes()).slice(-2)
-        + ("0" + now.getSeconds()).slice(-2)
-        + ("0" + now.getMilliseconds()).slice(-2);
+                + ("0" + (now.getMonth() + 1)).slice(-2)
+                + ("0" + now.getDate()).slice(-2)
+                + ("0" + now.getHours()).slice(-2)
+                + ("0" + now.getMinutes()).slice(-2)
+                + ("0" + now.getSeconds()).slice(-2)
+                + ("0" + now.getMilliseconds()).slice(-2);
     };
 
     /* Initialize Dialogs */
     function checkDuplicateStack(name) {
-        var node = self.notebookTree[self.storageUUID].tree("getNodeByName", name);
+        var node = self.getStorage().ui.tree("getNodeByName", name);
         if (node && node.isFolder())
             return true;
         return false;
     };
 
     function checkDuplicateNotebook(name) {
-        var node = self.notebookTree[self.storageUUID].tree("getNodeByName", name);
+        var node = self.getStorage().ui.tree("getNodeByName", name);
         if (node && !node.isFolder())
             return true;
         return false;
@@ -45,7 +44,7 @@ function Bookshelf(viewController) {
     notebookRenameDialog.addCustomCheck(checkDuplicateNotebook, "There is already a notebook named '#name'");
 
     function showRenameDialog(name, type) {
-        var node = self.notebookTree[self.storageUUID].tree("getNodeByName", name);
+        var node = self.getStorage().ui.tree("getNodeByName", name);
 
         notebookRenameDialog.onCreateClick(function(newName) {
             rename(node, newName);
@@ -63,7 +62,7 @@ function Bookshelf(viewController) {
         self.confirmDialog.setButton([
             {
                 text: "Yes", click: function(event) {
-                    var node = self.notebookTree[self.storageUUID].tree("getNodeByName", name);
+                    var node = self.getStorage().ui.tree("getNodeByName", name);
                     var parent = node.parent;
 
                     remove(node, false);
@@ -143,7 +142,7 @@ function Bookshelf(viewController) {
                 var type = $(this).find("span.jqtree-title-folder") ? "stack" : "notebook";
 
                 $(this).find("span.action-button").remove();
-                self.notebookTree[self.storageUUID].unbind("tree.contextmenu");
+                self.getStorage().ui.unbind("tree.contextmenu");
 
                 if (name === "All Notes")
                     return;
@@ -207,7 +206,7 @@ function Bookshelf(viewController) {
                     });
                 };
 
-                self.notebookTree[self.storageUUID].bind("tree.contextmenu", popupMenu);
+                self.getStorage().ui.bind("tree.contextmenu", popupMenu);
                 $("#action-button-notebook-" + idx + " a").click(popupMenu);
             },
             function() {
@@ -240,46 +239,46 @@ function Bookshelf(viewController) {
 
     /* Create and initialize tree */
     this.initNotebookTree = function() {
-        if (!self.notebookTree[self.storageUUID]) {
-            self.notebookTree[self.storageUUID] = $("#notebook-tree-" + self.storageUUID);
+        if (!self.getStorage().ui) {
+            self.getStorage().ui = $("#notebook-tree-" + self.storageUUID);
 
             /* Initialize notebook tree */
-            self.notebookTree[self.storageUUID].unbind("tree.init");
-            self.notebookTree[self.storageUUID].bind("tree.init", function() {
+            self.getStorage().ui.unbind("tree.init");
+            self.getStorage().ui.bind("tree.init", function() {
                 self.selectNotebookAtIndex(0);
             });
 
-            self.notebookTree[self.storageUUID].unbind("tree.open");
-            self.notebookTree[self.storageUUID].bind("tree.open", function(event) {
+            self.getStorage().ui.unbind("tree.open");
+            self.getStorage().ui.bind("tree.open", function(event) {
                 saveNotebookTree(1000);
             });
 
-            self.notebookTree[self.storageUUID].unbind("tree.close");
-            self.notebookTree[self.storageUUID].bind("tree.close", function(event) {
+            self.getStorage().ui.unbind("tree.close");
+            self.getStorage().ui.bind("tree.close", function(event) {
                 saveNotebookTree(1000);
             });
 
-            self.notebookTree[self.storageUUID].unbind("tree.refresh");
-            self.notebookTree[self.storageUUID].bind("tree.refresh", function() {
+            self.getStorage().ui.unbind("tree.refresh");
+            self.getStorage().ui.bind("tree.refresh", function() {
                 updateHoverHandler();
-                if (self.notebookTree[self.storageUUID].selectedNode) {
-                    var node = self.notebookTree[self.storageUUID].tree("getNodeByName", self.notebookTree[self.storageUUID].selectedNode.name);
-                    self.notebookTree[self.storageUUID].selectedNode = node;
-                    self.notebookTree[self.storageUUID].tree("selectNode", node);
+                if (self.getStorage().ui.selectedNode) {
+                    var node = self.getStorage().ui.tree("getNodeByName", self.getStorage().ui.selectedNode.name);
+                    self.getStorage().ui.selectedNode = node;
+                    self.getStorage().ui.tree("selectNode", node);
                 }
-                self.jqueryElement.trigger("bookshelf.loaded", { notebookTreeData: self.notebookTreeData });
+                self.jqueryElement.trigger("bookshelf.afterOpen", { notebooks: self.getStorage().treeData });
             });
 
-            self.notebookTree[self.storageUUID].unbind("tree.select");
-            self.notebookTree[self.storageUUID].bind("tree.select", function(event) {
+            self.getStorage().ui.unbind("tree.select");
+            self.getStorage().ui.bind("tree.select", function(event) {
                 if (event.node) {
-                    self.notebookTree[self.storageUUID].selectedNode = event.node;
-                    self.jqueryElement.trigger("bookshelf.select", { node: event.node });
+                    self.getStorage().ui.selectedNode = event.node;
+                    self.jqueryElement.trigger("bookshelf.select", { storage: self.storageUUID, node: event.node });
                 }
             });
 
-            self.notebookTree[self.storageUUID].unbind("tree.move");
-            self.notebookTree[self.storageUUID].bind("tree.move", function(event) {
+            self.getStorage().ui.unbind("tree.move");
+            self.getStorage().ui.bind("tree.move", function(event) {
                 event.preventDefault();
 
                 var movedNode = event.move_info.moved_node;
@@ -311,10 +310,10 @@ function Bookshelf(viewController) {
                     stackCreateDialog.onCreateClick(function(name) {
                         create(name, "stack");
 
-                        var stackNode = self.notebookTree[self.storageUUID].tree("getNodeByName", name);
+                        var stackNode = self.getStorage().ui.tree("getNodeByName", name);
                         move(targetNode, stackNode, "inside");
                         move(movedNode, stackNode, "inside");
-                        self.notebookTree[self.storageUUID].tree("openNode", stackNode, true);
+                        self.getStorage().ui.tree("openNode", stackNode, true);
 
                         if (movedNodeParent && movedNodeParent.children.length === 0) {
                             remove(movedNodeParent, true);
@@ -330,13 +329,13 @@ function Bookshelf(viewController) {
                 }
             });
 
-            self.notebookTree[self.storageUUID].unbind("tree.click");
-            self.notebookTree[self.storageUUID].bind("tree.click", function(event) {
+            self.getStorage().ui.unbind("tree.click");
+            self.getStorage().ui.bind("tree.click", function(event) {
                 // The clicked node is "event.node"
             });
 
             /* Initialize notebook tree */
-            self.notebookTree[self.storageUUID].tree({
+            self.getStorage().ui.tree({
                 closedIcon: $("<i class='fa fa-caret-right'></i>"),
                 openedIcon: $("<i class='fa fa-caret-down'></i>"),
                 nodeIcon: $("<i class='fa fa-book'></i>"),
@@ -349,11 +348,11 @@ function Bookshelf(viewController) {
                 toggleable: false,
                 dragAndDrop: true,
                 autoOpen: false,
-                data: self.notebookTreeData
+                data: self.getStorage().treeData
             });
         }
         else {
-            self.notebookTree[self.storageUUID].tree("loadData", self.notebookTreeData);
+            self.getStorage().ui.tree("loadData", self.getStorage().treeData);
         }
 
         updateHoverHandler();
@@ -371,8 +370,8 @@ function Bookshelf(viewController) {
         wait = wait || 0;
 
         saveNotebookTreeWaitTimer = setTimeout(function() {
-            var notebookTreeData = self.notebookTree[self.storageUUID].tree("toJson");
-            self.fileManager.writeFile("bookshelf-tree.json", notebookTreeData, function(path, progress, error) {
+            var treeData = self.getStorage().ui.tree("toJson");
+            self.fileManager.writeFile("bookshelf-tree.json", treeData, function(path, progress, error) {
                 cb && cb(error);
                 if (error) throw new Error("Unable to write bookshelf tree data");
             });
@@ -392,29 +391,29 @@ function Bookshelf(viewController) {
 
                 self.fileManager.createDirectory(path, function(path, error) {
                     if (error) throw new Error("unable to create " + path);
-                    self.notebookTree[self.storageUUID].tree("appendNode", { label: name, id: parseInt(code) });
+                    self.getStorage().ui.tree("appendNode", { label: name, id: parseInt(code) });
                     /* Select latest appended node */
-                    var node = self.notebookTree[self.storageUUID].tree("getNodeByName", name);
-                    if (node) self.notebookTree[self.storageUUID].tree("selectNode", node);
+                    var node = self.getStorage().ui.tree("getNodeByName", name);
+                    if (node) self.getStorage().ui.tree("selectNode", node);
                     saveNotebookTree();
                 });
             });
         }
         else {
-            self.notebookTree[self.storageUUID].tree("appendNode", { label: name, id: 1 });
+            self.getStorage().ui.tree("appendNode", { label: name, id: 1 });
             saveNotebookTree();
         }
     }
 
     function rename(node, name) {
-        self.notebookTree[self.storageUUID].tree("updateNode", node, name);
+        self.getStorage().ui.tree("updateNode", node, name);
         saveNotebookTree();
         updateHoverHandler();
-        self.jqueryElement.trigger("bookshelf.notebookModified", { node: node });
+        self.jqueryElement.trigger("bookshelf.notebookModified", { storage: self.storageUUID, node: node });
     }
 
     function move(srcNode, dstNode, pos) {
-        self.notebookTree[self.storageUUID].tree("moveNode", srcNode, dstNode, pos);
+        self.getStorage().ui.tree("moveNode", srcNode, dstNode, pos);
         saveNotebookTree();
     }
 
@@ -431,21 +430,27 @@ function Bookshelf(viewController) {
                     self.fileManager.remove(self.getPath(node), function(path, error) {
                         if (error) throw new Error("unable to remove " + path);
                         if (nextNodeToSelect) {
-                            if (self.notebookTree[self.storageUUID].selectedNode === nextNodeToSelect) {
+                            if (self.getStorage().ui.selectedNode === nextNodeToSelect) {
                                 /**
                                  * Selected node is the same as nextNodeToSelect, this will not trigger 'tree.select' event by 'selectNode' api.
                                  * Thus, we do trigger 'bookshelf.select' manually here to notify notebook.html to update notebook list.
                                  */
-                                self.jqueryElement.trigger("bookshelf.select", { node: nextNodeToSelect });
+                                self.jqueryElement.trigger("bookshelf.select", {
+                                    storage: self.storageUUID,
+                                    node: nextNodeToSelect
+                                });
                             }
                             else {
-                                self.notebookTree[self.storageUUID].selectedNode = nextNodeToSelect;
-                                self.notebookTree[self.storageUUID].tree("selectNode", self.notebookTree[self.storageUUID].selectedNode);
+                                self.getStorage().ui.selectedNode = nextNodeToSelect;
+                                self.getStorage().ui.tree("selectNode", self.getStorage().ui.selectedNode);
                             }
                         }
                         else {
-                            self.notebookTree[self.storageUUID].selectedNode = undefined;
-                            self.jqueryElement.trigger("bookshelf.select", { node: self.notebookTree[self.storageUUID].selectedNode });
+                            self.getStorage().ui.selectedNode = undefined;
+                            self.jqueryElement.trigger("bookshelf.select", {
+                                storage: self.storageUUID,
+                                node: self.getStorage().ui.selectedNode
+                            });
                         }
                     });
                 }
@@ -456,33 +461,32 @@ function Bookshelf(viewController) {
             self.fileManager.remove(self.getPath(node), function(path, error) {
                 if (error) throw new Error("unable to remove " + path);
                 if (nextNodeToSelect) {
-                    if (self.notebookTree[self.storageUUID].selectedNode === nextNodeToSelect) {
+                    if (self.getStorage().ui.selectedNode === nextNodeToSelect) {
                         /**
                          * Selected node is the same as nextNodeToSelect, this will not trigger 'tree.select' event by 'selectNode' api.
                          * Thus, we do trigger 'bookshelf.select' manually here to notify notebook.html to update notebook list.
                          */
-                        self.jqueryElement.trigger("bookshelf.select", { node: nextNodeToSelect });
+                        self.jqueryElement.trigger("bookshelf.select", { storage: self.storageUUID, node: nextNodeToSelect });
                     }
                     else {
-                        self.notebookTree[self.storageUUID].selectedNode = nextNodeToSelect;
-                        self.notebookTree[self.storageUUID].tree("selectNode", self.notebookTree[self.storageUUID].selectedNode);
+                        self.getStorage().ui.selectedNode = nextNodeToSelect;
+                        self.getStorage().ui.tree("selectNode", self.getStorage().ui.selectedNode);
                     }
                 }
                 else {
-                    self.notebookTree[self.storageUUID].selectedNode = undefined;
-                    self.jqueryElement.trigger("bookshelf.select", { node: self.notebookTree[self.storageUUID].selectedNode });
+                    self.getStorage().ui.selectedNode = undefined;
+                    self.jqueryElement.trigger("bookshelf.select", { storage: self.storageUUID, node: self.getStorage().ui.selectedNode });
                 }
             });
         }
 
-        self.notebookTree[self.storageUUID].tree("removeNode", node);
+        self.getStorage().ui.tree("removeNode", node);
         saveNotebookTree();
     }
 
     this.loadTreeData = function(cb) {
         /* Reset tree data */
-        self.notebookTreeData = [{ name: "All Notes" }];
-        //self.notebookTree[self.storageUUID].selectedNode = undefined;
+        self.getStorage().treeData = [{ name: "All Notes" }];
 
         /* Create /bookshelf if necessary */
         self.fileManager.exist(self.getPath(), function(path, exist, isDir, error) {
@@ -531,10 +535,10 @@ function Bookshelf(viewController) {
                     }
 
                     try {
-                        self.notebookTreeData = JSON.parse(data);
+                        self.getStorage().treeData = JSON.parse(data);
                     }
                     catch (error) {
-                        self.notebookTreeData = [];
+                        self.getStorage().treeData = [];
                         cb && cb(error);
                         throw new Error("Parse tree data error" + error + "\ndata:\n" + data);
                     }
@@ -543,7 +547,7 @@ function Bookshelf(viewController) {
                 });
             }
             else {
-                self.fileManager.writeFile("bookshelf-tree.json", JSON.stringify(self.notebookTreeData), function(path, progress, error) {
+                self.fileManager.writeFile("bookshelf-tree.json", JSON.stringify(self.getStorage().treeData), function(path, progress, error) {
                     if (error) {
                         cb && cb(error);
                         throw new Error("Unable to write bookshelf tree data");
@@ -589,7 +593,9 @@ Bookshelf.prototype.addStorage = function(disk) {
         "</span></h3>" +
         "<div id='notebook-tree-" + disk.uuid +"' class='notebook-tree'></div>"
     );
-    this.storages[disk.uuid] = disk;
+    this.storages[disk.uuid] = { disk: disk };
+    if (!this.storageUUID)
+        this.storageUUID = disk.uuid;
     $('#accordion').accordion("refresh");
 }
 
@@ -604,12 +610,17 @@ Bookshelf.prototype.removeStorage = function(disk) {
     }
 }
 
-Bookshelf.prototype.load = function(uuid, cb) {
+Bookshelf.prototype.getStorage = function(uuid) {
+    return this.storages[uuid || this.storageUUID];
+}
+
+Bookshelf.prototype.open = function(uuid, cb) {
     var self = this;
+
     self.storageUUID = uuid;
     self.loadTreeData(function(error) {
         if (error) {
-            self.notebookTree[self.storageUUID] = undefined;
+            self.getStorage().ui = undefined;
         }
         else {
             self.initNotebookTree();
@@ -619,18 +630,18 @@ Bookshelf.prototype.load = function(uuid, cb) {
     });
 }
 
-Bookshelf.prototype.unload = function(uuid) {
+Bookshelf.prototype.close = function(uuid) {
     this.unregisterStorageActionClick();
-    this.notebookTree[uuid] = undefined;
-    this.notebookTreeData = [];
-    this.storageUUID = undefined;
+    this.storages[uuid].ui = undefined;
+    this.storages[uuid].treeData = [];
+    if (this.storageUUID === uuid)
+        this.storageUUID = undefined;
 }
 
 Bookshelf.prototype.selectNotebookAtIndex = function(index) {
-    var notebookTreeData = this.notebookTree[this.storageUUID].tree("getTree").getData();
-    if (notebookTreeData.length > 0) {
-        var node = this.notebookTree[this.storageUUID].tree("getNodeByName", notebookTreeData[index].name);
-        console.log(node);
-        if (node) this.notebookTree[this.storageUUID].tree("selectNode", node);
+    var treeData = this.getStorage().ui.tree("getTree").getData();
+    if (treeData.length > 0) {
+        var node = this.getStorage().ui.tree("getNodeByName", treeData[index].name);
+        if (node) this.getStorage().ui.tree("selectNode", node);
     }
 }

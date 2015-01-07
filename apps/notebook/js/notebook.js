@@ -1,9 +1,6 @@
-// TODO: handle note data well after remove
-
 function Notebook(viewController) {
     var self = this;
-    this.node = undefined;
-    this.notes = undefined;
+    this.notebookObject = undefined;
     this.fileManager = viewController.fileManagerClient;
     this.jqueryElement = $("#notebook");
     this.tableView = new TableView($("#note-list"));
@@ -23,6 +20,7 @@ function Notebook(viewController) {
     this.currentSortMethod = 0;
 
     /* Build real path from node or string */
+    // TODO: wrap this in bookshelf
     this.getPath = function(node) {
         var path = "";
 
@@ -38,12 +36,12 @@ function Notebook(viewController) {
     this.getTimecode = function() {
         var now = new Date();
         return now.getFullYear()
-               + ("0" + (now.getMonth() + 1)).slice(-2)
-               + ("0" + now.getDate()).slice(-2)
-               + ("0" + now.getHours()).slice(-2)
-               + ("0" + now.getMinutes()).slice(-2)
-               + ("0" + now.getSeconds()).slice(-2)
-               + ("0" + now.getMilliseconds()).slice(-2);
+                + ("0" + (now.getMonth() + 1)).slice(-2)
+                + ("0" + now.getDate()).slice(-2)
+                + ("0" + now.getHours()).slice(-2)
+                + ("0" + now.getMinutes()).slice(-2)
+                + ("0" + now.getSeconds()).slice(-2)
+                + ("0" + now.getMilliseconds()).slice(-2);
     };
 
     /* Popup note edit menu */
@@ -171,8 +169,11 @@ function Notebook(viewController) {
                 self.toggleOptionMenuCheckIcon(4);
             }
 
+            self.notebookObject.status = "sort";
+
             /* Sort notes */
-            self.notes.sort(self.sortFuncs[self.currentSortMethod]);
+            self.notebookObject.notes.sort(self.sortFuncs[self.currentSortMethod]);
+
             /* Load notes on list */
             self.tableView.show();
         });
@@ -186,11 +187,12 @@ function Notebook(viewController) {
         self.tableView.view.off("tableview.show");
         self.tableView.view.on("tableview.show", function(event) {
             self.updateTitleBar();
-            if (self.status === "opening")
+            if (self.notebookObject.status === "open")
                 self.jqueryElement.trigger("notebook.afterOpen");
-            else if (self.status === "closing")
+            else if (self.notebookObject.status === "close")
                 self.jqueryElement.trigger("notebook.afterClose");
-            self.status = "";
+            else if (self.notebookObject.status === "sort")
+                self.jqueryElement.trigger("notebook.afterSort");
         });
 
         self.tableView.view.off("tableview.contextmenu");
@@ -200,12 +202,12 @@ function Notebook(viewController) {
 
         self.tableView.view.off("tableview.select");
         self.tableView.view.on("tableview.select", function(event, index) {
-            if (self.notes.length > index) {
+            if (self.notebookObject.notes.length > index) {
                 /* Exporting a note object for note editor */
                 self.jqueryElement.trigger("notebook.select", {
-                    path: self.notes[index].path + "/note.html",
-                    stat: self.notes[index].stat,
-                    title: self.notes[index].title,
+                    path: self.notebookObject.notes[index].path + "/note.html",
+                    stat: self.notebookObject.notes[index].stat,
+                    title: self.notebookObject.notes[index].title,
                     index: index
                 });
             }
@@ -216,11 +218,11 @@ function Notebook(viewController) {
 
         self.tableView.view.off("tableview.deselect");
         self.tableView.view.on("tableview.deselect", function(event, index) {
-            if (self.notes.length > index) {
+            if (self.notebookObject.notes.length > index) {
                 self.jqueryElement.trigger("notebook.deselect", {
-                    path: self.notes[index].path + "/note.html",
-                    stat: self.notes[index].stat,
-                    title: self.notes[index].title,
+                    path: self.notebookObject.notes[index].path + "/note.html",
+                    stat: self.notebookObject.notes[index].stat,
+                    title: self.notebookObject.notes[index].title,
                     index: index
                 });
             }
@@ -259,17 +261,17 @@ Notebook.prototype.updateTitleBar = function() {
 
     $("#notebook-title-bar").find("span").remove();
 
-    if (self.notebookNode) {
-        if (self.notebookNode.isFolder())
-            $("#notebook-title-bar").append("<span class='notebook-title'><i class='fa fa-list'></i>&nbsp;" + self.notebookNode.name + "</span>");
+    if (self.notebookObject.node) {
+        if (self.notebookObject.node.isFolder())
+            $("#notebook-title-bar").append("<span class='notebook-title'><i class='fa fa-list'></i>&nbsp;" + self.notebookObject.name + "</span>");
         else
-            $("#notebook-title-bar").append("<span class='notebook-title'><i class='fa fa-book'></i>&nbsp;" + self.notebookNode.name + "</span>");
+            $("#notebook-title-bar").append("<span class='notebook-title'><i class='fa fa-book'></i>&nbsp;" + self.notebookObject.name + "</span>");
 
         var titleBarWidth = $("#notebook-title-bar").width();
         $("#notebook-title-bar .notebook-title").width(titleBarWidth - 72 - 10 - 7);
 
-        if (self.notes.length > 0) {
-            $("#notebook-title-bar").append("<span class='notebook-count'>(" + self.notes.length + " notes)</span>");
+        if (self.notebookObject.notes.length > 0) {
+            $("#notebook-title-bar").append("<span class='notebook-count'>(" + self.notebookObject.notes.length + " notes)</span>");
             $("#notebook-title-bar .notebook-count").width(72);
 
         }
@@ -279,21 +281,28 @@ Notebook.prototype.updateTitleBar = function() {
     }
 }
 
-Notebook.prototype.open = function(node, searchPattern) {
+Notebook.prototype.open = function(notebookObject, searchPattern) {
     var self = this;
 
     /* Ignore opening the same notebook as we just opened */
-    if (self.notebookNode && self.notebookNode.name === node.name && !searchPattern)
+    if (self.notebookObject &&
+        self.notebookObject.storage === notebookObject.storage &&
+        self.notebookObject.name === notebookObject.node.name &&
+        !searchPattern)
         return;
 
-    self.status = "opening";
-    self.notebookNode = node;
-    self.notes = [];
+    self.notebookObject = {
+        storage: notebookObject.storage,
+        node: notebookObject.node,
+        name: notebookObject.node.name,
+        notes: [],
+        status: "open"
+    };
 
     self.jqueryElement.trigger("notebook.beforeOpen");
     self.updateTitleBar();
 
-    if (node.name === "All Notes") {
+    if (self.notebookObject.name === "All Notes") {
         self.fileManager.statList(self.getPath(), function(path, items, stats, error) {
             if (error) throw new Error("File system operation error (path = " + path + ", error = " + error + ")");
             var recursiveIterateList = function(notebookIndex) {
@@ -309,7 +318,7 @@ Notebook.prototype.open = function(node, searchPattern) {
 
                                 /* Do search if search pattern exists */
                                 if (searchPattern && searchPattern.length > 0) {
-                                    self.notebookNode.name = "Search result for \"" + searchPattern + "\"";
+                                    self.notebookObject.name = "Search result for \"" + searchPattern + "\"";
                                     self.updateTitleBar();
 
                                     self.fileManager.grep(
@@ -329,13 +338,13 @@ Notebook.prototype.open = function(node, searchPattern) {
                                             }
 
                                             if (data)
-                                                self.notes.unshift({ path: path + "/" + item, stat: stat, title: "" });
+                                                self.notebookObject.notes.unshift({ path: path + "/" + item, stat: stat, title: "" });
                                             waitItems.pop();
                                         }
                                     );
                                 }
                                 else {
-                                    self.notes.unshift({ path: path + "/" + item, stat: stat, title: "" });
+                                    self.notebookObject.notes.unshift({ path: path + "/" + item, stat: stat, title: "" });
                                     waitItems.pop();
                                 }
                             }
@@ -349,18 +358,18 @@ Notebook.prototype.open = function(node, searchPattern) {
 
                                         if (searchPattern && searchPattern.length > 0) {
                                             /* Update title bar for search result */
-                                            if (self.notes.length === 0) {
-                                                self.notebookNode.name = "No result found for \"" + searchPattern + "\"";
+                                            if (self.notebookObject.notes.length === 0) {
+                                                self.notebookObject.name = "No result found for \"" + searchPattern + "\"";
                                                 self.updateTitleBar();
                                             }
                                             else {
-                                                self.notebookNode.name = "Search result for \"" + searchPattern + "\"";
+                                                self.notebookObject.name = "Search result for \"" + searchPattern + "\"";
                                                 self.updateTitleBar();
                                             }
                                         }
 
                                         /* Sort notes */
-                                        self.notes.sort(self.sortFuncs[self.currentSortMethod]);
+                                        self.notebookObject.notes.sort(self.sortFuncs[self.currentSortMethod]);
                                         /* Load notes on list */
                                         self.tableView.show();
                                     }
@@ -382,22 +391,22 @@ Notebook.prototype.open = function(node, searchPattern) {
             }
         });
     }
-    else if (node.isFolder()) {
+    else if (self.notebookObject.node.isFolder()) {
         var recursiveIterateList = function(notebookIndex) {
-            if (notebookIndex < node.children.length) {
-                var child = node.children[notebookIndex];
+            if (notebookIndex < self.notebookObject.node.children.length) {
+                var child = self.notebookObject.node.children[notebookIndex];
                 self.fileManager.iterateStatList(
                     self.getPath(child),
                     function(path, item, stat, i, error) {
                         if (error)
                             console.log("Unable to list " + path + "/" + item);
                         else
-                            self.notes.unshift({ path: path + "/" + item, stat: stat, title: "" });
+                            self.notebookObject.notes.unshift({ path: path + "/" + item, stat: stat, title: "" });
                     },
                     function(path) {
-                        if (notebookIndex === node.children.length - 1) {
+                        if (notebookIndex === self.notebookObject.node.children.length - 1) {
                             /* Sort notes */
-                            self.notes.sort(self.sortFuncs[self.currentSortMethod]);
+                            self.notebookObject.notes.sort(self.sortFuncs[self.currentSortMethod]);
                             /* Load notes on list */
                             self.tableView.show();
                         } else
@@ -412,16 +421,16 @@ Notebook.prototype.open = function(node, searchPattern) {
     }
     else {
         self.fileManager.iterateStatList(
-            self.getPath(node),
+            self.getPath(self.notebookObject.node),
             function(path, item, stat, i, error) {
                 if (error)
                     console.log("Unable to list " + path + "/" + item);
                 else
-                    self.notes.unshift({ path: path + "/" + item, stat: stat, title: "" });
+                    self.notebookObject.notes.unshift({ path: path + "/" + item, stat: stat, title: "" });
             },
             function(path) {
                 /* Sort notes */
-                self.notes.sort(self.sortFuncs[self.currentSortMethod]);
+                self.notebookObject.notes.sort(self.sortFuncs[self.currentSortMethod]);
                 /* Load notes on list */
                 self.tableView.show();
             }
@@ -434,11 +443,15 @@ Notebook.prototype.open = function(node, searchPattern) {
 Notebook.prototype.close = function() {
     var self = this;
 
-    self.status = "closing";
     self.jqueryElement.trigger("notebook.beforeClose");
 
-    self.notebookNode = undefined;
-    self.notes = [];
+    /* Clear notebook object */
+    self.notebookObject = {
+        node: null,
+        name: null,
+        notes: [],
+        status: "close"
+    };
 
     /* Clear title bar */
     self.updateTitleBar();
@@ -451,7 +464,7 @@ Notebook.prototype.close = function() {
 Notebook.prototype.addNote = function(title, content, complete) {
     var self = this;
     var timecode = self.getTimecode();
-    var notePath = self.getPath(self.notebookNode) + "/" + timecode;
+    var notePath = self.getPath(self.notebookObject.node) + "/" + timecode;
 
     self.fileManager.exist(notePath, function(path, exist, isDir, error) {
         if (error) throw new Error("fs operation error");
@@ -468,13 +481,13 @@ Notebook.prototype.addNote = function(title, content, complete) {
 
                     self.fileManager.stat(path, function(path, stat, error) {
                         if (error) throw new Error("unable to get stat of " + path);
-                        self.notes.unshift({ path: notePath, stat: stat, title: title });
+                        self.notebookObject.notes.unshift({ path: notePath, stat: stat, title: title });
                         self.tableView.insertRowAtIndex(0, function() {
                             self.tableView.selectRowAtIndex(0);
                         });
                         self.updateTitleBar();
 
-                        if (complete) complete(path);
+                        complete && complete(path);
                     });
                 });
 
@@ -493,12 +506,12 @@ Notebook.prototype.addNote = function(title, content, complete) {
 Notebook.prototype.deleteNote = function(index, complete) {
     var self = this;
 
-    if (index >= self.notes.length) {
+    if (index >= self.notebookObject.notes.length) {
         complete && complete("Invalid index");
         return;
     }
 
-    self.fileManager.exist(self.notes[index].path, function(path, exist, isDir, error) {
+    self.fileManager.exist(self.notebookObject.notes[index].path, function(path, exist, isDir, error) {
         if (error) {
             complete && complete(error);
             throw new Error("fs operation error");
@@ -513,10 +526,10 @@ Notebook.prototype.deleteNote = function(index, complete) {
                     throw new Error("unable to remove " + path);
                 }
 
-                var deletedNote = self.notes.splice(index, 1);
+                var deletedNote = self.notebookObject.notes.splice(index, 1);
                 self.tableView.removeRowAtIndex(index);
                 self.updateTitleBar();
-                if (complete) complete();
+                complete && complete();
 
                 self.jqueryElement.trigger("notebook.afterDelete", {
                     path: deletedNote.path + "/note.html",
@@ -532,12 +545,12 @@ Notebook.prototype.deleteNote = function(index, complete) {
 Notebook.prototype.copyNote = function(index, complete) {
     var self = this;
 
-    if (index >= self.notes.length) {
+    if (index >= self.notebookObject.notes.length) {
         complete && complete("Invalid index");
         return;
     }
 
-    self.fileManager.exist(self.notes[index].path, function(path, exist, isDir, error) {
+    self.fileManager.exist(self.notebookObject.notes[index].path, function(path, exist, isDir, error) {
         if (error) throw new Error("fs operation error");
         if (exist) {
             self.jqueryElement.trigger("notebook.beforeCopy");
@@ -570,12 +583,12 @@ Notebook.prototype.copyNote = function(index, complete) {
                                 throw new Error("unable to get stat of " + path);
                             }
 
-                            self.notes.unshift({ path: path, stat: stat, title: self.notes[index].title });
+                            self.notebookObject.notes.unshift({ path: path, stat: stat, title: self.notebookObject.notes[index].title });
                             self.tableView.insertRowAtIndex(0, function() {
                                 self.tableView.selectRowAtIndex(0);
                             });
                             self.updateTitleBar();
-                            if (complete) complete();
+                            complete && complete();
 
                             self.jqueryElement.trigger("notebook.afterCopy");
                         });
@@ -588,40 +601,40 @@ Notebook.prototype.copyNote = function(index, complete) {
 
 Notebook.prototype.refreshNote = function(index) {
     var self = this;
-    if (index >= self.notes.length)
+    if (index >= self.notebookObject.notes.length)
         return;
 
     /* Reload note state */
-    self.fileManager.stat(self.notes[index].path, function(path, stat, error) {
+    self.fileManager.stat(self.notebookObject.notes[index].path, function(path, stat, error) {
         if (error) {
             console.log("Unable to reload " + path);
             return;
         }
 
-        self.notes[index].stat = stat;
+        self.notebookObject.notes[index].stat = stat;
         self.tableView.reloadRowAtIndex(index);
     });
 }
 
 Notebook.prototype.isEmpty = function() {
-    return (this.notes.length === 0);
+    return (this.notebookObject.notes.length === 0);
 }
 
 /* Tableview data source */
 Notebook.prototype.tableViewNumberOfRows = function() {
-    return this.notes.length;
+    return this.notebookObject.notes.length;
 }
 
 Notebook.prototype.tableViewCellForRowAtIndex = function(index, appendDivToTableRow) {
     var self = this;
 
-    if (index >= self.notes.length) {
+    if (index >= self.notebookObject.notes.length) {
         appendDivToTableRow(null, index);
         return;
     }
 
     self.fileManager.grep(
-        self.notes[index].path + "/note.html", "<title>(.*?)<\/title>",
+        self.notebookObject.notes[index].path + "/note.html", "<title>(.*?)<\/title>",
         {
             regExpModifiers: 'i',
             onlyMatching: true
@@ -634,18 +647,18 @@ Notebook.prototype.tableViewCellForRowAtIndex = function(index, appendDivToTable
             }
 
             /* Check if this notebook is closed */
-            if (index >= self.notes.length) {
+            if (index >= self.notebookObject.notes.length) {
                 appendDivToTableRow(null, index);
                 return;
             }
 
-            self.notes[index].title = data[1];
+            self.notebookObject.notes[index].title = data[1];
 
-            var mtime = new Date(self.notes[index].stat.mtime);
+            var mtime = new Date(self.notebookObject.notes[index].stat.mtime);
             var lastModifiedDate = mtime.toLocaleDateString() + " " + mtime.toLocaleTimeString();
 
             appendDivToTableRow(
-                "<div><p class='note-title'>" + self.notes[index].title + "</p>" +
+                "<div><p class='note-title'>" + self.notebookObject.notes[index].title + "</p>" +
                 "<p class='note-last-modified-date'>Modified: " + lastModifiedDate  + "</p></div>",
                 index
             );

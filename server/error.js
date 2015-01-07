@@ -40,5 +40,6 @@ exports.APPInstallFail = 'ERROR-APP-INSTALL';
 /* Storage errors */
 exports.StorUnknownError = 'ERROR-STOR-UNKNOWN';
 exports.StorDiskApiError = 'ERROR-STOR-DISK-API';
+exports.StorSysDiskNotFound = 'ERROR-STOR-SYSDISK-NOTFOUND';
 exports.StorDiskNotFound = 'ERROR-STOR-DISK-NOTFOUND';
 exports.StorBadDiskInfo = 'ERROR-STOR-DISK-INFO';

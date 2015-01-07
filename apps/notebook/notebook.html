@@ -86,39 +86,46 @@
                     );
 
                     /* bookshelf event handling */
-                    bookshelf.jqueryElement.on("bookshelf.loaded", function(event, arg) {
-                        //arg.notebookTreeData;
+                    bookshelf.jqueryElement.on("bookshelf.afterOpen", function(event, arg) {
+                        //arg.notebooks;
                     });
 
-                    bookshelf.jqueryElement.on("bookshelf.select", function(event, arg) {
+                    bookshelf.jqueryElement.on("bookshelf.select", function(event, notebookObject) {
                         noteEditor.flushContent(function() {
                             if ($("#search-text-input").val())
                                 resetSearch();
 
-                            if (arg.node) {
+                            if (notebookObject) {
                                 notebook.close();
-                                notebook.open(arg.node);
+                                notebook.open(notebookObject);
                             }
                             else
                                 notebook.close();
 
-                            if (arg.node && (arg.node.isFolder() || arg.node.name === "All Notes"))
+                            if (notebookObject.node && (notebookObject.node.isFolder() || notebookObject.node.name === "All Notes"))
                                 $("#add-note-button").attr("disabled", true);
                             else
                                 $("#add-note-button").attr("disabled", false);
                         });
                     });
 
-                    bookshelf.jqueryElement.on("bookshelf.notebookModified", function(event, arg) {
-                        if (arg.node === notebook.notebookNode) {
+                    bookshelf.jqueryElement.on("bookshelf.notebookModified", function(event, notebookObject) {
+                        if (notebookObject.node === notebook.notebookObject.node) {
                             setTimeout(function() { notebook.updateTitleBar(); }, 500);
                         }
                     });
 
                     bookshelf.jqueryElement.on("bookshelf.switchStorage", function(event, uuid) {
                         noteEditor.flushContent(function() {
-                            if (bookshelf.storages[uuid]) {
-                                notebookViewController.storageClient.setUserDataDisk(bookshelf.storages[uuid]);
+                            /*
+                             * Reset editor after flushing to avoid unnecessary flushing in 'bookshelf.select'
+                             * that causes removeUselessAssets() fail due to storage has been switched.
+                             */
+                            noteEditor.reset();
+
+                            var storage = bookshelf.getStorage(uuid);
+                            if (storage && storage.disk) {
+                                notebookViewController.storageClient.setUserDataDisk(storage.disk);
                             }
                             else {
                                 page.notifier.add (
@@ -141,23 +148,23 @@
                     });
 
                     notebook.jqueryElement.on("notebook.afterOpen", function(event) {
-                        if (notebook.isEmpty())
-                            noteEditor.resetContent();
+                        /* Reset editor if user opens an empty notebook */
+                        notebook.isEmpty() && noteEditor.reset();
                         clearTimeout(modal.timer);
                         modal.close();
                     });
 
                     notebook.jqueryElement.on("notebook.afterClose", function(event) {
-                        noteEditor.resetContent();
+                        noteEditor.reset();
                     });
 
                     notebook.jqueryElement.on("notebook.afterDelete", function(event, noteObject) {
                         if (notebook.isEmpty() || (noteEditor.noteObject && noteObject.path === noteEditor.noteObject.path))
-                            noteEditor.resetContent();
+                            noteEditor.reset();
                     });
 
                     notebook.jqueryElement.on("notebook.select", function(event, noteObject) {
-                        noteEditor.loadContent(noteObject);
+                        noteEditor.loadContent(bookshelf.getStorage().disk.uuid, noteObject);
                     });
 
                     notebook.jqueryElement.on("notebook.deselect", function(event, noteObject) {
@@ -389,7 +396,11 @@
                     var pattern = $("#search-text-input").val();
 
                     if (pattern) {
-                        notebook.open({ name: "All Notes", isFolder: function(){ return false; } }, pattern);
+                        notebook.open({
+                            storage: bookshelf.getStorage().disk.uuid,
+                            node: { name: "All Notes", isFolder: function(){ return false; } },
+                            name: "All Notes",
+                        }, pattern);
                         $("#add-note-button").attr("disabled", true);
                         $("#search-button").unbind("click");
                         $("#search-text").text(pattern);
@@ -397,7 +408,11 @@
                         $("#search-text-overlay i").unbind("click");
                         $("#search-text-overlay i").click(function() {
                             notebook.close();
-                            notebook.open(bookshelf.notebookTree[bookshelf.storageUUID].selectedNode);
+                            notebook.open({
+                                storage: bookshelf.getStorage().disk.uuid,
+                                node: bookshelf.getStorage().ui.selectedNode,
+                                name: bookshelf.getStorage().ui.selectedNode.name,
+                            });
                             resetSearch();
                         });
                     }
@@ -426,12 +441,12 @@
             });
 
             page.event.on("storage.notification#diskremove", function(event, disk) {
-                bookshelf.unload(disk.uuid);
+                bookshelf.close(disk.uuid);
                 bookshelf.removeStorage(disk);
             });
 
             page.event.on("storage.notification#userdatadiskset", function(event, disk) {
-                bookshelf.load(disk.uuid, function(error) {
+                bookshelf.open(disk.uuid, function(error) {
                     if (error)
                         page.notifier.add (
                             "Storage Error",
@@ -439,8 +454,6 @@
                             "/apps/b/notebook/img/icon.png",
                             3000
                         );
-                    else
-                        noteEditor.storageUUID = disk.uuid;
 
                     setContentSizeFit();
                 });
@@ -459,7 +472,7 @@
                     /* Temporarily disable add-note-button to prevent high frequence click that cause problems */
                     $("#add-note-button").attr("disabled", true);
                     setTimeout(function() {
-                        var node = bookshelf.notebookTree[bookshelf.storageUUID].selectedNode;
+                        var node = bookshelf.getStorage().ui.selectedNode;
                         if (node.name !== "All Notes")
                             $("#add-note-button").attr("disabled", false);
                     }, 500);
