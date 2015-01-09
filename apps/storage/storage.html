@@ -86,7 +86,7 @@
 
                     for (var i = 0; i  < disks.removable.length; i++) {
                         var disk = disks.removable[i];
-                        var diskId = disk.mountpoint.replace(/\//g, "__slash__").replace(/:/g, "__colon__");
+                        var diskId = disk.mountpoint.replace(/\//g, "_").replace(/:/g, "_").replace(/ /g, "_");
 
                         $("#content").append(
                             "<div id='removable-container-" + diskId + "' class='storage-container'>" +
@@ -108,7 +108,7 @@
                 self.storageClient.event.on("storage.localdisk#list#error", function(event, error) {});
 
                 self.storageClient.event.on("storage.notification#diskinsert", function(event, disk) {
-                    var diskId = disk.mountpoint.replace(/\//g, "__slash__").replace(/:/g, "__colon__");
+                    var diskId = disk.mountpoint.replace(/\//g, "_").replace(/:/g, "_").replace(/ /g, "_");
 
                     $("#content").append(
                         "<div id='removable-container-" + diskId + "' class='storage-container'>" +
@@ -125,7 +125,7 @@
                 });
 
                 self.storageClient.event.on("storage.notification#diskremove", function(event, disk) {
-                    $("#removable-container-" + disk.mountpoint.replace(/\//g, "__slash__").replace(/:/g, "__colon__")).remove();
+                    $("#removable-container-" + disk.mountpoint.replace(/\//g, "_").replace(/:/g, "_").replace(/ /g, "_")).remove();
                 });
             });
 

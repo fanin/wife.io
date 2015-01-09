@@ -2,28 +2,29 @@ var SYSTEM = require('../system');
 
 module.exports = ExtensionManager;
 
-function ExtensionManager() {
-    this.extensions = new Array();
+function ExtensionManager(_super, apiSpec) {
+    this._super = _super;
+    this.APISpec = apiSpec;
+    this.extensions = [];
 }
 
-ExtensionManager.prototype.register = function(_super, socket, protoExtension, complete) {
+ExtensionManager.prototype.register = function(socket, complete) {
     var self = this;
-    var securityManager = _super.securityManager;
 
     /**
      * Protocol Listener: Extension Management Events
      */
-    socket.on(protoExtension.Load.REQ, function(name, majorVersion) {
-        if (!securityManager.isExtensionAllowed(socket, name)) {
+    socket.on(self.APISpec.Load.REQ, function(name, majorVersion) {
+        if (!self._super.securityManager.isExtensionAllowed(socket, name)) {
             console.log('Extension module [' + name + '] not allowed');
-            socket.emit(protoExtension.Load.ERR, name, SYSTEM.ERROR.ExtensionNotAllow);
+            socket.emit(self.APISpec.Load.ERR, name, SYSTEM.ERROR.ExtensionNotAllow);
             return;
         }
 
-        if (self.extensions[name] && self.extensions[name].protocol) {
+        if (self.extensions[name] && self.extensions[name].apiSpec) {
             self.extensions[name].user++;
             self.extensions[name].activate(socket);
-            socket.emit(protoExtension.Load.RES, name, self.extensions[name].protocol);
+            socket.emit(self.APISpec.Load.RES, name, self.extensions[name].apiSpec);
             return;
         }
 
@@ -31,29 +32,29 @@ ExtensionManager.prototype.register = function(_super, socket, protoExtension, c
             var ExtensionModule = require('./extension/' + name.toLowerCase() + '/' +  name.toLowerCase());
             self.extensions[name] = new ExtensionModule();
 
-            self.extensions[name].protocol = _super.loadProtoSpec('ProtoSpecExt-' + name, majorVersion);
-            if (self.extensions[name].protocol) {
+            self.extensions[name].apiSpec = self._super.loadAPISpec('api-extension-spec-' + name.toLowerCase(), majorVersion);
+            if (self.extensions[name].apiSpec) {
                 if (self.extensions[name].user === undefined)
                     self.extensions[name].user = 1;
                 self.extensions[name].activate(socket);
-                socket.emit(protoExtension.Load.RES, name, self.extensions[name].protocol);
+                socket.emit(self.APISpec.Load.RES, name, self.extensions[name].apiSpec);
             }
             else {
-                console.log('Unable to load extension protocol spec');
-                socket.emit(protoExtension.Load.ERR, name, _super.error);
+                console.log('Unable to load extension api spec');
+                socket.emit(self.APISpec.Load.ERR, name, self._super.error);
             }
         }
         catch (err) {
             console.log('Unable to load extension module [' + name + ']: ' + err);
             self.extensions[name] = undefined;
-            socket.emit(protoExtension.Load.ERR, name, SYSTEM.ERROR.ExtensionLoad);
+            socket.emit(self.APISpec.Load.ERR, name, SYSTEM.ERROR.ExtensionLoad);
         }
     });
 
-    socket.on(protoExtension.Unload.REQ, function(name, majorVersion) {
-        if (!securityManager.isExtensionAllowed(socket, name)) {
+    socket.on(self.APISpec.Unload.REQ, function(name, majorVersion) {
+        if (!self._super.securityManager.isExtensionAllowed(socket, name)) {
             console.log('Extension module [' + name + '] not allowed');
-            socket.emit(protoExtension.Unload.ERR, name, SYSTEM.ERROR.ExtensionNotAllow);
+            socket.emit(self.APISpec.Unload.ERR, name, SYSTEM.ERROR.ExtensionNotAllow);
             return;
         }
 
@@ -62,17 +63,17 @@ ExtensionManager.prototype.register = function(_super, socket, protoExtension, c
             self.extensions[name].user--;
             if (self.extensions[name].user == 0) {
                 self.extensions[name] = undefined;
-                socket.emit(protoExtension.Unload.RES, name, "Unloaded");
+                socket.emit(self.APISpec.Unload.RES, name, "Unloaded");
             }
             else
-                socket.emit(protoExtension.Unload.RES, name, "InUse");
+                socket.emit(self.APISpec.Unload.RES, name, "InUse");
         }
     });
 
     complete && complete();
 }
 
-ExtensionManager.prototype.unregister = function(socket, protoExtension) {
-    socket.removeAllListeners(protoExtension.Load.REQ);
-    socket.removeAllListeners(protoExtension.Unload.REQ);
+ExtensionManager.prototype.unregister = function(socket) {
+    socket.removeAllListeners(this.APISpec.Load.REQ);
+    socket.removeAllListeners(this.APISpec.Unload.REQ);
 }

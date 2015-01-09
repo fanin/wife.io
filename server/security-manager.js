@@ -3,11 +3,11 @@ var SYSTEM = require('../system');
 
 module.exports = SecurityManager;
 
-function SecurityManager() {
+function SecurityManager(_super) {
     this.appInfo = [];
 }
 
-SecurityManager.prototype.register = function(_super, socket, appInfo, complete) {
+SecurityManager.prototype.register = function(socket, appInfo, complete) {
     this.appInfo[socket] = appInfo;
     complete && complete();
 }

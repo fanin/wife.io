@@ -10,6 +10,9 @@ exports.HasError = function(arg) {
     }
 }
 
+/* General system errors */
+exports.SysInvalidArg = 'ERROR-SYS-INVALID-ARG';
+
 /* Protocol errors */
 exports.ProtoRead = 'ERROR-PROTO-READ';
 exports.ProtoParse = 'ERROR-PROTO-PARSE';

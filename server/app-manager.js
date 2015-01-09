@@ -14,8 +14,12 @@ var APP_INFO_FILE = 'AppInfo.json';
 
 module.exports = AppManager;
 
-function AppManager() {
+function AppManager(_super, apiSpec) {
     var self = this;
+
+    this._super = _super;
+    this.APISpec = apiSpec;
+    this.securityManager = _super.securityManager;
 
     /* Maintain a 'AppIdentifier:AppInfo' dictionary array for all Apps */
     this.apps = [];
@@ -117,24 +121,19 @@ function AppManager() {
     };
 }
 
-AppManager.prototype.register = function(_super, socket, protoAPP, complete) {
+AppManager.prototype.register = function(socket, complete) {
     var self = this;
-    var securityManager = _super.securityManager;
-
-    /* Create user app path if not exist */
-    if (!fs.existsSync(USER_APP_PATH))
-        fs.mkdirsSync(USER_APP_PATH);
 
     /**
      * Protocol Listener: App Management Events
      */
-    socket.on(protoAPP.List.REQ, function() {
-        socket.emit(protoAPP.List.RES, self.listApps());
+    socket.on(self.APISpec.List.REQ, function() {
+        socket.emit(self.APISpec.List.RES, self.listApps());
     });
 
-    ss(socket).on(protoAPP.Install.REQ, function(appBundleDataStream) {
-        if (!securityManager.canManageApps(socket)) {
-            socket.emit(protoAPP.Install.ERR, SYSTEM.ERROR.SecurityAccessDenied);
+    ss(socket).on(self.APISpec.Install.REQ, function(appBundleDataStream) {
+        if (!self.securityManager.canManageApps(socket)) {
+            socket.emit(self.APISpec.Install.ERR, SYSTEM.ERROR.SecurityAccessDenied);
             return;
         }
 
@@ -145,17 +144,17 @@ AppManager.prototype.register = function(_super, socket, protoAPP, complete) {
         appBundleDataStream.pipe(appWriteStream);
 
         appBundleDataStream.once('data', function() {
-            socket.emit(protoAPP.Install.RES, installationCode, "Uploading");
+            socket.emit(self.APISpec.Install.RES, installationCode, "Uploading");
         });
 
         appBundleDataStream.on('finish', function() {
-            socket.emit(protoAPP.Install.RES, installationCode, "Installing");
+            socket.emit(self.APISpec.Install.RES, installationCode, "Installing");
 
             var result = self.install(filename).result;
             if (result === 'OK')
-                socket.emit(protoAPP.Install.RES, installationCode, "Installed");
+                socket.emit(self.APISpec.Install.RES, installationCode, "Installed");
             else
-                socket.emit(protoAPP.Install.ERR, result);
+                socket.emit(self.APISpec.Install.ERR, result);
 
             appBundleDataStream.end();
             fs.removeSync(filename);
@@ -163,13 +162,13 @@ AppManager.prototype.register = function(_super, socket, protoAPP, complete) {
 
         appBundleDataStream.on('error', function(err) {
             console.log('APP Install: ' + err);
-            socket.emit(protoAPP.Install.ERR, SYSTEM.ERROR.FSBrokenPipe);
+            socket.emit(self.APISpec.Install.ERR, SYSTEM.ERROR.FSBrokenPipe);
         });
     });
 
-    socket.on(protoAPP.CancelInstall.REQ, function(installationCode) {
-        if (!securityManager.canManageApps(socket)) {
-            socket.emit(protoAPP.CancelInstall.ERR, SYSTEM.ERROR.SecurityAccessDenied);
+    socket.on(self.APISpec.CancelInstall.REQ, function(installationCode) {
+        if (!self.securityManager.canManageApps(socket)) {
+            socket.emit(self.APISpec.CancelInstall.ERR, SYSTEM.ERROR.SecurityAccessDenied);
             return;
         }
 
@@ -185,30 +184,34 @@ AppManager.prototype.register = function(_super, socket, protoAPP, complete) {
             self.appBundleDataStream = undefined;
         }
 
-        socket.emit(protoAPP.CancelInstall.RES, installationCode);
+        socket.emit(self.APISpec.CancelInstall.RES, installationCode);
     });
 
-    socket.on(protoAPP.Uninstall.REQ, function(appInfo) {
-        if (!securityManager.canManageApps(socket)) {
-            socket.emit(protoAPP.Uninstall.ERR, SYSTEM.ERROR.SecurityAccessDenied);
+    socket.on(self.APISpec.Uninstall.REQ, function(appInfo) {
+        if (!self.securityManager.canManageApps(socket)) {
+            socket.emit(self.APISpec.Uninstall.ERR, SYSTEM.ERROR.SecurityAccessDenied);
             return;
         }
 
         var result = self.uninstall(appInfo).result;
         if (result === 'OK')
-            socket.emit(protoAPP.Uninstall.RES, appInfo);
+            socket.emit(self.APISpec.Uninstall.RES, appInfo);
         else
-            socket.emit(protoAPP.Uninstall.ERR, result);
+            socket.emit(self.APISpec.Uninstall.ERR, result);
     });
+
+    /* Create user app path if not exist */
+    if (!fs.existsSync(USER_APP_PATH))
+        fs.mkdirsSync(USER_APP_PATH);
 
     complete && complete();
 }
 
-AppManager.prototype.unregister = function(socket, protoAPP) {
-    socket.removeAllListeners(protoAPP.List.REQ);
-    socket.removeAllListeners(protoAPP.Install.REQ);
-    socket.removeAllListeners(protoAPP.CancelInstall.REQ);
-    socket.removeAllListeners(protoAPP.Uninstall.REQ);
+AppManager.prototype.unregister = function(socket) {
+    socket.removeAllListeners(this.APISpec.List.REQ);
+    socket.removeAllListeners(this.APISpec.Install.REQ);
+    socket.removeAllListeners(this.APISpec.CancelInstall.REQ);
+    socket.removeAllListeners(this.APISpec.Uninstall.REQ);
 }
 
 AppManager.prototype.getAppInfo = function(appDirectory) {

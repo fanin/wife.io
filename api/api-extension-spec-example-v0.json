@@ -4,10 +4,10 @@
         {
             "Say": {
                 "Hello": {
-                    "REQ": "EXT-PROTO-0-C-SAY-HELLO",
-                    "RES": "EXT-PROTO-0-R-SAY-HELLO",
-                    "ERR": "EXT-PROTO-0-E-SAY-HELLO",
-                    "Comment": {
+                    "REQ": "WSAPI-EXT-0-C-SAY-HELLO",
+                    "RES": "WSAPI-EXT-0-R-SAY-HELLO",
+                    "ERR": "WSAPI-EXT-0-E-SAY-HELLO",
+                    "DESC": {
                         "REQ Args": {
                             "To": "Say hello to",
                             "From": "Say hello from"
@@ -21,10 +21,10 @@
                     }
                 },
                 "Sorry": {
-                    "REQ": "EXT-PROTO-0-C-SAY-SORRY",
-                    "RES": "EXT-PROTO-0-R-SAY-SORRY",
-                    "ERR": "EXT-PROTO-0-E-SAY-SORRY",
-                    "Comment": {
+                    "REQ": "WSAPI-EXT-0-C-SAY-SORRY",
+                    "RES": "WSAPI-EXT-0-R-SAY-SORRY",
+                    "ERR": "WSAPI-EXT-0-E-SAY-SORRY",
+                    "DESC": {
                         "REQ Args": {
                             "To": "Say sorry to",
                             "From": "Say sorry from"

@@ -25,103 +25,103 @@ module.exports = CoreServer;
 
 function CoreServer(http) {
     this.ioServer = sio(http, { 'pingTimeout': 300000 });
-    this.emitter = new EventEmitter();
-    this.extensionManager = new ExtensionManager();
-    this.notificationCenter = new NotificationCenter();
-    this.appManager = new AppManager();
-    this.storageManager = new StorageManager();
-    this.fileManager = new FileManager();
-    this.securityManager = new SecurityManager();
     this.error = null;
 
-    this.loadProtoSpec = function(name, version) {
+    this.loadAPISpec = function(name, version) {
         var self = this;
-        var protoSpec = name + '-v' + version;
+        var apiSpec = name + '-v' + version;
 
-        var jsonString = fs.readFileSync(path.resolve(__dirname, '../protocol/' + protoSpec + '.json'));
+        var jsonString = fs.readFileSync(path.resolve(__dirname, '../api/' + apiSpec + '.json'));
         if (jsonString) {
             try {
                 var p = JSON.parse(jsonString);
-                console.log('Protocol [' + protoSpec + '] version: ' + p.MajorVersion);
+                console.log('API [' + apiSpec + '] version: ' + p.MajorVersion);
                 return p.MinorVersion;
             }
             catch (err) {
-                //console.log('Protocol error: ' + err);
+                //console.log('API error: ' + err);
                 self.error = SYSTEM.ERROR.ProtoParse;
                 return null;
             }
         }
         else {
-            //console.log('Protocol not specified');
+            //console.log('API not specified');
             self.error = SYSTEM.ERROR.ProtoRead;
             return null;
         }
     }
 
-    this.protocol = this.loadProtoSpec('ProtoSpec', 0);
-    if (!this.protocol) {
-        console.log('Unable to load protocol specification, error = ' + this.error);
+    this.apiSpec = this.loadAPISpec('api-spec', 0);
+    if (!this.apiSpec) {
+        console.log('Unable to load api specification, error = ' + this.error);
         process.exit(1);
     }
+
+    this.securityManager = new SecurityManager(this);
+    this.extensionManager = new ExtensionManager(this, this.apiSpec[0].Extension);
+    this.notificationCenter = new NotificationCenter(this, this.apiSpec[0].Notification);
+    this.storageManager = new StorageManager(this, this.apiSpec[0].Storage);
+    this.appManager = new AppManager(this, this.apiSpec[0].APP);
+    this.fileManager = new FileManager(this, this.apiSpec[0].FileSystem);
 }
 
 CoreServer.prototype.listen = function() {
     var self = this;
 
     this.ioServer.on('connection', function(socket) {
-        /* Handle protocol handshaking */
-        socket.on(self.protocol[0].Base.GetInfo.REQ, function(appDirectory) {
+        /* Handle api initiate handshaking */
+        socket.on(self.apiSpec[0].Base.GetInfo.REQ, function(appDirectory) {
             var appInfo = self.appManager.getAppInfo(appDirectory);
 
             if (!SYSTEM.ERROR.HasError(appInfo)) {
                 async.series([
                     function(callback) {
                         /* Create security manager for this app (connection) */
-                        self.securityManager.register(self, socket, appInfo, function() {
+                        self.securityManager.register(socket, appInfo, function() {
                             callback(null, true);
                         });
                     },
                     function(callback) {
                         /* Register extension manager */
-                        self.extensionManager.register(self, socket, self.protocol[0].Extension, function() {
+                        self.extensionManager.register(socket, function() {
                             callback(null, true);
                         });
                     },
                     function(callback) {
                         /* Register notification center */
-                        self.notificationCenter.register(self, socket, self.protocol[0].Notification, function() {
+                        self.notificationCenter.register(socket, function() {
                             callback(null, true);
                         });
                     },
                     function(callback) {
                         /* Register storage manager (must be done before registering app manager & file manager */
-                        self.storageManager.register(self, socket, self.protocol[0].Storage, function(error) {
+                        self.storageManager.register(socket, function(error) {
                             callback(error, true);
                         });
                     },
                     function(callback) {
                         /* Register app manager */
-                        self.appManager.register(self, socket, self.protocol[0].APP, function() {
+                        self.appManager.register(socket, function() {
                             callback(null, true);
                         });
                     },
                     function(callback) {
                         /* Register file manager */
-                        self.fileManager.register(self, socket, self.protocol[0].FileSystem, function() {
+                        self.fileManager.register(socket, function() {
                             callback(null, true);
                         });
                     },
                     function(callback) {
                         socket.on('disconnect', function() {
-                            /* Unregister protocols for this app */
-                            self.fileManager.unregister(socket, self.protocol[0].FileSystem);
-                            self.appManager.unregister(socket, self.protocol[0].APP);
-                            self.notificationCenter.unregister(socket, self.protocol[0].Notification);
-                            self.extensionManager.unregister(socket, self.protocol[0].Extension);
-                            self.storageManager.unregister(socket, self.protocol[0].Storage);
+                            /* Unregister api for this app */
+                            self.fileManager.unregister(socket);
+                            self.appManager.unregister(socket);
+                            self.notificationCenter.unregister(socket);
+                            self.extensionManager.unregister(socket);
+                            self.storageManager.unregister(socket);
                             self.securityManager.unregister(socket);
 
-                            socket.removeAllListeners(self.protocol[0].Base.GetInfo.REQ);
+                            socket.removeAllListeners(self.apiSpec[0].Base.GetInfo.REQ);
                             socket.removeAllListeners('disconnect');
                         });
 
@@ -130,11 +130,11 @@ CoreServer.prototype.listen = function() {
                 ],
                 function(err, results) {
                     /* Response AppInfo to app client */
-                    socket.emit(self.protocol[0].Base.GetInfo.RES, appInfo);
+                    socket.emit(self.apiSpec[0].Base.GetInfo.RES, appInfo);
                 });
             }
             else
-                socket.emit(self.protocol[0].Base.GetInfo.ERR, appInfo);
+                socket.emit(self.apiSpec[0].Base.GetInfo.ERR, appInfo);
         });
     });
 }
@@ -176,7 +176,7 @@ CoreServer.prototype.handleRequest = function(req, res) {
     }
     else if (urlComponent[1] === 'lib' ||
              urlComponent[1] === 'resources' ||
-             urlComponent[1] === 'protocol' ||
+             urlComponent[1] === 'api' ||
              urlComponent[1] === 'device') {
         if (path.basename(filename) === 'jquery-ui.min.css')
             this.jqueryuiPath = path.dirname(filename);

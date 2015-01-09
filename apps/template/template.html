@@ -62,7 +62,7 @@
             templateViewController.event.on("core.protospec#loaded", function(event) {
                 var self = templateViewController;
 
-                // NOTE: Do protocol relative operations here
+                // NOTE: Do API relative operations here
 
                 $("#proto").html(
                     "Protocol major version: <font color=blue>" + self.version + "</font>"
@@ -72,11 +72,11 @@
                 self.extensionClient.event.on("extension.load#success", function(event, name) {
                     $("#proto").html(
                         $("#proto").html() +
-                        "<br>Extension protocol [" + name + "] major version: <font color=blue>" +
+                        "<br>Extension API [" + name + "] major version: <font color=blue>" +
                         self.exampleExtension.version + "</font>"
                     );
 
-                    /* Test extension protocol */
+                    /* Test extension API */
                     self.exampleExtension.sayHello("Mac", "Kenny");
                 });
 

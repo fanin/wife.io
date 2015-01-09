@@ -4,10 +4,10 @@
         {
             "Base": {
                 "GetInfo": {
-                    "REQ": "PROTO-0-C-APP-GET-INFO",
-                    "RES": "PROTO-0-R-APP-INFO",
-                    "ERR": "PROTO-0-E-APP-GET-INFO",
-                    "Comment": {
+                    "REQ": "WSAPI-0-C-APP-GET-INFO",
+                    "RES": "WSAPI-0-R-APP-INFO",
+                    "ERR": "WSAPI-0-E-APP-GET-INFO",
+                    "DESC": {
                         "REQ Args": {
                             "AppDirectory": "Find App by App directory"
                         },
@@ -22,10 +22,10 @@
             },
             "Extension": {
                 "Load": {
-                    "REQ": "PROTO-0-C-EXT-LOAD",
-                    "RES": "PROTO-0-R-EXT-LOADED",
-                    "ERR": "PROTO-0-E-EXT-LOAD",
-                    "Comment": {
+                    "REQ": "WSAPI-0-C-EXT-LOAD",
+                    "RES": "WSAPI-0-R-EXT-LOADED",
+                    "ERR": "WSAPI-0-E-EXT-LOAD",
+                    "DESC": {
                         "REQ Args": {
                             "Name": "Extension name to load",
                             "MajorVersion": "Extension major version"
@@ -41,10 +41,10 @@
                     }
                 },
                 "Unload": {
-                    "REQ": "PROTO-0-C-EXT-UNLOAD",
-                    "RES": "PROTO-0-R-EXT-UNLOADED",
-                    "ERR": "PROTO-0-E-EXT-UNLOAD",
-                    "Comment": {
+                    "REQ": "WSAPI-0-C-EXT-UNLOAD",
+                    "RES": "WSAPI-0-R-EXT-UNLOADED",
+                    "ERR": "WSAPI-0-E-EXT-UNLOAD",
+                    "DESC": {
                         "REQ Args": {
                             "Name": "Extension name to load",
                             "MajorVersion": "Extension major version"
@@ -62,8 +62,8 @@
             },
             "Notification": {
                 "Post": {
-                    "RES": "PROTO-0-R-NOTIF-POST",
-                    "Comment": {
+                    "RES": "WSAPI-0-R-NOTIF-POST",
+                    "DESC": {
                         "RES Params": {
                             "Category": "Notification category",
                             "Name": "Notification name",
@@ -74,10 +74,10 @@
             },
             "APP": {
                 "List": {
-                    "REQ": "PROTO-0-C-APP-LIST",
-                    "RES": "PROTO-0-R-APP-LIST",
-                    "ERR": "PROTO-0-E-APP-LIST",
-                    "Comment": {
+                    "REQ": "WSAPI-0-C-APP-LIST",
+                    "RES": "WSAPI-0-R-APP-LIST",
+                    "ERR": "WSAPI-0-E-APP-LIST",
+                    "DESC": {
                         "REQ Args": {},
                         "RES Params": {
                             "List": "App list returned"
@@ -86,10 +86,10 @@
                     }
                 },
                 "Install": {
-                    "REQ": "PROTO-0-C-APP-INSTALL",
-                    "RES": "PROTO-0-R-APP-INSTALL",
-                    "ERR": "PROTO-0-E-APP-INSTALL",
-                    "Comment": {
+                    "REQ": "WSAPI-0-C-APP-INSTALL",
+                    "RES": "WSAPI-0-R-APP-INSTALL",
+                    "ERR": "WSAPI-0-E-APP-INSTALL",
+                    "DESC": {
                         "REQ Args": {
                             "AppBundleDataStream": "Data stream of App bundle"
                         },
@@ -103,10 +103,10 @@
                     }
                 },
                 "CancelInstall": {
-                    "REQ": "PROTO-0-C-APP-CANCEL",
-                    "RES": "PROTO-0-R-APP-CANCELLED",
-                    "ERR": "PROTO-0-E-APP-CANCEL",
-                    "Comment": {
+                    "REQ": "WSAPI-0-C-APP-CANCEL",
+                    "RES": "WSAPI-0-R-APP-CANCELLED",
+                    "ERR": "WSAPI-0-E-APP-CANCEL",
+                    "DESC": {
                         "REQ Args": {
                             "InstallationCode": "Installation code returned by 'Install' command"
                         },
@@ -119,10 +119,10 @@
                     }
                 },
                 "Uninstall": {
-                    "REQ": "PROTO-0-C-APP-UNINSTALL",
-                    "RES": "PROTO-0-R-APP-UNINSTALLED",
-                    "ERR": "PROTO-0-E-APP-UNINSTALL",
-                    "Comment": {
+                    "REQ": "WSAPI-0-C-APP-UNINSTALL",
+                    "RES": "WSAPI-0-R-APP-UNINSTALLED",
+                    "ERR": "WSAPI-0-E-APP-UNINSTALL",
+                    "DESC": {
                         "REQ Args": {
                             "AppInfo": "AppInfo to indicate which App to be uninstalled"
                         },
@@ -137,10 +137,10 @@
             },
             "Storage": {
                 "GetLocalDisks": {
-                    "REQ": "PROTO-0-C-STOR-GET-LOCAL-DISKS",
-                    "RES": "PROTO-0-R-STOR-GET-LOCAL-DISKS",
-                    "ERR": "PROTO-0-E-STOR-GET-LOCAL-DISKS",
-                    "Comment": {
+                    "REQ": "WSAPI-0-C-STOR-GET-LOCAL-DISKS",
+                    "RES": "WSAPI-0-R-STOR-GET-LOCAL-DISKS",
+                    "ERR": "WSAPI-0-E-STOR-GET-LOCAL-DISKS",
+                    "DESC": {
                         "REQ Args": {},
                         "RES Params": {
                             "Disks": "Local disk info objects returned"
@@ -151,10 +151,10 @@
                     }
                 },
                 "SetUserDataDisk": {
-                    "REQ": "PROTO-0-C-STOR-SET-USER-DATA-DISK",
-                    "RES": "PROTO-0-R-STOR-SET-USER-DATA-DISK",
-                    "ERR": "PROTO-0-E-STOR-SET-USER-DATA-DISK",
-                    "Comment": {
+                    "REQ": "WSAPI-0-C-STOR-SET-USER-DATA-DISK",
+                    "RES": "WSAPI-0-R-STOR-SET-USER-DATA-DISK",
+                    "ERR": "WSAPI-0-E-STOR-SET-USER-DATA-DISK",
+                    "DESC": {
                         "REQ Args": {
                             "Disk": "Disk info object"
                         },
@@ -167,10 +167,10 @@
             },
             "FileSystem": {
                 "List": {
-                    "REQ": "PROTO-0-C-FS-LIST",
-                    "RES": "PROTO-0-R-FS-LIST",
-                    "ERR": "PROTO-0-E-FS-LIST",
-                    "Comment": {
+                    "REQ": "WSAPI-0-C-FS-LIST",
+                    "RES": "WSAPI-0-R-FS-LIST",
+                    "ERR": "WSAPI-0-E-FS-LIST",
+                    "DESC": {
                         "REQ Args": {
                             "Path": "List files at path"
                         },
@@ -183,10 +183,10 @@
                     }
                 },
                 "StatList": {
-                    "REQ": "PROTO-0-C-FS-STAT-LIST",
-                    "RES": "PROTO-0-R-FS-STAT-LIST",
-                    "ERR": "PROTO-0-E-FS-STAT-LIST",
-                    "Comment": {
+                    "REQ": "WSAPI-0-C-FS-STAT-LIST",
+                    "RES": "WSAPI-0-R-FS-STAT-LIST",
+                    "ERR": "WSAPI-0-E-FS-STAT-LIST",
+                    "DESC": {
                         "REQ Args": {
                             "Path": "List files with stat at path"
                         },
@@ -199,10 +199,10 @@
                     }
                 },
                 "CreateFile": {
-                    "REQ": "PROTO-0-C-FS-CREATE-FILE",
-                    "RES": "PROTO-0-R-FS-CREATE-FILE",
-                    "ERR": "PROTO-0-E-FS-CREATE-FILE",
-                    "Comment": {
+                    "REQ": "WSAPI-0-C-FS-CREATE-FILE",
+                    "RES": "WSAPI-0-R-FS-CREATE-FILE",
+                    "ERR": "WSAPI-0-E-FS-CREATE-FILE",
+                    "DESC": {
                         "REQ Args": {
                             "Path": "Path of file to create"
                         },
@@ -215,10 +215,10 @@
                     }
                 },
                 "CreateDirectory": {
-                    "REQ": "PROTO-0-C-FS-CREATE-DIR",
-                    "RES": "PROTO-0-R-FS-CREATE-DIR",
-                    "ERR": "PROTO-0-E-FS-CREATE-DIR",
-                    "Comment": {
+                    "REQ": "WSAPI-0-C-FS-CREATE-DIR",
+                    "RES": "WSAPI-0-R-FS-CREATE-DIR",
+                    "ERR": "WSAPI-0-E-FS-CREATE-DIR",
+                    "DESC": {
                         "REQ Args": {
                             "Path": "Path of directory to create"
                         },
@@ -231,10 +231,10 @@
                     }
                 },
                 "CreateHardLink": {
-                    "REQ": "PROTO-0-C-FS-CREATE-HARDLINK",
-                    "RES": "PROTO-0-R-FS-CREATE-HARDLINK",
-                    "ERR": "PROTO-0-E-FS-CREATE-HARDLINK",
-                    "Comment": {
+                    "REQ": "WSAPI-0-C-FS-CREATE-HARDLINK",
+                    "RES": "WSAPI-0-R-FS-CREATE-HARDLINK",
+                    "ERR": "WSAPI-0-E-FS-CREATE-HARDLINK",
+                    "DESC": {
                         "REQ Args": {
                             "SrcPath": "Hard link source path",
                             "DstPath": "Hard link destination path"
@@ -246,10 +246,10 @@
                     }
                 },
                 "CreateSymbolicLink": {
-                    "REQ": "PROTO-0-C-FS-CREATE-SYMLINK",
-                    "RES": "PROTO-0-R-FS-CREATE-SYMLINK",
-                    "ERR": "PROTO-0-E-FS-CREATE-SYMLINK",
-                    "Comment": {
+                    "REQ": "WSAPI-0-C-FS-CREATE-SYMLINK",
+                    "RES": "WSAPI-0-R-FS-CREATE-SYMLINK",
+                    "ERR": "WSAPI-0-E-FS-CREATE-SYMLINK",
+                    "DESC": {
                         "REQ Args": {
                             "SrcPath": "Symbolick link source path",
                             "DstPath": "Symbolick link destination path"
@@ -261,10 +261,10 @@
                     }
                 },
                 "Remove": {
-                    "REQ": "PROTO-0-C-FS-REMOVE",
-                    "RES": "PROTO-0-R-FS-REMOVE",
-                    "ERR": "PROTO-0-E-FS-REMOVE",
-                    "Comment": {
+                    "REQ": "WSAPI-0-C-FS-REMOVE",
+                    "RES": "WSAPI-0-R-FS-REMOVE",
+                    "ERR": "WSAPI-0-E-FS-REMOVE",
+                    "DESC": {
                         "REQ Args": {
                             "Path": "File or directory path to remove"
                         },
@@ -277,10 +277,10 @@
                     }
                 },
                 "Move": {
-                    "REQ": "PROTO-0-C-FS-MOVE",
-                    "RES": "PROTO-0-R-FS-MOVE",
-                    "ERR": "PROTO-0-E-FS-MOVE",
-                    "Comment": {
+                    "REQ": "WSAPI-0-C-FS-MOVE",
+                    "RES": "WSAPI-0-R-FS-MOVE",
+                    "ERR": "WSAPI-0-E-FS-MOVE",
+                    "DESC": {
                         "REQ Args": {
                             "SrcPath": "Source path to move",
                             "DstPath": "Destination path move to"
@@ -295,10 +295,10 @@
                     }
                 },
                 "Copy": {
-                    "REQ": "PROTO-0-C-FS-COPY",
-                    "RES": "PROTO-0-R-FS-COPY",
-                    "ERR": "PROTO-0-E-FS-COPY",
-                    "Comment": {
+                    "REQ": "WSAPI-0-C-FS-COPY",
+                    "RES": "WSAPI-0-R-FS-COPY",
+                    "ERR": "WSAPI-0-E-FS-COPY",
+                    "DESC": {
                         "REQ Args": {
                             "SrcPath": "Source path to copy",
                             "DstPath": "Destination path copy to"
@@ -313,10 +313,10 @@
                     }
                 },
                 "Exist": {
-                    "REQ": "PROTO-0-C-FS-EXIST",
-                    "RES": "PROTO-0-R-FS-EXIST",
-                    "ERR": "PROTO-0-E-FS-EXIST",
-                    "Comment": {
+                    "REQ": "WSAPI-0-C-FS-EXIST",
+                    "RES": "WSAPI-0-R-FS-EXIST",
+                    "ERR": "WSAPI-0-E-FS-EXIST",
+                    "DESC": {
                         "REQ Args": {
                             "Path": "File or directory path to check existence"
                         },
@@ -329,10 +329,10 @@
                     }
                 },
                 "Stat": {
-                    "REQ": "PROTO-0-C-FS-STAT",
-                    "RES": "PROTO-0-R-FS-STAT",
-                    "ERR": "PROTO-0-E-FS-STAT",
-                    "Comment": {
+                    "REQ": "WSAPI-0-C-FS-STAT",
+                    "RES": "WSAPI-0-R-FS-STAT",
+                    "ERR": "WSAPI-0-E-FS-STAT",
+                    "DESC": {
                         "REQ Args": {
                             "Path": "File or directory path to get stat"
                         },
@@ -345,10 +345,10 @@
                     }
                 },
                 "Touch": {
-                    "REQ": "PROTO-0-C-FS-TOUCH",
-                    "RES": "PROTO-0-R-FS-TOUCH",
-                    "ERR": "PROTO-0-E-FS-TOUCH",
-                    "Comment": {
+                    "REQ": "WSAPI-0-C-FS-TOUCH",
+                    "RES": "WSAPI-0-R-FS-TOUCH",
+                    "ERR": "WSAPI-0-E-FS-TOUCH",
+                    "DESC": {
                         "REQ Args": {
                             "Path": "File or directory path to touch"
                         },
@@ -361,10 +361,10 @@
                     }
                 },
                 "ReadFile": {
-                    "REQ": "PROTO-0-C-FS-READ-FILE",
-                    "RES": "PROTO-0-R-FS-READ-DATA",
-                    "ERR": "PROTO-0-E-FS-READ-FILE",
-                    "Comment": {
+                    "REQ": "WSAPI-0-C-FS-READ-FILE",
+                    "RES": "WSAPI-0-R-FS-READ-DATA",
+                    "ERR": "WSAPI-0-E-FS-READ-FILE",
+                    "DESC": {
                         "REQ Args": {
                             "Path": "File path to read"
                         },
@@ -378,10 +378,10 @@
                     }
                 },
                 "WriteFile": {
-                    "REQ": "PROTO-0-C-FS-WRITE-FILE",
-                    "RES": "PROTO-0-R-FS-WRITE-FILE",
-                    "ERR": "PROTO-0-E-FS-WRITE-FILE",
-                    "Comment": {
+                    "REQ": "WSAPI-0-C-FS-WRITE-FILE",
+                    "RES": "WSAPI-0-R-FS-WRITE-FILE",
+                    "ERR": "WSAPI-0-E-FS-WRITE-FILE",
+                    "DESC": {
                         "REQ Args": {
                             "Path": "File path to write",
                             "Data": "Data stream of file to write"
@@ -396,10 +396,10 @@
                     }
                 },
                 "AppendFile": {
-                    "REQ": "PROTO-0-C-FS-APPEND-FILE",
-                    "RES": "PROTO-0-R-FS-APPEND-FILE",
-                    "ERR": "PROTO-0-E-FS-APPEND-FILE",
-                    "Comment": {
+                    "REQ": "WSAPI-0-C-FS-APPEND-FILE",
+                    "RES": "WSAPI-0-R-FS-APPEND-FILE",
+                    "ERR": "WSAPI-0-E-FS-APPEND-FILE",
+                    "DESC": {
                         "REQ Args": {
                             "Path": "File path to append",
                             "Data": "Data stream of file to append"
@@ -414,10 +414,10 @@
                     }
                 },
                 "SaveURLAs": {
-                    "REQ": "PROTO-0-C-FS-SAVE-URL-FILE",
-                    "RES": "PROTO-0-R-FS-SAVE-URL-FILE",
-                    "ERR": "PROTO-0-E-FS-SAVE-URL-FILE",
-                    "Comment": {
+                    "REQ": "WSAPI-0-C-FS-SAVE-URL-FILE",
+                    "RES": "WSAPI-0-R-FS-SAVE-URL-FILE",
+                    "ERR": "WSAPI-0-E-FS-SAVE-URL-FILE",
+                    "DESC": {
                         "REQ Args": {
                             "Path": "File path to write",
                             "URL": "HTTP URL of file to save"
@@ -431,10 +431,10 @@
                     }
                 },
                 "Grep": {
-                    "REQ": "PROTO-0-C-FS-GREP",
-                    "RES": "PROTO-0-R-FS-GREP",
-                    "ERR": "PROTO-0-E-FS-GREP",
-                    "Comment": {
+                    "REQ": "WSAPI-0-C-FS-GREP",
+                    "RES": "WSAPI-0-R-FS-GREP",
+                    "ERR": "WSAPI-0-E-FS-GREP",
+                    "DESC": {
                         "REQ Args": {
                             "Path": "File to grep",
                             "Regex": "Regular expression",
@@ -449,10 +449,10 @@
                     }
                 },
                 "Open": {
-                    "REQ": "PROTO-0-C-FILE-OPEN",
-                    "RES": "PROTO-0-R-FILE-OPEN",
-                    "ERR": "PROTO-0-E-FILE-OPEN",
-                    "Comment": {
+                    "REQ": "WSAPI-0-C-FILE-OPEN",
+                    "RES": "WSAPI-0-R-FILE-OPEN",
+                    "ERR": "WSAPI-0-E-FILE-OPEN",
+                    "DESC": {
                         "REQ Args": {
                             "Path": "Path of file to open",
                             "Flag": "rwxa+",
@@ -467,10 +467,10 @@
                     }
                 },
                 "Close": {
-                    "REQ": "PROTO-0-C-FILE-CLOSE",
-                    "RES": "PROTO-0-R-FILE-CLOSE",
-                    "ERR": "PROTO-0-E-FILE-CLOSE",
-                    "Comment": {
+                    "REQ": "WSAPI-0-C-FILE-CLOSE",
+                    "RES": "WSAPI-0-R-FILE-CLOSE",
+                    "ERR": "WSAPI-0-E-FILE-CLOSE",
+                    "DESC": {
                         "REQ Args": {
                             "FileHandle": "File descriptor"
                         },
@@ -481,10 +481,10 @@
                     }
                 },
                 "ReadData": {
-                    "REQ": "PROTO-0-C-FILE-READ-DATA",
-                    "RES": "PROTO-0-R-FILE-READ-DATA",
-                    "ERR": "PROTO-0-E-FILE-READ-DATA",
-                    "Comment": {
+                    "REQ": "WSAPI-0-C-FILE-READ-DATA",
+                    "RES": "WSAPI-0-R-FILE-READ-DATA",
+                    "ERR": "WSAPI-0-E-FILE-READ-DATA",
+                    "DESC": {
                         "REQ Args": {
                             "FileHandle": "File descriptor",
                             "Offset": "Offset to read",
@@ -500,10 +500,10 @@
                     }
                 },
                 "WriteData": {
-                    "REQ": "PROTO-0-C-FILE-WRITE-DATA",
-                    "RES": "PROTO-0-R-FILE-WRITE-DATA",
-                    "ERR": "PROTO-0-E-FILE-WRITE-DATA",
-                    "Comment": {
+                    "REQ": "WSAPI-0-C-FILE-WRITE-DATA",
+                    "RES": "WSAPI-0-R-FILE-WRITE-DATA",
+                    "ERR": "WSAPI-0-E-FILE-WRITE-DATA",
+                    "DESC": {
                         "REQ Args": {
                             "FileHandle": "File descriptor",
                             "Offset": "Offset to write",
