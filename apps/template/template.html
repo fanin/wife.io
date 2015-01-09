@@ -59,7 +59,7 @@
                 );
             });
 
-            templateViewController.event.on("core.protospec#loaded", function(event) {
+            templateViewController.event.on("core.wsapi#loaded", function(event) {
                 var self = templateViewController;
 
                 // NOTE: Do API relative operations here
@@ -99,7 +99,7 @@
                 self.extensionClient.load(self.exampleExtension);
             });
 
-            templateViewController.event.on("core.protospec#error", function(event, error) {});
+            templateViewController.event.on("core.wsapi#error", function(event, error) {});
 
             templateViewController.initiate();
         });

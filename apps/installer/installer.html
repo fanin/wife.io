@@ -95,7 +95,7 @@
 
             installer.event.on("core.connection#error", function(event, error) {});
 
-            installer.event.on("core.protospec#loaded", function(event) {
+            installer.event.on("core.wsapi#loaded", function(event) {
                 var self = installer;
 
                 self.appManagerClient.event.on("app.install#uploading", function(event, installationCode) {
@@ -162,7 +162,7 @@
                 });
             });
 
-            installer.event.on("core.protospec#error", function(event, error) {});
+            installer.event.on("core.wsapi#error", function(event, error) {});
 
             installer.initiate();
         });

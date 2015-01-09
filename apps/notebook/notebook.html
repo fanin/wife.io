@@ -73,7 +73,7 @@
 
                 notebookViewController.event.on("core.connection#error", function(event, error) {});
 
-                notebookViewController.event.on("core.protospec#loaded", function(event) {
+                notebookViewController.event.on("core.wsapi#loaded", function(event) {
                     /* Initialize bookshelf and load notebooks */
                     bookshelf = new Bookshelf(notebookViewController);
                     notebook = new Notebook(notebookViewController);
@@ -248,7 +248,7 @@
                     });
                 });
 
-                notebookViewController.event.on("core.protospec#error", function(event, error) {});
+                notebookViewController.event.on("core.wsapi#error", function(event, error) {});
 
                 notebookViewController.initiate();
                 setContentSizeFit();

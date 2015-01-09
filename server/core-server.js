@@ -51,7 +51,7 @@ function CoreServer(http) {
         }
     }
 
-    this.apiSpec = this.loadAPISpec('api-spec', 0);
+    this.apiSpec = this.loadAPISpec('wsapi-spec', 0);
     if (!this.apiSpec) {
         console.log('Unable to load api specification, error = ' + this.error);
         process.exit(1);

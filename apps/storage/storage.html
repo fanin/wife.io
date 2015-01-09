@@ -49,7 +49,7 @@
 
             storageViewController.event.on("core.connection#error", function(event, error) {});
 
-            storageViewController.event.on("core.protospec#loaded", function(event) {
+            storageViewController.event.on("core.wsapi#loaded", function(event) {
                 var self = storageViewController;
 
                 self.storageClient.getLocalDisks();
@@ -129,7 +129,7 @@
                 });
             });
 
-            storageViewController.event.on("core.protospec#error", function(event, error) {});
+            storageViewController.event.on("core.wsapi#error", function(event, error) {});
 
             storageViewController.initiate();
         });

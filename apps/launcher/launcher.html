@@ -44,7 +44,7 @@
 
             launcher.event.on("core.connection#error", function(event, error) {});
 
-            launcher.event.on("core.protospec#loaded", function(event) {
+            launcher.event.on("core.wsapi#loaded", function(event) {
                 var self = launcher;
 
                 self.appManagerClient.event.on("app.list", function(event, arg) {
@@ -125,7 +125,7 @@
                 self.appManagerClient.list();
             });
 
-            launcher.event.on("core.protospec#error", function(event, error) {});
+            launcher.event.on("core.wsapi#error", function(event, error) {});
 
             launcher.initiate();
         });
