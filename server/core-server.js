@@ -27,7 +27,7 @@ function CoreServer(http) {
     this.ioServer = sio(http, { 'pingTimeout': 300000 });
     this.error = null;
 
-    this.loadAPISpec = function(name, version) {
+    this.loadWSAPISpec = function(name, version) {
         var self = this;
         var apiSpec = name + '-v' + version;
 
@@ -51,7 +51,7 @@ function CoreServer(http) {
         }
     }
 
-    this.apiSpec = this.loadAPISpec('wsapi-spec', 0);
+    this.apiSpec = this.loadWSAPISpec('wsapi-spec', 0);
     if (!this.apiSpec) {
         console.log('Unable to load api specification, error = ' + this.error);
         process.exit(1);

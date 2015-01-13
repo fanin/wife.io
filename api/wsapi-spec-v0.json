@@ -32,7 +32,7 @@
                         },
                         "RES Params": {
                             "Name": "Extension name loaded",
-                            "Protocol": "Extension protocol JSON object"
+                            "WSAPISpec": "JSON object of WebSocket extension API spec"
                         },
                         "ERR Params": {
                             "Name": "Name of failed extension",

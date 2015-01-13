@@ -1,7 +1,7 @@
 {
     "AppName": "APP Installer",
     "Version": "0.1.0",
-    "ProtocolVersion": "0.1",
+    "WSAPIVersion": "0.1",
     "Directory": "installer",
     "AppEntry": "installer.html",
     "Extensions": [],

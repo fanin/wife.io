@@ -199,6 +199,7 @@ StorageManager.prototype.getLocalDisks = function(callback) {
                         /* To compare two disks by their mountpoint and total capacity */
                         if (self.removableDisk[i].mountpoint === _oldDisk[j].mountpoint &&
                             self.removableDisk[i].total === _oldDisk[j].total) {
+                            self.removableDisk[i].uuid = self.removableDisk[i].uuid || _oldDisk[j].uuid;
                             self.removableDisk[i].present = true;
                             _oldDisk[j].present = true;
                         }

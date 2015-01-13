@@ -32,7 +32,7 @@ ExtensionManager.prototype.register = function(socket, complete) {
             var ExtensionModule = require('./extension/' + name.toLowerCase() + '/' +  name.toLowerCase());
             self.extensions[name] = new ExtensionModule();
 
-            self.extensions[name].apiSpec = self._super.loadAPISpec('wsapi-ext-spec-' + name.toLowerCase(), majorVersion);
+            self.extensions[name].apiSpec = self._super.loadWSAPISpec('wsapi-ext-spec-' + name.toLowerCase(), majorVersion);
             if (self.extensions[name].apiSpec) {
                 if (self.extensions[name].user === undefined)
                     self.extensions[name].user = 1;

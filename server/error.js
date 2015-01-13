@@ -13,9 +13,9 @@ exports.HasError = function(arg) {
 /* General system errors */
 exports.SysInvalidArg = 'ERROR-SYS-INVALID-ARG';
 
-/* Protocol errors */
-exports.ProtoRead = 'ERROR-PROTO-READ';
-exports.ProtoParse = 'ERROR-PROTO-PARSE';
+/* WSAPI errors */
+exports.ProtoRead = 'ERROR-WSAPI-READ';
+exports.ProtoParse = 'ERROR-WSAPI-PARSE';
 
 /* Extension module errors */
 exports.ExtensionLoad = 'ERROR-EXTENSION-LOAD';

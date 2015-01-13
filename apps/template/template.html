@@ -55,7 +55,7 @@
 
             templateViewController.event.on("core.connection#error", function(event, error) {
                 $("#proto").html(
-                    "Protocol version <font color=blue>" + templateViewController.version + "</font> load failed, error = " + error
+                    "WSAPI version <font color=blue>" + templateViewController.version + "</font> load failed, error = " + error
                 );
             });
 
@@ -65,7 +65,7 @@
                 // NOTE: Do API relative operations here
 
                 $("#proto").html(
-                    "Protocol major version: <font color=blue>" + self.version + "</font>"
+                    "WSAPI major version: <font color=blue>" + self.version + "</font>"
                 );
 
                 /* Extension event handling */

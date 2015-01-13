@@ -30,7 +30,7 @@ function AppManager(_super, apiSpec) {
             return false;
         if (appInfo.Version === undefined)
             return false;
-        if (appInfo.ProtocolVersion === undefined)
+        if (appInfo.WSAPIVersion === undefined)
             return false;
         if (appInfo.Directory === undefined)
             return false;

@@ -1,7 +1,7 @@
 {
     "AppName": "Notebook",
     "Version": "0.1.0",
-    "ProtocolVersion": "0.1",
+    "WSAPIVersion": "0.1",
     "Directory": "notebook",
     "AppEntry": "notebook.html",
     "Extensions": [],
