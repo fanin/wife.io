@@ -15,8 +15,6 @@ var APP_INFO_FILE = 'AppInfo.json';
 module.exports = AppManager;
 
 function AppManager(_super, apiSpec) {
-    var self = this;
-
     this._super = _super;
     this.APISpec = apiSpec;
     this.securityManager = _super.securityManager;
@@ -52,7 +50,7 @@ function AppManager(_super, apiSpec) {
                 else if (path.basename(zipEntry.entryName) === APP_INFO_FILE) {
                     try {
                         var info = JSON.parse(appBundle.readAsText(zipEntry, 'utf8'));
-                        if (self.verifyAppInfo(info)) {
+                        if (this.verifyAppInfo(info)) {
                             if (appBundle.getEntry(info.Directory + path.sep + info.AppEntry)) {
                                 if (appDirs.indexOf(info.Directory) >= 0) {
                                     appInfo = info;
@@ -66,7 +64,7 @@ function AppManager(_super, apiSpec) {
                 }
 
                 return true;
-            });
+            }.bind(this));
         }
         catch (err) { 'App Bundle Error: ' + console.log(err); }
 

@@ -28,7 +28,6 @@ function CoreServer(http) {
     this.error = null;
 
     this.loadWSAPISpec = function(name, version) {
-        var self = this;
         var apiSpec = name + '-v' + version;
 
         var jsonString = fs.readFileSync(path.resolve(__dirname, '../api/' + apiSpec + '.json'));
@@ -40,13 +39,13 @@ function CoreServer(http) {
             }
             catch (err) {
                 //console.log('API error: ' + err);
-                self.error = SYSTEM.ERROR.ProtoParse;
+                this.error = SYSTEM.ERROR.ProtoParse;
                 return null;
             }
         }
         else {
             //console.log('API not specified');
-            self.error = SYSTEM.ERROR.ProtoRead;
+            this.error = SYSTEM.ERROR.ProtoRead;
             return null;
         }
     }
@@ -140,7 +139,6 @@ CoreServer.prototype.listen = function() {
 }
 
 CoreServer.prototype.handleRequest = function(req, res) {
-    var self = this;
     var url = require('url').parse(req.url, true);
     var filename = path.normalize(url.pathname);
     var query = url.query;
@@ -196,12 +194,12 @@ CoreServer.prototype.handleRequest = function(req, res) {
                 var dataPath = null;
 
                 if (query.uuid) {
-                    var disk = self.storageManager.getDiskByUUID(query.uuid);
+                    var disk = this.storageManager.getDiskByUUID(query.uuid);
 
                     if (SYSTEM.ERROR.HasError(disk))
                         /* Inavlid disk uuid specified, ignore this request */
                         dataPath = null;
-                    else if (disk.mountpoint === self.storageManager.systemDisk.mountpoint)
+                    else if (disk.mountpoint === this.storageManager.systemDisk.mountpoint)
                         dataPath = SYSTEM.SETTINGS.SystemDataPath;
                     else
                         dataPath = disk.mountpoint;
@@ -217,7 +215,7 @@ CoreServer.prototype.handleRequest = function(req, res) {
             }
             else if (path.basename(filename).match(/^ui/) && path.basename(filename).match(/png$/)) {
                 /* Rebuild jquery-ui images path */
-                filename = self.jqueryuiPath + path.normalize('/images/') + path.basename(filename);
+                filename = this.jqueryuiPath + path.normalize('/images/') + path.basename(filename);
                 filepath = path.join(rootdir, filename);
             }
             else {
@@ -258,5 +256,5 @@ CoreServer.prototype.handleRequest = function(req, res) {
                 res.end(content);
             }
         });
-    });
+    }.bind(this));
 }

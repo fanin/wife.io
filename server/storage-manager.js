@@ -7,8 +7,6 @@ var SYSTEM = require('../system');
 module.exports = StorageManager;
 
 function StorageManager(_super, apiSpec) {
-    var self = this;
-
     this._super = _super;
     this.APISpec = apiSpec;
     this.notificationCenter = _super.notificationCenter;
@@ -24,12 +22,12 @@ function StorageManager(_super, apiSpec) {
      * FIXME: Integrate with system disk event instead of polling
      */
     this.diskMonitorTimer = setInterval(function() {
-        if (!self.pausePolling) {
-            self.getLocalDisks(function(disks, error) {
-                self.pausePolling = false;
-            });
+        if (!this.pausePolling) {
+            this.getLocalDisks(function(disks, error) {
+                this.pausePolling = false;
+            }.bind(this));
         }
-    }, 3000);
+    }.bind(this), 3000);
 }
 
 StorageManager.prototype.register = function(socket, complete) {
