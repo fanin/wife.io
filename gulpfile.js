@@ -24,19 +24,19 @@ gulp.task('server', function() {
 gulp.task('lib', function() {
     /* Create foundation framework bundle */
     gulp.src('lib/framework/foundation/**/*.js')
-        .pipe(concat('foundation-bundle.js'))
+        .pipe(concat('bundle.js'))
         .pipe(uglify())
         .pipe(gulp.dest(OUTPATH + '/lib/framework/foundation/'));
 
     /* Create UIKit js bundle */
     gulp.src('lib/framework/ui/**/*.js')
-        .pipe(concat('ui-kits-bundle.js'))
+        .pipe(concat('bundle.js'))
         .pipe(uglify())
         .pipe(gulp.dest(OUTPATH + '/lib/framework/ui'));
 
     /* Create UIKit css bundle */
     gulp.src('lib/framework/ui/**/*.css')
-        .pipe(concat('ui-kits-bundle.css'))
+        .pipe(concat('bundle.css'))
         .pipe(uglifycss())
         .pipe(gulp.dest(OUTPATH + '/lib/framework/ui'));
 
@@ -68,7 +68,7 @@ gulp.task('ui-kits', function() {
         debug: true
     })
     .bundle()
-    .pipe(source('ui-kits-bundle.js'))
+    .pipe(source('bundle.js'))
     .pipe(gulp.dest(OUTPATH + '/lib/framework/ui/'))
 });
 
