@@ -1,0 +1,22 @@
+body {
+    background-color: white;
+}
+
+h1 {
+    font: normal 28px "omnes-pro", Helvetica, Arial, sans-serif;
+    color: black;
+}
+
+h2 {
+    font: normal 22px "omnes-pro", Helvetica, Arial, sans-serif;
+    color: black;
+}
+
+#greetings {
+    display: none;
+}
+
+#greetings p {
+    font: normal 12px "omnes-pro", Helvetica, Arial, sans-serif;
+    color: blue;
+}

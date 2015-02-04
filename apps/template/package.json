@@ -1,0 +1,27 @@
+{
+  "name": "template",
+  "description": "Template app skeleton",
+  "repository": "https://github.com/knych/wife.io",
+  "main": "js/app.js",
+  "dependencies": {
+    "flux": "^2.0.1",
+    "object-assign": "^2.0.0",
+    "react": "^0.12.2"
+  },
+  "devDependencies": {
+    "browserify": "^8.1.1",
+    "reactify": "^1.0.0",
+    "uglify-js": "^2.4.16",
+    "watchify": "^2.2.1"
+  },
+  "scripts": {
+    "start": "watchify -o js/bundle.js -v -d .",
+    "build": "NODE_ENV=production browserify . | uglifyjs -cm > js/bundle.min.js",
+    "clean": "rm -f js/bundle.min.js"
+  },
+  "browserify": {
+    "transform": [
+      "reactify"
+    ]
+  }
+}

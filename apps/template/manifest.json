@@ -3,9 +3,9 @@
     "Version": "0.1.0",
     "WSAPIVersion": "0.1",
     "Directory": "template",
-    "AppEntry": "template.html",
+    "AppEntry": "index.html",
     "Extensions": [
-        "Example"
+        "Greetings"
     ],
     "Localizations": [
         "en_US",

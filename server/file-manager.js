@@ -1,3 +1,5 @@
+"use strict";
+
 var fs = require('graceful-fs'),
     fse = require('fs-extra'),
     path = require('path'),
@@ -33,7 +35,7 @@ FileManager.prototype.register = function(socket, complete) {
         try {
             var realPath = resolvePath(path);
 
-            if (SYSTEM.ERROR.HasError(realPath))
+            if (SYSTEM.ERROR.HAS_ERROR(realPath))
                 socket.emit(self.APISpec.List.ERR, path, realPath);
             else {
                 var items = fs.readdirSync(realPath);
@@ -41,7 +43,7 @@ FileManager.prototype.register = function(socket, complete) {
             }
         }
         catch (err) {
-            socket.emit(self.APISpec.List.ERR, path, SYSTEM.ERROR.FSNotExist);
+            socket.emit(self.APISpec.List.ERR, path, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
         }
     });
 
@@ -49,7 +51,7 @@ FileManager.prototype.register = function(socket, complete) {
         try {
             var realPath = resolvePath(_path);
 
-            if (SYSTEM.ERROR.HasError(realPath))
+            if (SYSTEM.ERROR.HAS_ERROR(realPath))
                 socket.emit(self.APISpec.StatList.ERR, _path, realPath);
             else {
                 var items = fs.readdirSync(realPath);
@@ -62,19 +64,19 @@ FileManager.prototype.register = function(socket, complete) {
             }
         }
         catch (err) {
-            socket.emit(self.APISpec.StatList.ERR, _path, SYSTEM.ERROR.FSNotExist);
+            socket.emit(self.APISpec.StatList.ERR, _path, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
         }
     });
 
     socket.on(self.APISpec.CreateFile.REQ, function(path) {
         var realPath = resolvePath(path);
 
-        if (SYSTEM.ERROR.HasError(realPath))
+        if (SYSTEM.ERROR.HAS_ERROR(realPath))
             socket.emit(self.APISpec.CreateFile.ERR, path, realPath);
         else {
             fs.createFile(realPath, function(err) {
                 if (err) {
-                    socket.emit(self.APISpec.CreateFile.ERR, path, SYSTEM.ERROR.FSIOError);
+                    socket.emit(self.APISpec.CreateFile.ERR, path, SYSTEM.ERROR.ERROR_FS_IO);
                 }
                 else {
                     socket.emit(self.APISpec.CreateFile.RES, path);
@@ -86,12 +88,12 @@ FileManager.prototype.register = function(socket, complete) {
     socket.on(self.APISpec.CreateDirectory.REQ, function(path) {
         var realPath = resolvePath(path);
 
-        if (SYSTEM.ERROR.HasError(realPath))
+        if (SYSTEM.ERROR.HAS_ERROR(realPath))
             socket.emit(self.APISpec.CreateDirectory.ERR, path, realPath);
         else {
             fse.mkdirp(realPath, function(err) {
                 if (err) {
-                    socket.emit(self.APISpec.CreateDirectory.ERR, path, SYSTEM.ERROR.FSIOError);
+                    socket.emit(self.APISpec.CreateDirectory.ERR, path, SYSTEM.ERROR.ERROR_FS_IO);
                 }
                 else {
                     socket.emit(self.APISpec.CreateDirectory.RES, path);
@@ -104,15 +106,15 @@ FileManager.prototype.register = function(socket, complete) {
         var realSrcPath = resolvePath(srcPath);
         var realDstPath = resolvePath(dstPath);
 
-        if (SYSTEM.ERROR.HasError(realSrcPath))
+        if (SYSTEM.ERROR.HAS_ERROR(realSrcPath))
             socket.emit(self.APISpec.CreateHardLink.ERR, srcPath, dstPath, realSrcPath);
-        else if (SYSTEM.ERROR.HasError(realDstPath))
+        else if (SYSTEM.ERROR.HAS_ERROR(realDstPath))
             socket.emit(self.APISpec.CreateHardLink.ERR, srcPath, dstPath, realDstPath);
         else {
             if (!fs.existsSync(realSrcPath))
-                socket.emit(self.APISpec.CreateHardLink.ERR, srcPath, dstPath, SYSTEM.ERROR.FSNotExist);
+                socket.emit(self.APISpec.CreateHardLink.ERR, srcPath, dstPath, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
             else if (!fs.linkSync(realSrcPath, realDstPath))
-                socket.emit(self.APISpec.CreateHardLink.ERR, srcPath, dstPath, SYSTEM.ERROR.FSIOError);
+                socket.emit(self.APISpec.CreateHardLink.ERR, srcPath, dstPath, SYSTEM.ERROR.ERROR_FS_IO);
             else
                 socket.emit(self.APISpec.CreateHardLink.RES, srcPath, dstPath);
         }
@@ -122,15 +124,15 @@ FileManager.prototype.register = function(socket, complete) {
         var realSrcPath = resolvePath(srcPath);
         var realDstPath = resolvePath(dstPath);
 
-        if (SYSTEM.ERROR.HasError(realSrcPath))
+        if (SYSTEM.ERROR.HAS_ERROR(realSrcPath))
             socket.emit(self.APISpec.CreateSymbolicLink.ERR, srcPath, dstPath, realSrcPath);
-        else if (SYSTEM.ERROR.HasError(realDstPath))
+        else if (SYSTEM.ERROR.HAS_ERROR(realDstPath))
             socket.emit(self.APISpec.CreateSymbolicLink.ERR, srcPath, dstPath, realDstPath);
         else {
             if (!fs.existsSync(realSrcPath))
-                socket.emit(self.APISpec.CreateSymbolicLink.ERR, srcPath, dstPath, SYSTEM.ERROR.FSNotExist);
+                socket.emit(self.APISpec.CreateSymbolicLink.ERR, srcPath, dstPath, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
             else if (!fs.symlinkSync(realSrcPath, realDstPath))
-                socket.emit(self.APISpec.CreateSymbolicLink.ERR, srcPath, dstPath, SYSTEM.ERROR.FSIOError);
+                socket.emit(self.APISpec.CreateSymbolicLink.ERR, srcPath, dstPath, SYSTEM.ERROR.ERROR_FS_IO);
             else
                 socket.emit(self.APISpec.CreateSymbolicLink.RES, srcPath, dstPath);
         }
@@ -139,20 +141,20 @@ FileManager.prototype.register = function(socket, complete) {
     socket.on(self.APISpec.Remove.REQ, function(path) {
         var realPath = resolvePath(path);
 
-        if (SYSTEM.ERROR.HasError(realPath))
+        if (SYSTEM.ERROR.HAS_ERROR(realPath))
             socket.emit(self.APISpec.Remove.ERR, path, realPath);
         else {
             if (fs.existsSync(realPath)) {
                 fse.remove(realPath, function(err) {
                     if (err) {
-                        socket.emit(self.APISpec.Remove.ERR, path, SYSTEM.ERROR.FSIOError);
+                        socket.emit(self.APISpec.Remove.ERR, path, SYSTEM.ERROR.ERROR_FS_IO);
                     }
                     else
                         socket.emit(self.APISpec.Remove.RES, path);
                 });
             }
             else
-                socket.emit(self.APISpec.Remove.ERR, path, SYSTEM.ERROR.FSNotExist);
+                socket.emit(self.APISpec.Remove.ERR, path, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
         }
     });
 
@@ -160,22 +162,22 @@ FileManager.prototype.register = function(socket, complete) {
         var realSrcPath = resolvePath(srcPath);
         var realDstPath = resolvePath(dstPath);
 
-        if (SYSTEM.ERROR.HasError(realSrcPath))
+        if (SYSTEM.ERROR.HAS_ERROR(realSrcPath))
             socket.emit(self.APISpec.Move.ERR, srcPath, dstPath, realSrcPath);
-        else if (SYSTEM.ERROR.HasError(realDstPath))
+        else if (SYSTEM.ERROR.HAS_ERROR(realDstPath))
             socket.emit(self.APISpec.Move.ERR, srcPath, dstPath, realDstPath);
         else {
             if (fs.existsSync(realSrcPath)) {
                 fse.move(realSrcPath, realDstPath, function(err) {
                     if (err) {
-                        socket.emit(self.APISpec.Move.ERR, srcPath, dstPath, SYSTEM.ERROR.FSIOError);
+                        socket.emit(self.APISpec.Move.ERR, srcPath, dstPath, SYSTEM.ERROR.ERROR_FS_IO);
                     }
                     else
                         socket.emit(self.APISpec.Move.RES, srcPath, dstPath);
                 });
             }
             else
-                socket.emit(self.APISpec.Move.ERR, srcPath, dstPath, SYSTEM.ERROR.FSNotExist);
+                socket.emit(self.APISpec.Move.ERR, srcPath, dstPath, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
         }
     });
 
@@ -183,29 +185,29 @@ FileManager.prototype.register = function(socket, complete) {
         var realSrcPath = resolvePath(srcPath);
         var realDstPath = resolvePath(dstPath);
 
-        if (SYSTEM.ERROR.HasError(realSrcPath))
+        if (SYSTEM.ERROR.HAS_ERROR(realSrcPath))
             socket.emit(self.APISpec.Copy.ERR, srcPath, dstPath, realSrcPath);
-        else if (SYSTEM.ERROR.HasError(realDstPath))
+        else if (SYSTEM.ERROR.HAS_ERROR(realDstPath))
             socket.emit(self.APISpec.Copy.ERR, srcPath, dstPath, realDstPath);
         else {
             if (fs.existsSync(realSrcPath)) {
                 fse.copy(realSrcPath, realDstPath, function(err) {
                     if (err) {
-                        socket.emit(self.APISpec.Copy.ERR, srcPath, dstPath, SYSTEM.ERROR.FSIOError);
+                        socket.emit(self.APISpec.Copy.ERR, srcPath, dstPath, SYSTEM.ERROR.ERROR_FS_IO);
                     }
                     else
                         socket.emit(self.APISpec.Copy.RES, srcPath, dstPath);
                 });
             }
             else
-                socket.emit(self.APISpec.Copy.ERR, srcPath, dstPath, SYSTEM.ERROR.FSNotExist);
+                socket.emit(self.APISpec.Copy.ERR, srcPath, dstPath, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
         }
     });
 
     socket.on(self.APISpec.Exist.REQ, function(path) {
         var realPath = resolvePath(path);
 
-        if (SYSTEM.ERROR.HasError(realPath))
+        if (SYSTEM.ERROR.HAS_ERROR(realPath))
             socket.emit(self.APISpec.Exist.ERR, path, realPath);
         else {
             var exist = fs.existsSync(realPath);
@@ -217,7 +219,7 @@ FileManager.prototype.register = function(socket, complete) {
     socket.on(self.APISpec.Stat.REQ, function(path) {
         var realPath = resolvePath(path);
 
-        if (SYSTEM.ERROR.HasError(realPath))
+        if (SYSTEM.ERROR.HAS_ERROR(realPath))
             socket.emit(self.APISpec.Stat.ERR, path, realPath);
         else {
             var exist = fs.existsSync(realPath);
@@ -226,14 +228,14 @@ FileManager.prototype.register = function(socket, complete) {
                 socket.emit(self.APISpec.Stat.RES, path, stat);
             }
             else
-                socket.emit(self.APISpec.Stat.ERR, path, SYSTEM.ERROR.FSIOError);
+                socket.emit(self.APISpec.Stat.ERR, path, SYSTEM.ERROR.ERROR_FS_IO);
         }
     });
 
     socket.on(self.APISpec.Touch.REQ, function(path, atime, mtime) {
         var realPath = resolvePath(path);
 
-        if (SYSTEM.ERROR.HasError(realPath))
+        if (SYSTEM.ERROR.HAS_ERROR(realPath))
             socket.emit(self.APISpec.Touch.ERR, path, realPath);
         else {
             var exist = fs.existsSync(realPath);
@@ -242,14 +244,14 @@ FileManager.prototype.register = function(socket, complete) {
                 socket.emit(self.APISpec.Touch.RES, path);
             }
             else
-                socket.emit(self.APISpec.Touch.ERR, path, SYSTEM.ERROR.FSIOError);
+                socket.emit(self.APISpec.Touch.ERR, path, SYSTEM.ERROR.ERROR_FS_IO);
         }
     });
 
     socket.on(self.APISpec.ReadFile.REQ, function(path, encoding) {
         var realPath = resolvePath(path);
 
-        if (SYSTEM.ERROR.HasError(realPath))
+        if (SYSTEM.ERROR.HAS_ERROR(realPath))
             socket.emit(self.APISpec.ReadFile.ERR, path, realPath);
         else {
             encoding = encoding || 'utf8';
@@ -264,13 +266,13 @@ FileManager.prototype.register = function(socket, complete) {
                 });
 
                 readStream.on('error', function(err) {
-                    socket.emit(self.APISpec.ReadFile.ERR, path, SYSTEM.ERROR.FSIOError);
+                    socket.emit(self.APISpec.ReadFile.ERR, path, SYSTEM.ERROR.ERROR_FS_IO);
                 });
                 */
 
                 fs.readFile(realPath, encoding, function(err, data) {
                     if (err) {
-                        socket.emit(self.APISpec.ReadFile.ERR, path, SYSTEM.ERROR.FSIOError);
+                        socket.emit(self.APISpec.ReadFile.ERR, path, SYSTEM.ERROR.ERROR_FS_IO);
                     }
                     else {
                         socket.emit(self.APISpec.ReadFile.RES, path, data);
@@ -279,14 +281,14 @@ FileManager.prototype.register = function(socket, complete) {
 
             }
             else
-                socket.emit(self.APISpec.ReadFile.ERR, path, SYSTEM.ERROR.FSNotExist);
+                socket.emit(self.APISpec.ReadFile.ERR, path, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
         }
     });
 
     ss(socket).on(self.APISpec.WriteFile.REQ, function(path, dataStream, dataSize) {
         var realPath = resolvePath(path);
 
-        if (SYSTEM.ERROR.HasError(realPath))
+        if (SYSTEM.ERROR.HAS_ERROR(realPath))
             socket.emit(self.APISpec.WriteFile.ERR, path, realPath);
         else {
             var writeStream = fs.createWriteStream(realPath);
@@ -312,7 +314,7 @@ FileManager.prototype.register = function(socket, complete) {
 
                 dataStream.on('error', function(err) {
                     if (err) {
-                        socket.emit(self.APISpec.WriteFile.ERR, path, SYSTEM.ERROR.FSIOError);
+                        socket.emit(self.APISpec.WriteFile.ERR, path, SYSTEM.ERROR.ERROR_FS_IO);
                         release();
                     }
                 });
@@ -325,7 +327,7 @@ FileManager.prototype.register = function(socket, complete) {
     ss(socket).on(self.APISpec.AppendFile.REQ, function(path, dataStream, dataSize) {
         var realPath = resolvePath(path);
 
-        if (SYSTEM.ERROR.HasError(realPath))
+        if (SYSTEM.ERROR.HAS_ERROR(realPath))
             socket.emit(self.APISpec.AppendFile.ERR, path, realPath);
         else {
             rwlock.writeLock(realPath, function(release) {
@@ -352,7 +354,7 @@ FileManager.prototype.register = function(socket, complete) {
 
                     dataStream.on('error', function(err) {
                         if (err) {
-                            socket.emit(self.APISpec.AppendFile.ERR, path, SYSTEM.ERROR.FSIOError);
+                            socket.emit(self.APISpec.AppendFile.ERR, path, SYSTEM.ERROR.ERROR_FS_IO);
                             release();
                         }
                     });
@@ -360,7 +362,7 @@ FileManager.prototype.register = function(socket, complete) {
                     dataStream.pipe(writeStream);
                 }
                 else {
-                    socket.emit(self.APISpec.AppendFile.ERR, path, SYSTEM.ERROR.FSNotExist);
+                    socket.emit(self.APISpec.AppendFile.ERR, path, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
                     release();
                 }
             });
@@ -370,7 +372,7 @@ FileManager.prototype.register = function(socket, complete) {
     socket.on(self.APISpec.SaveURLAs.REQ, function(_path, fileURL) {
         var realPath = resolvePath(_path);
 
-        if (SYSTEM.ERROR.HasError(realPath))
+        if (SYSTEM.ERROR.HAS_ERROR(realPath))
             socket.emit(self.APISpec.SaveURLAs.ERR, _path, realPath);
         else {
             if (fs.existsSync(path.dirname(realPath))) {
@@ -396,7 +398,7 @@ FileManager.prototype.register = function(socket, complete) {
                 };
 
                 if (!options.host || !options.path) {
-                    socket.emit(self.APISpec.SaveURLAs.ERR, _path, SYSTEM.ERROR.FSInvalidURL);
+                    socket.emit(self.APISpec.SaveURLAs.ERR, _path, SYSTEM.ERROR.ERROR_FS_INVALID_URL);
                 }
                 else {
                     http.get(options, function(res) {
@@ -417,7 +419,7 @@ FileManager.prototype.register = function(socket, complete) {
     socket.on(self.APISpec.Grep.REQ, function(path, regex, option) {
         var realPath = resolvePath(path);
 
-        if (SYSTEM.ERROR.HasError(realPath))
+        if (SYSTEM.ERROR.HAS_ERROR(realPath))
             socket.emit(self.APISpec.Grep.ERR, path, realPath);
         else {
             var defaultOption = {
@@ -438,7 +440,7 @@ FileManager.prototype.register = function(socket, complete) {
             if (fs.existsSync(realPath)) {
                 fs.readFile(realPath, option.encoding, function(err, data) {
                     if (err) {
-                        socket.emit(self.APISpec.Grep.ERR, path, SYSTEM.ERROR.FSIOError);
+                        socket.emit(self.APISpec.Grep.ERR, path, SYSTEM.ERROR.ERROR_FS_IO);
                     }
                     else {
                         if (option.parseFormat) {
@@ -473,7 +475,7 @@ FileManager.prototype.register = function(socket, complete) {
 
             }
             else
-                socket.emit(self.APISpec.Grep.ERR, path, SYSTEM.ERROR.FSNotExist);
+                socket.emit(self.APISpec.Grep.ERR, path, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
         }
     });
 
@@ -484,7 +486,7 @@ FileManager.prototype.register = function(socket, complete) {
     socket.on(self.APISpec.Open.REQ, function(path, flag, mode) {
         var realPath = resolvePath(path);
 
-        if (SYSTEM.ERROR.HasError(realPath))
+        if (SYSTEM.ERROR.HAS_ERROR(realPath))
             socket.emit(self.APISpec.Open.ERR, path, realPath);
         else {
             if (fs.existsSync(realPath)) {
@@ -497,7 +499,7 @@ FileManager.prototype.register = function(socket, complete) {
                 });
             }
             else
-                socket.emit(self.APISpec.Open.ERR, path, SYSTEM.ERROR.FSNotExist);
+                socket.emit(self.APISpec.Open.ERR, path, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
         }
     });
 
@@ -512,7 +514,7 @@ FileManager.prototype.register = function(socket, complete) {
             });
         }
         else
-            socket.emit(self.APISpec.Close.ERR, fileHandle, SYSTEM.ERROR.FSNotExist);
+            socket.emit(self.APISpec.Close.ERR, fileHandle, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
     });
 
     socket.on(self.APISpec.ReadData.REQ, function(fileHandle, offset, size) {
@@ -528,7 +530,7 @@ FileManager.prototype.register = function(socket, complete) {
             });
         }
         else
-            socket.emit(self.APISpec.ReadData.ERR, fileHandle, SYSTEM.ERROR.FSNotExist);
+            socket.emit(self.APISpec.ReadData.ERR, fileHandle, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
     });
 
     socket.on(self.APISpec.WriteData.REQ, function(fileHandle, offset, size, data) {
@@ -543,7 +545,7 @@ FileManager.prototype.register = function(socket, complete) {
             });
         }
         else
-            socket.emit(self.APISpec.WriteData.ERR, fileHandle, SYSTEM.ERROR.FSNotExist);
+            socket.emit(self.APISpec.WriteData.ERR, fileHandle, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
     });
 
     complete && complete();

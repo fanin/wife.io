@@ -1,47 +1,88 @@
 var gulp = require('gulp'),
     browserify = require('browserify'),
+    reactify = require('reactify'),
     uglify = require('gulp-uglify'),
     uglifycss = require('gulp-uglifycss'),
     concat = require('gulp-concat'),
+    streamify = require('gulp-streamify'),
+    merge = require('merge-stream'),
     jsonmin = require('gulp-jsonmin'),
+    transform = require('vinyl-transform'),
     source = require('vinyl-source-stream'),
+    buffer = require('vinyl-buffer'),
     del = require('del');
 
 var JQUERY_VERSION = '1.11.1',
-    FONTAWESOME_VERSION = '4.2.0';
+    FONTAWESOME_VERSION = '4.2.0',
+    OUTPATH = 'mywife',
+    BUILD_APPS = [ 'template' ];
 
-var OUTPATH = 'build';
+var targets = [
+    'server',
+    'base',
+    'lib',
+    'app',
+    'api',
+    'resource',
+    'config'
+];
 
 gulp.task('server', function() {
-    gulp.src(['*.js', '!gulpfile.js'])
+    var base = gulp.src(['*.js', '!gulpfile.js'])
         .pipe(uglify())
         .pipe(gulp.dest(OUTPATH));
-    gulp.src('server/**/*.js')
+    var servers = gulp.src('server/**/*.js')
         .pipe(uglify())
         .pipe(gulp.dest(OUTPATH + '/server'));
+    return merge(base, servers);
 });
 
 gulp.task('lib', function() {
-    /* Create foundation framework bundle */
-    gulp.src('lib/framework/foundation/**/*.js')
-        .pipe(concat('bundle.js'))
-        .pipe(uglify())
-        .pipe(gulp.dest(OUTPATH + '/lib/framework/foundation/'));
+    /* Copy 3rd party libraries */
+    var jquery = gulp.src('lib/jquery/jquery-' + JQUERY_VERSION + '.min.js')
+        .pipe(gulp.dest(OUTPATH + '/lib/jquery'));
+    var jquery_plugin = gulp.src('lib/jquery/plugins/**/*')
+        .pipe(gulp.dest(OUTPATH + '/lib/jquery/plugins'));
+    var jquery_ui = gulp.src('lib/jquery/ui/' + JQUERY_VERSION + '/**/*')
+        .pipe(gulp.dest(OUTPATH + '/lib/jquery/ui/' + JQUERY_VERSION));
+    var font_awesome = gulp.src('lib/font-awesome/' + FONTAWESOME_VERSION + '/**/*')
+        .pipe(gulp.dest(OUTPATH + '/lib/font-awesome/' + FONTAWESOME_VERSION));
 
-    /* Create UIKit js bundle */
-    gulp.src('lib/framework/ui/**/*.js')
-        .pipe(concat('bundle.js'))
+    return merge(
+        jquery,
+        jquery_plugin,
+        jquery_ui,
+        font_awesome
+    );
+});
+
+gulp.task('base', function() {
+    return browserify({
+            entries: ['./lib/framework/base/base.js'],
+            debug: false
+        })
+        .bundle()
+        .pipe(source('base.min.js'))
+        .pipe(buffer())
         .pipe(uglify())
-        .pipe(gulp.dest(OUTPATH + '/lib/framework/ui'));
+        .pipe(gulp.dest(OUTPATH + '/lib/framework/base/'));
+});
+
+gulp.task('ui-kits', function() {
+    /* Create UIKit js bundle */
+    var uikits_js = gulp.src('lib/framework/ui/**/*.js')
+    .pipe(concat('uikit-bundle.min.js'))
+    .pipe(uglify())
+    .pipe(gulp.dest(OUTPATH + '/lib/framework/ui'));
 
     /* Create UIKit css bundle */
-    gulp.src('lib/framework/ui/**/*.css')
-        .pipe(concat('bundle.css'))
-        .pipe(uglifycss())
-        .pipe(gulp.dest(OUTPATH + '/lib/framework/ui'));
+    var uikits_css = gulp.src('lib/framework/ui/**/*.css')
+    .pipe(concat('uikit-bundle.min.css'))
+    .pipe(uglifycss())
+    .pipe(gulp.dest(OUTPATH + '/lib/framework/ui'));
 
     /* Copy UIKit images */
-    gulp.src([
+    var uikits_res = gulp.src([
         'lib/framework/ui/**/*',
         '!lib/framework/ui/**/js',
         '!lib/framework/ui/**/css',
@@ -50,31 +91,44 @@ gulp.task('lib', function() {
     ])
     .pipe(gulp.dest(OUTPATH + '/lib/framework/ui'));
 
-    /* Copy 3rd party libraries */
-    gulp.src('lib/jquery/jquery-' + JQUERY_VERSION + '.min.js')
-        .pipe(gulp.dest(OUTPATH + '/lib/jquery'));
-    gulp.src('lib/jquery/plugins/**/*')
-        .pipe(gulp.dest(OUTPATH + '/lib/jquery/plugins'));
-    gulp.src('lib/jquery/ui/' + JQUERY_VERSION + '/**/*')
-        .pipe(gulp.dest(OUTPATH + '/lib/jquery/ui/' + JQUERY_VERSION));
-    gulp.src('lib/font-awesome/' + FONTAWESOME_VERSION + '/**/*')
-        .pipe(gulp.dest(OUTPATH + '/lib/font-awesome/' + FONTAWESOME_VERSION));
-});
-
-gulp.task('ui-kits', function() {
     return browserify({
         entries: ['./lib/framework/ui/ui-kits.js'],
-        standalone: 'Page',
-        debug: true
+        debug: false
     })
     .bundle()
-    .pipe(source('bundle.js'))
+    .pipe(source('ui-kits.js'))
     .pipe(gulp.dest(OUTPATH + '/lib/framework/ui/'))
 });
 
 gulp.task('app', function() {
-    gulp.src('apps/**/*')
-        .pipe(gulp.dest(OUTPATH + '/apps'));
+    for (var a in BUILD_APPS) {
+        /* Build app js bundle */
+        browserify({
+            entries: ['./apps/' + BUILD_APPS[a] + '/js/app.js'],
+            debug: false
+        })
+        .transform(reactify)
+        .bundle()
+        .pipe(source('app.min.js'))
+        .pipe(buffer())
+        .pipe(uglify())
+        .pipe(gulp.dest(OUTPATH + '/apps/' + BUILD_APPS[a] + '/js/'));
+
+        /* Build app css bundle */
+        gulp.src('apps/' + BUILD_APPS[a] + '/css**/*.css')
+            .pipe(concat('app.min.css'))
+            .pipe(uglifycss())
+            .pipe(gulp.dest(OUTPATH + '/apps/' + BUILD_APPS[a] + '/css'));
+
+        gulp.src([
+            'apps/' + BUILD_APPS[a] + '/index.html',
+            'apps/' + BUILD_APPS[a] + '/manifest.json',
+            'apps/' + BUILD_APPS[a] + '/js**/app.min.js',
+            'apps/' + BUILD_APPS[a] + '/css**/app.min.css',
+            'apps/' + BUILD_APPS[a] + '/img**/*',
+        ])
+        .pipe(gulp.dest(OUTPATH + '/apps/' + BUILD_APPS[a]));
+    }
 });
 
 gulp.task('api', function() {
@@ -97,13 +151,5 @@ gulp.task('clean', function(cb) {
     del(OUTPATH, cb);
 });
 
-gulp.task('default', [
-    'server',
-    'lib',
-    //'ui-kits',
-    'app',
-    'api',
-    'resource',
-    'config'
-]);
-
+gulp.task('default', targets);
+gulp.task('brackets-default', targets);

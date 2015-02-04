@@ -1,3 +1,5 @@
+"use strict";
+
 var SYSTEM = require('../system');
 
 module.exports = ExtensionManager;
@@ -17,7 +19,7 @@ ExtensionManager.prototype.register = function(socket, complete) {
     socket.on(self.APISpec.Load.REQ, function(name, majorVersion) {
         if (!self._super.securityManager.isExtensionAllowed(socket, name)) {
             console.log('Extension module [' + name + '] not allowed');
-            socket.emit(self.APISpec.Load.ERR, name, SYSTEM.ERROR.ExtensionNotAllow);
+            socket.emit(self.APISpec.Load.ERR, name, SYSTEM.ERROR.ERROR_EXTENSION_NOT_ALLOW);
             return;
         }
 
@@ -47,14 +49,14 @@ ExtensionManager.prototype.register = function(socket, complete) {
         catch (err) {
             console.log('Unable to load extension module [' + name + ']: ' + err);
             self.extensions[name] = undefined;
-            socket.emit(self.APISpec.Load.ERR, name, SYSTEM.ERROR.ExtensionLoad);
+            socket.emit(self.APISpec.Load.ERR, name, err);
         }
     });
 
     socket.on(self.APISpec.Unload.REQ, function(name, majorVersion) {
         if (!self._super.securityManager.isExtensionAllowed(socket, name)) {
             console.log('Extension module [' + name + '] not allowed');
-            socket.emit(self.APISpec.Unload.ERR, name, SYSTEM.ERROR.ExtensionNotAllow);
+            socket.emit(self.APISpec.Unload.ERR, name, SYSTEM.ERROR.ERROR_EXTENSION_NOT_ALLOW);
             return;
         }
 

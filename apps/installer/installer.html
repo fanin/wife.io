@@ -8,7 +8,7 @@
     <script src="http://%SYSIP%:%SYSPORT%/lib/jquery/jquery-1.11.1.min.js"></script>
 
     <!-- Import Foundation Frameworks -->
-    <script src="http://%SYSIP%:%SYSPORT%/lib/framework/foundation/bundle.js"></script>
+    <script src="http://%SYSIP%:%SYSPORT%/lib/framework/base/base.min.js"></script>
 
     <!-- Import UI Frameworks -->
     <script src="http://%SYSIP%:%SYSPORT%/lib/framework/ui/bundle.js"></script>
@@ -29,14 +29,14 @@
             this.appManagerClient = new AppManagerClient();
         };
 
-        /* Inherit CoreClient */
-        Installer.prototype = new CoreClient();
+        /* Inherit DiligentClient */
+        Installer.prototype = new DiligentClient();
         Installer.prototype.constructor = Installer;
 
         $(function() {
             var installer = new Installer();
 
-            installer.event.on("core.connection#established", function(event) {
+            installer.event.on("diligent.connection#established", function(event) {
                 var self = installer;
                 self.appManagerClient.attach(self);
 
@@ -89,13 +89,13 @@
                 });
             });
 
-            installer.event.on("core.connection#closed", function(event) {
+            installer.event.on("diligent.connection#closed", function(event) {
                 installer.appManagerClient.detach();
             });
 
-            installer.event.on("core.connection#error", function(event, error) {});
+            installer.event.on("diligent.connection#error", function(event, error) {});
 
-            installer.event.on("core.wsapi#loaded", function(event) {
+            installer.event.on("diligent.wsapi#loaded", function(event) {
                 var self = installer;
 
                 self.appManagerClient.event.on("app.install#uploading", function(event, installationCode) {
@@ -162,7 +162,7 @@
                 });
             });
 
-            installer.event.on("core.wsapi#error", function(event, error) {});
+            installer.event.on("diligent.wsapi#error", function(event, error) {});
 
             installer.initiate();
         });

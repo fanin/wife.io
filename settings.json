@@ -1,7 +1,7 @@
 {
     "SystemName": "wife.io",
     "Brand": "Mac!",
-    "CoreServer": "core-server",
+    "DiligentServer": "diligent-server",
     "SystemDataPath": "/Volumes/UserStorage",
     "TempPath": "/tmp",
     "Copyright": "Copyright 2014 Chen, Shou-Yuan"

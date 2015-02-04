@@ -19,14 +19,14 @@ catch (err) {
 }
 
 /* Set default settings if needed */
-if (!SYSTEM.SETTINGS.CoreServer) SYSTEM.SETTINGS.CoreServer = "core-server";
+if (!SYSTEM.SETTINGS.DiligentServer) SYSTEM.SETTINGS.DiligentServer = "diligent-server";
 if (!SYSTEM.SETTINGS.SystemDataPath) throw new Error('Missing system setting "SystemDataPath" in the settings.json');
 if (!SYSTEM.SETTINGS.TempPath) SYSTEM.SETTINGS.TempPath = "/tmp";
 
 server.listen(process.env.npm_package_config_port || 8001, function() {
-    var CoreServer = require('./server/' + SYSTEM.SETTINGS.CoreServer);
+    var DiligentServer = require('./server/' + SYSTEM.SETTINGS.DiligentServer);
     if (!SYSTEM.SERVER) {
-        SYSTEM.SERVER = new CoreServer(server);
+        SYSTEM.SERVER = new DiligentServer(server);
         SYSTEM.SERVER.listen();
     }
 });

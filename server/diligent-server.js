@@ -1,7 +1,10 @@
 /*
- * TODO:
+ * TODOs & FIXMEs:
  * 1) Introduce express to handle APP routing
+ * 2) Fix unusual '/apps/b/launcher/' request
  */
+
+"use strict";
 
 var sio = require('socket.io'),
     util = require('util'),
@@ -21,9 +24,9 @@ var sio = require('socket.io'),
 
 var SYSTEM = require('../system');
 
-module.exports = CoreServer;
+module.exports = DiligentServer;
 
-function CoreServer(http) {
+function DiligentServer(http) {
     this.ioServer = sio(http, { 'pingTimeout': 300000 });
     this.error = null;
 
@@ -39,20 +42,20 @@ function CoreServer(http) {
             }
             catch (err) {
                 //console.log('API error: ' + err);
-                this.error = SYSTEM.ERROR.ProtoParse;
+                this.error = SYSTEM.ERROR.ERROR_WSAPI_PARSE;
                 return null;
             }
         }
         else {
             //console.log('API not specified');
-            this.error = SYSTEM.ERROR.ProtoRead;
+            this.error = SYSTEM.ERROR.ERROR_WSAPI_READ;
             return null;
         }
     }
 
     this.apiSpec = this.loadWSAPISpec('wsapi-spec', 0);
     if (!this.apiSpec) {
-        console.log('Unable to load api specification, error = ' + this.error);
+        console.log('Unable to load API Spec, error = ' + this.error);
         process.exit(1);
     }
 
@@ -64,7 +67,7 @@ function CoreServer(http) {
     this.fileManager = new FileManager(this, this.apiSpec[0].FileSystem);
 }
 
-CoreServer.prototype.listen = function() {
+DiligentServer.prototype.listen = function() {
     var self = this;
 
     this.ioServer.on('connection', function(socket) {
@@ -72,7 +75,7 @@ CoreServer.prototype.listen = function() {
         socket.on(self.apiSpec[0].Base.GetInfo.REQ, function(appDirectory) {
             var appInfo = self.appManager.getAppInfo(appDirectory);
 
-            if (!SYSTEM.ERROR.HasError(appInfo)) {
+            if (!SYSTEM.ERROR.HAS_ERROR(appInfo)) {
                 async.series([
                     function(callback) {
                         /* Create security manager for this app (connection) */
@@ -138,7 +141,7 @@ CoreServer.prototype.listen = function() {
     });
 }
 
-CoreServer.prototype.handleRequest = function(req, res) {
+DiligentServer.prototype.handleRequest = function(req, res) {
     var url = require('url').parse(req.url, true);
     var filename = path.normalize(url.pathname);
     var query = url.query;
@@ -175,11 +178,13 @@ CoreServer.prototype.handleRequest = function(req, res) {
     else if (urlComponent[1] === 'lib' ||
              urlComponent[1] === 'resources' ||
              urlComponent[1] === 'api' ||
-             urlComponent[1] === 'device') {
+             urlComponent[1] === 'device' ||
+             urlComponent[1] === 'favicon.ico') {
         if (path.basename(filename) === 'jquery-ui.min.css')
             this.jqueryuiPath = path.dirname(filename);
     }
     else {
+        console.log('Access denied: ' + filename + ' : ' + filepath);
         backToLauncher();
         return;
     }
@@ -190,13 +195,17 @@ CoreServer.prototype.handleRequest = function(req, res) {
                 filename = path.normalize('/resources/img/unknown-icon.png');
                 filepath = path.join(rootdir, filename);
             }
+            else if (path.basename(filename) === 'favicon.ico') {
+                filename = path.normalize('/resources/img/favicon.ico');
+                filepath = path.join(rootdir, filename);
+            }
             else if (filename.indexOf('userdata') > 0 && filename.indexOf('assets') > 0) {
                 var dataPath = null;
 
                 if (query.uuid) {
                     var disk = this.storageManager.getDiskByUUID(query.uuid);
 
-                    if (SYSTEM.ERROR.HasError(disk))
+                    if (SYSTEM.ERROR.HAS_ERROR(disk))
                         /* Inavlid disk uuid specified, ignore this request */
                         dataPath = null;
                     else if (disk.mountpoint === this.storageManager.systemDisk.mountpoint)
@@ -232,7 +241,9 @@ CoreServer.prototype.handleRequest = function(req, res) {
         }
 
         if (fs.lstatSync(filepath).isDirectory())
-            filepath += path.sep + path.basename(filepath) + '.html';
+            filepath += path.sep + 'index.html';
+
+        filepath = path.normalize(filepath);
 
         fs.readFile(filepath, function(err, content) {
             if (err) {

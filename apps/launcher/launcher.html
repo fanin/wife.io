@@ -8,7 +8,7 @@
     <script src="http://%SYSIP%:%SYSPORT%/lib/jquery/jquery-1.11.1.min.js"></script>
 
     <!-- Import Foundation Frameworks -->
-    <script src="http://%SYSIP%:%SYSPORT%/lib/framework/foundation/bundle.js"></script>
+    <script src="http://%SYSIP%:%SYSPORT%/lib/framework/base/base.min.js"></script>
 
     <!-- Import UI Frameworks -->
     <script src="http://%SYSIP%:%SYSPORT%/lib/framework/ui/bundle.js"></script>
@@ -25,26 +25,26 @@
             this.fileManagerClient = new FileManagerClient();
         };
 
-        /* Inherit CoreClient */
-        Launcher.prototype = new CoreClient();
+        /* Inherit DiligentClient */
+        Launcher.prototype = new DiligentClient();
         Launcher.prototype.constructor = Launcher;
 
         $(function() {
             var launcher = new Launcher();
 
-            launcher.event.on("core.connection#established", function(event) {
+            launcher.event.on("diligent.connection#established", function(event) {
                 launcher.appManagerClient.attach(launcher);
                 launcher.fileManagerClient.attach(launcher);
             });
 
-            launcher.event.on("core.connection#closed", function(event) {
+            launcher.event.on("diligent.connection#closed", function(event) {
                 launcher.appManagerClient.detach();
                 launcher.fileManagerClient.detach();
             });
 
-            launcher.event.on("core.connection#error", function(event, error) {});
+            launcher.event.on("diligent.connection#error", function(event, error) {});
 
-            launcher.event.on("core.wsapi#loaded", function(event) {
+            launcher.event.on("diligent.wsapi#loaded", function(event) {
                 var self = launcher;
 
                 self.appManagerClient.event.on("app.list", function(event, arg) {
@@ -125,7 +125,7 @@
                 self.appManagerClient.list();
             });
 
-            launcher.event.on("core.wsapi#error", function(event, error) {});
+            launcher.event.on("diligent.wsapi#error", function(event, error) {});
 
             launcher.initiate();
         });

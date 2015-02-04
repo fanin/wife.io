@@ -1,3 +1,5 @@
+"use strict";
+
 var fs = require('fs-extra'),
     fse = require('fs-extended'),
     ss = require('socket.io-stream'),
@@ -10,7 +12,7 @@ fs.jsonfile.spaces = 4;
 var SYSTEM = require('../system');
 var USER_APP_PATH = SYSTEM.SETTINGS.SystemDataPath + path.sep + SYSTEM.SETTINGS.SystemName + path.sep + 'apps';
 var BUILTIN_APP_PATH = path.resolve(__dirname, '..' + path.sep + 'apps');
-var APP_INFO_FILE = 'AppInfo.json';
+var APP_INFO_FILE = 'manifest.json';
 
 module.exports = AppManager;
 
@@ -131,7 +133,7 @@ AppManager.prototype.register = function(socket, complete) {
 
     ss(socket).on(self.APISpec.Install.REQ, function(appBundleDataStream) {
         if (!self.securityManager.canManageApps(socket)) {
-            socket.emit(self.APISpec.Install.ERR, SYSTEM.ERROR.SecurityAccessDenied);
+            socket.emit(self.APISpec.Install.ERR, SYSTEM.ERROR.ERROR_SECURITY_ACCESS_DENIED);
             return;
         }
 
@@ -160,13 +162,13 @@ AppManager.prototype.register = function(socket, complete) {
 
         appBundleDataStream.on('error', function(err) {
             console.log('APP Install: ' + err);
-            socket.emit(self.APISpec.Install.ERR, SYSTEM.ERROR.FSBrokenPipe);
+            socket.emit(self.APISpec.Install.ERR, SYSTEM.ERROR.ERROR_FS_BROKEN_PIPE);
         });
     });
 
     socket.on(self.APISpec.CancelInstall.REQ, function(installationCode) {
         if (!self.securityManager.canManageApps(socket)) {
-            socket.emit(self.APISpec.CancelInstall.ERR, SYSTEM.ERROR.SecurityAccessDenied);
+            socket.emit(self.APISpec.CancelInstall.ERR, SYSTEM.ERROR.ERROR_SECURITY_ACCESS_DENIED);
             return;
         }
 
@@ -187,7 +189,7 @@ AppManager.prototype.register = function(socket, complete) {
 
     socket.on(self.APISpec.Uninstall.REQ, function(appInfo) {
         if (!self.securityManager.canManageApps(socket)) {
-            socket.emit(self.APISpec.Uninstall.ERR, SYSTEM.ERROR.SecurityAccessDenied);
+            socket.emit(self.APISpec.Uninstall.ERR, SYSTEM.ERROR.ERROR_SECURITY_ACCESS_DENIED);
             return;
         }
 
@@ -221,10 +223,10 @@ AppManager.prototype.getAppInfo = function(appDirectory) {
         if (appInfo)
             return appInfo;
         else
-            return SYSTEM.ERROR.FSIOError;
+            return SYSTEM.ERROR.ERROR_FS_IO;
     }
     else
-        return SYSTEM.ERROR.FSNotExist;
+        return SYSTEM.ERROR.ERROR_FS_NOT_EXIST;
 }
 
 AppManager.prototype.listApps = function() {
@@ -262,25 +264,25 @@ AppManager.prototype.install = function(appBundlePath) {
     var officialUpgrade = false;
 
     if (!fs.existsSync(appBundlePath))
-        return { result: SYSTEM.ERROR.FSNotExist };
+        return { result: SYSTEM.ERROR.ERROR_FS_NOT_EXIST };
 
     try {
         appBundle = new AdmZip(appBundlePath);
     }
     catch (err) {
-        return { result: SYSTEM.ERROR.APPBadFileFormat };
+        return { result: SYSTEM.ERROR.ERROR_APP_BAD_FILE_FORMAT };
     }
 
     appInfo = this.verifyAppBundle(appBundle);
     if (!appInfo)
-        return { result: SYSTEM.ERROR.APPBadContentStruct };
+        return { result: SYSTEM.ERROR.ERROR_APP_BAD_STRUCT };
 
     /* Extract APP bundle */
     try {
         appBundle.extractAllTo(SYSTEM.SETTINGS.TempPath, true);
     }
     catch (err) {
-        return { result: SYSTEM.ERROR.APPExtractFail };
+        return { result: SYSTEM.ERROR.ERROR_APP_EXTRACT };
     }
 
     if (appInfo.AppIdentifier === undefined)
@@ -319,7 +321,7 @@ AppManager.prototype.install = function(appBundlePath) {
         }
     }
     else {
-        return { result: SYSTEM.ERROR.APPBadIdentifier };
+        return { result: SYSTEM.ERROR.ERROR_APP_BAD_ID };
     }
 
     function installApp(appPath, appInfo) {
@@ -338,7 +340,7 @@ AppManager.prototype.install = function(appBundlePath) {
         oldAppInfo = JSON.parse(jsonAppInfo);
 
         if (appInfo.Directory != oldAppInfo.Directory)
-            return { result: SYSTEM.ERROR.APPUpgradeFail };
+            return { result: SYSTEM.ERROR.ERROR_APP_UPGRADE };
 
         if (appInfo.AppIdentifier === oldAppInfo.AppIdentifier)
             officialUpgrade = true;
@@ -375,7 +377,7 @@ AppManager.prototype.uninstall = function(appInfo) {
     var appPath = USER_APP_PATH + path.sep + appInfo.Directory;
 
     if (!fs.existsSync(appPath))
-        return { result: SYSTEM.ERROR.FSNotExist };
+        return { result: SYSTEM.ERROR.ERROR_FS_NOT_EXIST };
 
     try {
         /* Remove from app list */
@@ -386,7 +388,7 @@ AppManager.prototype.uninstall = function(appInfo) {
     }
     catch (err) {
         console.log(err);
-        return { result: SYSTEM.ERROR.FSRemoveItem };
+        return { result: SYSTEM.ERROR.ERROR_FS_REMOVE };
     }
 
     return { result: 'OK' };

@@ -1,3 +1,5 @@
+"use strict";
+
 var fs = require('fs-extra');
 var path = require('path');
 var storage = require('./lib/disks.js');
@@ -39,11 +41,11 @@ StorageManager.prototype.register = function(socket, complete) {
     socket.on(self.APISpec.GetLocalDisks.REQ, function() {
         self.getLocalDisks(function(disks, error) {
             if (error) {
-                socket.emit(self.APISpec.GetLocalDisks.ERR, SYSTEM.ERROR.StorDiskApiError);
+                socket.emit(self.APISpec.GetLocalDisks.ERR, SYSTEM.ERROR.ERROR_STOR_DISK_API);
             }
             else {
                 if (!disks.system) {
-                    socket.emit(self.APISpec.GetLocalDisks.ERR, SYSTEM.ERROR.StorDiskNotFound);
+                    socket.emit(self.APISpec.GetLocalDisks.ERR, SYSTEM.ERROR.ERROR_STOR_DISK_NOT_FOUND);
                 }
 
                 socket.emit(self.APISpec.GetLocalDisks.RES, disks);
@@ -63,10 +65,10 @@ StorageManager.prototype.register = function(socket, complete) {
                 self.notificationCenter.post("Storage", "UserDataDiskSet", disk);
             }
             else
-                socket.emit(self.APISpec.SetUserDataDisk.ERR, SYSTEM.ERROR.StorBadDiskInfo);
+                socket.emit(self.APISpec.SetUserDataDisk.ERR, SYSTEM.ERROR.ERROR_STOR_BAD_DISK_INFO);
         }
         else
-            socket.emit(self.APISpec.SetUserDataDisk.ERR, SYSTEM.ERROR.SecurityExternalNotAllowed);
+            socket.emit(self.APISpec.SetUserDataDisk.ERR, SYSTEM.ERROR.ERROR_SECURITY_EXTERNAL_NOT_ALLOWED);
     });
 
     self.getLocalDisks(function(disks, error) {
@@ -76,7 +78,7 @@ StorageManager.prototype.register = function(socket, complete) {
         }
         /* Examine SystemDataPath */
         else if (!fs.existsSync(SYSTEM.SETTINGS.SystemDataPath)) {
-            error = SYSTEM.ERROR.StorSysDiskNotFound;
+            error = SYSTEM.ERROR.ERROR_STOR_SYSDISK_NOT_FOUND;
             self.notificationCenter.post("Storage", "Error", error);
             self.pausePolling = true;
         }
@@ -243,21 +245,21 @@ StorageManager.prototype.getDiskByUUID = function(uuid) {
         if (this.removableDisk[i].uuid === uuid)
             return this.removableDisk[i];
 
-    return SYSTEM.ERROR.StorBadDiskInfo;
+    return SYSTEM.ERROR.ERROR_STOR_BAD_DISK_INFO;
 }
 
 StorageManager.prototype.getUserDataPath = function(socket, _path) {
     var userDataPath;
 
     if (!socket || !_path)
-        return SYSTEM.ERROR.SysInvalidArg;
+        return SYSTEM.ERROR.ERROR_INVALID_ARG;
 
     if (this.userWorkingDisk[socket].uuid === this.systemDisk.uuid)
         userDataPath = SYSTEM.SETTINGS.SystemDataPath + this.securityManager.appUserDataDirectory(socket);
     else if (this.userWorkingDisk[socket])
         userDataPath = this.userWorkingDisk[socket].mountpoint + this.securityManager.appUserDataDirectory(socket);
     else
-        return SYSTEM.ERROR.StorDiskNotFound;
+        return SYSTEM.ERROR.ERROR_STOR_DISK_NOT_FOUND;
 
     try {
         if (!fs.existsSync(userDataPath))
@@ -266,10 +268,10 @@ StorageManager.prototype.getUserDataPath = function(socket, _path) {
     catch (error) {
         if (error.code === 'EACCES') {
             /* userWorkingDisk is probably removed */
-            return SYSTEM.ERROR.SecurityAccessDenied;
+            return SYSTEM.ERROR.ERROR_SECURITY_ACCESS_DENIED;
         }
         else
-            return SYSTEM.ERROR.StorUnknownError;
+            return SYSTEM.ERROR.ERROR_STOR_UNKNOWN;
     }
 
     return userDataPath + path.sep + path.normalize(_path);

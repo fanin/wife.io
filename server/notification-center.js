@@ -1,3 +1,5 @@
+"use strict";
+
 module.exports = NotificationCenter;
 
 function NotificationCenter(_super, apiSpec) {
