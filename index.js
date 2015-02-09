@@ -23,6 +23,9 @@ if (!SYSTEM.SETTINGS.DiligentServer) SYSTEM.SETTINGS.DiligentServer = "diligent-
 if (!SYSTEM.SETTINGS.SystemDataPath) throw new Error('Missing system setting "SystemDataPath" in the settings.json');
 if (!SYSTEM.SETTINGS.TempPath) SYSTEM.SETTINGS.TempPath = "/tmp";
 
+/* Set process name */
+process.title = SYSTEM.SETTINGS.SystemName;
+
 server.listen(process.env.npm_package_config_port || 8001, function() {
     var DiligentServer = require('./server/' + SYSTEM.SETTINGS.DiligentServer);
     if (!SYSTEM.SERVER) {

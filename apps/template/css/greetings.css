@@ -2,6 +2,10 @@ body {
     background-color: white;
 }
 
+.app-view {
+    text-align: center;
+}
+
 h1 {
     font: normal 28px "omnes-pro", Helvetica, Arial, sans-serif;
     color: black;
@@ -12,11 +16,13 @@ h2 {
     color: black;
 }
 
-#greetings {
+.greetings {
     display: none;
+    margin: 0px auto;
+    width: 800px;
 }
 
-#greetings p {
+.greetings p {
     font: normal 12px "omnes-pro", Helvetica, Arial, sans-serif;
     color: blue;
 }

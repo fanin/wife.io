@@ -1,5 +1,4 @@
 var React = require('react');
-var DiligentAgent = require('./DiligentAgent.jsx');
 var GreetingsActionCreators = require('../actions/GreetingsActionCreators');
 var DiligentStore = require('../stores/DiligentStore');
 var GreetingsStore = require('../stores/GreetingsStore');
@@ -47,34 +46,52 @@ var GreetingsApp = React.createClass({
         GreetingsActionCreators.sayHello('Mac', 'Kenny');
     },
 
+    toggleDebugConsole: function(event) {
+        $('.ui.sidebar')
+        .sidebar('setting', 'dimPage', false)
+        .sidebar('setting', 'closable', false)
+        .sidebar('toggle');
+    },
+
     render: function() {
         return (
             <div>
                 <h1>Greetings!</h1>
-                <h2>This is a React + Flux architecture application.</h2>
+                <h2>This is a React + Flux application template.</h2>
+                <p>&nbsp;</p>
 
-                <DiligentAgent debug={true} />
+                <div className="ui button" onClick={this.toggleDebugConsole}>
+                    Toggle Diligent Console
+                </div>
 
-                <p>
-                    <input type="button"
-                          value={(this.state.greetingsExtentionLoaded ? "Unload" : "Load") + " Greetings Extension"}
-                        onClick={this.handleExtensionLoad} />
-                </p>
+                <div className="ui button" onClick={this.handleExtensionLoad}>
+                    {(this.state.greetingsExtentionLoaded ? "Unload" : "Load") + " Greetings Extension"}
+                </div>
 
-                <div id='greetings' style={{display: this.state.greetingsExtentionLoaded ? "block" : "none"}}>
+                <div className="greetings" style={{display: this.state.greetingsExtentionLoaded ? "block" : "none"}}>
                     <p>
-                        <input type="button"
-                              value="Test Greetings Extension"
-                            onClick={this.handleExtensionTest} />
+                        <div className="ui button" onClick={this.handleExtensionTest}>
+                            Test Greetings Extension
+                        </div>
                     </p>
 
-                    <p>
-                        Greetings from Extension: <mark>{this.state.greetingsMsg}</mark>
-                    </p>
+                    <div className="ui horizontal divider">
+                        <i className="bar chart icon"></i>
+                        &nbsp;Extension Test Result
+                    </div>
 
-                    <p>
-                        Rude message from Extension: <mark>{this.state.rudeMsg}</mark>
-                    </p>
+                    <table className="ui definition table">
+                        <tbody>
+                            <tr>
+                                <td className="five wide column">Greetings from Extension</td>
+                                <td>{this.state.greetingsMsg}</td>
+                            </tr>
+                            <tr>
+                                <td>Rude message from Extension</td>
+                                <td>{this.state.rudeMsg}</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         );

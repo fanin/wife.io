@@ -58,38 +58,49 @@ var DiligentAgent = React.createClass({
 
     render: function() {
         return (
-            <div className="diligent-agent" style={{display: this.props.debug ? "block" : "none"}}>
-                <p>
-                    Diligent client status: <mark>{this.state.diligentClientStatus}</mark>
-                </p>
-
-                <p>
-                    Diligent client version: <mark>{this.state.diligentClientVersion}</mark>
-                </p>
-
-                <p>
-                    Connection status: <mark>{this.state.diligentConnectionStatus}</mark>
-                </p>
-
-                <p>
-                    WSAPI status: <mark>{this.state.diligentWSApiStatus}</mark>
-                </p>
-
-                <p>
-                    Extension status: <mark>{this.state.extensionStatus}</mark>
-                </p>
-
-                <p>
-                    Extension name: <mark>{this.state.extensionName}</mark>
-                </p>
-
-                <p>
-                    Extension version: <mark>{this.state.extensionVersion}</mark>
-                </p>
-
-                <p>
-                    Extension error: <mark>{this.state.extensionError}</mark>
-                </p>
+            <div style={{display: this.props.debug ? "block" : "none"}}>
+                <table className="ui small table">
+                    <thead>
+                        <tr>
+                            <th>Information</th>
+                            <th className="twelve wide">Result</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Diligent client status</td>
+                            <td>{this.state.diligentClientStatus}</td>
+                        </tr>
+                        <tr>
+                            <td>Diligent client version</td>
+                            <td>{this.state.diligentClientVersion}</td>
+                        </tr>
+                        <tr>
+                            <td>Connection status</td>
+                            <td>{this.state.diligentConnectionStatus}</td>
+                        </tr>
+                        <tr>
+                            <td>WSAPI status</td>
+                            <td>{this.state.diligentWSApiStatus}</td>
+                        </tr>
+                        <tr>
+                            <td>Extension status</td>
+                            <td>{this.state.extensionStatus}</td>
+                        </tr>
+                        <tr>
+                            <td>Extension name</td>
+                            <td>{this.state.extensionName}</td>
+                        </tr>
+                        <tr>
+                            <td>Extension version</td>
+                            <td>{this.state.extensionVersion}</td>
+                        </tr>
+                        <tr>
+                            <td>Extension error</td>
+                            <td>{this.state.extensionError}</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         );
     }

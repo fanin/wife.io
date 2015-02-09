@@ -5,6 +5,7 @@ Wife.io, a Web Interface For Embedded devices, is a prior project to WifeOS base
 ##Prepare
 ```
 $ npm install
+$ source envsetup.sh
 ```
 
 ##Build your wife

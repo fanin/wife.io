@@ -20,6 +20,7 @@ var JQUERY_VERSION = '1.11.1',
 var targets = [
     'server',
     'base',
+    'ui',
     'lib',
     'app',
     'api',
@@ -66,6 +67,12 @@ gulp.task('base', function() {
         .pipe(buffer())
         .pipe(uglify())
         .pipe(gulp.dest(OUTPATH + '/lib/framework/base/'));
+});
+
+gulp.task('ui', function() {
+    /* Copy Semantic UI framework */
+    return gulp.src('lib/framework/ui-kits/semantic/**/*')
+               .pipe(gulp.dest(OUTPATH + '/lib/framework/ui-kits/semantic/'));
 });
 
 gulp.task('ui-kits', function() {

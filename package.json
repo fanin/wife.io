@@ -7,7 +7,8 @@
     "port": "8001"
   },
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js &",
+    "stop": "killall wife.io"
   },
   "repository": {
     "type": "git",
