@@ -72,14 +72,14 @@ DiligentServer.prototype.listen = function() {
 
     this.ioServer.on('connection', function(socket) {
         /* Handle api initiate handshaking */
-        socket.on(self.apiSpec[0].Base.GetInfo.REQ, function(appDirectory) {
-            var appInfo = self.appManager.getAppInfo(appDirectory);
+        socket.on(self.apiSpec[0].Base.GetManifest.REQ, function(appDirectory) {
+            var manifest = self.appManager.getAppManifest(appDirectory);
 
-            if (!SYSTEM.ERROR.HAS_ERROR(appInfo)) {
+            if (!SYSTEM.ERROR.HAS_ERROR(manifest)) {
                 async.series([
                     function(callback) {
                         /* Create security manager for this app (connection) */
-                        self.securityManager.register(socket, appInfo, function() {
+                        self.securityManager.register(socket, manifest, function() {
                             callback(null, true);
                         });
                     },
@@ -123,7 +123,7 @@ DiligentServer.prototype.listen = function() {
                             self.storageManager.unregister(socket);
                             self.securityManager.unregister(socket);
 
-                            socket.removeAllListeners(self.apiSpec[0].Base.GetInfo.REQ);
+                            socket.removeAllListeners(self.apiSpec[0].Base.GetManifest.REQ);
                             socket.removeAllListeners('disconnect');
                         });
 
@@ -131,12 +131,12 @@ DiligentServer.prototype.listen = function() {
                     }
                 ],
                 function(err, results) {
-                    /* Response AppInfo to app client */
-                    socket.emit(self.apiSpec[0].Base.GetInfo.RES, appInfo);
+                    /* Response app manifest to app client */
+                    socket.emit(self.apiSpec[0].Base.GetManifest.RES, manifest);
                 });
             }
             else
-                socket.emit(self.apiSpec[0].Base.GetInfo.ERR, appInfo);
+                socket.emit(self.apiSpec[0].Base.GetManifest.ERR, manifest);
         });
     });
 }

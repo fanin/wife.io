@@ -1,0 +1,22 @@
+{
+    "name": "Notebook",
+    "version": "0.1.0",
+    "ws_api_version": "0.1",
+    "directory": "notebook",
+    "entry": "notebook.html",
+    "extensions": [],
+    "localizations": [
+        "en_US",
+        "zh_TW"
+    ],
+    "browser_support": {
+        "chrome": "*",
+        "firefox": "*",
+        "internet_explorer": "*",
+        "safari": "*"
+    },
+    "description": "Write and manage notes",
+    "show_in_launcher": true,
+    "allow_external_userdata": true,
+    "identifier": "BAPPnbwWbNnD"
+}

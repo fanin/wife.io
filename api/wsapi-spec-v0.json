@@ -3,16 +3,16 @@
     "MinorVersion": [
         {
             "Base": {
-                "GetInfo": {
-                    "REQ": "WSAPI-0-C-APP-GET-INFO",
+                "GetManifest": {
+                    "REQ": "WSAPI-0-C-APP-GET-MANIFEST",
                     "RES": "WSAPI-0-R-APP-INFO",
-                    "ERR": "WSAPI-0-E-APP-GET-INFO",
+                    "ERR": "WSAPI-0-E-APP-GET-MANIFEST",
                     "DESC": {
                         "REQ Args": {
                             "AppDirectory": "Find App by App directory"
                         },
                         "RES Params": {
-                            "AppInfo": "AppInfo object"
+                            "Manifest": "App manifest object"
                         },
                         "ERR Params": {
                             "Error": "Error code"
@@ -124,10 +124,10 @@
                     "ERR": "WSAPI-0-E-APP-UNINSTALL",
                     "DESC": {
                         "REQ Args": {
-                            "AppInfo": "AppInfo to indicate which App to be uninstalled"
+                            "Manifest": "App manifest to indicate which App to be uninstalled"
                         },
                         "RES Params": {
-                            "AppInfo": "AppInfo to indicate which App being uninstalled"
+                            "Manifest": "App manifest to indicate which App being uninstalled"
                         },
                         "ERR Params": {
                             "Error": "Error code"

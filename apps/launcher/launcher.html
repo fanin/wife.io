@@ -64,11 +64,11 @@
                                         /* Build sorted app list directory to speed up merge process */
                                         var appDirectory = [];
                                         for (i in sorted)
-                                            appDirectory[sorted[i].Directory] = sorted[i];
+                                            appDirectory[sorted[i].directory] = sorted[i];
 
                                         /* Merge sorted list & latest app list */
                                         for (i in arg.list)
-                                            if (appDirectory[arg.list[i].Directory] === undefined)
+                                            if (appDirectory[arg.list[i].directory] === undefined)
                                                 sorted.push(arg.list[i]);
 
                                         self.appList = sorted;
@@ -96,10 +96,10 @@
                     });
                 });
 
-                self.appManagerClient.event.on("app.uninstall#success", function(event, appInfo) {
-                    /* Remove appInfo from appList */
+                self.appManagerClient.event.on("app.uninstall#success", function(event, manifest) {
+                    /* Remove manifest from appList */
                     for (var i = 0, len = self.appList.length; i < len; i++) {
-                        if (self.appList[i].Directory === appInfo.Directory) {
+                        if (self.appList[i].directory === manifest.directory) {
                             self.appList.splice(i, 1);
                             break;
                         }
@@ -113,7 +113,7 @@
                     });
 
                     /* Remove app icon */
-                    var elementIconLi = document.getElementById("icon-li-" + appInfo.Directory);
+                    var elementIconLi = document.getElementById("icon-li-" + manifest.directory);
                     if (elementIconLi)
                         document.getElementById("applist").removeChild(elementIconLi);
                 });
@@ -139,17 +139,17 @@
                     var app = self.appList[i];
                     var appType = self.appManagerClient.getType(app);
 
-                    var elementLi = document.getElementById("icon-li-" + app.Directory);
-                    var elementA = document.getElementById("icon-a-" + app.Directory);
-                    var elementIconDiv = document.getElementById("icon-div-" + app.Directory);
+                    var elementLi = document.getElementById("icon-li-" + app.directory);
+                    var elementA = document.getElementById("icon-a-" + app.directory);
+                    var elementIconDiv = document.getElementById("icon-div-" + app.directory);
 
                     if (appType === "user") {
                         elementOverlayImg = document.createElement("img");
-                        elementOverlayImg.setAttribute("id", "overlay-img-" + app.Directory);
+                        elementOverlayImg.setAttribute("id", "overlay-img-" + app.directory);
                         elementOverlayImg.setAttribute("src", "img/delete-icon.png");
 
                         elementOverlayDiv = document.createElement("div");
-                        elementOverlayDiv.setAttribute("id", "overlay-div-" + app.Directory);
+                        elementOverlayDiv.setAttribute("id", "overlay-div-" + app.directory);
                         elementOverlayDiv.setAttribute("class", "overlay");
                         elementOverlayDiv.appendChild(elementOverlayImg);
 
@@ -160,7 +160,7 @@
                     if (appType === "builtin")
                         elementA.setAttribute("title", "Builtin APP");
                     else
-                        elementA.setAttribute("title", "Delete " + app.AppName);
+                        elementA.setAttribute("title", "Delete " + app.name);
 
                     elementIconDiv.setAttribute("class", "shake");
                 }
@@ -177,22 +177,22 @@
                     var app = self.appList[i];
                     var appType = self.appManagerClient.getType(app);
 
-                    var elementA = document.getElementById("icon-a-" + app.Directory);
-                    var elementIconDiv = document.getElementById("icon-div-" + app.Directory);
+                    var elementA = document.getElementById("icon-a-" + app.directory);
+                    var elementIconDiv = document.getElementById("icon-div-" + app.directory);
 
                     if (appType === "user") {
-                        var elementOverlayImg = document.getElementById("overlay-img-" + app.Directory);
-                        var elementOverlayDiv = document.getElementById("overlay-div-" + app.Directory);
+                        var elementOverlayImg = document.getElementById("overlay-img-" + app.directory);
+                        var elementOverlayDiv = document.getElementById("overlay-div-" + app.directory);
 
                         elementOverlayDiv.removeChild(elementOverlayImg);
                         elementIconDiv.removeChild(elementOverlayDiv);
 
-                        elementA.setAttribute("href", "/apps/u/" + app.Directory + "/" + app.AppEntry);
+                        elementA.setAttribute("href", "/apps/u/" + app.directory + "/" + app.entry);
                     }
                     else
-                        elementA.setAttribute("href", "/apps/b/" + app.Directory + "/" + app.AppEntry);
+                        elementA.setAttribute("href", "/apps/b/" + app.directory + "/" + app.entry);
 
-                    elementA.setAttribute("title", app.Description);
+                    elementA.setAttribute("title", app.description);
 
                     elementIconDiv.removeAttribute("class");
                 }
@@ -213,40 +213,40 @@
                 return;
 
             var elementIconImg = document.createElement("img");
-            elementIconImg.setAttribute("id", "icon-img-" + app.Directory);
+            elementIconImg.setAttribute("id", "icon-img-" + app.directory);
             elementIconImg.setAttribute("width", "100%");
             elementIconImg.setAttribute("height", "100%");
 
             var elementIconDiv = document.createElement("div");
-            elementIconDiv.setAttribute("id", "icon-div-" + app.Directory);
+            elementIconDiv.setAttribute("id", "icon-div-" + app.directory);
             if (appType === "user") {
-                elementIconImg.setAttribute("src", "/apps/u/" + app.Directory + "/img/icon.png");
+                elementIconImg.setAttribute("src", "/apps/u/" + app.directory + "/img/icon.png");
                 elementIconDiv.setAttribute(
                     "style",
-                    "background:url(/apps/u/" + app.Directory + "/img/icon.png) no-repeat; background-size: contain;"
+                    "background:url(/apps/u/" + app.directory + "/img/icon.png) no-repeat; background-size: contain;"
                 );
             }
             else {
-                elementIconImg.setAttribute("src", "/apps/b/" + app.Directory + "/img/icon.png");
+                elementIconImg.setAttribute("src", "/apps/b/" + app.directory + "/img/icon.png");
                 elementIconDiv.appendChild(elementIconImg);
             }
 
             var elementText = document.createElement("span");
-            elementText.setAttribute("id", "icon-text-" + app.Directory);
-            elementText.appendChild(document.createTextNode(app.AppName));
+            elementText.setAttribute("id", "icon-text-" + app.directory);
+            elementText.appendChild(document.createTextNode(app.name));
 
             var elementA = document.createElement("a");
-            elementA.setAttribute("id", "icon-a-" + app.Directory);
+            elementA.setAttribute("id", "icon-a-" + app.directory);
             elementA.appendChild(elementIconDiv);
             if (appType === "user")
-                elementA.setAttribute("href", "/apps/u/" + app.Directory + "/" + app.AppEntry);
+                elementA.setAttribute("href", "/apps/u/" + app.directory + "/" + app.entry);
             else
-                elementA.setAttribute("href", "/apps/b/" + app.Directory + "/" + app.AppEntry);
-            elementA.setAttribute("title", app.Description);
+                elementA.setAttribute("href", "/apps/b/" + app.directory + "/" + app.entry);
+            elementA.setAttribute("title", app.description);
             elementA.appendChild(elementText);
 
             var elementLi = document.createElement("li");
-            elementLi.setAttribute("id", "icon-li-" + app.Directory);
+            elementLi.setAttribute("id", "icon-li-" + app.directory);
             elementLi.appendChild(elementA);
             document.getElementById("applist").appendChild(elementLi);
         }
@@ -276,7 +276,7 @@
                         if (!ignoreClick) {
                             var ids = $(this).attr("id").split("-");
                             for (var i = 0, len = self.appList.length; i < len; i++) {
-                                if (self.appList[i].Directory === ids[2]) {
+                                if (self.appList[i].directory === ids[2]) {
                                     if (confirm("Are you sure?"))
                                         self.appManagerClient.uninstall(self.appList[i]);
                                     break;

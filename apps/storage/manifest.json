@@ -1,12 +1,10 @@
 {
-    "name": "Template",
-    "version": "0.2.0",
+    "name": "Storage",
+    "version": "0.1.0",
     "ws_api_version": "0.1",
-    "directory": "template",
-    "entry": "index.html",
-    "extensions": [
-        "Greetings"
-    ],
+    "directory": "storage",
+    "entry": "storage.html",
+    "extensions": [],
     "localizations": [
         "en_US",
         "zh_TW"
@@ -17,8 +15,8 @@
         "internet_explorer": "*",
         "safari": "*"
     },
-    "description": "APP template codes",
+    "description": "Storage information",
     "show_in_launcher": true,
     "allow_external_userdata": false,
-    "identifier": "BAPPSjoBcXEe"
+    "identifier": "BAPPiBelWizY"
 }

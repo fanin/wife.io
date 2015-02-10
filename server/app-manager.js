@@ -21,28 +21,28 @@ function AppManager(_super, apiSpec) {
     this.APISpec = apiSpec;
     this.securityManager = _super.securityManager;
 
-    /* Maintain a 'AppIdentifier:AppInfo' dictionary array for all Apps */
+    /* Maintain a 'identifier:manifest' dictionary array for all Apps */
     this.apps = [];
 
     /* Private methods */
-    this.verifyAppInfo = function(appInfo) {
-        if (appInfo.AppName === undefined)
+    this.verifyAppManifest = function(manifest) {
+        if (manifest.name === undefined)
             return false;
-        if (appInfo.Version === undefined)
+        if (manifest.version === undefined)
             return false;
-        if (appInfo.WSAPIVersion === undefined)
+        if (manifest.ws_api_version === undefined)
             return false;
-        if (appInfo.Directory === undefined)
+        if (manifest.directory === undefined)
             return false;
-        if (appInfo.AppEntry === undefined)
+        if (manifest.entry === undefined)
             return false;
-        if (appInfo.ShowInLauncher === undefined)
+        if (manifest.show_in_launcher === undefined)
             return false;
         return true;
     };
 
     this.verifyAppBundle = function(appBundle) {
-        var appInfo = null;
+        var manifest = null;
         var appDirs = [];
 
         try {
@@ -52,60 +52,60 @@ function AppManager(_super, apiSpec) {
                 else if (path.basename(zipEntry.entryName) === APP_INFO_FILE) {
                     try {
                         var info = JSON.parse(appBundle.readAsText(zipEntry, 'utf8'));
-                        if (this.verifyAppInfo(info)) {
-                            if (appBundle.getEntry(info.Directory + path.sep + info.AppEntry)) {
-                                if (appDirs.indexOf(info.Directory) >= 0) {
-                                    appInfo = info;
+                        if (this.verifyAppManifest(info)) {
+                            if (appBundle.getEntry(info.directory + path.sep + info.entry)) {
+                                if (appDirs.indexOf(info.directory) >= 0) {
+                                    manifest = info;
                                     return false;
                                 }
                             }
                         }
                     }
-                    catch (err) { console.log('Parse AppInfo Error: ' + err); }
+                    catch (err) { console.log('Parse app manifest error: ' + err); }
                     return false;
                 }
 
                 return true;
             }.bind(this));
         }
-        catch (err) { 'App Bundle Error: ' + console.log(err); }
+        catch (err) { 'App bundle error: ' + console.log(err); }
 
-        return appInfo;
+        return manifest;
     };
 
     this.loadApps = function(_path, list) {
         var appList = [];
 
         for (var i in list) {
-            var jsonAppInfo = fs.readFileSync(_path + path.sep + list[i] + path.sep + APP_INFO_FILE);
-            if (jsonAppInfo) {
+            var jsonManifest = fs.readFileSync(_path + path.sep + list[i] + path.sep + APP_INFO_FILE);
+            if (jsonManifest) {
                 try {
-                    var appInfo = JSON.parse(jsonAppInfo);
-                    if (this.verifyAppInfo(appInfo)) {
+                    var manifest = JSON.parse(jsonManifest);
+                    if (this.verifyAppManifest(manifest)) {
                         if (_path === USER_APP_PATH) {
-                            if (appInfo.AppIdentifier) {
-                                this.apps[appInfo.AppIdentifier] = appInfo;
+                            if (manifest.identifier) {
+                                this.apps[manifest.identifier] = manifest;
 
-                                /* Erase AppIdentifier digits */
-                                appInfo.AppIdentifier = 'UAPP00000000';
-                                appList.push(appInfo);
+                                /* Erase identifier digits */
+                                manifest.identifier = 'UAPP00000000';
+                                appList.push(manifest);
                             }
                             else
                                 console.log('Invalid App: No identifier');
                         }
                         else {
                             /* FIXME: Builtin App Indentifier should be generated at build time */
-                            if (appInfo.AppIdentifier === undefined) {
+                            if (manifest.identifier === undefined) {
                                 /* Generate builtin APPs indentifier for first time running */
-                                appInfo.AppIdentifier = randomstring.generate('BAPPXXXXXXXX');
-                                fs.writeJsonSync(_path + path.sep + list[i] + path.sep + APP_INFO_FILE, appInfo);
+                                manifest.identifier = randomstring.generate('BAPPXXXXXXXX');
+                                fs.writeJsonSync(_path + path.sep + list[i] + path.sep + APP_INFO_FILE, manifest);
                             }
 
-                            this.apps[appInfo.AppIdentifier] = appInfo;
+                            this.apps[manifest.identifier] = manifest;
 
-                            /* Erase AppIdentifier digits for security reason, we only return APP type 'BAPP/UAPP' to client */
-                            appInfo.AppIdentifier = 'BAPP00000000';
-                            appList.push(appInfo);
+                            /* Erase identifier digits for security reason, we only return APP type 'BAPP/UAPP' to client */
+                            manifest.identifier = 'BAPP00000000';
+                            appList.push(manifest);
                         }
                     }
                     else
@@ -187,15 +187,15 @@ AppManager.prototype.register = function(socket, complete) {
         socket.emit(self.APISpec.CancelInstall.RES, installationCode);
     });
 
-    socket.on(self.APISpec.Uninstall.REQ, function(appInfo) {
+    socket.on(self.APISpec.Uninstall.REQ, function(manifest) {
         if (!self.securityManager.canManageApps(socket)) {
             socket.emit(self.APISpec.Uninstall.ERR, SYSTEM.ERROR.ERROR_SECURITY_ACCESS_DENIED);
             return;
         }
 
-        var result = self.uninstall(appInfo).result;
+        var result = self.uninstall(manifest).result;
         if (result === 'OK')
-            socket.emit(self.APISpec.Uninstall.RES, appInfo);
+            socket.emit(self.APISpec.Uninstall.RES, manifest);
         else
             socket.emit(self.APISpec.Uninstall.ERR, result);
     });
@@ -214,14 +214,14 @@ AppManager.prototype.unregister = function(socket) {
     socket.removeAllListeners(this.APISpec.Uninstall.REQ);
 }
 
-AppManager.prototype.getAppInfo = function(appDirectory) {
+AppManager.prototype.getAppManifest = function(appDirectory) {
     var file = BUILTIN_APP_PATH + path.sep + appDirectory + path.sep + APP_INFO_FILE;
 
     if (fs.existsSync(file)) {
-        var appInfo = fs.readJsonSync(file);
+        var manifest = fs.readJsonSync(file);
 
-        if (appInfo)
-            return appInfo;
+        if (manifest)
+            return manifest;
         else
             return SYSTEM.ERROR.ERROR_FS_IO;
     }
@@ -259,8 +259,8 @@ AppManager.prototype.listApps = function() {
 
 AppManager.prototype.install = function(appBundlePath) {
     var appBundle;
-    var appInfo;
-    var oldAppInfo;
+    var manifest;
+    var oldManifest;
     var officialUpgrade = false;
 
     if (!fs.existsSync(appBundlePath))
@@ -273,8 +273,8 @@ AppManager.prototype.install = function(appBundlePath) {
         return { result: SYSTEM.ERROR.ERROR_APP_BAD_FILE_FORMAT };
     }
 
-    appInfo = this.verifyAppBundle(appBundle);
-    if (!appInfo)
+    manifest = this.verifyAppBundle(appBundle);
+    if (!manifest)
         return { result: SYSTEM.ERROR.ERROR_APP_BAD_STRUCT };
 
     /* Extract APP bundle */
@@ -285,36 +285,36 @@ AppManager.prototype.install = function(appBundlePath) {
         return { result: SYSTEM.ERROR.ERROR_APP_EXTRACT };
     }
 
-    if (appInfo.AppIdentifier === undefined)
-        appInfo.AppIdentifier = 'UAPP00000000';
+    if (manifest.identifier === undefined)
+        manifest.identifier = 'UAPP00000000';
 
-    if (appInfo.AppIdentifier.indexOf('BAPP') === 0) {
-        var builtinAppPath = BUILTIN_APP_PATH + path.sep + appInfo.Directory;
+    if (manifest.identifier.indexOf('BAPP') === 0) {
+        var builtinAppPath = BUILTIN_APP_PATH + path.sep + manifest.directory;
 
         if (fs.existsSync(builtinAppPath)) {
-            upgradeApp(builtinAppPath, appInfo, true);
+            upgradeApp(builtinAppPath, manifest, true);
         }
         else {
-            installApp(builtinAppPath, appInfo);
+            installApp(builtinAppPath, manifest);
         }
     }
-    else if (appInfo.AppIdentifier.indexOf('UAPP') === 0) {
-        var userAppPath = USER_APP_PATH + path.sep + appInfo.Directory;
+    else if (manifest.identifier.indexOf('UAPP') === 0) {
+        var userAppPath = USER_APP_PATH + path.sep + manifest.directory;
 
         if (fs.existsSync(userAppPath)) {
-            upgradeApp(userAppPath, appInfo, false);
+            upgradeApp(userAppPath, manifest, false);
         }
         else {
-            installApp(userAppPath, appInfo);
+            installApp(userAppPath, manifest);
 
             /* Generate user APP indentifier */
-            if (appInfo.AppIdentifier === 'UAPP00000000') {
+            if (manifest.identifier === 'UAPP00000000') {
                 while (1) {
-                    appInfo.AppIdentifier = randomstring.generate('UAPPXXXXXXXX');
-                    if (this.apps[appInfo.AppIdentifier])
+                    manifest.identifier = randomstring.generate('UAPPXXXXXXXX');
+                    if (this.apps[manifest.identifier])
                         continue;
 
-                    fs.writeJsonSync(userAppPath + path.sep + APP_INFO_FILE, appInfo);
+                    fs.writeJsonSync(userAppPath + path.sep + APP_INFO_FILE, manifest);
                     break;
                 }
             }
@@ -324,10 +324,10 @@ AppManager.prototype.install = function(appBundlePath) {
         return { result: SYSTEM.ERROR.ERROR_APP_BAD_ID };
     }
 
-    function installApp(appPath, appInfo) {
+    function installApp(appPath, manifest) {
         try {
             /* Install extracted APP */
-            fse.moveSync(SYSTEM.SETTINGS.TempPath + path.sep + appInfo.Directory, appPath);
+            fse.moveSync(SYSTEM.SETTINGS.TempPath + path.sep + manifest.directory, appPath);
         }
         catch (error) {
             console.log("installApp: " + error);
@@ -335,14 +335,14 @@ AppManager.prototype.install = function(appBundlePath) {
         }
     }
 
-    function upgradeApp(appPath, appInfo, backupOrig) {
-        var jsonAppInfo = fs.readFileSync(appPath + path.sep + APP_INFO_FILE);
-        oldAppInfo = JSON.parse(jsonAppInfo);
+    function upgradeApp(appPath, manifest, backupOrig) {
+        var jsonManifest = fs.readFileSync(appPath + path.sep + APP_INFO_FILE);
+        oldManifest = JSON.parse(jsonManifest);
 
-        if (appInfo.Directory != oldAppInfo.Directory)
+        if (manifest.directory != oldManifest.directory)
             return { result: SYSTEM.ERROR.ERROR_APP_UPGRADE };
 
-        if (appInfo.AppIdentifier === oldAppInfo.AppIdentifier)
+        if (manifest.identifier === oldManifest.identifier)
             officialUpgrade = true;
 
         if (backupOrig) {
@@ -353,7 +353,7 @@ AppManager.prototype.install = function(appBundlePath) {
 
         try {
             /* Install extracted APP */
-            fs.copySync(SYSTEM.SETTINGS.TempPath + path.sep + appInfo.Directory, appPath);
+            fs.copySync(SYSTEM.SETTINGS.TempPath + path.sep + manifest.directory, appPath);
         }
         catch (error) {
             console.log("upgradeApp: " + error);
@@ -362,26 +362,26 @@ AppManager.prototype.install = function(appBundlePath) {
 
         /* Copy APP identifier if this is not an official upgrade */
         if (!officialUpgrade) {
-            appInfo.AppIdentifier = oldAppInfo.AppIdentifier;
-            fs.writeJsonSync(appPath + path.sep + APP_INFO_FILE, appInfo);
+            manifest.identifier = oldManifest.identifier;
+            fs.writeJsonSync(appPath + path.sep + APP_INFO_FILE, manifest);
         }
 
         /* Remove tmp path */
-        fs.removeSync(SYSTEM.SETTINGS.TempPath + path.sep + appInfo.Directory);
+        fs.removeSync(SYSTEM.SETTINGS.TempPath + path.sep + manifest.directory);
     }
 
     return { result: 'OK' };
 }
 
-AppManager.prototype.uninstall = function(appInfo) {
-    var appPath = USER_APP_PATH + path.sep + appInfo.Directory;
+AppManager.prototype.uninstall = function(manifest) {
+    var appPath = USER_APP_PATH + path.sep + manifest.directory;
 
     if (!fs.existsSync(appPath))
         return { result: SYSTEM.ERROR.ERROR_FS_NOT_EXIST };
 
     try {
         /* Remove from app list */
-        this.apps[appInfo.AppIdentifier] = undefined;
+        this.apps[manifest.identifier] = undefined;
 
         /* Remove APP in user storage */
         fs.removeSync(appPath);
