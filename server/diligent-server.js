@@ -6,21 +6,21 @@
 
 "use strict";
 
-var sio = require('socket.io'),
-    util = require('util'),
-    fs = require('fs-extra'),
-    path = require('path'),
-    ip = require('ip'),
-    mime = require('mime'),
-    async = require('async'),
-    EventEmitter = require('events').EventEmitter,
-    randomstring = require('./lib/randomstring'),
-    ExtensionManager = require('./extension-manager'),
-    SecurityManager = require('./security-manager'),
+var sio                = require('socket.io'),
+    util               = require('util'),
+    fs                 = require('fs-extra'),
+    path               = require('path'),
+    ip                 = require('ip'),
+    mime               = require('mime'),
+    async              = require('async'),
+    EventEmitter       = require('events').EventEmitter,
+    randomstring       = require('./lib/randomstring'),
+    ExtensionManager   = require('./extension-manager'),
+    SecurityManager    = require('./security-manager'),
     NotificationCenter = require('./notification-center'),
-    AppManager = require('./app-manager'),
-    FileManager = require('./file-manager'),
-    StorageManager = require('./storage-manager');
+    AppManager         = require('./app-manager'),
+    FileManager        = require('./file-manager'),
+    StorageManager     = require('./storage-manager');
 
 var SYSTEM = require('../system');
 

@@ -1,21 +1,22 @@
-var gulp = require('gulp'),
+var gulp       = require('gulp'),
     browserify = require('browserify'),
-    reactify = require('reactify'),
-    uglify = require('gulp-uglify'),
-    uglifycss = require('gulp-uglifycss'),
-    concat = require('gulp-concat'),
-    streamify = require('gulp-streamify'),
-    merge = require('merge-stream'),
-    jsonmin = require('gulp-jsonmin'),
-    transform = require('vinyl-transform'),
-    source = require('vinyl-source-stream'),
-    buffer = require('vinyl-buffer'),
-    del = require('del');
+    reactify   = require('reactify'),
+    uglify     = require('gulp-uglify'),
+    uglifycss  = require('gulp-uglifycss'),
+    concat     = require('gulp-concat'),
+    streamify  = require('gulp-streamify'),
+    merge      = require('merge-stream'),
+    jsonmin    = require('gulp-jsonmin'),
+    transform  = require('vinyl-transform'),
+    source     = require('vinyl-source-stream'),
+    buffer     = require('vinyl-buffer'),
+    del        = require('del');
 
-var JQUERY_VERSION = '1.11.1',
+var JQUERY_VERSION      = '1.11.1',
     FONTAWESOME_VERSION = '4.2.0',
-    OUTPATH = 'mywife',
-    BUILD_APPS = [ 'template' ];
+    REACT_VERSION       = '0.12.2',
+    OUTPATH             = 'mywife',
+    BUILD_APPS          = [ 'template' ];
 
 var targets = [
     'server',
@@ -48,25 +49,50 @@ gulp.task('lib', function() {
         .pipe(gulp.dest(OUTPATH + '/lib/jquery/ui/' + JQUERY_VERSION));
     var font_awesome = gulp.src('lib/font-awesome/' + FONTAWESOME_VERSION + '/**/*')
         .pipe(gulp.dest(OUTPATH + '/lib/font-awesome/' + FONTAWESOME_VERSION));
+    var react = gulp.src('lib/react/react-' + REACT_VERSION + '.min.js')
+        .pipe(gulp.dest(OUTPATH + '/lib/react'));
 
     return merge(
         jquery,
         jquery_plugin,
         jquery_ui,
-        font_awesome
+        font_awesome,
+        react
     );
 });
 
 gulp.task('base', function() {
-    return browserify({
-            entries: ['./lib/framework/base/base.js'],
+    var base_clients = browserify({
+            entries: ['./lib/framework/base/clients/clients.js'],
             debug: false
         })
         .bundle()
-        .pipe(source('base.min.js'))
+        .pipe(source('clients.min.js'))
         .pipe(buffer())
         .pipe(uglify())
         .pipe(gulp.dest(OUTPATH + '/lib/framework/base/'));
+
+    var base_diligent_js = browserify({
+            entries: ['./lib/framework/base/app/js/agent.js'],
+            debug: false
+        })
+        .transform(reactify)
+        .bundle()
+        .pipe(source('diligent.min.js'))
+        .pipe(buffer())
+        .pipe(uglify())
+        .pipe(gulp.dest(OUTPATH + '/lib/framework/base/'));
+
+    var base_diligent_css = gulp.src('lib/framework/base/app/css/*.css')
+        .pipe(concat('diligent.min.css'))
+        .pipe(uglifycss())
+        .pipe(gulp.dest(OUTPATH + '/lib/framework/base/'));
+
+    return merge(
+        base_clients,
+        base_diligent_js,
+        base_diligent_css
+    );
 });
 
 gulp.task('ui', function() {
@@ -78,15 +104,15 @@ gulp.task('ui', function() {
 gulp.task('ui-kits', function() {
     /* Create UIKit js bundle */
     var uikits_js = gulp.src('lib/framework/ui/**/*.js')
-    .pipe(concat('uikit-bundle.min.js'))
-    .pipe(uglify())
-    .pipe(gulp.dest(OUTPATH + '/lib/framework/ui'));
+        .pipe(concat('uikit-bundle.min.js'))
+        .pipe(uglify())
+        .pipe(gulp.dest(OUTPATH + '/lib/framework/ui'));
 
     /* Create UIKit css bundle */
     var uikits_css = gulp.src('lib/framework/ui/**/*.css')
-    .pipe(concat('uikit-bundle.min.css'))
-    .pipe(uglifycss())
-    .pipe(gulp.dest(OUTPATH + '/lib/framework/ui'));
+        .pipe(concat('uikit-bundle.min.css'))
+        .pipe(uglifycss())
+        .pipe(gulp.dest(OUTPATH + '/lib/framework/ui'));
 
     /* Copy UIKit images */
     var uikits_res = gulp.src([
@@ -111,7 +137,7 @@ gulp.task('app', function() {
     for (var a in BUILD_APPS) {
         /* Build app js bundle */
         browserify({
-            entries: ['./apps/' + BUILD_APPS[a] + '/js/app.js'],
+            entries: ['./apps/' + BUILD_APPS[a] + '/js/app.jsx'],
             debug: false
         })
         .transform(reactify)
@@ -127,11 +153,10 @@ gulp.task('app', function() {
             .pipe(uglifycss())
             .pipe(gulp.dest(OUTPATH + '/apps/' + BUILD_APPS[a] + '/css'));
 
+        /* Copy rest app resources */
         gulp.src([
             'apps/' + BUILD_APPS[a] + '/index.html',
             'apps/' + BUILD_APPS[a] + '/manifest.json',
-            'apps/' + BUILD_APPS[a] + '/js**/app.min.js',
-            'apps/' + BUILD_APPS[a] + '/css**/app.min.css',
             'apps/' + BUILD_APPS[a] + '/img**/*',
         ])
         .pipe(gulp.dest(OUTPATH + '/apps/' + BUILD_APPS[a]));

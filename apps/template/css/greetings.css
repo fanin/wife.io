@@ -2,7 +2,7 @@ body {
     background-color: white;
 }
 
-.app-view {
+#app-view {
     text-align: center;
 }
 
@@ -19,7 +19,7 @@ h2 {
 .greetings {
     display: none;
     margin: 0px auto;
-    width: 800px;
+    max-width: 800px;
 }
 
 .greetings p {

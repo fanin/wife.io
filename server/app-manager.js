@@ -1,18 +1,18 @@
 "use strict";
 
-var fs = require('fs-extra'),
-    fse = require('fs-extended'),
-    ss = require('socket.io-stream'),
-    path = require('path'),
+var fs           = require('fs-extra'),
+    fse          = require('fs-extended'),
+    ss           = require('socket.io-stream'),
+    path         = require('path'),
     randomstring = require('./lib/randomstring'),
-    AdmZip = require('adm-zip');
+    AdmZip       = require('adm-zip');
 
 fs.jsonfile.spaces = 4;
 
-var SYSTEM = require('../system');
-var USER_APP_PATH = SYSTEM.SETTINGS.SystemDataPath + path.sep + SYSTEM.SETTINGS.SystemName + path.sep + 'apps';
+var SYSTEM           = require('../system');
+var USER_APP_PATH    = SYSTEM.SETTINGS.SystemDataPath + path.sep + SYSTEM.SETTINGS.SystemName + path.sep + 'apps';
 var BUILTIN_APP_PATH = path.resolve(__dirname, '..' + path.sep + 'apps');
-var APP_INFO_FILE = 'manifest.json';
+var APP_INFO_FILE    = 'manifest.json';
 
 module.exports = AppManager;
 

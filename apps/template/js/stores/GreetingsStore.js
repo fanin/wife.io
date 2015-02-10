@@ -1,12 +1,13 @@
-var AppDispatcher = require('../dispatcher/AppDispatcher');
-var GreetingsConstants = require('../constants/GreetingsConstants');
-var EventEmitter = require('events').EventEmitter;
-var assign = require('object-assign');
+var GreetingsDispatcher = require('../dispatcher/GreetingsDispatcher');
+var GreetingsConstants  = require('../constants/GreetingsConstants');
+var EventEmitter        = require('events').EventEmitter;
+var assign              = require('object-assign');
 
-var CHANGE_EVENT = 'GREETINGS_CHANGE';;
+var CHANGE_EVENT = 'GREETINGS_CHANGE';
+
 var extensionErrorMsg = '';
-var greetingsMsg = '';
-var rudeMsg = '';
+var greetingsMsg      = '';
+var rudeMsg           = '';
 
 var GreetingsStore = assign({}, EventEmitter.prototype, {
     getGreetingsMsg: function() {
@@ -37,7 +38,7 @@ var GreetingsStore = assign({}, EventEmitter.prototype, {
 });
 
 // Register callback to handle all updates
-AppDispatcher.register(function(action) {
+GreetingsDispatcher.register(function(action) {
     switch(action.actionType) {
         case GreetingsConstants.GREETINGS_SAY_HELLO:
             break;

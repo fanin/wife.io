@@ -1,17 +1,17 @@
-var AppDispatcher = require('../dispatcher/AppDispatcher');
-var DiligentActionCreators = require('./DiligentActionCreators');
-var GreetingsExtension = require('../extension/greetings');
-var GreetingsConstants = require('../constants/GreetingsConstants');
+var GreetingsDispatcher    = require('../dispatcher/GreetingsDispatcher');
+var GreetingsExtension     = require('../extension/greetings');
+var GreetingsConstants     = require('../constants/GreetingsConstants');
+var DiligentActionCreators = DiligentAgent.actions;
 
 function dispatchGreetingsMsg(msg) {
-    AppDispatcher.dispatch({
+    GreetingsDispatcher.dispatch({
         actionType: GreetingsConstants.GREETINGS_SAY_HELLO_SUCCESS,
         msg: msg
     });
 }
 
 function dispatchGreetingsErrMsg(msg) {
-    AppDispatcher.dispatch({
+    GreetingsDispatcher.dispatch({
         actionType: GreetingsConstants.GREETINGS_SAY_HELLO_FAIL,
         msg: msg
     });
@@ -30,7 +30,7 @@ var GreetingsActions = {
     },
 
     sayHello: function(from, to) {
-        AppDispatcher.dispatch({
+        GreetingsDispatcher.dispatch({
             actionType: GreetingsConstants.GREETINGS_SAY_HELLO
         });
 

@@ -1,7 +1,6 @@
-var React = require('react');
 var GreetingsActionCreators = require('../actions/GreetingsActionCreators');
-var DiligentStore = require('../stores/DiligentStore');
-var GreetingsStore = require('../stores/GreetingsStore');
+var GreetingsStore          = require('../stores/GreetingsStore');
+var DiligentStore           = DiligentAgent.store;
 
 var GreetingsApp = React.createClass({
     getInitialState: function() {
@@ -46,23 +45,12 @@ var GreetingsApp = React.createClass({
         GreetingsActionCreators.sayHello('Mac', 'Kenny');
     },
 
-    toggleDebugConsole: function(event) {
-        $('.ui.sidebar')
-        .sidebar('setting', 'dimPage', false)
-        .sidebar('setting', 'closable', false)
-        .sidebar('toggle');
-    },
-
     render: function() {
         return (
             <div>
                 <h1>Greetings!</h1>
                 <h2>This is a React + Flux application template.</h2>
                 <p>&nbsp;</p>
-
-                <div className="ui button" onClick={this.toggleDebugConsole}>
-                    Toggle Diligent Console
-                </div>
 
                 <div className="ui button" onClick={this.handleExtensionLoad}>
                     {(this.state.greetingsExtentionLoaded ? "Unload" : "Load") + " Greetings Extension"}
@@ -74,11 +62,13 @@ var GreetingsApp = React.createClass({
                             Test Greetings Extension
                         </div>
                     </p>
+                    <p>&nbsp;</p>
 
                     <div className="ui horizontal divider">
                         <i className="bar chart icon"></i>
                         &nbsp;Extension Test Result
                     </div>
+                    <p>&nbsp;</p>
 
                     <table className="ui definition table">
                         <tbody>

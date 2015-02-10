@@ -5,8 +5,7 @@
   "main": "js/app.js",
   "dependencies": {
     "flux": "^2.0.1",
-    "object-assign": "^2.0.0",
-    "react": "^0.12.2"
+    "object-assign": "^2.0.0"
   },
   "devDependencies": {
     "browserify": "^8.1.1",

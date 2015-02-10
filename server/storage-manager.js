@@ -1,10 +1,10 @@
 "use strict";
 
-var fs = require('fs-extra');
-var path = require('path');
+var fs      = require('fs-extra');
+var path    = require('path');
 var storage = require('./lib/disks.js');
-var uuid = require('node-uuid');
-var SYSTEM = require('../system');
+var uuid    = require('node-uuid');
+var SYSTEM  = require('../system');
 
 module.exports = StorageManager;
 

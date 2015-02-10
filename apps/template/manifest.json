@@ -1,6 +1,6 @@
 {
     "AppName": "Template",
-    "Version": "0.1.0",
+    "Version": "0.2.0",
     "WSAPIVersion": "0.1",
     "Directory": "template",
     "AppEntry": "index.html",

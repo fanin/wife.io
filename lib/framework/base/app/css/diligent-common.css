@@ -1,0 +1,22 @@
+#diligent-navigation-bar {
+    z-index: 9999;
+}
+
+#diligent-dock {
+    z-index: 9999;
+}
+
+#diligent-console {
+    z-index: 9998;
+    border-top: 1px;
+    max-height: 40%;
+    overflow-y: auto !important;
+}
+
+.pushable, .pusher {
+    background: white !important;
+}
+
+#app-view {
+    padding-top: 35px;
+}
