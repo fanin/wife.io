@@ -43,7 +43,7 @@ var errors = keyMirror({
 
 errors['HAS_ERROR'] = function(arg) {
     try {
-        if (arg.indexOf('ERROR-') === 0)
+        if (arg.indexOf('ERROR_') === 0)
             return true;
         else
             return false;

@@ -8,14 +8,10 @@ var DiligentDock = React.createClass({
     },
 
     componentDidMount: function() {
-        DiligentStore.addDiligentListener(this._onDiligentChanges);
+
     },
 
     componentWillUnmount: function() {
-        DiligentStore.removeDiligentListener(this._onDiligentChanges);
-    },
-
-    _onDiligentChanges: function() {
 
     },
 

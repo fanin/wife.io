@@ -1,4 +1,4 @@
-div.shake, div.shake img {
+div.shake-app, div.shake-app img {
     -webkit-transform: translate3d(0,0,0);
     -moz-transform: translate3d(0,0,0);
     -ie-transform: translate3d(0,0,0);
@@ -7,7 +7,7 @@ div.shake, div.shake img {
     transform: translate3d(0,0,0);
 }
 
-div.shake img {
+div.shake-app img {
 /*
     width: 64px;
     height: 64px;
@@ -20,21 +20,21 @@ div.shake img {
     -khtml-user-select: none;
 }
 
-div.shake:nth-child(even) {
-    -webkit-animation: shake-even 250ms infinite linear;
-    -moz-animation: shake-even 250ms infinite linear;
-    -ms-animation: shake-even 250ms infinite linear;
-    animation: shake-even 250ms infinite linear;
+div.shake-app:nth-child(even) {
+    -webkit-animation: shake-app-even 250ms infinite linear;
+    -moz-animation: shake-app-even 250ms infinite linear;
+    -ms-animation: shake-app-even 250ms infinite linear;
+    animation: shake-app-even 250ms infinite linear;
 }
 
-div.shake:nth-child(odd) {
-    -webkit-animation: shake-odd 250ms infinite linear;
-    -moz-animation: shake-odd 250ms infinite linear;
-    -ms-animation: shake-odd 250ms infinite linear;
-    animation: shake-odd 250ms infinite linear;
+div.shake-app:nth-child(odd) {
+    -webkit-animation: shake-app-odd 250ms infinite linear;
+    -moz-animation: shake-app-odd 250ms infinite linear;
+    -ms-animation: shake-app-odd 250ms infinite linear;
+    animation: shake-app-odd 250ms infinite linear;
 }
 
-@-webkit-keyframes shake-even {
+@-webkit-keyframes shake-app-even {
     from {
         -webkit-transform: rotate(0deg);
         margin-bottom: 15px;
@@ -53,7 +53,7 @@ div.shake:nth-child(odd) {
     }
 }
 
-@-webkit-keyframes shake-odd {
+@-webkit-keyframes shake-app-odd {
     from {
         -webkit-transform: rotate(0deg);
         margin-bottom: 15px;
@@ -74,7 +74,7 @@ div.shake:nth-child(odd) {
 
 
 
-@-moz-keyframes shake-even {
+@-moz-keyframes shake-app-even {
     from {
         -moz-transform: rotate(0deg);
         margin-bottom: 15px;
@@ -93,7 +93,7 @@ div.shake:nth-child(odd) {
     }
 }
 
-@-moz-keyframes shake-odd {
+@-moz-keyframes shake-app-odd {
     from {
         -moz-transform: rotate(0deg);
         margin-bottom: 15px;
@@ -115,7 +115,7 @@ div.shake:nth-child(odd) {
 
 
 
-@-ms-keyframes shake-even {
+@-ms-keyframes shake-app-even {
     from {
         -ms-transform: rotate(0deg);
         margin-bottom: 15px;
@@ -134,7 +134,7 @@ div.shake:nth-child(odd) {
     }
  }
 
- @-ms-keyframes shake-odd {
+ @-ms-keyframes shake-app-odd {
     from {
         -ms-transform: rotate(0deg);
         margin-bottom: 15px;
@@ -156,7 +156,7 @@ div.shake:nth-child(odd) {
 
 
 
-@keyframes shake-even {
+@keyframes shake-app-even {
     from {
         transform: rotate(0deg);
         margin-bottom: 15px;
@@ -175,7 +175,7 @@ div.shake:nth-child(odd) {
     }
  }
 
- @keyframes shake-odd {
+ @keyframes shake-app-odd {
     from {
         transform: rotate(0deg);
         margin-bottom: 15px;

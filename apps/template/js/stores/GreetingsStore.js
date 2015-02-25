@@ -39,7 +39,7 @@ var GreetingsStore = assign({}, EventEmitter.prototype, {
 
 // Register callback to handle all updates
 GreetingsDispatcher.register(function(action) {
-    switch(action.actionType) {
+    switch (action.actionType) {
         case GreetingsConstants.GREETINGS_SAY_HELLO:
             break;
         case GreetingsConstants.GREETINGS_SAY_HELLO_SUCCESS:

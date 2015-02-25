@@ -1,3 +1,7 @@
+body {
+    background-color: black;
+}
+
 #diligent-navigation-bar {
     z-index: 9999;
 }
@@ -14,9 +18,10 @@
 }
 
 .pushable, .pusher {
-    background: white !important;
+    background: black !important;
 }
 
 #app-view {
+    height: 100%;
     padding-top: 35px;
 }

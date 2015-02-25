@@ -168,7 +168,8 @@ function detail(drive, callback) {
                         callback(null, drive);
                         break;
                     case 'darwin':
-                        getDetailNaN('df -k | grep ' + drive + ' |  awk -F \'%\' \'{ print $3 }\' | sed \'s/^ *//\' | sed \'1{/^$/d}\'', function(e, d){
+                        getDetailNaN('df -k | grep ' + drive + ' |  awk -F \'%\' \'{ print $3 }\' | sed \'s/^ *//\'', function(e, d){
+                            if (e) console.log(e);
                             if (d) d = d.trim();
                             callback(e, d);
                         });

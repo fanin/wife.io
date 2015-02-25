@@ -72,8 +72,8 @@ DiligentServer.prototype.listen = function() {
 
     this.ioServer.on('connection', function(socket) {
         /* Handle api initiate handshaking */
-        socket.on(self.apiSpec[0].Base.GetManifest.REQ, function(appDirectory) {
-            var manifest = self.appManager.getAppManifest(appDirectory);
+        socket.on(self.apiSpec[0].Base.GetManifest.REQ, function(appInfo) {
+            var manifest = self.appManager.getAppManifest(appInfo.type, appInfo.directory);
 
             if (!SYSTEM.ERROR.HAS_ERROR(manifest)) {
                 async.series([

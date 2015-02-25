@@ -1,19 +1,14 @@
-body {
-    background-color: black;
-}
-
-.apps {
+.launcher-app-grid {
     position: relative;
     -webkit-transition: height .2s ease-in-out;
     transition: height .2s ease-in-out;
     overflow-y: auto;
     overflow-x: hidden;
-    max-width: 800px;
-    min-height: 200px;
     margin: auto auto;
+    padding: 36px;
 }
 
-.apps ul {
+.launcher-app-grid ul {
     background: rgba(128, 128, 128, 0.5);
     margin: 0 auto;
     padding: 40px;
@@ -24,35 +19,33 @@ body {
     border-radius: 12px;
 }
 
-.apps ul li {
+.launcher-app-grid ul li {
     float: left;
-    height: 80px;
-    width: 80px;
-    color: black;
-    padding: 28px 28px;
+    height: auto;
+    width: 100px;
     text-align: center;
 }
 
 /*
-.apps ul li:hover {
+.launcher-app-grid ul li:hover {
     border: 0px solid #555;
 }
 
-.apps ul li:hover .overlay {
+.launcher-app-grid ul li:hover .overlay {
     opacity: 1;
 }
 */
 
-.apps ul li .overlay {
+.launcher-app-grid ul li .overlay {
     opacity: 1;
 }
 
-.apps ul li a {
+.launcher-app-grid ul li a {
     text-decoration: none;
     color: black;
 }
 
-div[id^="icon-div-"] {
+div[id^="launcher-icon-div-"] {
     height: 64px;
     width: 64px;
     padding: 0px 0px;
@@ -62,7 +55,7 @@ div[id^="icon-div-"] {
     border-radius: 12px;
 }
 
-img[id^="icon-img-"] {
+img[id^="launcher-icon-img-"] {
     width: 64px;
     height: 64px;
     -webkit-border-radius: 12px;
@@ -70,21 +63,16 @@ img[id^="icon-img-"] {
     border-radius: 12px;
 }
 
-span[id^="icon-text-"] {
+span[id^="launcher-icon-text-"] {
     color: white;
     font-size: 12px;
+    display:inline-block; /* Make width valid */
+    width: 64px;
 }
 
-img[id^="overlay-img-"] {
-    width: 50%;
-    height: 50%;
-    vertical-align: middle;
-}
-
-.overlay {
+div[id^="launcher-overlay-icon-div-"] {
     background: rgba(0, 0, 0, .6);
     text-align: center;
-    opacity: 0;
     width: 64px;
     height: 64px;
     line-height:64px;
@@ -93,7 +81,13 @@ img[id^="overlay-img-"] {
     border-radius: 12px;
 }
 
-.delete {
-    position: relative;
-    top: 15px;
+img[id^="launcher-overlay-icon-img-"] {
+    width: 50%;
+    height: 50%;
+    vertical-align: middle;
+}
+
+.launcher-overlay-icon-delete {
+    position: absolute;
+    top: 0px;
 }

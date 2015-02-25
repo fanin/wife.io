@@ -1,28 +1,19 @@
-body {
-    background-color: white;
-}
-
 #app-view {
     text-align: center;
 }
 
 h1 {
     font: normal 28px "omnes-pro", Helvetica, Arial, sans-serif;
-    color: black;
+    color: white;
 }
 
 h2 {
     font: normal 22px "omnes-pro", Helvetica, Arial, sans-serif;
-    color: black;
+    color: white;
 }
 
 .greetings {
     display: none;
     margin: 0px auto;
     max-width: 800px;
-}
-
-.greetings p {
-    font: normal 12px "omnes-pro", Helvetica, Arial, sans-serif;
-    color: blue;
 }

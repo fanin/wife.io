@@ -1,4 +1,5 @@
-var DiligentStore = require('../stores/DiligentStore');
+var DiligentStore     = require('../stores/DiligentStore');
+var DiligentConstants = require('../constants/DiligentConstants');
 
 var DiligentConsole = React.createClass({
     getInitialState: function() {
@@ -25,31 +26,109 @@ var DiligentConsole = React.createClass({
     },
 
     _onDiligentChanges: function() {
-        this.setState({
-            diligentClientVersion: DiligentStore.getClientVersion(),
-            diligentClientStatus: DiligentStore.getClientStatus(),
-            diligentConnectionStatus: DiligentStore.getConnectionStatus(),
-            diligentWSApiStatus: DiligentStore.getWSApiStatus()
-        });
+        switch (DiligentStore.getClient().status) {
+            case DiligentConstants.DILIGENT_CLIENT_INITIATE:
+                this.setState({
+                    diligentClientVersion: DiligentStore.getClient().version,
+                    diligentClientStatus: 'INITIATE'
+                });
+                break;
+            case DiligentConstants.DILIGENT_CLIENT_RUNNING:
+                this.setState({
+                    diligentClientVersion: DiligentStore.getClient().version,
+                    diligentClientStatus: 'RUNNING'
+                });
+                break;
+            case DiligentConstants.DILIGENT_CLIENT_TERMINATE:
+                this.setState({
+                    diligentClientVersion: DiligentStore.getClient().version,
+                    diligentClientStatus: 'TERMINATING'
+                });
+                break;
+            case DiligentConstants.DILIGENT_CONNECTION_ESTABLISHED:
+                this.setState({
+                    diligentClientVersion: DiligentStore.getClient().version,
+                    diligentClientStatus: 'ESTABLISHED'
+                });
+                break;
+            case DiligentConstants.DILIGENT_CONNECTION_CLOSED:
+                this.setState({
+                    diligentClientVersion: DiligentStore.getClient().version,
+                    diligentConnectionStatus: 'CLOSED'
+                });
+                break;
+            case DiligentConstants.DILIGENT_CONNECT_FAIL:
+                this.setState({
+                    diligentClientVersion: DiligentStore.getClient().version,
+                    diligentConnectionStatus: DiligentStore.getClient().error
+                });
+                break;
+            case DiligentConstants.DILIGENT_WSAPI_LOAD_SUCCESS:
+                this.setState({
+                    diligentClientVersion: DiligentStore.getClient().version,
+                    diligentWSApiStatus: 'SUCCESS'
+                });
+                break;
+            case DiligentConstants.DILIGENT_WSAPI_LOAD_FAIL:
+                this.setState({
+                    diligentClientVersion: DiligentStore.getClient().version,
+                    diligentWSApiStatus: 'FAILED'
+                });
+                break;
+        }
     },
 
     _onExtensionChanges: function(extensionName) {
-        var status = DiligentStore.getExtension(extensionName).status;
-
-        if (status === "LOADED")
-            this.setState({
-                extensionName: extensionName,
-                extensionStatus: status,
-                extensionVersion: DiligentStore.getExtension(extensionName).version,
-                extensionError: DiligentStore.getExtension(extensionName).error || "no error"
-            });
-        else
-            this.setState({
-                extensionName: "",
-                extensionStatus: status,
-                extensionVersion: -1,
-                extensionError: DiligentStore.getExtension(extensionName).error || "no error"
-            });
+        switch (DiligentStore.getExtension(extensionName).status) {
+            case DiligentConstants.EXTENSION_LOAD:
+                this.setState({
+                    extensionName: extensionName,
+                    extensionStatus: 'LOADING',
+                    extensionVersion: DiligentStore.getExtension(extensionName).version,
+                    extensionError: ''
+                });
+                break;
+            case DiligentConstants.EXTENSION_UNLOAD:
+                this.setState({
+                    extensionName: extensionName,
+                    extensionStatus: 'UNLOADING',
+                    extensionVersion: DiligentStore.getExtension(extensionName).version,
+                    extensionError: ''
+                });
+                break;
+            case DiligentConstants.EXTENSION_LOAD_SUCCESS:
+                this.setState({
+                    extensionName: extensionName,
+                    extensionStatus: 'LOADED',
+                    extensionVersion: DiligentStore.getExtension(extensionName).version,
+                    extensionError: ''
+                });
+                break;
+            case DiligentConstants.EXTENSION_UNLOAD_SUCCESS:
+                this.setState({
+                    extensionName: extensionName,
+                    extensionStatus: 'UNLOADED',
+                    extensionVersion: -1,
+                    extensionError: ''
+                });
+                break;
+            case DiligentConstants.EXTENSION_LOAD_FAIL:
+                this.setState({
+                    extensionName: extensionName,
+                    extensionStatus: 'LOAD FAILED',
+                    extensionVersion: -1,
+                    extensionError: DiligentStore.getExtension(extensionName).error
+                });
+                break;
+            case DiligentConstants.EXTENSION_UNLOAD_FAIL:
+                this.setState({
+                    extensionName: extensionName,
+                    extensionStatus: 'UNLOAD FAILED',
+                    extensionVersion: DiligentStore.getExtension(extensionName).version,
+                    extensionError: DiligentStore.getExtension(extensionName).error
+                });
+                break;
+        }
     },
 
     render: function() {

@@ -22,7 +22,7 @@ var GreetingsApp = React.createClass({
     },
 
     handleExtensionLoad: function(event) {
-        if (DiligentStore.getExtension('Greetings').status !== 'LOADED') {
+        if (DiligentStore.getExtension('Greetings').status !== DiligentConstants.EXTENSION_LOAD_SUCCESS) {
             GreetingsActionCreators.loadExtension();
         }
         else {
@@ -31,7 +31,7 @@ var GreetingsApp = React.createClass({
     },
 
     _onExtensionChanges: function(extensionName) {
-        if (DiligentStore.getExtension(extensionName).status === 'LOADED') {
+        if (DiligentStore.getExtension(extensionName).status === DiligentConstants.EXTENSION_LOAD_SUCCESS) {
             this.setState({ greetingsExtentionLoaded: true });
         }
         else {
@@ -64,8 +64,8 @@ var GreetingsApp = React.createClass({
                     </p>
                     <p>&nbsp;</p>
 
-                    <div className="ui horizontal divider">
-                        <i className="bar chart icon"></i>
+                    <div className="ui inverted horizontal divider">
+                        <i className="bar inverted chart icon"></i>
                         &nbsp;Extension Test Result
                     </div>
                     <p>&nbsp;</p>

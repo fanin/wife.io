@@ -1,14 +1,14 @@
 "use strict";
 
 /* Server side greetings extension module */
-module.exports = GreetingsExtension;
+module.exports = LauncherExtension;
 
-function GreetingsExtension() {
-    this.name = "Greetings";
+function LauncherExtension() {
+    this.name = "Launcher";
     this.version = 0;
 }
 
-GreetingsExtension.prototype.activate = function(socket) {
+LauncherExtension.prototype.activate = function(socket) {
     /* Implement greetings extension commands */
     socket.on(this.apiSpec[this.version].Say.Hello.REQ, function(from, to) {
         /* Response test */
@@ -19,6 +19,6 @@ GreetingsExtension.prototype.activate = function(socket) {
     }.bind(this));
 }
 
-GreetingsExtension.prototype.inactivate = function(socket) {
+LauncherExtension.prototype.inactivate = function(socket) {
     socket.removeAllListeners(this.apiSpec[this.version].Say.Hello.REQ);
 }

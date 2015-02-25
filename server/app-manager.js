@@ -214,8 +214,13 @@ AppManager.prototype.unregister = function(socket) {
     socket.removeAllListeners(this.APISpec.Uninstall.REQ);
 }
 
-AppManager.prototype.getAppManifest = function(appDirectory) {
-    var file = BUILTIN_APP_PATH + path.sep + appDirectory + path.sep + APP_INFO_FILE;
+AppManager.prototype.getAppManifest = function(appType, appDirectory) {
+    var file;
+
+    if (appType === 'b')
+        file = BUILTIN_APP_PATH + path.sep + appDirectory + path.sep + APP_INFO_FILE;
+    else
+        file = USER_APP_PATH + path.sep + appDirectory + path.sep + APP_INFO_FILE;
 
     if (fs.existsSync(file)) {
         var manifest = fs.readJsonSync(file);
