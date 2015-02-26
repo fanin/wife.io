@@ -151,7 +151,7 @@ DiligentServer.prototype.handleRequest = function(req, res) {
     function backToLauncher() {
         // Redirect to launcher
         res.writeHead(301, {
-            "location" : 'http://' + req.headers.host + '/apps/b/launcher/'
+            "location" : SYSTEM.SETTINGS.Protocol + '://' + req.headers.host + '/apps/b/launcher/'
         });
         res.end();
     }
@@ -255,7 +255,8 @@ DiligentServer.prototype.handleRequest = function(req, res) {
             res.writeHead(200, {'Content-Type': ctype});
 
             if (ctype.indexOf('text') > -1 || ctype.indexOf('javascript') > -1) {
-                var contentString = content.toString().replace(/%SYSIP%/g, ip.address());
+                var contentString = content.toString().replace(/%PROTO%/g, SYSTEM.SETTINGS.Protocol);
+                contentString = contentString.replace(/%SYSIP%/g, ip.address());
                 contentString = contentString.replace(/%SYSPORT%/g, process.env.npm_package_config_port || '8001');
                 contentString = contentString.replace(/%SYSNAME%/g, SYSTEM.SETTINGS.SystemName);
                 contentString = contentString.replace(/%BRAND%/g, SYSTEM.SETTINGS.Brand);
