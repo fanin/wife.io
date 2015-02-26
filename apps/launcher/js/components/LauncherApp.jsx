@@ -3,14 +3,6 @@ var LauncherActionCreators = require('../actions/LauncherActionCreators');
 var LauncherStore          = require('../stores/LauncherStore');
 var DiligentStore          = DiligentAgent.store;
 
-function LIST_SWITCH_ELEMENT(list, from, to) {
-    var e = list[from];
-    list.splice(from, 1);
-    list.splice(to, 0, e);
-    list.join();
-    return list;
-}
-
 var LauncherAppIcon = React.createClass({
     propTypes: {
         appType: React.PropTypes.string.isRequired,
@@ -18,24 +10,10 @@ var LauncherAppIcon = React.createClass({
         manageMode: React.PropTypes.bool
     },
 
-    getInitialState: function() {
-        return {
-
-        };
-    },
-
-    componentWillMount: function() {
-        LauncherStore.addChangeListener(this._onLauncherChanges);
-    },
-
     componentDidMount: function() {
         document.getElementById('launcher-icon-div-' + this.props.manifest.directory).draggable = false;
         document.getElementById('launcher-icon-img-' + this.props.manifest.directory).draggable = false;
         document.getElementById('launcher-icon-text-' + this.props.manifest.directory).draggable = false;
-    },
-
-    componentWillUnmount: function() {
-        LauncherStore.removeChangeListener(this._onLauncherChanges);
     },
 
     render: function() {
@@ -83,23 +61,6 @@ var LauncherAppIcon = React.createClass({
                 </a>
             </li>
         );
-    },
-
-    _onLauncherChanges: function(changes) {
-        switch (changes.type) {
-            case LauncherConstants.LAUNCHER_APP_LIST:
-                break;
-            case LauncherConstants.LAUNCHER_APP_UNINSTALL_SUCCESS:
-                break;
-            case LauncherConstants.LAUNCHER_APP_WRITE_SORT_LIST:
-                break;
-            case LauncherConstants.LAUNCHER_APP_ENTER_MANAGE_MODE:
-                break;
-            case LauncherConstants.LAUNCHER_APP_LEAVE_MANAGE_MODE:
-                break;
-            case LauncherConstants.LAUNCHER_APP_ICON_MOVE:
-                break;
-        }
     }
 });
 
@@ -330,10 +291,9 @@ var LauncherApp = React.createClass({
 
         return (
             <div className='launcher-app-grid' onClick={this._leaveManageMode}>
-                <LauncherSortable
-                    onClick    = {this._leaveManageMode}
-                    onSort     = {this._handleSort}
-                    manageMode = {this.state.manageMode}>
+                <LauncherSortable onClick    = {this._leaveManageMode}
+                                  onSort     = {this._handleSort}
+                                  manageMode = {this.state.manageMode}>
                     {appIcons}
                 </LauncherSortable>
             </div>
@@ -379,7 +339,6 @@ var LauncherApp = React.createClass({
                 this.setState({ appList: LauncherStore.getAppList() });
                 break;
             case LauncherConstants.LAUNCHER_APP_UNINSTALL_SUCCESS:
-                // FIXME: Should only remove app icon instead of reload the whole list
                 this.setState({ appList: LauncherStore.getAppList() });
                 break;
             case LauncherConstants.LAUNCHER_APP_WRITE_SORT_LIST:

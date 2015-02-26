@@ -9,15 +9,15 @@
 }
 
 .launcher-app-grid ul {
-    background: rgba(128, 128, 128, 0.5);
+    background: transparent;
     height: 100%;
     margin: 0 auto;
     padding: 40px;
     overflow: hidden;
     list-style: none;
-    -webkit-border-radius: 12px;
+    /*-webkit-border-radius: 12px;
     -moz-border-radius: 12px;
-    border-radius: 12px;
+    border-radius: 12px;*/
 }
 
 .launcher-app-grid ul li {

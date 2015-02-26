@@ -34,12 +34,12 @@ html, body {
     -moz-background-size: cover;
     -o-background-size: cover;
     background-size: cover;
-    -webkit-filter: blur(10px);
-    -moz-filter: blur(10px);
-    -ms-filter: blur(10px);
-    -o-filter: blur(10px);
-    filter: blur(10px);
-    filter: url("data:image/svg+xml;utf9,<svg%20version='1.1'%20xmlns='http://www.w3.org/2000/svg'><filter%20id='blur'><feGaussianBlur%20stdDeviation='10'/></filter></svg>#blur"); <!-- SVG filter for Firefox  -->
+    -webkit-filter: blur(14px);
+    -moz-filter: blur(14px);
+    -ms-filter: blur(14px);
+    -o-filter: blur(14px);
+    filter: blur(14px);
+    filter: url("data:image/svg+xml;utf9,<svg%20version=%271.1%27%20xmlns=%27http://www.w3.org/2000/svg%27><filter%20id=%27blur%27><feGaussianBlur%20stdDeviation=%2714%27/></filter></svg>#blur"); <!-- SVG filter for Firefox  -->
     display: block;
     position: fixed;
     width: 100%;

@@ -184,8 +184,8 @@ DiligentServer.prototype.handleRequest = function(req, res) {
             this.jqueryuiPath = path.dirname(filename);
     }
     else {
-        console.log('Access denied: ' + filename + ' : ' + filepath);
-        backToLauncher();
+        console.log('Access denied: ' + req.url);
+        //backToLauncher();
         return;
     }
 
