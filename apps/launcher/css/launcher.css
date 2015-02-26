@@ -1,15 +1,16 @@
 .launcher-app-grid {
+    height: 100%;
     position: relative;
     -webkit-transition: height .2s ease-in-out;
     transition: height .2s ease-in-out;
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow: hidden;
     margin: auto auto;
     padding: 36px;
 }
 
 .launcher-app-grid ul {
     background: rgba(128, 128, 128, 0.5);
+    height: 100%;
     margin: 0 auto;
     padding: 40px;
     overflow: hidden;
