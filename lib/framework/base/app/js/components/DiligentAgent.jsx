@@ -8,7 +8,6 @@ var DiligentActionCreators = require('../actions/DiligentActionCreators');
 var DiligentStore          = require('../stores/DiligentStore');
 
 var DiligentAgent = {
-    dispatcher: DiligentDispatcher,
     actions: DiligentActionCreators,
     store: DiligentStore,
     render: function(opts) {

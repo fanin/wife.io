@@ -22,7 +22,7 @@ var JQUERY_VERSION      = '1.11.1',
 var targets = [
     'server',
     'base',
-    'ui',
+    'cutie',
     'lib',
     'app',
     'api',
@@ -46,11 +46,14 @@ gulp.task('lib', function() {
         .pipe(gulp.dest(OUTPATH + '/lib/jquery'));
     var jquery_plugin = gulp.src([
             'lib/jquery/plugins/**/*.min.*',
-            'lib/jquery/plugins/**/*.css'
+            'lib/jquery/plugins/**/*.css',
+            'lib/jquery/plugins/**/images/*'
         ])
         .pipe(gulp.dest(OUTPATH + '/lib/jquery/plugins'));
     var jquery_ui = gulp.src('lib/jquery/ui/' + JQUERY_VERSION + '/*.min.*')
         .pipe(gulp.dest(OUTPATH + '/lib/jquery/ui/' + JQUERY_VERSION));
+    var semantic = gulp.src('lib/semantic/**/*')
+        .pipe(gulp.dest(OUTPATH + '/lib/semantic/'));
     var font_awesome = gulp.src('lib/font-awesome/' + FONTAWESOME_VERSION + '/**/*')
         .pipe(gulp.dest(OUTPATH + '/lib/font-awesome/' + FONTAWESOME_VERSION));
     var react = gulp.src('lib/react/react-' + REACT_VERSION + '*.js')
@@ -60,6 +63,7 @@ gulp.task('lib', function() {
         jquery,
         jquery_plugin,
         jquery_ui,
+        semantic,
         font_awesome,
         react
     );
@@ -103,43 +107,30 @@ gulp.task('base', function() {
     );
 });
 
-gulp.task('ui', function() {
-    /* Copy Semantic UI framework */
-    var semantic = gulp.src('lib/framework/ui-kits/semantic/**/*')
-        .pipe(gulp.dest(OUTPATH + '/lib/framework/ui-kits/semantic/'));
-    return semantic;
-});
-
-gulp.task('ui-kits', function() {
-    /* Create UIKit js bundle */
-    var uikits_js = gulp.src('lib/framework/ui/**/*.js')
-        .pipe(concat('uikit-bundle.min.js'))
-        .pipe(uglify())
-        .pipe(gulp.dest(OUTPATH + '/lib/framework/ui'));
-
-    /* Create UIKit css bundle */
-    var uikits_css = gulp.src('lib/framework/ui/**/*.css')
-        .pipe(concat('uikit-bundle.min.css'))
-        .pipe(minifycss())
-        .pipe(gulp.dest(OUTPATH + '/lib/framework/ui'));
-
-    /* Copy UIKit images */
-    var uikits_res = gulp.src([
-        'lib/framework/ui/**/*',
-        '!lib/framework/ui/**/js',
-        '!lib/framework/ui/**/css',
-        '!lib/framework/ui/**/*.js',
-        '!lib/framework/ui/**/*.css'
-    ])
-    .pipe(gulp.dest(OUTPATH + '/lib/framework/ui'));
-
-    return browserify({
-        entries: ['./lib/framework/ui/ui-kits.js'],
+gulp.task('cutie', function() {
+    /* Create Cutie UI js bundle */
+    var cutie_js = browserify({
+        entries: ['./lib/framework/cutie/cutie.js'],
         debug: DEBUG
     })
+    .transform(reactify)
     .bundle()
-    .pipe(source('ui-kits.js'))
-    .pipe(gulp.dest(OUTPATH + '/lib/framework/ui/'))
+    .pipe(source('cutie.min.js'));
+
+    if (!DEBUG)
+        cutie_js = cutie_js.pipe(buffer()).pipe(uglify());
+
+    cutie_js.pipe(gulp.dest(OUTPATH + '/lib/framework/cutie/'));
+
+    var cutie_css = gulp.src('lib/framework/cutie/notification/**/*.css')
+    .pipe(concat('cutie.min.css'))
+    .pipe(minifycss())
+    .pipe(gulp.dest(OUTPATH + '/lib/framework/cutie/'));
+
+    return merge(
+        cutie_js,
+        cutie_css
+    );
 });
 
 gulp.task('app', function() {

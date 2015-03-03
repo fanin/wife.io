@@ -71,7 +71,7 @@ var cloneWithProps = React.addons.cloneWithProps;
 
 var LauncherSortable = React.createClass({
     getDefaultProps: function() {
-        return {component: "ul", childComponent: "li"};
+        return { component: "ul", childComponent: "li" };
     },
 
     propTypes: {
@@ -85,27 +85,27 @@ var LauncherSortable = React.createClass({
     },
 
     componentDidMount: function() {
-        jQuery(this.getDOMNode()).sortable({stop: this.handleDrop});
-        jQuery(this.getDOMNode()).disableSelection();
+        $(this.getDOMNode()).sortable({stop: this.handleDrop});
+        $(this.getDOMNode()).disableSelection();
     },
 
     componentDidUpdate: function() {
         var childIndex = 0;
         var nodeIndex = 0;
         var children = this.getChildren();
-        var nodes = jQuery(this.getDOMNode()).children();
+        var nodes = $(this.getDOMNode()).children();
         var numChildren = children.length;
         var numNodes = nodes.length;
 
         while (childIndex < numChildren) {
             if (nodeIndex >= numNodes) {
-                jQuery(this.getDOMNode()).append('<' + this.props.childComponent + '/>');
+                $(this.getDOMNode()).append('<' + this.props.childComponent + '/>');
                 var appType = children[childIndex].props.appType;
-                var node = jQuery(this.getDOMNode()).children().last()[0];
+                var node = $(this.getDOMNode()).children().last()[0];
 
                 node.manifest    = children[childIndex].props.manifest;
                 node.onmousedown = (appType === 'b') ? this.handleMouseDown_b : this.handleMouseDown_u;
-                node.onmouseup   = (appType === 'b') ? this.handleMouseUp_b : this.handleMouseUp_u;
+                node.onmouseup   = (appType === 'b') ? this.handleMouseUp_b   : this.handleMouseUp_u;
                 node.onmousemove = (appType === 'b') ? this.handleMouseMove_b : this.handleMouseMove_u;
                 node.onclick     = this.handleDefaultClick;
 
@@ -121,18 +121,18 @@ var LauncherSortable = React.createClass({
 
         while (nodeIndex < numNodes) {
             React.unmountComponentAtNode(nodes[nodeIndex]);
-            jQuery(nodes[nodeIndex]).remove();
+            $(nodes[nodeIndex]).remove();
             nodeIndex++;
         }
 
         if (this.props.manageMode)
-            jQuery(this.getDOMNode()).sortable('enable');
+            $(this.getDOMNode()).sortable('enable');
         else
-            jQuery(this.getDOMNode()).sortable('disable');
+            $(this.getDOMNode()).sortable('disable');
     },
 
     componentWillUnmount: function() {
-        jQuery(this.getDOMNode()).children().get().forEach(function(node) {
+        $(this.getDOMNode()).children().get().forEach(function(node) {
             React.unmountComponentAtNode(node);
         });
     },
@@ -143,7 +143,7 @@ var LauncherSortable = React.createClass({
     },
 
     handleDrop: function() {
-        var newOrder = jQuery(this.getDOMNode()).children().get().map(function(child, i) {
+        var newOrder = $(this.getDOMNode()).children().get().map(function(child, i) {
             var rv = child.dataset.reactSortablePos;
             child.dataset.reactSortablePos = i;
             return rv;

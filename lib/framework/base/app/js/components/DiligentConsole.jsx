@@ -1,3 +1,5 @@
+'use strict';
+
 var DiligentStore     = require('../stores/DiligentStore');
 var DiligentConstants = require('../constants/DiligentConstants');
 

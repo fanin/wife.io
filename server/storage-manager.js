@@ -230,6 +230,8 @@ StorageManager.prototype.getLocalDisks = function(callback) {
             }
 
             callback && callback({ system: self.systemDisk, data: self.systemDataDisk, removable: self.removableDisk });
+
+            self.pausePolling = false;
         });
     });
 }

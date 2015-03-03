@@ -1,20 +1,8 @@
+'use strict';
+
 var DiligentStore = require('../stores/DiligentStore');
 
 var DiligentDock = React.createClass({
-    getInitialState: function() {
-        return {
-
-        };
-    },
-
-    componentDidMount: function() {
-
-    },
-
-    componentWillUnmount: function() {
-
-    },
-
     render: function() {
         return (
             <div className="ui inverted labeled icon menu">
@@ -32,5 +20,3 @@ var DiligentDock = React.createClass({
 });
 
 module.exports = DiligentDock;
-
-
