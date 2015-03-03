@@ -96,7 +96,7 @@ gulp.task('diligent', function() {
     agent_js.pipe(gulp.dest(OUTPATH + '/lib/framework/diligent/'));
 
     var agent_css = gulp.src('lib/framework/diligent/app/css/*.css')
-    .pipe(concat('agent.min.css'))
+        .pipe(concat('agent.min.css'))
         .pipe(minifycss())
         .pipe(gulp.dest(OUTPATH + '/lib/framework/diligent/'));
 
@@ -123,9 +123,9 @@ gulp.task('cutie', function() {
     cutie_js.pipe(gulp.dest(OUTPATH + '/lib/framework/cutie/'));
 
     var cutie_css = gulp.src('lib/framework/cutie/notification/**/*.css')
-    .pipe(concat('cutie.min.css'))
-    .pipe(minifycss())
-    .pipe(gulp.dest(OUTPATH + '/lib/framework/cutie/'));
+        .pipe(concat('cutie.min.css'))
+        .pipe(minifycss())
+        .pipe(gulp.dest(OUTPATH + '/lib/framework/cutie/'));
 
     return merge(
         cutie_js,
@@ -137,12 +137,12 @@ gulp.task('app', function() {
     for (var a in BUILD_APPS) {
         /* Build app js bundle */
         var b = browserify({
-                    entries: ['./apps/' + BUILD_APPS[a] + '/js/app.jsx'],
-                    debug: DEBUG
-                })
-                .transform(reactify)
-                .bundle()
-                .pipe(source('app.min.js'));
+                entries: ['./apps/' + BUILD_APPS[a] + '/js/app.jsx'],
+                debug: DEBUG
+            })
+            .transform(reactify)
+            .bundle()
+            .pipe(source('app.min.js'));
 
         if (!DEBUG)
             b = b.pipe(buffer()).pipe(uglify());

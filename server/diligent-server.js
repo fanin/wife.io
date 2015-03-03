@@ -171,6 +171,7 @@ DiligentServer.prototype.handleRequest = function(req, res) {
                 SYSTEM.SETTINGS.SystemName.replace(/\s/g, '').toLocaleLowerCase() + filename;
         }
         else {
+            console.log('Access denied: ' + req.url);
             backToLauncher();
             return;
         }
@@ -183,9 +184,13 @@ DiligentServer.prototype.handleRequest = function(req, res) {
         if (path.basename(filename) === 'jquery-ui.min.css')
             this.jqueryuiPath = path.dirname(filename);
     }
+    else if (url.pathname === '/') {
+        backToLauncher();
+        return;
+    }
     else {
-        console.log('Access denied: ' + req.url);
-        //backToLauncher();
+        console.log('Access denied: ' + url.pathname);
+        res.writeHead(404, {'Content-Type': 'text/plain'});
         return;
     }
 
