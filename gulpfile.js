@@ -21,7 +21,7 @@ var JQUERY_VERSION      = '1.11.1',
 
 var targets = [
     'server',
-    'base',
+    'diligent',
     'cutie',
     'lib',
     'app',
@@ -31,13 +31,13 @@ var targets = [
 ];
 
 gulp.task('server', function() {
-    var base = gulp.src(['*.js', '!gulpfile.js'])
+    var diligent_server = gulp.src(['*.js', '!gulpfile.js'])
         .pipe(uglify())
         .pipe(gulp.dest(OUTPATH));
     var servers = gulp.src('server/**/*.js')
         .pipe(uglify())
         .pipe(gulp.dest(OUTPATH + '/server'));
-    return merge(base, servers);
+    return merge(diligent_server, servers);
 });
 
 gulp.task('lib', function() {
@@ -69,41 +69,41 @@ gulp.task('lib', function() {
     );
 });
 
-gulp.task('base', function() {
-    var base_clients = browserify({
-            entries: ['./lib/framework/base/clients/clients.js'],
+gulp.task('diligent', function() {
+    var clients = browserify({
+        entries: ['./lib/framework/diligent/clients/clients.js'],
             debug: DEBUG
         })
         .bundle()
         .pipe(source('clients.min.js'));
 
     if (!DEBUG)
-        base_clients = base_clients.pipe(buffer()).pipe(uglify());
+        clients = clients.pipe(buffer()).pipe(uglify());
 
-    base_clients.pipe(gulp.dest(OUTPATH + '/lib/framework/base/'));
+    clients.pipe(gulp.dest(OUTPATH + '/lib/framework/diligent/'));
 
-    var base_diligent_js = browserify({
-            entries: ['./lib/framework/base/app/js/agent.js'],
+    var agent_js = browserify({
+        entries: ['./lib/framework/diligent/app/js/agent.js'],
             debug: DEBUG
         })
         .transform(reactify)
         .bundle()
-        .pipe(source('diligent.min.js'));
+        .pipe(source('agent.min.js'));
 
     if (!DEBUG)
-        base_diligent_js = base_diligent_js.pipe(buffer()).pipe(uglify());
+        agent_js = agent_js.pipe(buffer()).pipe(uglify());
 
-    base_diligent_js.pipe(gulp.dest(OUTPATH + '/lib/framework/base/'));
+    agent_js.pipe(gulp.dest(OUTPATH + '/lib/framework/diligent/'));
 
-    var base_diligent_css = gulp.src('lib/framework/base/app/css/*.css')
-        .pipe(concat('diligent.min.css'))
+    var agent_css = gulp.src('lib/framework/diligent/app/css/*.css')
+    .pipe(concat('agent.min.css'))
         .pipe(minifycss())
-        .pipe(gulp.dest(OUTPATH + '/lib/framework/base/'));
+        .pipe(gulp.dest(OUTPATH + '/lib/framework/diligent/'));
 
     return merge(
-        base_clients,
-        base_diligent_js,
-        base_diligent_css
+        clients,
+        agent_js,
+        agent_css
     );
 });
 
