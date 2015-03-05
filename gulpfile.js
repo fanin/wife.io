@@ -17,6 +17,7 @@ var JQUERY_VERSION      = '1.11.1',
     REACT_VERSION       = '0.12.2',
     OUTPATH             = 'mywife',
     DEBUG               = true,
+    SEMANTIC_UI_THEME   = 'default',
     BUILD_APPS          = [ 'launcher', 'template' ];
 
 var targets = [
@@ -52,8 +53,10 @@ gulp.task('lib', function() {
         .pipe(gulp.dest(OUTPATH + '/lib/jquery/plugins'));
     var jquery_ui = gulp.src('lib/jquery/ui/' + JQUERY_VERSION + '/*.min.*')
         .pipe(gulp.dest(OUTPATH + '/lib/jquery/ui/' + JQUERY_VERSION));
-    var semantic = gulp.src('lib/semantic/**/*')
+    var semantic_ui = gulp.src('lib/semantic/**/*.min.*')
         .pipe(gulp.dest(OUTPATH + '/lib/semantic/'));
+    var semantic_ui_theme = gulp.src('lib/semantic/themes/' + SEMANTIC_UI_THEME + '/**/*')
+        .pipe(gulp.dest(OUTPATH + '/lib/semantic/themes/' + SEMANTIC_UI_THEME));
     var font_awesome = gulp.src('lib/font-awesome/' + FONTAWESOME_VERSION + '/**/*')
         .pipe(gulp.dest(OUTPATH + '/lib/font-awesome/' + FONTAWESOME_VERSION));
     var react = gulp.src('lib/react/react-' + REACT_VERSION + '*.js')
@@ -63,7 +66,8 @@ gulp.task('lib', function() {
         jquery,
         jquery_plugin,
         jquery_ui,
-        semantic,
+        semantic_ui,
+        semantic_ui_theme,
         font_awesome,
         react
     );
@@ -83,7 +87,7 @@ gulp.task('diligent', function() {
     clients.pipe(gulp.dest(OUTPATH + '/lib/framework/diligent/'));
 
     var agent_js = browserify({
-        entries: ['./lib/framework/diligent/app/js/agent.js'],
+        entries: ['./lib/framework/diligent/agent/js/agent.js'],
             debug: DEBUG
         })
         .transform(reactify)
@@ -95,7 +99,7 @@ gulp.task('diligent', function() {
 
     agent_js.pipe(gulp.dest(OUTPATH + '/lib/framework/diligent/'));
 
-    var agent_css = gulp.src('lib/framework/diligent/app/css/*.css')
+    var agent_css = gulp.src('lib/framework/diligent/agent/css/*.css')
         .pipe(concat('agent.min.css'))
         .pipe(minifycss())
         .pipe(gulp.dest(OUTPATH + '/lib/framework/diligent/'));

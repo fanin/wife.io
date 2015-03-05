@@ -7,7 +7,7 @@ var LauncherAppIcon = React.createClass({
     propTypes: {
         appType: React.PropTypes.string.isRequired,
         manifest: React.PropTypes.object.isRequired,
-        manageMode: React.PropTypes.bool
+        manageable: React.PropTypes.bool
     },
 
     componentDidMount: function() {
@@ -34,14 +34,14 @@ var LauncherAppIcon = React.createClass({
         return (
             <li id={'launcher-icon-li-' + this.props.manifest.directory} key={this.props.manifest.directory}>
                 <a id    = {'launcher-icon-a-' + this.props.manifest.directory}
-                   href  = {this.props.manageMode ? '#' : iconAHref}
-                   title = {(this.props.manageMode && this.props.appType === 'u') ?
-                            'Delete' + this.props.manifest.name :
+                   href  = {this.props.manageable ? '#' : iconAHref}
+                   title = {(this.props.manageable && this.props.appType === 'u') ?
+                            'Uninstall ' + this.props.manifest.name :
                             this.props.manifest.description}>
 
                     <div id        = {'launcher-icon-div-' + this.props.manifest.directory}
                          style     = {iconDivStyle}
-                         className = {this.props.manageMode ? 'shake-app' : ''}>
+                         className = {this.props.manageable ? 'shake-app' : ''}>
 
                         <img id    = {'launcher-icon-img-' + this.props.manifest.directory}
                              style = {iconImgStyle}
@@ -49,7 +49,7 @@ var LauncherAppIcon = React.createClass({
 
                         <div id        = {'launcher-overlay-icon-div-' + this.props.manifest.directory}
                              className = 'launcher-overlay-icon-delete'
-                             style     = {{display: (this.props.appType === 'u' && this.props.manageMode) ? 'block' : 'none'}}>
+                             style     = {{display: (this.props.appType === 'u' && this.props.manageable) ? 'block' : 'none'}}>
 
                             <img id  = {'launcher-overlay-icon-img-' + this.props.manifest.directory}
                                  src = 'img/delete-icon.png'/>
@@ -75,7 +75,7 @@ var LauncherSortable = React.createClass({
     },
 
     propTypes: {
-        manageMode: React.PropTypes.bool
+        manageable: React.PropTypes.bool
     },
 
     render: function() {
@@ -85,7 +85,7 @@ var LauncherSortable = React.createClass({
     },
 
     componentDidMount: function() {
-        $(this.getDOMNode()).sortable({stop: this.handleDrop});
+        $(this.getDOMNode()).sortable({stop: this._handleDrop});
         $(this.getDOMNode()).disableSelection();
     },
 
@@ -104,10 +104,10 @@ var LauncherSortable = React.createClass({
                 var node = $(this.getDOMNode()).children().last()[0];
 
                 node.manifest    = children[childIndex].props.manifest;
-                node.onmousedown = (appType === 'b') ? this.handleMouseDown_b : this.handleMouseDown_u;
-                node.onmouseup   = (appType === 'b') ? this.handleMouseUp_b   : this.handleMouseUp_u;
-                node.onmousemove = (appType === 'b') ? this.handleMouseMove_b : this.handleMouseMove_u;
-                node.onclick     = this.handleDefaultClick;
+                node.onmousedown = (appType === 'b') ? this._handleMouseDown_b : this._handleMouseDown_u;
+                node.onmouseup   = (appType === 'b') ? this._handleMouseUp_b   : this._handleMouseUp_u;
+                node.onmousemove = (appType === 'b') ? this._handleMouseMove_b : this._handleMouseMove_u;
+                node.onclick     = this._handleDefaultClick;
 
                 nodes.push(node);
                 nodes[numNodes].dataset.reactSortablePos = numNodes;
@@ -125,7 +125,7 @@ var LauncherSortable = React.createClass({
             nodeIndex++;
         }
 
-        if (this.props.manageMode)
+        if (this.props.manageable)
             $(this.getDOMNode()).sortable('enable');
         else
             $(this.getDOMNode()).sortable('disable');
@@ -142,7 +142,7 @@ var LauncherSortable = React.createClass({
         return this.props.children || [];
     },
 
-    handleDrop: function() {
+    _handleDrop: function() {
         var newOrder = $(this.getDOMNode()).children().get().map(function(child, i) {
             var rv = child.dataset.reactSortablePos;
             child.dataset.reactSortablePos = i;
@@ -151,80 +151,71 @@ var LauncherSortable = React.createClass({
         this.props.onSort(newOrder);
     },
 
-    handleMouseDown_b: function(e) {
+    _handleMouseDown_b: function(e) {
         __builtinAppClickTimer = setTimeout(function() {
             __builtinAppClickTimer = undefined;
         }, 500);
-        this.startManageModeTimer();
+        this._startManageModeTimer();
     },
 
-    handleMouseUp_b: function(e) {
-        if (__builtinAppClickTimer)
-            this.clickAppIcon(e);
-        this.stopManageModeTimer();
+    _handleMouseUp_b: function(e) {
+        if (__builtinAppClickTimer) {
+            e.stopPropagation();
+            if (this.props.manageable) {
+                e.preventDefault();
+            }
+        }
+        this._stopManageModeTimer();
     },
 
-    handleMouseMove_b: function(e) {
+    _handleMouseMove_b: function(e) {
         clearTimeout(__builtinAppClickTimer);
         __builtinAppClickTimer = undefined;
-        this.stopManageModeTimer();
+        this._stopManageModeTimer();
     },
 
-    handleMouseDown_u: function(e) {
+    _handleMouseDown_u: function(e) {
         __userAppClickTimer = setTimeout(function() {
             __userAppClickTimer = undefined;
         }, 500);
-        this.startManageModeTimer();
+        this._startManageModeTimer();
     },
 
-    handleMouseUp_u: function(e) {
-        if (__userAppClickTimer)
-            this.clickDeleteApp(e);
-        this.stopManageModeTimer();
+    _handleMouseUp_u: function(e) {
+        if (__userAppClickTimer) {
+            e.stopPropagation();
+            if (this.props.manageable) {
+                var dir = e.target.id.split('-').pop();
+                this.props.onUninstall(dir);
+            }
+        }
+        this._stopManageModeTimer();
     },
 
-    handleMouseMove_u: function(e) {
+    _handleMouseMove_u: function(e) {
         clearTimeout(__userAppClickTimer);
             __userAppClickTimer = undefined;
-        this.stopManageModeTimer();
+        this._stopManageModeTimer();
     },
 
-    handleDefaultClick: function(e) {
-        if (this.props.manageMode) {
+    _handleDefaultClick: function(e) {
+        if (this.props.manageable) {
             e.preventDefault();
             e.stopPropagation();
         }
     },
 
-    startManageModeTimer: function() {
-        if (!this.props.manageMode) {
+    _startManageModeTimer: function() {
+        if (!this.props.manageable) {
             __longPressTimer = setTimeout(function() {
-                LauncherActionCreators.manageApps(true);
-            }, 750);
+                this.props.onLongPressIcon();
+            }.bind(this), 750);
         }
     },
 
-    stopManageModeTimer: function() {
+    _stopManageModeTimer: function() {
         if (__longPressTimer)
             clearTimeout(__longPressTimer);
-    },
-
-    clickAppIcon: function(e) {
-        e.stopPropagation();
-        if (this.props.manageMode) {
-            e.preventDefault();
-        }
-    },
-
-    clickDeleteApp: function(e) {
-        e.stopPropagation();
-        if (this.props.manageMode) {
-            if (confirm('Are you sure?')) {
-                var dir = e.target.id.split('-').pop();
-                var manifest = LauncherStore.getAppManifest(dir);
-                LauncherActionCreators.removeApp(manifest);
-            }
-        }
     }
 });
 
@@ -232,7 +223,10 @@ var LauncherApp = React.createClass({
     getInitialState: function() {
         return {
             appList: [],
-            manageMode: false
+            manageable: false,
+            /* AlertView parameters */
+            alertTitle: '',
+            alertDescription: ''
         };
     },
 
@@ -253,7 +247,7 @@ var LauncherApp = React.createClass({
     },
 
     shouldComponentUpdate: function (nextProps, nextState) {
-        if (this.state.manageMode && !nextState.manageMode)
+        if (this.state.manageable && !nextState.manageable)
             LauncherActionCreators.writeAppList(this.state.appList);
         return true;
     },
@@ -276,7 +270,7 @@ var LauncherApp = React.createClass({
                         key        = {manifest.directory}
                         appType    = 'b'
                         manifest   = {manifest}
-                        manageMode = {this.state.manageMode} />
+                        manageable = {this.state.manageable} />
                 );
             }
             else if (type === 'user')
@@ -285,19 +279,34 @@ var LauncherApp = React.createClass({
                         key        = {manifest.directory}
                         appType    = 'u'
                         manifest   = {manifest}
-                        manageMode = {this.state.manageMode} />
+                        manageable = {this.state.manageable} />
                 );
         }, this);
 
         return (
             <div className='launcher-app-grid' onClick={this._leaveManageMode}>
-                <LauncherSortable onClick    = {this._leaveManageMode}
-                                  onSort     = {this._handleSort}
-                                  manageMode = {this.state.manageMode}>
+                <LauncherSortable onClick         = {this._leaveManageMode}
+                                  onLongPressIcon = {this._enterManageMode}
+                                  onSort          = {this._handleSort}
+                                  onUninstall     = {this._handleUninstall}
+                                  manageable      = {this.state.manageable}>
                     {appIcons}
                 </LauncherSortable>
+                <AlertView ref                 = 'alertView'
+                           title               = {this.state.alertTitle}
+                           description         = {this.state.alertDescription}
+                           onActionAffirmative = {this._handleUninstallAffirmative}
+                           onActionNegative    = {this._handleUninstallNegative} />
             </div>
         );
+    },
+
+    _enterManageMode: function() {
+        LauncherActionCreators.manageApps(true);
+    },
+
+    _leaveManageMode: function() {
+        LauncherActionCreators.manageApps(false);
     },
 
     _handleSort: function(newOrder) {
@@ -307,8 +316,22 @@ var LauncherApp = React.createClass({
         this.setState({appList: newList});
     },
 
-    _leaveManageMode: function(e) {
-        LauncherActionCreators.manageApps(false);
+    _handleUninstall: function(dir) {
+        this._manifest = LauncherStore.getAppManifest(dir);
+        this.setState({
+            alertTitle: 'Uninstall APP',
+            alertDescription: 'Are you sure to uninstall ' + this._manifest.name + ' ?'
+        });
+        this.refs.alertView.show();
+    },
+
+    _handleUninstallAffirmative: function(e) {
+        e.stopPropagation();
+        LauncherActionCreators.removeApp(this._manifest);
+    },
+
+    _handleUninstallNegative: function(e) {
+        e.stopPropagation();
     },
 
     _onDiligentChanges: function() {
@@ -339,15 +362,16 @@ var LauncherApp = React.createClass({
                 this.setState({ appList: LauncherStore.getAppList() });
                 break;
             case LauncherConstants.LAUNCHER_APP_UNINSTALL_SUCCESS:
+                this._manifest = null;
                 this.setState({ appList: LauncherStore.getAppList() });
                 break;
             case LauncherConstants.LAUNCHER_APP_WRITE_SORT_LIST:
                 break;
             case LauncherConstants.LAUNCHER_APP_ENTER_MANAGE_MODE:
-                this.setState({ manageMode: true });
+                this.setState({ manageable: true });
                 break;
             case LauncherConstants.LAUNCHER_APP_LEAVE_MANAGE_MODE:
-                this.setState({ manageMode: false });
+                this.setState({ manageable: false });
                 break;
             case LauncherConstants.LAUNCHER_APP_ICON_MOVE:
                 break;

@@ -14,7 +14,7 @@ var DiligentNavigationBar = React.createClass({
 
     toggleDock: function(event) {
         $('#diligent-dock')
-        .sidebar('setting', 'transition', 'push')
+        .sidebar('setting', 'transition', 'overlay')
         .sidebar('setting', 'dimPage', false)
         .sidebar('toggle');
     },
