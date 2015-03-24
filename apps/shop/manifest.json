@@ -1,9 +1,9 @@
 {
-    "name": "APP Installer",
+    "name": "AppShop",
     "version": "0.1.0",
     "ws_api_version": "0.1",
-    "directory": "installer",
-    "entry": "installer.html",
+    "directory": "shop",
+    "entry": "index.html",
     "extensions": [],
     "localizations": [
         "en_US",
@@ -15,7 +15,7 @@
         "internet_explorer": "*",
         "safari": "*"
     },
-    "description": "APP installer",
+    "description": "Install apps for wife",
     "show_in_launcher": true,
     "allow_external_userdata": false,
     "identifier": "BAPPNPPZlk1Y"

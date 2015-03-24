@@ -25,7 +25,7 @@ function AppManager(_super, apiSpec) {
     this.apps = [];
 
     /* Private methods */
-    this.verifyAppManifest = function(manifest) {
+    this._verifyAppManifest = function(manifest) {
         if (manifest.name === undefined)
             return false;
         if (manifest.version === undefined)
@@ -41,7 +41,7 @@ function AppManager(_super, apiSpec) {
         return true;
     };
 
-    this.verifyAppBundle = function(appBundle) {
+    this._verifyAppBundle = function(appBundle) {
         var manifest = null;
         var appDirs = [];
 
@@ -52,7 +52,7 @@ function AppManager(_super, apiSpec) {
                 else if (path.basename(zipEntry.entryName) === APP_INFO_FILE) {
                     try {
                         var info = JSON.parse(appBundle.readAsText(zipEntry, 'utf8'));
-                        if (this.verifyAppManifest(info)) {
+                        if (this._verifyAppManifest(info)) {
                             if (appBundle.getEntry(info.directory + path.sep + info.entry)) {
                                 if (appDirs.indexOf(info.directory) >= 0) {
                                     manifest = info;
@@ -73,7 +73,7 @@ function AppManager(_super, apiSpec) {
         return manifest;
     };
 
-    this.loadApps = function(_path, list) {
+    this._loadApps = function(_path, list) {
         var appList = [];
 
         for (var i in list) {
@@ -81,7 +81,7 @@ function AppManager(_super, apiSpec) {
             if (jsonManifest) {
                 try {
                     var manifest = JSON.parse(jsonManifest);
-                    if (this.verifyAppManifest(manifest)) {
+                    if (this._verifyAppManifest(manifest)) {
                         if (_path === USER_APP_PATH) {
                             if (manifest.identifier) {
                                 this.apps[manifest.identifier] = manifest;
@@ -119,86 +119,119 @@ function AppManager(_super, apiSpec) {
 
         return appList;
     };
+
+    this.instQueue = [];
+    this.dataStream = [];
+
+    this._handleNextInstall = function(socket) {
+        if (!this.instQueue.length)
+            return;
+
+        if (this.instQueue[0].busy)
+            return;
+
+        this.instQueue[0].busy = true;
+
+        var instid = this.instQueue[0].instid;
+        var filename = SYSTEM.SETTINGS.TempPath + path.sep + instid + '.zip';
+        var appWriteStream = fs.createWriteStream(filename);
+
+        socket.emit(this.APISpec.Install.RES, "Initiating", instid);
+        this.dataStream[instid].pipe(appWriteStream);
+
+        this.dataStream[instid].once('data', function() {
+            socket.emit(this.APISpec.Install.RES, "Uploading", instid);
+        }.bind(this));
+
+        this.dataStream[instid].on('finish', function() {
+            socket.emit(this.APISpec.Install.RES, "Installing", instid);
+
+            var result = this.install(filename).result;
+            if (result === 'OK')
+                socket.emit(this.APISpec.Install.RES, "Installed", instid);
+            else
+                socket.emit(this.APISpec.Install.ERR, instid, result);
+
+            this.dataStream[instid].end();
+            fs.removeSync(filename);
+
+            this.instQueue.shift();
+            this._handleNextInstall(socket);
+        }.bind(this));
+
+        this.dataStream[instid].on('error', function(err) {
+            socket.emit(this.APISpec.Install.ERR, instid, SYSTEM.ERROR.ERROR_FS_BROKEN_PIPE);
+            this.instQueue.shift();
+            this._handleNextInstall(socket);
+        }.bind(this));
+    };
 }
 
 AppManager.prototype.register = function(socket, complete) {
-    var self = this;
-
     /**
      * Protocol Listener: App Management Events
      */
-    socket.on(self.APISpec.List.REQ, function() {
-        socket.emit(self.APISpec.List.RES, self.listApps());
-    });
+    socket.on(this.APISpec.List.REQ, function() {
+        socket.emit(this.APISpec.List.RES, this.listApps());
+    }.bind(this));
 
-    ss(socket).on(self.APISpec.Install.REQ, function(appBundleDataStream) {
-        if (!self.securityManager.canManageApps(socket)) {
-            socket.emit(self.APISpec.Install.ERR, SYSTEM.ERROR.ERROR_SECURITY_ACCESS_DENIED);
+    ss(socket).on(this.APISpec.Install.REQ, function(instid, appBundleDataStream) {
+        if (this.dataStream[instid])
+            return;
+
+        if (!this.securityManager.canManageApps(socket)) {
+            socket.emit(this.APISpec.Install.ERR, instid, SYSTEM.ERROR.ERROR_SECURITY_ACCESS_DENIED);
             return;
         }
 
-        var installationCode = randomstring.generate('XXXXXXXX');
-        var filename = SYSTEM.SETTINGS.TempPath + path.sep + installationCode + '.zip';
-        var appWriteStream = fs.createWriteStream(filename);
-        self.appBundleDataStream = appBundleDataStream;
-        appBundleDataStream.pipe(appWriteStream);
+        this.dataStream[instid] = appBundleDataStream;
+        this.instQueue.push({ instid: instid, busy: false });
+        this._handleNextInstall(socket);
+    }.bind(this));
 
-        appBundleDataStream.once('data', function() {
-            socket.emit(self.APISpec.Install.RES, installationCode, "Uploading");
-        });
-
-        appBundleDataStream.on('finish', function() {
-            socket.emit(self.APISpec.Install.RES, installationCode, "Installing");
-
-            var result = self.install(filename).result;
-            if (result === 'OK')
-                socket.emit(self.APISpec.Install.RES, installationCode, "Installed");
-            else
-                socket.emit(self.APISpec.Install.ERR, result);
-
-            appBundleDataStream.end();
-            fs.removeSync(filename);
-        });
-
-        appBundleDataStream.on('error', function(err) {
-            console.log('APP Install: ' + err);
-            socket.emit(self.APISpec.Install.ERR, SYSTEM.ERROR.ERROR_FS_BROKEN_PIPE);
-        });
-    });
-
-    socket.on(self.APISpec.CancelInstall.REQ, function(installationCode) {
-        if (!self.securityManager.canManageApps(socket)) {
-            socket.emit(self.APISpec.CancelInstall.ERR, SYSTEM.ERROR.ERROR_SECURITY_ACCESS_DENIED);
+    socket.on(this.APISpec.CancelInstall.REQ, function(instid) {
+        if (!this.securityManager.canManageApps(socket)) {
+            socket.emit(this.APISpec.CancelInstall.ERR, instid, SYSTEM.ERROR.ERROR_SECURITY_ACCESS_DENIED);
             return;
         }
 
-        var filename = SYSTEM.SETTINGS.TempPath + path.sep + installationCode + '.zip';
+        var filename = SYSTEM.SETTINGS.TempPath + path.sep + instid + '.zip';
 
         if (fs.existsSync(filename))
             fs.removeSync(filename);
 
-        if (self.appBundleDataStream) {
-            self.appBundleDataStream.end();
-            self.appBundleDataStream.removeAllListeners('finish');
-            self.appBundleDataStream.removeAllListeners('error');
-            self.appBundleDataStream = undefined;
+        if (this.dataStream[instid]) {
+            this.dataStream[instid].removeAllListeners('finish');
+            this.dataStream[instid].removeAllListeners('error');
+            this.dataStream[instid].end();
+            this.dataStream[instid] = undefined;
         }
 
-        socket.emit(self.APISpec.CancelInstall.RES, installationCode);
-    });
+        for (var i in this.instQueue) {
+            if (this.instQueue[i].instid === instid) {
+                this.instQueue.splice(i, 1);
+                socket.emit(this.APISpec.CancelInstall.RES, instid);
+                if (i === 0)
+                    this._handleNextInstall(socket);
+                return;
+            }
+        }
 
-    socket.on(self.APISpec.Uninstall.REQ, function(manifest) {
-        if (!self.securityManager.canManageApps(socket)) {
-            socket.emit(self.APISpec.Uninstall.ERR, SYSTEM.ERROR.ERROR_SECURITY_ACCESS_DENIED);
+        socket.emit(this.APISpec.CancelInstall.ERR, instid, SYSTEM.ERROR.ERROR_INVALID_ARG);
+    }.bind(this));
+
+    socket.on(this.APISpec.Uninstall.REQ, function(manifest) {
+        if (!this.securityManager.canManageApps(socket)) {
+            socket.emit(this.APISpec.Uninstall.ERR, SYSTEM.ERROR.ERROR_SECURITY_ACCESS_DENIED);
             return;
         }
 
-        var result = self.uninstall(manifest).result;
+        var result = this.uninstall(manifest).result;
         if (result === 'OK')
-            socket.emit(self.APISpec.Uninstall.RES, manifest);
+            socket.emit(this.APISpec.Uninstall.RES, manifest);
         else
-            socket.emit(self.APISpec.Uninstall.ERR, result);
-    });
+            socket.emit(this.APISpec.Uninstall.ERR, result);
+    }.bind(this));
 
     /* Create user app path if not exist */
     if (!fs.existsSync(USER_APP_PATH))
@@ -238,7 +271,7 @@ AppManager.prototype.listApps = function() {
     this.apps = [];
 
     try {
-        var builtinApps = this.loadApps(BUILTIN_APP_PATH, fs.readdirSync(BUILTIN_APP_PATH).filter(function (file) {
+        var builtinApps = this._loadApps(BUILTIN_APP_PATH, fs.readdirSync(BUILTIN_APP_PATH).filter(function (file) {
             var stat = fs.lstatSync(BUILTIN_APP_PATH + path.sep + file);
             if (stat.isDirectory())
                 if (fs.existsSync(BUILTIN_APP_PATH + path.sep + file + path.sep + APP_INFO_FILE))
@@ -246,7 +279,7 @@ AppManager.prototype.listApps = function() {
             return false;
         }));
 
-        var userApps = this.loadApps(USER_APP_PATH, fs.readdirSync(USER_APP_PATH).filter(function (file) {
+        var userApps = this._loadApps(USER_APP_PATH, fs.readdirSync(USER_APP_PATH).filter(function (file) {
             var stat = fs.lstatSync(USER_APP_PATH + path.sep + file);
             if (stat.isDirectory())
                 if (fs.existsSync(USER_APP_PATH + path.sep + file + path.sep + APP_INFO_FILE))
@@ -278,7 +311,7 @@ AppManager.prototype.install = function(appBundlePath) {
         return { result: SYSTEM.ERROR.ERROR_APP_BAD_FILE_FORMAT };
     }
 
-    manifest = this.verifyAppBundle(appBundle);
+    manifest = this._verifyAppBundle(appBundle);
     if (!manifest)
         return { result: SYSTEM.ERROR.ERROR_APP_BAD_STRUCT };
 

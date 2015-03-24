@@ -11,23 +11,23 @@ function onAppList(arg) {
 function onAppUninstallSuccess(arg) {
     LauncherDispatcher.dispatch({
         actionType: LauncherConstants.LAUNCHER_APP_UNINSTALL_SUCCESS,
-        manifest: arg
+        manifest: arg.manifest
     });
 }
 
 function onAppUninstallFail(arg) {
     LauncherDispatcher.dispatch({
         actionType: LauncherConstants.LAUNCHER_APP_UNINSTALL_FAIL,
-        error: arg
+        error: arg.error
     });
 }
 
+AppManagerClient.on("app.list", onAppList);
+AppManagerClient.on("app.uninstall#success", onAppUninstallSuccess);
+AppManagerClient.on("app.uninstall#error", onAppUninstallFail);
+
 var LauncherActions = {
     listApps: function() {
-        AppManagerClient.on("app.list", onAppList);
-        AppManagerClient.on("app.uninstall#success", onAppUninstallSuccess);
-        AppManagerClient.on("app.uninstall#error", onAppUninstallFail);
-
         AppManagerClient.list();
     },
 

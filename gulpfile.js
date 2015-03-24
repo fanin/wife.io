@@ -18,7 +18,7 @@ var JQUERY_VERSION      = '1.11.1',
     OUTPATH             = 'mywife',
     DEBUG               = true,
     SEMANTIC_UI_THEME   = 'default',
-    BUILD_APPS          = [ 'launcher', 'template' ];
+    BUILD_APPS          = [ 'launcher', 'shop', 'template' ];
 
 var targets = [
     'server',
@@ -75,7 +75,8 @@ gulp.task('lib', function() {
 
 gulp.task('diligent', function() {
     var clients = browserify({
-        entries: ['./lib/framework/diligent/clients/clients.js'],
+            entries: ['./lib/framework/diligent/clients/clients.js'],
+            paths: ['./'],
             debug: DEBUG
         })
         .bundle()
@@ -190,4 +191,3 @@ gulp.task('clean', function(cb) {
 });
 
 gulp.task('default', targets);
-gulp.task('brackets-default', targets);

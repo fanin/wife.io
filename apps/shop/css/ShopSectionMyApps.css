@@ -1,0 +1,80 @@
+.section-myapp-container {
+    width: 100%;
+    overflow: hidden;
+}
+
+.section-myapp-scroller {
+    width: 100%;
+    margin: 0px auto;
+    /*top: -50px;*/
+    overflow-x: auto;
+    overflow-y: hidden;
+    position: relative;
+}
+
+.section-myapp-scroll-back {
+    float: left;
+    position: relative;
+    top: 190px;
+    z-index: 1;
+    cursor: pointer;
+    /* Hide scroll button, no need for now */
+    display: none;
+}
+
+.section-myapp-scroll-forward {
+    float: right;
+    position: relative;
+    top: 190px;
+    z-index: 1;
+    cursor: pointer;
+    /* Hide scroll button, no need for now */
+    display: none;
+}
+
+/* Hide scrollbar
+.section-myapp-scroller::-webkit-scrollbar {
+    display: none;
+}
+*/
+
+.section-myapp-cards {
+    margin: 0 !important;
+}
+
+.ui.cards > .card {
+    margin-left: 8px !important;
+    margin-right: 8px !important;
+}
+
+.ui.card, .ui.cards>.card {
+    width: 200px !important;
+}
+
+/* Control dimmer by ourself */
+.ui.active.dimmer {
+    background-color: rgba(0, 0, 0, .6) !important;
+}
+
+h2.ui.inverted.header {
+    word-wrap: break-word;
+    font-size: 100% !important;
+}
+
+.card-enter {
+    opacity: 0.01 !important;
+    transition: opacity .5s ease-in !important;
+}
+
+.card-enter.card-enter-active {
+    opacity: 1 !important;
+}
+
+.card-leave {
+    opacity: 1 !important;
+    transition: opacity .5s ease-in !important;
+}
+
+.card-leave.card-leave-active {
+    opacity: 0.01 !important;
+}

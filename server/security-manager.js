@@ -33,7 +33,7 @@ SecurityManager.prototype.canManageApps = function(socket) {
     if (!this.manifests[socket])
         return false;
 
-    if (this.manifests[socket].directory === 'launcher' || this.manifests[socket].directory === 'installer')
+    if (this.manifests[socket].directory === 'launcher' || this.manifests[socket].directory === 'shop')
         return true;
     else
         return false;

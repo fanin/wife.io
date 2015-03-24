@@ -39,7 +39,7 @@ html, body {
     -ms-filter: blur(14px);
     -o-filter: blur(14px);
     filter: blur(14px);
-    filter: url("data:image/svg+xml;utf9,<svg%20version=%271.1%27%20xmlns=%27http://www.w3.org/2000/svg%27><filter%20id=%27blur%27><feGaussianBlur%20stdDeviation=%2714%27/></filter></svg>#blur"); <!-- SVG filter for Firefox  -->
+    filter: url("data:image/svg+xml;utf9,<svg%20version=%271.1%27%20xmlns=%27http://www.w3.org/2000/svg%27><filter%20id=%27blur%27><feGaussianBlur%20stdDeviation=%2714%27/></filter></svg>#blur");
     display: block;
     position: fixed;
     width: 100%;
