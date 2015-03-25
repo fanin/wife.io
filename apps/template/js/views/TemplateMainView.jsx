@@ -2,7 +2,7 @@ var $TEMPLATE$ActionCreators = require('../actions/$TEMPLATE$ActionCreators');
 var $TEMPLATE$Store          = require('../stores/$TEMPLATE$Store');
 var DiligentStore            = DiligentAgent.store;
 
-var $TEMPLATE$App = React.createClass({
+var $TEMPLATE$MainView = React.createClass({
     getDefaultProps: function() {
         return {};
     },
@@ -75,4 +75,4 @@ var $TEMPLATE$App = React.createClass({
     }
 });
 
-module.exports = $TEMPLATE$App;
+module.exports = $TEMPLATE$MainView;

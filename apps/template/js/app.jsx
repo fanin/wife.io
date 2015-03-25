@@ -1,8 +1,8 @@
-var GreetingsApp = require('./components/GreetingsApp.jsx');
+var GreetingsMainView = require('./views/GreetingsMainView.jsx');
 
 DiligentAgent.render({ debug: true });
 
 React.render(
-    <GreetingsApp />,
+    <GreetingsMainView />,
     document.getElementById('app-view')
 );

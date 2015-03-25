@@ -1,8 +1,8 @@
-var LauncherApp = require('./components/LauncherApp.jsx');
+var LauncherMainView = require('./views/LauncherMainView.jsx');
 
 DiligentAgent.render({ debug: true });
 
 React.render(
-    <LauncherApp />,
+    <LauncherMainView />,
     document.getElementById('app-view')
 );

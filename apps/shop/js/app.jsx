@@ -1,8 +1,8 @@
-var ShopApp = require('./components/ShopApp.jsx');
+var ShopMainView = require('./views/ShopMainView.jsx');
 
 DiligentAgent.render({ debug: true });
 
 React.render(
-    <ShopApp />,
+    <ShopMainView />,
     document.getElementById('app-view')
 );

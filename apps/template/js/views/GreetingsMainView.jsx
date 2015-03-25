@@ -2,7 +2,7 @@ var GreetingsActionCreators = require('../actions/GreetingsActionCreators');
 var GreetingsStore          = require('../stores/GreetingsStore');
 var DiligentStore           = DiligentAgent.store;
 
-var GreetingsApp = React.createClass({
+var GreetingsMainView = React.createClass({
     getInitialState: function() {
         return {
             greetingsExtentionLoaded: false,
@@ -95,4 +95,4 @@ var GreetingsApp = React.createClass({
     }
 });
 
-module.exports = GreetingsApp;
+module.exports = GreetingsMainView;

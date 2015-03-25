@@ -3,7 +3,7 @@ var ShopActionCreators = require('../actions/ShopActionCreators');
 var ShopStore          = require('../stores/ShopStore');
 var DiligentStore      = DiligentAgent.store;
 
-var ShopApp = React.createClass({
+var ShopMainView = React.createClass({
     getDefaultProps: function() {
         return {};
     },
@@ -78,4 +78,4 @@ var ShopApp = React.createClass({
     }
 });
 
-module.exports = ShopApp;
+module.exports = ShopMainView;
