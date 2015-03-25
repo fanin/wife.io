@@ -1,7 +1,6 @@
 var __builtinAppClickTimer;
 var __userAppClickTimer;
 var __longPressTimer;
-var cloneWithProps = React.addons.cloneWithProps;
 
 var LauncherSortable = React.createClass({
     getDefaultProps: function() {
@@ -47,7 +46,7 @@ var LauncherSortable = React.createClass({
                 nodes[numNodes].dataset.reactSortablePos = numNodes;
                 numNodes++;
             }
-            var child = cloneWithProps(children[childIndex]);
+            var child = React.cloneElement(children[childIndex]);
             React.render(child, nodes[nodeIndex]);
             childIndex++;
             nodeIndex++;

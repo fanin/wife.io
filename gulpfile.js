@@ -14,7 +14,7 @@ var gulp       = require('gulp'),
 
 var JQUERY_VERSION      = '1.11.1',
     FONTAWESOME_VERSION = '4.2.0',
-    REACT_VERSION       = '0.12.2',
+    REACT_VERSION       = '0.13.1',
     OUTPATH             = 'mywife',
     DEBUG               = true,
     SEMANTIC_UI_THEME   = 'default',
@@ -59,7 +59,7 @@ gulp.task('lib', function() {
         .pipe(gulp.dest(OUTPATH + '/lib/semantic/themes/' + SEMANTIC_UI_THEME));
     var font_awesome = gulp.src('lib/font-awesome/' + FONTAWESOME_VERSION + '/**/*')
         .pipe(gulp.dest(OUTPATH + '/lib/font-awesome/' + FONTAWESOME_VERSION));
-    var react = gulp.src('lib/react/react-' + REACT_VERSION + '*.js')
+    var react = gulp.src('lib/react/react*-' + REACT_VERSION + '*.js')
         .pipe(gulp.dest(OUTPATH + '/lib/react'));
 
     return merge(
