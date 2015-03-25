@@ -71,18 +71,18 @@ var LauncherMainView = React.createClass({
 
         return (
             <div className='launcher-app-grid' onClick={this._leaveManageMode}>
-                <LauncherSortable onClick         = {this._leaveManageMode}
-                                  onLongPressIcon = {this._enterManageMode}
-                                  onSort          = {this._handleSort}
-                                  onUninstall     = {this._handleUninstall}
-                                  manageable      = {this.state.manageable}>
+                <LauncherSortable onClick = {this._leaveManageMode}
+                          onLongPressIcon = {this._enterManageMode}
+                                   onSort = {this._handleSort}
+                              onUninstall = {this._handleUninstall}
+                               manageable = {this.state.manageable}>
                     {appIcons}
                 </LauncherSortable>
-                <AlertView ref                 = 'alertView'
-                           title               = {this.state.alertTitle}
-                           description         = {this.state.alertDescription}
-                           onActionAffirmative = {this._handleUninstallAffirmative}
-                           onActionNegative    = {this._handleUninstallNegative} />
+                <AlertViewController ref = 'alertViewController'
+                                   title = {this.state.alertTitle}
+                             description = {this.state.alertDescription}
+                     onActionAffirmative = {this._handleUninstallAffirmative}
+                        onActionNegative = {this._handleUninstallNegative} />
             </div>
         );
     },
@@ -108,7 +108,7 @@ var LauncherMainView = React.createClass({
             alertTitle: 'Uninstall APP',
             alertDescription: 'Are you sure to uninstall ' + this._manifest.name + ' ?'
         });
-        this.refs.alertView.show();
+        this.refs.alertViewController.show();
     },
 
     _handleUninstallAffirmative: function(e) {

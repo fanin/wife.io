@@ -1,6 +1,6 @@
 'use strict';
 
-var AlertView = React.createClass({
+var AlertViewController = React.createClass({
     getDefaultProps: function() {
         return {
             title: "",
@@ -69,4 +69,4 @@ var AlertView = React.createClass({
     }
 });
 
-module.exports = AlertView;
+module.exports = AlertViewController;
