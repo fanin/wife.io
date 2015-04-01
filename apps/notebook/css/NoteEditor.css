@@ -1,0 +1,11 @@
+.nb-column-toolbar-title-input {
+	width: calc(100% - 250px);
+}
+
+.nb-column-toolbar-search-input {
+	width: 245px;
+}
+
+.cke_reset {
+	height: 100% !important;
+}

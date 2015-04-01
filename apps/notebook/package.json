@@ -1,0 +1,26 @@
+{
+    "name": "notebook",
+    "description": "Notebook",
+    "repository": "https://github.com/knych/wife.io",
+    "main": "js/app.jsx",
+    "dependencies": {
+        "flux": "^2.0.1",
+        "object-assign": "^2.0.0"
+    },
+    "devDependencies": {
+        "browserify": "^9.0.3",
+        "del": "^1.1.1",
+        "gulp": "^3.8.11",
+        "gulp-concat": "^2.5.2",
+        "gulp-minify-css": "^0.5.1",
+        "gulp-uglify": "^1.1.0",
+        "reactify": "^1.0.0",
+        "vinyl-buffer": "^1.0.0",
+        "vinyl-source-stream": "^1.0.0",
+        "vinyl-transform": "^1.0.0"
+    },
+    "scripts": {
+        "build": "gulp",
+        "clean": "gulp clean"
+    }
+}

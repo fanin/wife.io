@@ -1,0 +1,4 @@
+/* Fix sort icon being cut */
+.dropdown > .icon {
+	height: 1em !important;
+}
