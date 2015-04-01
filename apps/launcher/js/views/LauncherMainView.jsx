@@ -1,3 +1,4 @@
+var AlertViewController    = require('framework/cutie/AlertView/js/AlertViewController.jsx');
 var LauncherAppIcon        = require('./LauncherAppIcon.jsx');
 var LauncherSortable       = require('./LauncherSortable.jsx');
 var LauncherConstants      = require('../constants/LauncherConstants');

@@ -24,6 +24,7 @@ html, body {
 }
 
 #app-view {
+    /*height: calc(100% - 44px);*/
     height: 100%;
     padding-top: 35px;
 }

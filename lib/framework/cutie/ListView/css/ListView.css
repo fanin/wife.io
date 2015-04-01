@@ -1,0 +1,29 @@
+.ui.list > .active.item {
+	background: rgba(9, 87, 142, 0.5) !important;
+}
+
+.content {
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	color: white;
+	cursor: pointer;
+	font-size: 1em;
+}
+
+.cutie-listview-title {
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	color: white;
+	font-size: 1.2em;
+	padding-bottom: 5px;
+}
+
+.cutie-listview-subtitle {
+	color: darkgray;
+	font-style: italic;
+	font-family: verdana;
+	font-size: .85em;
+	padding-bottom: 12px;
+}

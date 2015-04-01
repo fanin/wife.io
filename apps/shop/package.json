@@ -1,6 +1,6 @@
 {
-    "name": "template",
-    "description": "Template app skeleton",
+    "name": "shop",
+    "description": "Install online and offline apps",
     "repository": "https://github.com/knych/wife.io",
     "main": "js/app.jsx",
     "dependencies": {

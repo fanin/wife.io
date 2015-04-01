@@ -15,6 +15,7 @@ var OUTPATH = 'build',
 gulp.task('default', function() {
     var b = browserify({
             entries: ['./js/app.jsx'],
+            paths: ['../../lib'],
             debug: DEBUG
         })
         .transform(reactify)

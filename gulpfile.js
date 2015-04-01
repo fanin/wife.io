@@ -16,9 +16,10 @@ var JQUERY_VERSION      = '1.11.1',
     FONTAWESOME_VERSION = '4.2.0',
     REACT_VERSION       = '0.13.1',
     OUTPATH             = 'mywife',
-    DEBUG               = true,
+    DEBUG               = false,
     SEMANTIC_UI_THEME   = 'default',
-    BUILD_APPS          = [ 'launcher', 'shop', 'template' ];
+    BUILD_APPS          = [ 'launcher', 'shop', 'notebook', 'template' ],
+    LIB_PATHS           = ['./lib'];
 
 var targets = [
     'server',
@@ -76,7 +77,7 @@ gulp.task('lib', function() {
 gulp.task('diligent', function() {
     var clients = browserify({
             entries: ['./lib/framework/diligent/clients/clients.js'],
-            paths: ['./'],
+            paths: LIB_PATHS,
             debug: DEBUG
         })
         .bundle()
@@ -89,6 +90,7 @@ gulp.task('diligent', function() {
 
     var agent_js = browserify({
         entries: ['./lib/framework/diligent/agent/js/agent.js'],
+            paths: LIB_PATHS,
             debug: DEBUG
         })
         .transform(reactify)
@@ -116,6 +118,7 @@ gulp.task('cutie', function() {
     /* Create Cutie UI js bundle */
     var cutie_js = browserify({
         entries: ['./lib/framework/cutie/cutie.js'],
+        paths: LIB_PATHS,
         debug: DEBUG
     })
     .transform(reactify)
@@ -127,7 +130,7 @@ gulp.task('cutie', function() {
 
     cutie_js.pipe(gulp.dest(OUTPATH + '/lib/framework/cutie/'));
 
-    var cutie_css = gulp.src('lib/framework/cutie/notification/**/*.css')
+    var cutie_css = gulp.src('lib/framework/cutie/**/*.css')
         .pipe(concat('cutie.min.css'))
         .pipe(minifycss())
         .pipe(gulp.dest(OUTPATH + '/lib/framework/cutie/'));
@@ -143,6 +146,7 @@ gulp.task('app', function() {
         /* Build app js bundle */
         var b = browserify({
                 entries: ['./apps/' + BUILD_APPS[a] + '/js/app.jsx'],
+                paths: LIB_PATHS,
                 debug: DEBUG
             })
             .transform(reactify)
@@ -165,6 +169,7 @@ gulp.task('app', function() {
                 'apps/' + BUILD_APPS[a] + '/index.html',
                 'apps/' + BUILD_APPS[a] + '/manifest.json',
                 'apps/' + BUILD_APPS[a] + '/img**/*',
+                'apps/' + BUILD_APPS[a] + '/lib**/**'
             ])
             .pipe(gulp.dest(OUTPATH + '/apps/' + BUILD_APPS[a]));
     }
