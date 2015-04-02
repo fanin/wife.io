@@ -5,11 +5,11 @@ var DiligentStore          = require('../stores/DiligentStore');
 
 var DiligentNavigationBar = React.createClass({
     componentDidMount: function() {
-        DiligentActionCreators.initiateDiligentClient();
+        DiligentActionCreators.register();
     },
 
     componentWillUnmount: function() {
-        DiligentActionCreators.terminateDiligentClient();
+        DiligentActionCreators.unregister();
     },
 
     toggleDock: function(event) {
