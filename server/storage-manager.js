@@ -55,20 +55,20 @@ StorageManager.prototype.register = function(socket, complete) {
         });
     });
 
-    socket.on(self.APISpec.SetUserDataDisk.REQ, function(disk) {
+    socket.on(self.APISpec.SetWorkingDisk.REQ, function(disk) {
         if (self.securityManager.isExternalUserDataAllowed(socket)) {
             if (self.verifyDiskInfo(disk)) {
                 if (self.userWorkingDisk[socket].mountpoint !== disk.mountpoint) {
                     self.userWorkingDisk[socket] = disk;
-                    self.notificationCenter.post("Storage", "UserDataDiskChange", disk);
+                    self.notificationCenter.post("Storage", "WorkingDiskChange", disk);
                 }
-                self.notificationCenter.post("Storage", "UserDataDiskSet", disk);
+                self.notificationCenter.post("Storage", "WorkingDiskSet", disk);
             }
             else
-                socket.emit(self.APISpec.SetUserDataDisk.ERR, SYSTEM.ERROR.ERROR_STOR_BAD_DISK_INFO);
+                socket.emit(self.APISpec.SetWorkingDisk.ERR, SYSTEM.ERROR.ERROR_STOR_BAD_DISK_INFO);
         }
         else
-            socket.emit(self.APISpec.SetUserDataDisk.ERR, SYSTEM.ERROR.ERROR_SECURITY_EXTERNAL_NOT_ALLOWED);
+            socket.emit(self.APISpec.SetWorkingDisk.ERR, SYSTEM.ERROR.ERROR_SECURITY_EXTERNAL_NOT_ALLOWED);
     });
 
     self.getLocalDisks(function(disks, error) {
@@ -219,7 +219,7 @@ StorageManager.prototype.getLocalDisks = function(callback) {
                 for (i = 0; i < _oldDisk.length; i++) {
                     if (!_oldDisk[i].present) {
                         for (j in self.userWorkingDisk) {
-                            /* If removed disk is user working disk, reset working disk to system disk */
+                            /* If removed disk is user working disk, reset working disk to system data disk */
                             if (self.userWorkingDisk[j] === _oldDisk[i]) {
                                 self.userWorkingDisk[j] = self.systemDataDisk || self.systemDisk;
                             }

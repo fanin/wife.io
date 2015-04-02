@@ -18,8 +18,8 @@ var GreetingsStore = assign({}, EventEmitter.prototype, {
         return rudeMsg;
     },
 
-    emitChange: function() {
-        this.emit(CHANGE_EVENT);
+    emitChange: function(changes) {
+        this.emit(CHANGE_EVENT, changes);
     },
 
     /**

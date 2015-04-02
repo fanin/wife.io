@@ -125,7 +125,7 @@
 
                             var storage = bookshelf.getStorage(uuid);
                             if (storage && storage.disk) {
-                                notebookViewController.storageClient.setUserDataDisk(storage.disk);
+                                notebookViewController.storageClient.setWorkingDisk(storage.disk);
                             }
                             else {
                                 page.notifier.add (

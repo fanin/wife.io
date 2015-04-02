@@ -1,9 +1,7 @@
 var BookshelfContainer     = require('./BookshelfContainer.jsx');
 var NoteListContainer      = require('./NoteListContainer.jsx');
 var NoteEditorContainer    = require('./NoteEditorContainer.jsx');
-var NotebookActionCreators = require('../actions/NotebookActionCreators');
-var NotebookStore          = require('../stores/NotebookStore');
-var DiligentStore            = DiligentAgent.store;
+var DiligentStore          = DiligentAgent.store;
 
 var NotebookMainView = React.createClass({
 
@@ -26,13 +24,11 @@ var NotebookMainView = React.createClass({
     componentDidMount: function() {
         // Uncomment this to listen extension events
         //DiligentStore.addExtensionListener(this._onExtensionChanges);
-        NotebookStore.addChangeListener(this._onStoreChange);
     },
 
     componentWillUnmount: function() {
         // Uncomment this to listen extension events
         //DiligentStore.removeExtensionListener(this._onExtensionChanges);
-        NotebookStore.removeChangeListener(this._onStoreChange);
     },
 
     shouldComponentUpdate: function (nextProps, nextState) {

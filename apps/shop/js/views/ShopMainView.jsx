@@ -18,17 +18,15 @@ var ShopMainView = React.createClass({
 
     componentWillMount: function() {
         DiligentStore.addDiligentListener(this._onDiligentChanges);
+        ShopActionCreators.register();
     },
 
     componentDidMount: function() {
-        // Uncomment this to listen extension events
-        //DiligentStore.addExtensionListener(this._onExtensionChanges);
         ShopStore.addChangeListener(this._onStoreChange);
     },
 
     componentWillUnmount: function() {
-        // Uncomment this to listen extension events
-        //DiligentStore.removeExtensionListener(this._onExtensionChanges);
+        ShopActionCreators.unregister();
         ShopStore.removeChangeListener(this._onStoreChange);
     },
 

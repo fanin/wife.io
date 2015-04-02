@@ -150,10 +150,10 @@
                         }
                     }
                 },
-                "SetUserDataDisk": {
-                    "REQ": "WSAPI-0-C-STOR-SET-USER-DATA-DISK",
-                    "RES": "WSAPI-0-R-STOR-SET-USER-DATA-DISK",
-                    "ERR": "WSAPI-0-E-STOR-SET-USER-DATA-DISK",
+                "SetWorkingDisk": {
+                    "REQ": "WSAPI-0-C-STOR-SET-WORKING-DISK",
+                    "RES": "WSAPI-0-R-STOR-SET-WORKING-DISK",
+                    "ERR": "WSAPI-0-E-STOR-SET-WORKING-DISK",
                     "DESC": {
                         "REQ Args": {
                             "Disk": "Disk info object"

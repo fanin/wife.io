@@ -3,9 +3,9 @@ var NotebookConstants  = require('../constants/NotebookConstants');
 var EventEmitter       = require('events').EventEmitter;
 var assign             = require('object-assign');
 
-var CHANGE_EVENT = 'NOTEBOOK_STORE_CHANGE';
+var CHANGE_EVENT = 'NOTEBOOK_DATABASE_STORE_CHANGE';
 
-var NotebookStore = assign({}, EventEmitter.prototype, {
+var DatabaseStore = assign({}, EventEmitter.prototype, {
     emitChange: function(changes) {
         this.emit(CHANGE_EVENT, changes);
     },
@@ -22,15 +22,29 @@ var NotebookStore = assign({}, EventEmitter.prototype, {
      */
     removeChangeListener: function(callback) {
         this.removeListener(CHANGE_EVENT, callback);
+    },
+
+    /**
+     * Build real path from node or string
+     * @param {object/string} jqTree node object or relative path string
+     */
+    getPath: function(node) {
+        var path = "";
+
+        if (typeof node === "object")
+            path = "/" + node.id;
+        else if (typeof node === "string")
+            path = node;
+
+        return "bookshelf" + path;
     }
 });
 
-// Register callback to handle all updates
-NotebookDispatcher.register(function(action) {
+DatabaseStore.dispatchToken = NotebookDispatcher.register(function(action) {
     switch (action.actionType) {
         default:
             break;
     }
 });
 
-module.exports = NotebookStore;
+module.exports = DatabaseStore;

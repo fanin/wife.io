@@ -152,7 +152,6 @@ var JqTreeView = React.createClass({
 
 	_nodeMove: function(srcNode, dstNode, pos) {
         this.treeInstance.tree("moveNode", srcNode, dstNode, pos);
-        //saveNotebookTree();
     },
 
     _nodeCreate: function(name) {
@@ -176,7 +175,10 @@ var JqTreeView = React.createClass({
         }
 
         this.treeInstance.tree("removeNode", node);
-        //saveNotebookTree();
+    },
+
+    _nodeRename: function(node, name) {
+    	this.treeInstance.tree("updateNode", node, name);
     },
 
     _getNodeByName: function(name) {

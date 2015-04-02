@@ -17,6 +17,7 @@ var $TEMPLATE$MainView = React.createClass({
 
     componentWillMount: function() {
         DiligentStore.addDiligentListener(this._onDiligentChanges);
+        $TEMPLATE$ActionCreators.register();
     },
 
     componentDidMount: function() {
@@ -26,6 +27,7 @@ var $TEMPLATE$MainView = React.createClass({
     },
 
     componentWillUnmount: function() {
+        $TEMPLATE$ActionCreators.unregister();
         // Uncomment this to listen extension events
         //DiligentStore.removeExtensionListener(this._onExtensionChanges);
         $TEMPLATE$Store.removeChangeListener(this._onStoreChange);

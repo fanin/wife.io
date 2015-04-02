@@ -18,24 +18,24 @@ var GreetingsExtension = assign({}, EventEmitter.prototype, {
         var self = this;
 
         /* Implement Greetings extension response handler */
-        this.socket.on(this.apiSpec[0].Say.Hello.RES, function(msg) {
+        this.socket.on(this.wsapi[this.version].Say.Hello.RES, function(msg) {
             self.emit("greetings.sayhello#success", msg);
         });
 
         /* Implement Greetings extension error handler */
-        this.socket.on(this.apiSpec[0].Say.Hello.ERR, function(err) {
+        this.socket.on(this.wsapi[this.version].Say.Hello.ERR, function(err) {
             self.emit("greetings.sayhello#error", err);
         });
     },
 
     inactivate: function() {
-        this.socket.removeAllListeners(this.apiSpec[0].Say.Hello.RES);
-        this.socket.removeAllListeners(this.apiSpec[0].Say.Hello.ERR);
+        this.socket.removeAllListeners(this.wsapi[this.version].Say.Hello.RES);
+        this.socket.removeAllListeners(this.wsapi[this.version].Say.Hello.ERR);
     },
 
     /* Implement Greetings extension command wrapper */
     sayHello: function(from, to) {
-        this.socket.emit(this.apiSpec[0].Say.Hello.REQ, from, to);
+        this.socket.emit(this.wsapi[this.version].Say.Hello.REQ, from, to);
     }
 });
 

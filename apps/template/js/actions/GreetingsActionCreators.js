@@ -17,10 +17,17 @@ function dispatchGreetingsErrMsg(msg) {
     });
 }
 
-GreetingsExtension.on('greetings.sayhello#success', dispatchGreetingsMsg);
-GreetingsExtension.on('greetings.sayhello#error', dispatchGreetingsErrMsg);
+var GreetingsActionCreators = {
+    register: function() {
+        GreetingsExtension.on('greetings.sayhello#success', dispatchGreetingsMsg);
+        GreetingsExtension.on('greetings.sayhello#error', dispatchGreetingsErrMsg);
+    },
 
-var GreetingsActions = {
+    unregister: function() {
+        GreetingsExtension.removeListener('greetings.sayhello#success', dispatchGreetingsMsg);
+        GreetingsExtension.removeListener('greetings.sayhello#error', dispatchGreetingsErrMsg);
+    },
+
     loadExtension: function() {
         DiligentActionCreators.loadExtension(GreetingsExtension);
     },
@@ -38,4 +45,4 @@ var GreetingsActions = {
     }
 }
 
-module.exports = GreetingsActions;
+module.exports = GreetingsActionCreators;

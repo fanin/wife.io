@@ -14,9 +14,11 @@ var GreetingsMainView = React.createClass({
     componentDidMount: function() {
         DiligentStore.addExtensionListener(this._onExtensionChanges);
         GreetingsStore.addChangeListener(this._onReceiveMessage);
+        GreetingsActionCreators.register();
     },
 
     componentWillUnmount: function() {
+        GreetingsActionCreators.unregister();
         GreetingsStore.removeChangeListener(this._onReceiveMessage);
         DiligentStore.removeExtensionListener(this._onExtensionChanges);
     },

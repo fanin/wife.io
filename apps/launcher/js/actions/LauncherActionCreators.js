@@ -22,11 +22,19 @@ function onAppUninstallFail(arg) {
     });
 }
 
-AppManagerClient.on("app.list", onAppList);
-AppManagerClient.on("app.uninstall#success", onAppUninstallSuccess);
-AppManagerClient.on("app.uninstall#error", onAppUninstallFail);
+var LauncherActionCreators = {
+    register: function() {
+        AppManagerClient.on("app.list", onAppList);
+        AppManagerClient.on("app.uninstall#success", onAppUninstallSuccess);
+        AppManagerClient.on("app.uninstall#error", onAppUninstallFail);
+    },
 
-var LauncherActions = {
+    unregister: function() {
+        AppManagerClient.removeListener("app.list", onAppList);
+        AppManagerClient.removeListener("app.uninstall#success", onAppUninstallSuccess);
+        AppManagerClient.removeListener("app.uninstall#error", onAppUninstallFail);
+    },
+
     listApps: function() {
         AppManagerClient.list();
     },
@@ -59,4 +67,4 @@ var LauncherActions = {
     }
 }
 
-module.exports = LauncherActions;
+module.exports = LauncherActionCreators;

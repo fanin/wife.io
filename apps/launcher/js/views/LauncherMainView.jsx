@@ -21,6 +21,7 @@ var LauncherMainView = React.createClass({
         DiligentStore.addDiligentListener(this._onDiligentChanges);
         LauncherStore.addChangeListener(this._onLauncherChanges);
         LauncherStore.addErrorListener(this._onLauncherError);
+        LauncherActionCreators.register();
     },
 
     componentDidMount: function() {
@@ -28,6 +29,7 @@ var LauncherMainView = React.createClass({
     },
 
     componentWillUnmount: function() {
+        LauncherActionCreators.unregister();
         LauncherStore.removeErrorListener(this._onLauncherError);
         LauncherStore.removeChangeListener(this._onLauncherChanges);
         DiligentStore.removeDiligentListener(this._onDiligentChanges);

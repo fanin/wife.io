@@ -2,21 +2,24 @@ var ShopDispatcher         = require('../dispatcher/ShopDispatcher');
 var ShopConstants          = require('../constants/ShopConstants');
 var DiligentActionCreators = DiligentAgent.actions;
 
-var ShopActions = {
-    /**
-     * Extension support
-     */
-    /* Uncomment this to support loading extension
-    loadExtension: function() {
-        DiligentActionCreators.loadExtension(YOUR_EXTENSION);
+var ShopActionCreators = {
+    register: function() {
+        AppManagerClient.on("app.install#uploading", onAppUploading);
+        AppManagerClient.on("app.install#installing", onAppInstalling);
+        AppManagerClient.on("app.install#success", onAppInstallSuccess);
+        AppManagerClient.on("app.install#error", onAppInstallFail);
+        AppManagerClient.on("app.install#cancelled", onAppCancelInstallSuccess);
+        AppManagerClient.on("app.install#cancel-error", onAppCancelInstallFail);
     },
-    */
 
-    /* Uncomment this to support unloading extension
-    unloadExtension: function() {
-        DiligentActionCreators.unloadExtension(YOUR_EXTENSION);
-    }
-    */
+    unregister: function() {
+        AppManagerClient.removeListener("app.install#uploading", onAppUploading);
+        AppManagerClient.removeListener("app.install#installing", onAppInstalling);
+        AppManagerClient.removeListener("app.install#success", onAppInstallSuccess);
+        AppManagerClient.removeListener("app.install#error", onAppInstallFail);
+        AppManagerClient.removeListener("app.install#cancelled", onAppCancelInstallSuccess);
+        AppManagerClient.removeListener("app.install#cancel-error", onAppCancelInstallFail);
+    },
 
     offlineAppList: function() {
 
@@ -49,7 +52,7 @@ var ShopActions = {
     }
 }
 
-module.exports = ShopActions;
+module.exports = ShopActionCreators;
 
 function onAppUploading(arg) {
     ShopDispatcher.dispatch({
@@ -93,10 +96,3 @@ function onAppCancelInstallFail(arg) {
         instid: arg.instid
     });
 }
-
-AppManagerClient.on("app.install#uploading", onAppUploading);
-AppManagerClient.on("app.install#installing", onAppInstalling);
-AppManagerClient.on("app.install#success", onAppInstallSuccess);
-AppManagerClient.on("app.install#error", onAppInstallFail);
-AppManagerClient.on("app.install#cancelled", onAppCancelInstallSuccess);
-AppManagerClient.on("app.install#cancel-error", onAppCancelInstallFail);

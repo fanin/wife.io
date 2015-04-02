@@ -2,7 +2,21 @@ var $TEMPLATE$Dispatcher   = require('../dispatcher/$TEMPLATE$Dispatcher');
 var $TEMPLATE$Constants    = require('../constants/$TEMPLATE$Constants');
 var DiligentActionCreators = DiligentAgent.actions;
 
-var $TEMPLATE$Actions = {
+var $TEMPLATE$ActionCreators = {
+    /**
+     * Register event listeners for diligent clients
+     */
+    register: function() {
+
+    },
+
+    /**
+     * Unregister diligent client event listeners
+     */
+    unregister: function() {
+
+    }
+
     /**
      * Extension support
      */
@@ -19,4 +33,4 @@ var $TEMPLATE$Actions = {
     */
 }
 
-module.exports = $TEMPLATE$Actions;
+module.exports = $TEMPLATE$ActionCreators;

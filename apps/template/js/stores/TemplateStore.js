@@ -6,8 +6,8 @@ var assign               = require('object-assign');
 var CHANGE_EVENT = '$$TEMPLATE$$_STORE_CHANGE';
 
 var $TEMPLATE$Store = assign({}, EventEmitter.prototype, {
-    emitChange: function() {
-        this.emit(CHANGE_EVENT);
+    emitChange: function(changes) {
+        this.emit(CHANGE_EVENT, changes);
     },
 
     /**
