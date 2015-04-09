@@ -29,7 +29,6 @@ var ShopStore = assign({}, EventEmitter.prototype, {
 ShopDispatcher.register(function(action) {
     switch (action.actionType) {
         case ShopConstants.SHOP_APP_INSTALL:
-        case ShopConstants.SHOP_APP_INSTALL_PROGRESS:
         case ShopConstants.SHOP_APP_STATE_UPLOADING:
         case ShopConstants.SHOP_APP_STATE_INSTALLING:
         case ShopConstants.SHOP_APP_INSTALL_SUCCESS:

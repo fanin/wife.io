@@ -12,7 +12,8 @@ var gulp       = require('gulp'),
     buffer     = require('vinyl-buffer'),
     del        = require('del');
 
-var JQUERY_VERSION      = '1.11.1',
+var JQUERY_VERSION      = '1.11.2',
+    JQUERYUI_VERSION    = '1.11.1',
     FONTAWESOME_VERSION = '4.2.0',
     REACT_VERSION       = '0.13.1',
     OUTPATH             = 'mywife',
@@ -52,8 +53,8 @@ gulp.task('lib', function() {
             'lib/jquery/plugins/**/images/*'
         ])
         .pipe(gulp.dest(OUTPATH + '/lib/jquery/plugins'));
-    var jquery_ui = gulp.src('lib/jquery/ui/' + JQUERY_VERSION + '/*.min.*')
-        .pipe(gulp.dest(OUTPATH + '/lib/jquery/ui/' + JQUERY_VERSION));
+    var jquery_ui = gulp.src('lib/jquery/ui/' + JQUERYUI_VERSION + '/*.min.*')
+        .pipe(gulp.dest(OUTPATH + '/lib/jquery/ui/' + JQUERYUI_VERSION));
     var semantic_ui = gulp.src('lib/semantic/**/*.min.*')
         .pipe(gulp.dest(OUTPATH + '/lib/semantic/'));
     var semantic_ui_theme = gulp.src('lib/semantic/themes/' + SEMANTIC_UI_THEME + '/**/*')
@@ -75,6 +76,7 @@ gulp.task('lib', function() {
 });
 
 gulp.task('diligent', function() {
+    /*
     var clients = browserify({
             entries: ['./lib/framework/diligent/clients/clients.js'],
             paths: LIB_PATHS,
@@ -87,6 +89,7 @@ gulp.task('diligent', function() {
         clients = clients.pipe(buffer()).pipe(uglify());
 
     clients.pipe(gulp.dest(OUTPATH + '/lib/framework/diligent/'));
+    */
 
     var agent_js = browserify({
         entries: ['./lib/framework/diligent/agent/js/agent.js'],
@@ -108,7 +111,7 @@ gulp.task('diligent', function() {
         .pipe(gulp.dest(OUTPATH + '/lib/framework/diligent/'));
 
     return merge(
-        clients,
+        /*clients,*/
         agent_js,
         agent_css
     );

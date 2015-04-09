@@ -1,7 +1,5 @@
 'use strict';
 
-var DiligentStore = require('../stores/DiligentStore');
-
 var DiligentDock = React.createClass({
     render: function() {
         return (

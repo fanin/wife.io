@@ -201,9 +201,9 @@ AppManager.prototype.register = function(socket, complete) {
             fs.removeSync(filename);
 
         if (this.dataStream[instid]) {
+            this.dataStream[instid].end();
             this.dataStream[instid].removeAllListeners('finish');
             this.dataStream[instid].removeAllListeners('error');
-            this.dataStream[instid].end();
             this.dataStream[instid] = undefined;
         }
 

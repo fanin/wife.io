@@ -1,20 +1,21 @@
 'use strict';
 
-var DiligentActionCreators = require('../actions/DiligentActionCreators');
-var DiligentStore          = require('../stores/DiligentStore');
+var DiligentNavigator = React.createClass({
+    componentWillMount: function() {
+        DiligentAgent.register();
+    },
 
-var DiligentNavigationBar = React.createClass({
     componentDidMount: function() {
-        DiligentActionCreators.register();
+
     },
 
     componentWillUnmount: function() {
-        DiligentActionCreators.unregister();
+        DiligentAgent.unregister();
     },
 
     toggleDock: function(event) {
         $('#diligent-dock')
-        .sidebar('setting', 'transition', 'overlay')
+        .sidebar('setting', 'transition', 'push')
         .sidebar('setting', 'dimPage', false)
         .sidebar('toggle');
     },
@@ -41,4 +42,4 @@ var DiligentNavigationBar = React.createClass({
     }
 });
 
-module.exports = DiligentNavigationBar;
+module.exports = DiligentNavigator;

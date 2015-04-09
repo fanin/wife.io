@@ -21,10 +21,11 @@ var OfflineAppCard = React.createClass({
 
     getInitialState: function() {
         return {
-            hideInstallDimmer: false,
-            installDimmerTitle: "Waiting...",
-            installDimmerDescription: "",
-            installProgress: 0
+            hideDimmer: false,
+            hideDimmerButton: false,
+            dimmerTitle: "Waiting...",
+            dimmerDescription: "",
+            installProgress: 0,
         };
     },
 
@@ -48,59 +49,58 @@ var OfflineAppCard = React.createClass({
         switch (change.actionType) {
             case ShopConstants.SHOP_APP_INSTALL:
                 break;
-            case ShopConstants.SHOP_APP_INSTALL_PROGRESS:
-                this.setState({ installProgress: change.progress });
-                break;
             case ShopConstants.SHOP_APP_STATE_UPLOADING:
                 this.setState({
-                    installDimmerTitle: "Uploading...",
-                    installDimmerDescription: "Please wait..."
+                    dimmerTitle: "Uploading...",
+                    dimmerDescription: "Please wait...",
+                    installProgress: change.progress
                 });
                 break;
             case ShopConstants.SHOP_APP_STATE_INSTALLING:
                 this.setState({
-                    installDimmerTitle: "Installing...",
-                    installDimmerDescription: "Please wait..."
+                    hideDimmerButton: true,
+                    dimmerTitle: "Installing...",
+                    dimmerDescription: "Please wait..."
                 });
                 break;
             case ShopConstants.SHOP_APP_INSTALL_SUCCESS:
                 setTimeout(function() {
-                    this.setState({ hideInstallDimmer: true });
+                    this.setState({ hideDimmer: true });
                 }.bind(this), 600);
                 break;
             case ShopConstants.SHOP_APP_INSTALL_FAIL:
                 switch (change.error) {
                     case "ERROR_SECURITY_ACCESS_DENIED":
                         this.setState({
-                            installDimmerTitle: "Error",
-                            installDimmerDescription: "You are not allowed to install offline APPs."
+                            dimmerTitle: "Error",
+                            dimmerDescription: "You are not allowed to install offline APPs."
                         });
                         break;
                     case "ERROR_APP_BAD_FILE_FORMAT":
                     case "ERROR_APP_BAD_STRUCT":
                         this.setState({
-                            installDimmerTitle: "Error",
-                            installDimmerDescription: "Not a supported APP format."
+                            dimmerTitle: "Error",
+                            dimmerDescription: "Not a supported APP format."
                         });
                         break;
                     default:
                         this.setState({
-                            installDimmerTitle: "Error",
-                            installDimmerDescription: change.error
+                            dimmerTitle: "Error",
+                            dimmerDescription: change.error
                         });
                         break;
                 }
                 break;
             case ShopConstants.SHOP_APP_CANCEL_INSTALL:
                 this.setState({
-                    installDimmerTitle: "Cancelling...",
-                    installDimmerDescription: "Wait for cancelling installation."
+                    dimmerTitle: "Cancelling...",
+                    dimmerDescription: "Wait for cancelling installation."
                 });
                 break;
             case ShopConstants.SHOP_APP_CANCEL_INSTALL_SUCCESS:
                 this.setState({
-                    installDimmerTitle: "Cancelled",
-                    installDimmerDescription: "You cancelled installation."
+                    dimmerTitle: "Cancelled",
+                    dimmerDescription: "You cancelled installation."
                 });
                 break;
             case ShopConstants.SHOP_APP_CANCEL_INSTALL_FAIL:
@@ -109,13 +109,13 @@ var OfflineAppCard = React.createClass({
     },
 
     _onButtonClick: function() {
-        if (this.state.installDimmerTitle === "Error" || this.state.installDimmerTitle === "Cancelled")
+        if (this.state.dimmerTitle === "Error" || this.state.dimmerTitle === "Cancelled")
             this.props.onRemoveCard(this.props.id);
         else {
             if (this.props.onCancelInstall(this.props.id)) {
                 this.setState({
-                    installDimmerTitle: "Cancelled",
-                    installDimmerDescription: "You cancelled installation."
+                    dimmerTitle: "Cancelled",
+                    dimmerDescription: "You cancelled installation."
                 });
             }
         }
@@ -125,15 +125,15 @@ var OfflineAppCard = React.createClass({
         var randomColor = APP_COLORS[Math.floor(Math.random() * APP_COLORS.length)];
         var imageURL    = this.props.imageURL ? this.props.imageURL : "/apps/b/shop/img/install-wait.png";
         var description = this.props.description ? this.props.description : "";
-        var dimmerClass = this.state.hideInstallDimmer ? "ui dimmer" : "ui active dimmer";
+        var dimmerClass = this.state.hideDimmer ? "ui dimmer" : "ui active dimmer";
         var buttonTitle;
         var progressbarClass;
 
-        if (this.state.installDimmerTitle === "Error") {
+        if (this.state.dimmerTitle === "Error") {
             buttonTitle = "Remove";
             progressbarClass = "ui progress error";
         }
-        else if (this.state.installDimmerTitle === "Cancelled") {
+        else if (this.state.dimmerTitle === "Cancelled") {
             buttonTitle = "Remove";
             progressbarClass = "ui progress warning";
         }
@@ -148,13 +148,14 @@ var OfflineAppCard = React.createClass({
                     <div className="content">
                         <div className="center">
                             <div className="ui inverted header">
-                                {this.state.installDimmerTitle}
+                                {this.state.dimmerTitle}
                             </div>
-                            <p>&nbsp;{this.state.installDimmerDescription}&nbsp;</p>
+                            <p>&nbsp;{this.state.dimmerDescription}&nbsp;</p>
                             <div className={progressbarClass}>
                                 <div className="bar" style={{width: (this.state.installProgress + "%")}}></div>
                             </div>
                             <div className="ui red button"
+                                     style={{display: (this.state.hideDimmerButton ? "none" : "inline-block")}}
                                    onClick={this._onButtonClick}>
                                 {buttonTitle}
                             </div>

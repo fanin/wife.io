@@ -1,6 +1,5 @@
 var $TEMPLATE$ActionCreators = require('../actions/$TEMPLATE$ActionCreators');
 var $TEMPLATE$Store          = require('../stores/$TEMPLATE$Store');
-var DiligentStore            = DiligentAgent.store;
 
 var $TEMPLATE$MainView = React.createClass({
     getDefaultProps: function() {
@@ -16,21 +15,23 @@ var $TEMPLATE$MainView = React.createClass({
     },
 
     componentWillMount: function() {
-        DiligentStore.addDiligentListener(this._onDiligentChanges);
-        $TEMPLATE$ActionCreators.register();
-    },
-
-    componentDidMount: function() {
+        DiligentAgent.on('agent.client.ready', this._onDiligentClientReady);
+        DiligentAgent.on('agent.client.stop', this._onDiligentClientStop);
         // Uncomment this to listen extension events
-        //DiligentStore.addExtensionListener(this._onExtensionChanges);
+        //DiligentAgent.on('agent.extension.status', this._onExtensionStatus);
         $TEMPLATE$Store.addChangeListener(this._onStoreChange);
     },
 
+    componentDidMount: function() {
+
+    },
+
     componentWillUnmount: function() {
-        $TEMPLATE$ActionCreators.unregister();
         // Uncomment this to listen extension events
-        //DiligentStore.removeExtensionListener(this._onExtensionChanges);
+        //DiligentAgent.off('agent.extension.status', this._onExtensionStatus);
         $TEMPLATE$Store.removeChangeListener(this._onStoreChange);
+        DiligentAgent.off('agent.client.ready', this._onDiligentClientReady);
+        DiligentAgent.off('agent.client.stop', this._onDiligentClientStop);
     },
 
     shouldComponentUpdate: function (nextProps, nextState) {
@@ -51,25 +52,12 @@ var $TEMPLATE$MainView = React.createClass({
         );
     },
 
-    _onDiligentChanges: function() {
-        switch (DiligentStore.getClient().status) {
-            case DiligentConstants.DILIGENT_CLIENT_INITIATE:
-                break;
-            case DiligentConstants.DILIGENT_CLIENT_RUNNING:
-                break;
-            case DiligentConstants.DILIGENT_CLIENT_TERMINATE:
-                break;
-            case DiligentConstants.DILIGENT_CONNECTION_ESTABLISHED:
-                break;
-            case DiligentConstants.DILIGENT_CONNECTION_CLOSED:
-                break;
-            case DiligentConstants.DILIGENT_CONNECT_FAIL:
-                break;
-            case DiligentConstants.DILIGENT_WSAPI_LOAD_SUCCESS:
-                break;
-            case DiligentConstants.DILIGENT_WSAPI_LOAD_FAIL:
-                break;
-        }
+    _onDiligentClientReady: function() {
+
+    },
+
+    _onDiligentClientStop: function() {
+
     },
 
     _onStoreChange: function(change) {

@@ -112,7 +112,7 @@ StorageStore.dispatchToken = NotebookDispatcher.register(function(action) {
                 if (disks[i].uuid === action.disk.uuid) {
                     disks.splice(i, 1);
                     if (workingDisk.uuid === action.disk.uuid)
-                        StorageClient.setWorkingDisk(disks[0]);
+                        DiligentAgent.getClient().storageManager.setWorkingDisk(disks[0]);
                     else
                         StorageStore.emitChange(action.actionType);
                 }
@@ -131,6 +131,7 @@ StorageStore.dispatchToken = NotebookDispatcher.register(function(action) {
                     }
                 }
             }
+
             break;
     }
 });

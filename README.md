@@ -1,6 +1,18 @@
 #wife.io
 
-Wife.io, a Web Interface For Embedded devices, is a prior project to WifeOS based on node.js.
+`Wife.io` is an extensible web control system designed for devices which are capable of running node.js.
+
+###Architecture
+
+Backend:   System service provider based on node.js
+
+![Backend Architecture](docs/diligent_be.png)
+
+Frontend: Client applications built with React/Flux architecture
+
+![Frontend Architecture](docs/diligent_fe.png)
+
+![App Framework](docs/app_framework.png)
 
 ###Prepare
 ```

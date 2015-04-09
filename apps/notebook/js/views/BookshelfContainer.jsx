@@ -2,7 +2,6 @@ var JqTreeView            = require('./JqTreeView.jsx');
 var StorageStore          = require('../stores/StorageStore');
 var NotebookConstants     = require('../constants/NotebookConstants');
 var StorageActionCreators = require('../actions/StorageActionCreators');
-var DiligentStore         = DiligentAgent.store;
 
 var BookshelfContainer = React.createClass({
 
@@ -13,9 +12,9 @@ var BookshelfContainer = React.createClass({
     },
 
     componentWillMount: function() {
-        DiligentStore.addDiligentListener(this._onDiligentChanges);
+        DiligentAgent.on('agent.client.ready', this._onDiligentClientReady);
+        DiligentAgent.on('agent.client.stop', this._onDiligentClientStop);
         StorageStore.addChangeListener(this._onStorageChange);
-        StorageActionCreators.register();
     },
 
     componentDidMount: function() {
@@ -29,21 +28,21 @@ var BookshelfContainer = React.createClass({
     },
 
     componentWillUnmount: function() {
-        StorageActionCreators.unregister();
         StorageStore.removeChangeListener(this._onStorageChange);
-        DiligentStore.removeDiligentListener(this._onDiligentChanges);
+        DiligentAgent.off('agent.client.ready', this._onDiligentClientReady);
+        DiligentAgent.off('agent.client.stop', this._onDiligentClientStop);
+    },
+
+    _onDiligentClientReady: function() {
+        StorageActionCreators.list();
+    },
+
+    _onDiligentClientStop: function() {
+
     },
 
     _onStorageChange: function(change) {
         this.setState({ disks: StorageStore.getDisks() });
-    },
-
-    _onDiligentChanges: function() {
-        switch (DiligentStore.getClient().status) {
-            case DiligentConstants.DILIGENT_WSAPI_LOAD_SUCCESS:
-                StorageActionCreators.list();
-                break;
-        }
     },
 
     render: function() {

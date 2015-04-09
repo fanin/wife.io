@@ -11,66 +11,64 @@ function ExtensionManager(_super, apiSpec) {
 }
 
 ExtensionManager.prototype.register = function(socket, complete) {
-    var self = this;
-
     /**
      * Protocol Listener: Extension Management Events
      */
-    socket.on(self.APISpec.Load.REQ, function(name, majorVersion) {
-        if (!self._super.securityManager.isExtensionAllowed(socket, name)) {
+    socket.on(this.APISpec.Load.REQ, function(name, majorVersion) {
+        if (!this._super.securityManager.isExtensionAllowed(socket, name)) {
             console.log('Extension module [' + name + '] not allowed');
-            socket.emit(self.APISpec.Load.ERR, name, SYSTEM.ERROR.ERROR_EXTENSION_NOT_ALLOW);
+            socket.emit(this.APISpec.Load.ERR, name, SYSTEM.ERROR.ERROR_EXTENSION_NOT_ALLOW);
             return;
         }
 
-        if (self.extensions[name] && self.extensions[name].apiSpec) {
-            self.extensions[name].user++;
-            self.extensions[name].activate(socket);
-            socket.emit(self.APISpec.Load.RES, name, self.extensions[name].apiSpec);
+        if (this.extensions[name] && this.extensions[name].apiSpec) {
+            this.extensions[name].userCount++;
+            this.extensions[name].activate(socket);
+            socket.emit(this.APISpec.Load.RES, name, this.extensions[name].apiSpec);
             return;
         }
 
         try {
             var ExtensionModule = require('./extension/' + name.toLowerCase() + '/' +  name.toLowerCase());
-            self.extensions[name] = new ExtensionModule();
+            this.extensions[name] = new ExtensionModule();
 
-            self.extensions[name].apiSpec = self._super.loadWSAPISpec('wsapi-ext-spec-' + name.toLowerCase(), majorVersion);
-            if (self.extensions[name].apiSpec) {
-                if (self.extensions[name].user === undefined)
-                    self.extensions[name].user = 1;
-                self.extensions[name].activate(socket);
-                socket.emit(self.APISpec.Load.RES, name, self.extensions[name].apiSpec);
+            this.extensions[name].apiSpec = this._super.loadWSAPISpec('wsapi-ext-spec-' + name.toLowerCase(), majorVersion);
+            if (this.extensions[name].apiSpec) {
+                if (this.extensions[name].userCount === undefined)
+                    this.extensions[name].userCount = 1;
+                this.extensions[name].activate(socket);
+                socket.emit(this.APISpec.Load.RES, name, this.extensions[name].apiSpec);
             }
             else {
                 console.log('Unable to load extension api spec');
-                socket.emit(self.APISpec.Load.ERR, name, self._super.error);
+                socket.emit(this.APISpec.Load.ERR, name, this._super.error);
             }
         }
         catch (err) {
             console.log('Unable to load extension module [' + name + ']: ' + err);
-            self.extensions[name] = undefined;
-            socket.emit(self.APISpec.Load.ERR, name, err);
+            this.extensions[name] = undefined;
+            socket.emit(this.APISpec.Load.ERR, name, err);
         }
-    });
+    }.bind(this));
 
-    socket.on(self.APISpec.Unload.REQ, function(name, majorVersion) {
-        if (!self._super.securityManager.isExtensionAllowed(socket, name)) {
+    socket.on(this.APISpec.Unload.REQ, function(name, majorVersion) {
+        if (!this._super.securityManager.isExtensionAllowed(socket, name)) {
             console.log('Extension module [' + name + '] not allowed');
-            socket.emit(self.APISpec.Unload.ERR, name, SYSTEM.ERROR.ERROR_EXTENSION_NOT_ALLOW);
+            socket.emit(this.APISpec.Unload.ERR, name, SYSTEM.ERROR.ERROR_EXTENSION_NOT_ALLOW);
             return;
         }
 
-        if (self.extensions[name]) {
-            self.extensions[name].inactivate(socket);
-            self.extensions[name].user--;
-            if (self.extensions[name].user == 0) {
-                self.extensions[name] = undefined;
-                socket.emit(self.APISpec.Unload.RES, name, "Unloaded");
+        if (this.extensions[name]) {
+            this.extensions[name].inactivate(socket);
+            this.extensions[name].userCount--;
+            if (this.extensions[name].userCount == 0) {
+                this.extensions[name] = undefined;
+                socket.emit(this.APISpec.Unload.RES, name, "Unloaded");
             }
             else
-                socket.emit(self.APISpec.Unload.RES, name, "InUse");
+                socket.emit(this.APISpec.Unload.RES, name, "InUse");
         }
-    });
+    }.bind(this));
 
     complete && complete();
 }

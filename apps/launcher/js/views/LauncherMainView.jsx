@@ -4,7 +4,6 @@ var LauncherSortable       = require('./LauncherSortable.jsx');
 var LauncherConstants      = require('../constants/LauncherConstants');
 var LauncherActionCreators = require('../actions/LauncherActionCreators');
 var LauncherStore          = require('../stores/LauncherStore');
-var DiligentStore          = DiligentAgent.store;
 
 var LauncherMainView = React.createClass({
     getInitialState: function() {
@@ -18,10 +17,10 @@ var LauncherMainView = React.createClass({
     },
 
     componentWillMount: function() {
-        DiligentStore.addDiligentListener(this._onDiligentChanges);
         LauncherStore.addChangeListener(this._onLauncherChanges);
         LauncherStore.addErrorListener(this._onLauncherError);
-        LauncherActionCreators.register();
+        DiligentAgent.on('agent.client.ready', this._onDiligentClientReady);
+        DiligentAgent.on('agent.client.stop', this._onDiligentClientStop);
     },
 
     componentDidMount: function() {
@@ -29,10 +28,10 @@ var LauncherMainView = React.createClass({
     },
 
     componentWillUnmount: function() {
-        LauncherActionCreators.unregister();
         LauncherStore.removeErrorListener(this._onLauncherError);
         LauncherStore.removeChangeListener(this._onLauncherChanges);
-        DiligentStore.removeDiligentListener(this._onDiligentChanges);
+        DiligentAgent.off('agent.client.ready', this._onDiligentClientReady);
+        DiligentAgent.off('agent.client.stop', this._onDiligentClientStop);
     },
 
     shouldComponentUpdate: function (nextProps, nextState) {
@@ -55,20 +54,18 @@ var LauncherMainView = React.createClass({
 
             if (type === 'builtin') {
                 return (
-                    <LauncherAppIcon
-                        key        = {manifest.directory}
-                        appType    = 'b'
-                        manifest   = {manifest}
-                        manageable = {this.state.manageable} />
+                    <LauncherAppIcon key = {manifest.directory}
+                                 appType = 'b'
+                                manifest = {manifest}
+                              manageable = {this.state.manageable} />
                 );
             }
             else if (type === 'user')
                 return (
-                    <LauncherAppIcon
-                        key        = {manifest.directory}
-                        appType    = 'u'
-                        manifest   = {manifest}
-                        manageable = {this.state.manageable} />
+                    <LauncherAppIcon key = {manifest.directory}
+                                 appType = 'u'
+                                manifest = {manifest}
+                              manageable = {this.state.manageable} />
                 );
         }, this);
 
@@ -123,26 +120,12 @@ var LauncherMainView = React.createClass({
         e.stopPropagation();
     },
 
-    _onDiligentChanges: function() {
-        switch (DiligentStore.getClient().status) {
-            case DiligentConstants.DILIGENT_CLIENT_INITIATE:
-                break;
-            case DiligentConstants.DILIGENT_CLIENT_RUNNING:
-                break;
-            case DiligentConstants.DILIGENT_CLIENT_TERMINATE:
-                break;
-            case DiligentConstants.DILIGENT_CONNECTION_ESTABLISHED:
-                break;
-            case DiligentConstants.DILIGENT_CONNECTION_CLOSED:
-                break;
-            case DiligentConstants.DILIGENT_CONNECT_FAIL:
-                break;
-            case DiligentConstants.DILIGENT_WSAPI_LOAD_SUCCESS:
-                LauncherActionCreators.listApps();
-                break;
-            case DiligentConstants.DILIGENT_WSAPI_LOAD_FAIL:
-                break;
-        }
+    _onDiligentClientReady: function() {
+        LauncherActionCreators.listApps();
+    },
+
+    _onDiligentClientStop: function() {
+
     },
 
     _onLauncherChanges: function(changes) {

@@ -1,7 +1,7 @@
-var BookshelfContainer     = require('./BookshelfContainer.jsx');
-var NoteListContainer      = require('./NoteListContainer.jsx');
-var NoteEditorContainer    = require('./NoteEditorContainer.jsx');
-var DiligentStore          = DiligentAgent.store;
+var StorageActionCreators = require('../actions/StorageActionCreators');
+var BookshelfContainer    = require('./BookshelfContainer.jsx');
+var NoteListContainer     = require('./NoteListContainer.jsx');
+var NoteEditorContainer   = require('./NoteEditorContainer.jsx');
 
 var NotebookMainView = React.createClass({
 
@@ -18,17 +18,20 @@ var NotebookMainView = React.createClass({
     },
 
     componentWillMount: function() {
-        DiligentStore.addDiligentListener(this._onDiligentChanges);
+        DiligentAgent.on('agent.client.ready', this._onDiligentClientReady);
+        DiligentAgent.on('agent.client.stop', this._onDiligentClientStop);
     },
 
     componentDidMount: function() {
         // Uncomment this to listen extension events
-        //DiligentStore.addExtensionListener(this._onExtensionChanges);
+        //DiligentAgent.on('agent.extension.status', this._onExtensionStatus);
     },
 
     componentWillUnmount: function() {
         // Uncomment this to listen extension events
-        //DiligentStore.removeExtensionListener(this._onExtensionChanges);
+        //DiligentAgent.off('agent.extension.status', this._onExtensionStatus);
+        DiligentAgent.off('agent.client.ready', this._onDiligentClientReady);
+        DiligentAgent.off('agent.client.stop', this._onDiligentClientStop);
     },
 
     shouldComponentUpdate: function (nextProps, nextState) {
@@ -40,6 +43,14 @@ var NotebookMainView = React.createClass({
     },
 
     componentDidUpdate: function(prevProps, prevState) {
+
+    },
+
+    _onDiligentClientReady: function() {
+        StorageActionCreators.initNotifications();
+    },
+
+    _onDiligentClientStop: function() {
 
     },
 
@@ -61,31 +72,6 @@ var NotebookMainView = React.createClass({
                 </div>
             </div>
         );
-    },
-
-    _onDiligentChanges: function() {
-        switch (DiligentStore.getClient().status) {
-            case DiligentConstants.DILIGENT_CLIENT_INITIATE:
-                break;
-            case DiligentConstants.DILIGENT_CLIENT_RUNNING:
-                break;
-            case DiligentConstants.DILIGENT_CLIENT_TERMINATE:
-                break;
-            case DiligentConstants.DILIGENT_CONNECTION_ESTABLISHED:
-                break;
-            case DiligentConstants.DILIGENT_CONNECTION_CLOSED:
-                break;
-            case DiligentConstants.DILIGENT_CONNECT_FAIL:
-                break;
-            case DiligentConstants.DILIGENT_WSAPI_LOAD_SUCCESS:
-                break;
-            case DiligentConstants.DILIGENT_WSAPI_LOAD_FAIL:
-                break;
-        }
-    },
-
-    _onStoreChange: function(change) {
-
     }
 
 });

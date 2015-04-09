@@ -18,75 +18,99 @@ var DiligentConsole = React.createClass({
     },
 
     componentDidMount: function() {
-        DiligentStore.addDiligentListener(this._onDiligentChanges);
-        DiligentStore.addExtensionListener(this._onExtensionChanges);
+        DiligentStore.addDiligentClientInitListener(this._onDiligentClientInitProcedure);
+        DiligentStore.addDiligentClientReadyListener(this._onDiligentClientReady);
+        DiligentStore.addDiligentClientStopListener(this._onDiligentClientStop);
+        DiligentStore.addExtensionListener(this._onExtensionStatus);
     },
 
     componentWillUnmount: function() {
-        DiligentStore.removeExtensionListener(this._onExtensionChanges);
-        DiligentStore.removeDiligentListener(this._onDiligentChanges);
+        DiligentStore.removeExtensionListener(this._onExtensionStatus);
+        DiligentStore.removeDiligentClientStopListener(this._onDiligentClientStop);
+        DiligentStore.removeDiligentClientReadyListener(this._onDiligentClientReady);
+        DiligentStore.removeDiligentClientInitListener(this._onDiligentClientInitProcedure);
     },
 
-    _onDiligentChanges: function() {
-        switch (DiligentStore.getClient().status) {
+    _onDiligentClientReady: function() {
+        this.setState({
+            diligentClientVersion: DiligentStore.getClientInfo().version,
+            diligentClientStatus: 'RUNNING'
+        });
+    },
+
+    _onDiligentClientStop: function() {
+        this.setState({
+            diligentClientVersion: DiligentStore.getClientInfo().version,
+            diligentClientStatus: 'STOPPED'
+        });
+    },
+
+    _onDiligentClientInitProcedure: function() {
+        switch (DiligentStore.getClientInfo().status) {
             case DiligentConstants.DILIGENT_CLIENT_INITIATE:
                 this.setState({
-                    diligentClientVersion: DiligentStore.getClient().version,
-                    diligentClientStatus: 'INITIATE'
-                });
-                break;
-            case DiligentConstants.DILIGENT_CLIENT_RUNNING:
-                this.setState({
-                    diligentClientVersion: DiligentStore.getClient().version,
-                    diligentClientStatus: 'RUNNING'
+                    diligentClientVersion: DiligentStore.getClientInfo().version,
+                    diligentClientStatus: 'INITIATING'
                 });
                 break;
             case DiligentConstants.DILIGENT_CLIENT_TERMINATE:
                 this.setState({
-                    diligentClientVersion: DiligentStore.getClient().version,
+                    diligentClientVersion: DiligentStore.getClientInfo().version,
                     diligentClientStatus: 'TERMINATING'
                 });
                 break;
             case DiligentConstants.DILIGENT_CONNECTION_ESTABLISHED:
                 this.setState({
-                    diligentClientVersion: DiligentStore.getClient().version,
+                    diligentClientVersion: DiligentStore.getClientInfo().version,
                     diligentClientStatus: 'ESTABLISHED'
                 });
                 break;
             case DiligentConstants.DILIGENT_CONNECTION_CLOSED:
                 this.setState({
-                    diligentClientVersion: DiligentStore.getClient().version,
+                    diligentClientVersion: DiligentStore.getClientInfo().version,
                     diligentConnectionStatus: 'CLOSED'
                 });
                 break;
             case DiligentConstants.DILIGENT_CONNECT_FAIL:
                 this.setState({
-                    diligentClientVersion: DiligentStore.getClient().version,
-                    diligentConnectionStatus: DiligentStore.getClient().error
+                    diligentClientVersion: DiligentStore.getClientInfo().version,
+                    diligentConnectionStatus: DiligentStore.getClientInfo().error
                 });
                 break;
             case DiligentConstants.DILIGENT_WSAPI_LOAD_SUCCESS:
                 this.setState({
-                    diligentClientVersion: DiligentStore.getClient().version,
+                    diligentClientVersion: DiligentStore.getClientInfo().version,
                     diligentWSApiStatus: 'SUCCESS'
                 });
                 break;
             case DiligentConstants.DILIGENT_WSAPI_LOAD_FAIL:
                 this.setState({
-                    diligentClientVersion: DiligentStore.getClient().version,
+                    diligentClientVersion: DiligentStore.getClientInfo().version,
                     diligentWSApiStatus: 'FAILED'
+                });
+                break;
+            case DiligentConstants.DILIGENT_CLIENT_RUNNING:
+                this.setState({
+                    diligentClientVersion: DiligentStore.getClientInfo().version,
+                    diligentClientStatus: 'RUNNING'
+                });
+                break;
+            case DiligentConstants.DILIGENT_CLIENT_STOPPED:
+                this.setState({
+                    diligentClientVersion: DiligentStore.getClientInfo().version,
+                    diligentClientStatus: 'STOPPED'
                 });
                 break;
         }
     },
 
-    _onExtensionChanges: function(extensionName) {
-        switch (DiligentStore.getExtension(extensionName).status) {
+    _onExtensionStatus: function(extensionName) {
+        switch (DiligentStore.getExtensionInfo(extensionName).status) {
             case DiligentConstants.EXTENSION_LOAD:
                 this.setState({
                     extensionName: extensionName,
                     extensionStatus: 'LOADING',
-                    extensionVersion: DiligentStore.getExtension(extensionName).version,
+                    extensionVersion: DiligentStore.getExtensionInfo(extensionName).version,
                     extensionError: ''
                 });
                 break;
@@ -94,7 +118,7 @@ var DiligentConsole = React.createClass({
                 this.setState({
                     extensionName: extensionName,
                     extensionStatus: 'UNLOADING',
-                    extensionVersion: DiligentStore.getExtension(extensionName).version,
+                    extensionVersion: DiligentStore.getExtensionInfo(extensionName).version,
                     extensionError: ''
                 });
                 break;
@@ -102,7 +126,7 @@ var DiligentConsole = React.createClass({
                 this.setState({
                     extensionName: extensionName,
                     extensionStatus: 'LOADED',
-                    extensionVersion: DiligentStore.getExtension(extensionName).version,
+                    extensionVersion: DiligentStore.getExtensionInfo(extensionName).version,
                     extensionError: ''
                 });
                 break;
@@ -119,15 +143,15 @@ var DiligentConsole = React.createClass({
                     extensionName: extensionName,
                     extensionStatus: 'LOAD FAILED',
                     extensionVersion: -1,
-                    extensionError: DiligentStore.getExtension(extensionName).error
+                    extensionError: DiligentStore.getExtensionInfo(extensionName).error
                 });
                 break;
             case DiligentConstants.EXTENSION_UNLOAD_FAIL:
                 this.setState({
                     extensionName: extensionName,
                     extensionStatus: 'UNLOAD FAILED',
-                    extensionVersion: DiligentStore.getExtension(extensionName).version,
-                    extensionError: DiligentStore.getExtension(extensionName).error
+                    extensionVersion: DiligentStore.getExtensionInfo(extensionName).version,
+                    extensionError: DiligentStore.getExtensionInfo(extensionName).error
                 });
                 break;
         }

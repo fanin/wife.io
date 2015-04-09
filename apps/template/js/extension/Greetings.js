@@ -9,22 +9,33 @@
  */
 
 var EventEmitter = require('events').EventEmitter;
-var assign = require('object-assign');
+var assign       = require('object-assign');
+var cbq          = require('framework/diligent/clients/callback-queue');
 
 var GreetingsExtension = assign({}, EventEmitter.prototype, {
-    name: "Greetings",
+    name: 'Greetings',
     version: 0,
     activate: function() {
         var self = this;
 
         /* Implement Greetings extension response handler */
         this.socket.on(this.wsapi[this.version].Say.Hello.RES, function(msg) {
-            self.emit("greetings.sayhello#success", msg);
+            cbq.dequeueApiCallback('extension.greetings', 'sayHello', function(apiCallback) {
+                apiCallback(msg);
+                /**
+                 * We will get Say.Hello.ERR for error test after Say.Hello.RES.
+                 * Return false to keep callback in cb queue to handle Say.Hello.ERR
+                 */
+                return false;
+            });
         });
 
         /* Implement Greetings extension error handler */
         this.socket.on(this.wsapi[this.version].Say.Hello.ERR, function(err) {
-            self.emit("greetings.sayhello#error", err);
+            cbq.dequeueApiCallback('extension.greetings', 'sayHello', function(apiCallback) {
+                apiCallback(null, err);
+                return true;
+            });
         });
     },
 
@@ -34,7 +45,8 @@ var GreetingsExtension = assign({}, EventEmitter.prototype, {
     },
 
     /* Implement Greetings extension command wrapper */
-    sayHello: function(from, to) {
+    sayHello: function(from, to, onComplete) {
+        cbq.queueApiCallback('extension.greetings', 'sayHello', onComplete);
         this.socket.emit(this.wsapi[this.version].Say.Hello.REQ, from, to);
     }
 });

@@ -1,6 +1,5 @@
 var GreetingsActionCreators = require('../actions/GreetingsActionCreators');
 var GreetingsStore          = require('../stores/GreetingsStore');
-var DiligentStore           = DiligentAgent.store;
 
 var GreetingsMainView = React.createClass({
     getInitialState: function() {
@@ -11,20 +10,26 @@ var GreetingsMainView = React.createClass({
         };
     },
 
-    componentDidMount: function() {
-        DiligentStore.addExtensionListener(this._onExtensionChanges);
+    componentWillMount: function() {
+        DiligentAgent.on('agent.client.ready', this._onDiligentClientReady);
+        DiligentAgent.on('agent.client.stop', this._onDiligentClientStop);
+        DiligentAgent.on('agent.extension.status', this._onExtensionStatus);
         GreetingsStore.addChangeListener(this._onReceiveMessage);
-        GreetingsActionCreators.register();
+    },
+
+    componentDidMount: function() {
+
     },
 
     componentWillUnmount: function() {
-        GreetingsActionCreators.unregister();
         GreetingsStore.removeChangeListener(this._onReceiveMessage);
-        DiligentStore.removeExtensionListener(this._onExtensionChanges);
+        DiligentAgent.off('agent.extension.status', this._onExtensionStatus);
+        DiligentAgent.off('agent.client.ready', this._onDiligentClientReady);
+        DiligentAgent.off('agent.client.stop', this._onDiligentClientStop);
     },
 
     handleExtensionLoad: function(event) {
-        if (DiligentStore.getExtension('Greetings').status !== DiligentConstants.EXTENSION_LOAD_SUCCESS) {
+        if (DiligentAgent.getExtensionInfo('Greetings').status !== DiligentAgent.constants.EXTENSION_LOAD_SUCCESS) {
             GreetingsActionCreators.loadExtension();
         }
         else {
@@ -32,8 +37,16 @@ var GreetingsMainView = React.createClass({
         }
     },
 
-    _onExtensionChanges: function(extensionName) {
-        if (DiligentStore.getExtension(extensionName).status === DiligentConstants.EXTENSION_LOAD_SUCCESS) {
+    _onDiligentClientReady: function() {
+
+    },
+
+    _onDiligentClientStop: function() {
+
+    },
+
+    _onExtensionStatus: function(extensionName) {
+        if (DiligentAgent.getExtensionInfo(extensionName).status === DiligentAgent.constants.EXTENSION_LOAD_SUCCESS) {
             this.setState({ greetingsExtentionLoaded: true });
         }
         else {

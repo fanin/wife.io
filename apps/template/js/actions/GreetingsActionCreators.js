@@ -1,39 +1,15 @@
 var GreetingsDispatcher    = require('../dispatcher/GreetingsDispatcher');
 var GreetingsExtension     = require('../extension/greetings');
 var GreetingsConstants     = require('../constants/GreetingsConstants');
-var DiligentActionCreators = DiligentAgent.actions;
-
-function dispatchGreetingsMsg(msg) {
-    GreetingsDispatcher.dispatch({
-        actionType: GreetingsConstants.GREETINGS_SAY_HELLO_SUCCESS,
-        msg: msg
-    });
-}
-
-function dispatchGreetingsErrMsg(msg) {
-    GreetingsDispatcher.dispatch({
-        actionType: GreetingsConstants.GREETINGS_SAY_HELLO_FAIL,
-        msg: msg
-    });
-}
 
 var GreetingsActionCreators = {
-    register: function() {
-        GreetingsExtension.on('greetings.sayhello#success', dispatchGreetingsMsg);
-        GreetingsExtension.on('greetings.sayhello#error', dispatchGreetingsErrMsg);
-    },
-
-    unregister: function() {
-        GreetingsExtension.removeListener('greetings.sayhello#success', dispatchGreetingsMsg);
-        GreetingsExtension.removeListener('greetings.sayhello#error', dispatchGreetingsErrMsg);
-    },
 
     loadExtension: function() {
-        DiligentActionCreators.loadExtension(GreetingsExtension);
+        DiligentAgent.loadExtension(GreetingsExtension);
     },
 
     unloadExtension: function() {
-        DiligentActionCreators.unloadExtension(GreetingsExtension);
+        DiligentAgent.unloadExtension(GreetingsExtension);
     },
 
     sayHello: function(from, to) {
@@ -41,7 +17,18 @@ var GreetingsActionCreators = {
             actionType: GreetingsConstants.GREETINGS_SAY_HELLO
         });
 
-        GreetingsExtension.sayHello(from, to);
+        GreetingsExtension.sayHello(from, to, function(msg, err) {
+            if (msg)
+                GreetingsDispatcher.dispatch({
+                    actionType: GreetingsConstants.GREETINGS_SAY_HELLO_SUCCESS,
+                    msg: msg
+                });
+            else
+                GreetingsDispatcher.dispatch({
+                    actionType: GreetingsConstants.GREETINGS_SAY_HELLO_FAIL,
+                    msg: err
+                });
+        });
     }
 }
 
