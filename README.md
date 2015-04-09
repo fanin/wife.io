@@ -6,13 +6,13 @@
 
 Backend:   System service provider based on node.js
 
-![Backend Architecture](docs/diligent_be.png)
+![Backend Architecture](docs/diligent_be.png =600x)
 
 Frontend: Client applications built with React/Flux architecture
 
-![Frontend Architecture](docs/diligent_fe.png)
+![Frontend Architecture](docs/diligent_fe.png =600x)
 
-![App Framework](docs/app_framework.png)
+![App Framework](docs/app_framework.png =600x)
 
 ###Prepare
 ```
