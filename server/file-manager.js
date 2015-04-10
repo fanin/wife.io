@@ -15,9 +15,9 @@ var rwlock = new ReadWriteLock();
 
 module.exports = FileManager;
 
-function FileManager(_super, apiSpec) {
+function FileManager(_super, wsapi) {
     this._super = _super;
-    this.APISpec = apiSpec;
+    this.wsapi = wsapi;
     this.storageManager = _super.storageManager;
 }
 
@@ -31,28 +31,28 @@ FileManager.prototype.register = function(socket, complete) {
     /**
      * Protocol Listener: File System Events
      */
-    socket.on(self.APISpec.List.REQ, function(path) {
+    socket.on(self.wsapi.List.REQ, function(path) {
         try {
             var realPath = resolvePath(path);
 
             if (SYSTEM.ERROR.HAS_ERROR(realPath))
-                socket.emit(self.APISpec.List.ERR, path, realPath);
+                socket.emit(self.wsapi.List.ERR, path, realPath);
             else {
                 var items = fs.readdirSync(realPath);
-                socket.emit(self.APISpec.List.RES, path, items);
+                socket.emit(self.wsapi.List.RES, path, items);
             }
         }
         catch (err) {
-            socket.emit(self.APISpec.List.ERR, path, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
+            socket.emit(self.wsapi.List.ERR, path, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
         }
     });
 
-    socket.on(self.APISpec.StatList.REQ, function(_path) {
+    socket.on(self.wsapi.StatList.REQ, function(_path) {
         try {
             var realPath = resolvePath(_path);
 
             if (SYSTEM.ERROR.HAS_ERROR(realPath))
-                socket.emit(self.APISpec.StatList.ERR, _path, realPath);
+                socket.emit(self.wsapi.StatList.ERR, _path, realPath);
             else {
                 var items = fs.readdirSync(realPath);
                 var itemStats = [];
@@ -60,199 +60,199 @@ FileManager.prototype.register = function(socket, complete) {
                     var stat = fs.lstatSync(realPath + path.sep + file);
                     itemStats.push(stat);
                 });
-                socket.emit(self.APISpec.StatList.RES, _path, items, itemStats);
+                socket.emit(self.wsapi.StatList.RES, _path, items, itemStats);
             }
         }
         catch (err) {
-            socket.emit(self.APISpec.StatList.ERR, _path, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
+            socket.emit(self.wsapi.StatList.ERR, _path, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
         }
     });
 
-    socket.on(self.APISpec.CreateFile.REQ, function(path) {
+    socket.on(self.wsapi.CreateFile.REQ, function(path) {
         var realPath = resolvePath(path);
 
         if (SYSTEM.ERROR.HAS_ERROR(realPath))
-            socket.emit(self.APISpec.CreateFile.ERR, path, realPath);
+            socket.emit(self.wsapi.CreateFile.ERR, path, realPath);
         else {
             fs.createFile(realPath, function(err) {
                 if (err) {
-                    socket.emit(self.APISpec.CreateFile.ERR, path, SYSTEM.ERROR.ERROR_FS_IO);
+                    socket.emit(self.wsapi.CreateFile.ERR, path, SYSTEM.ERROR.ERROR_FS_IO);
                 }
                 else {
-                    socket.emit(self.APISpec.CreateFile.RES, path);
+                    socket.emit(self.wsapi.CreateFile.RES, path);
                 }
             });
         }
     });
 
-    socket.on(self.APISpec.CreateDirectory.REQ, function(path) {
+    socket.on(self.wsapi.CreateDirectory.REQ, function(path) {
         var realPath = resolvePath(path);
 
         if (SYSTEM.ERROR.HAS_ERROR(realPath))
-            socket.emit(self.APISpec.CreateDirectory.ERR, path, realPath);
+            socket.emit(self.wsapi.CreateDirectory.ERR, path, realPath);
         else {
             fse.mkdirp(realPath, function(err) {
                 if (err) {
-                    socket.emit(self.APISpec.CreateDirectory.ERR, path, SYSTEM.ERROR.ERROR_FS_IO);
+                    socket.emit(self.wsapi.CreateDirectory.ERR, path, SYSTEM.ERROR.ERROR_FS_IO);
                 }
                 else {
-                    socket.emit(self.APISpec.CreateDirectory.RES, path);
+                    socket.emit(self.wsapi.CreateDirectory.RES, path);
                 }
             });
         }
     });
 
-    socket.on(self.APISpec.CreateHardLink.REQ, function(srcPath, dstPath) {
+    socket.on(self.wsapi.CreateHardLink.REQ, function(srcPath, dstPath) {
         var realSrcPath = resolvePath(srcPath);
         var realDstPath = resolvePath(dstPath);
 
         if (SYSTEM.ERROR.HAS_ERROR(realSrcPath))
-            socket.emit(self.APISpec.CreateHardLink.ERR, srcPath, dstPath, realSrcPath);
+            socket.emit(self.wsapi.CreateHardLink.ERR, srcPath, dstPath, realSrcPath);
         else if (SYSTEM.ERROR.HAS_ERROR(realDstPath))
-            socket.emit(self.APISpec.CreateHardLink.ERR, srcPath, dstPath, realDstPath);
+            socket.emit(self.wsapi.CreateHardLink.ERR, srcPath, dstPath, realDstPath);
         else {
             if (!fs.existsSync(realSrcPath))
-                socket.emit(self.APISpec.CreateHardLink.ERR, srcPath, dstPath, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
+                socket.emit(self.wsapi.CreateHardLink.ERR, srcPath, dstPath, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
             else if (!fs.linkSync(realSrcPath, realDstPath))
-                socket.emit(self.APISpec.CreateHardLink.ERR, srcPath, dstPath, SYSTEM.ERROR.ERROR_FS_IO);
+                socket.emit(self.wsapi.CreateHardLink.ERR, srcPath, dstPath, SYSTEM.ERROR.ERROR_FS_IO);
             else
-                socket.emit(self.APISpec.CreateHardLink.RES, srcPath, dstPath);
+                socket.emit(self.wsapi.CreateHardLink.RES, srcPath, dstPath);
         }
     });
 
-    socket.on(self.APISpec.CreateSymbolicLink.REQ, function(srcPath, dstPath) {
+    socket.on(self.wsapi.CreateSymbolicLink.REQ, function(srcPath, dstPath) {
         var realSrcPath = resolvePath(srcPath);
         var realDstPath = resolvePath(dstPath);
 
         if (SYSTEM.ERROR.HAS_ERROR(realSrcPath))
-            socket.emit(self.APISpec.CreateSymbolicLink.ERR, srcPath, dstPath, realSrcPath);
+            socket.emit(self.wsapi.CreateSymbolicLink.ERR, srcPath, dstPath, realSrcPath);
         else if (SYSTEM.ERROR.HAS_ERROR(realDstPath))
-            socket.emit(self.APISpec.CreateSymbolicLink.ERR, srcPath, dstPath, realDstPath);
+            socket.emit(self.wsapi.CreateSymbolicLink.ERR, srcPath, dstPath, realDstPath);
         else {
             if (!fs.existsSync(realSrcPath))
-                socket.emit(self.APISpec.CreateSymbolicLink.ERR, srcPath, dstPath, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
+                socket.emit(self.wsapi.CreateSymbolicLink.ERR, srcPath, dstPath, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
             else if (!fs.symlinkSync(realSrcPath, realDstPath))
-                socket.emit(self.APISpec.CreateSymbolicLink.ERR, srcPath, dstPath, SYSTEM.ERROR.ERROR_FS_IO);
+                socket.emit(self.wsapi.CreateSymbolicLink.ERR, srcPath, dstPath, SYSTEM.ERROR.ERROR_FS_IO);
             else
-                socket.emit(self.APISpec.CreateSymbolicLink.RES, srcPath, dstPath);
+                socket.emit(self.wsapi.CreateSymbolicLink.RES, srcPath, dstPath);
         }
     });
 
-    socket.on(self.APISpec.Remove.REQ, function(path) {
+    socket.on(self.wsapi.Remove.REQ, function(path) {
         var realPath = resolvePath(path);
 
         if (SYSTEM.ERROR.HAS_ERROR(realPath))
-            socket.emit(self.APISpec.Remove.ERR, path, realPath);
+            socket.emit(self.wsapi.Remove.ERR, path, realPath);
         else {
             if (fs.existsSync(realPath)) {
                 fse.remove(realPath, function(err) {
                     if (err) {
-                        socket.emit(self.APISpec.Remove.ERR, path, SYSTEM.ERROR.ERROR_FS_IO);
+                        socket.emit(self.wsapi.Remove.ERR, path, SYSTEM.ERROR.ERROR_FS_IO);
                     }
                     else
-                        socket.emit(self.APISpec.Remove.RES, path);
+                        socket.emit(self.wsapi.Remove.RES, path);
                 });
             }
             else
-                socket.emit(self.APISpec.Remove.ERR, path, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
+                socket.emit(self.wsapi.Remove.ERR, path, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
         }
     });
 
-    socket.on(self.APISpec.Move.REQ, function(srcPath, dstPath) {
+    socket.on(self.wsapi.Move.REQ, function(srcPath, dstPath) {
         var realSrcPath = resolvePath(srcPath);
         var realDstPath = resolvePath(dstPath);
 
         if (SYSTEM.ERROR.HAS_ERROR(realSrcPath))
-            socket.emit(self.APISpec.Move.ERR, srcPath, dstPath, realSrcPath);
+            socket.emit(self.wsapi.Move.ERR, srcPath, dstPath, realSrcPath);
         else if (SYSTEM.ERROR.HAS_ERROR(realDstPath))
-            socket.emit(self.APISpec.Move.ERR, srcPath, dstPath, realDstPath);
+            socket.emit(self.wsapi.Move.ERR, srcPath, dstPath, realDstPath);
         else {
             if (fs.existsSync(realSrcPath)) {
                 fse.move(realSrcPath, realDstPath, function(err) {
                     if (err) {
-                        socket.emit(self.APISpec.Move.ERR, srcPath, dstPath, SYSTEM.ERROR.ERROR_FS_IO);
+                        socket.emit(self.wsapi.Move.ERR, srcPath, dstPath, SYSTEM.ERROR.ERROR_FS_IO);
                     }
                     else
-                        socket.emit(self.APISpec.Move.RES, srcPath, dstPath);
+                        socket.emit(self.wsapi.Move.RES, srcPath, dstPath);
                 });
             }
             else
-                socket.emit(self.APISpec.Move.ERR, srcPath, dstPath, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
+                socket.emit(self.wsapi.Move.ERR, srcPath, dstPath, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
         }
     });
 
-    socket.on(self.APISpec.Copy.REQ, function(srcPath, dstPath) {
+    socket.on(self.wsapi.Copy.REQ, function(srcPath, dstPath) {
         var realSrcPath = resolvePath(srcPath);
         var realDstPath = resolvePath(dstPath);
 
         if (SYSTEM.ERROR.HAS_ERROR(realSrcPath))
-            socket.emit(self.APISpec.Copy.ERR, srcPath, dstPath, realSrcPath);
+            socket.emit(self.wsapi.Copy.ERR, srcPath, dstPath, realSrcPath);
         else if (SYSTEM.ERROR.HAS_ERROR(realDstPath))
-            socket.emit(self.APISpec.Copy.ERR, srcPath, dstPath, realDstPath);
+            socket.emit(self.wsapi.Copy.ERR, srcPath, dstPath, realDstPath);
         else {
             if (fs.existsSync(realSrcPath)) {
                 fse.copy(realSrcPath, realDstPath, function(err) {
                     if (err) {
-                        socket.emit(self.APISpec.Copy.ERR, srcPath, dstPath, SYSTEM.ERROR.ERROR_FS_IO);
+                        socket.emit(self.wsapi.Copy.ERR, srcPath, dstPath, SYSTEM.ERROR.ERROR_FS_IO);
                     }
                     else
-                        socket.emit(self.APISpec.Copy.RES, srcPath, dstPath);
+                        socket.emit(self.wsapi.Copy.RES, srcPath, dstPath);
                 });
             }
             else
-                socket.emit(self.APISpec.Copy.ERR, srcPath, dstPath, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
+                socket.emit(self.wsapi.Copy.ERR, srcPath, dstPath, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
         }
     });
 
-    socket.on(self.APISpec.Exist.REQ, function(path) {
+    socket.on(self.wsapi.Exist.REQ, function(path) {
         var realPath = resolvePath(path);
 
         if (SYSTEM.ERROR.HAS_ERROR(realPath))
-            socket.emit(self.APISpec.Exist.ERR, path, realPath);
+            socket.emit(self.wsapi.Exist.ERR, path, realPath);
         else {
             var exist = fs.existsSync(realPath);
             var isDir = exist ? fs.lstatSync(realPath).isDirectory() : false;
-            socket.emit(self.APISpec.Exist.RES, path, exist, isDir);
+            socket.emit(self.wsapi.Exist.RES, path, exist, isDir);
         }
     });
 
-    socket.on(self.APISpec.Stat.REQ, function(path) {
+    socket.on(self.wsapi.Stat.REQ, function(path) {
         var realPath = resolvePath(path);
 
         if (SYSTEM.ERROR.HAS_ERROR(realPath))
-            socket.emit(self.APISpec.Stat.ERR, path, realPath);
+            socket.emit(self.wsapi.Stat.ERR, path, realPath);
         else {
             var exist = fs.existsSync(realPath);
             if (exist) {
                 var stat = fs.lstatSync(realPath);
-                socket.emit(self.APISpec.Stat.RES, path, stat);
+                socket.emit(self.wsapi.Stat.RES, path, stat);
             }
             else
-                socket.emit(self.APISpec.Stat.ERR, path, SYSTEM.ERROR.ERROR_FS_IO);
+                socket.emit(self.wsapi.Stat.ERR, path, SYSTEM.ERROR.ERROR_FS_IO);
         }
     });
 
-    socket.on(self.APISpec.Touch.REQ, function(path, atime, mtime) {
+    socket.on(self.wsapi.Touch.REQ, function(path, atime, mtime) {
         var realPath = resolvePath(path);
 
         if (SYSTEM.ERROR.HAS_ERROR(realPath))
-            socket.emit(self.APISpec.Touch.ERR, path, realPath);
+            socket.emit(self.wsapi.Touch.ERR, path, realPath);
         else {
             var exist = fs.existsSync(realPath);
             if (exist) {
                 fs.utimesSync(realPath, new Date(atime), new Date(mtime));
-                socket.emit(self.APISpec.Touch.RES, path);
+                socket.emit(self.wsapi.Touch.RES, path);
             }
             else
-                socket.emit(self.APISpec.Touch.ERR, path, SYSTEM.ERROR.ERROR_FS_IO);
+                socket.emit(self.wsapi.Touch.ERR, path, SYSTEM.ERROR.ERROR_FS_IO);
         }
     });
 
-    socket.on(self.APISpec.ReadFile.REQ, function(path, encoding) {
+    socket.on(self.wsapi.ReadFile.REQ, function(path, encoding) {
         var realPath = resolvePath(path);
 
         if (SYSTEM.ERROR.HAS_ERROR(realPath))
-            socket.emit(self.APISpec.ReadFile.ERR, path, realPath);
+            socket.emit(self.wsapi.ReadFile.ERR, path, realPath);
         else {
             encoding = encoding || 'utf8';
 
@@ -261,35 +261,35 @@ FileManager.prototype.register = function(socket, complete) {
                 var readStream = fs.createReadStream(path);
                 readStream.on('open', function () {
                     var dataStream = ss.createStream();
-                    ss(socket).emit(self.APISpec.ReadFile.RES, path, dataStream);
+                    ss(socket).emit(self.wsapi.ReadFile.RES, path, dataStream);
                     readStream.pipe(dataStream);
                 });
 
                 readStream.on('error', function(err) {
-                    socket.emit(self.APISpec.ReadFile.ERR, path, SYSTEM.ERROR.ERROR_FS_IO);
+                    socket.emit(self.wsapi.ReadFile.ERR, path, SYSTEM.ERROR.ERROR_FS_IO);
                 });
                 */
 
                 fs.readFile(realPath, encoding, function(err, data) {
                     if (err) {
-                        socket.emit(self.APISpec.ReadFile.ERR, path, SYSTEM.ERROR.ERROR_FS_IO);
+                        socket.emit(self.wsapi.ReadFile.ERR, path, SYSTEM.ERROR.ERROR_FS_IO);
                     }
                     else {
-                        socket.emit(self.APISpec.ReadFile.RES, path, data);
+                        socket.emit(self.wsapi.ReadFile.RES, path, data);
                     }
                 });
 
             }
             else
-                socket.emit(self.APISpec.ReadFile.ERR, path, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
+                socket.emit(self.wsapi.ReadFile.ERR, path, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
         }
     });
 
-    ss(socket).on(self.APISpec.WriteFile.REQ, function(path, dataStream, dataSize) {
+    ss(socket).on(self.wsapi.WriteFile.REQ, function(path, dataStream, dataSize) {
         var realPath = resolvePath(path);
 
         if (SYSTEM.ERROR.HAS_ERROR(realPath))
-            socket.emit(self.APISpec.WriteFile.ERR, path, realPath);
+            socket.emit(self.wsapi.WriteFile.ERR, path, realPath);
         else {
             var writeStream = fs.createWriteStream(realPath);
             var size = 0;
@@ -303,18 +303,18 @@ FileManager.prototype.register = function(socket, complete) {
                     progress = (progress > 0) ? progress - 1: 0;
                     if (currentProgress === progress) return;
                     currentProgress = progress;
-                    socket.emit(self.APISpec.WriteFile.RES, path, progress);
+                    socket.emit(self.wsapi.WriteFile.RES, path, progress);
                 });
 
                 dataStream.on('finish', function() {
-                    socket.emit(self.APISpec.WriteFile.RES, path, 100);
+                    socket.emit(self.wsapi.WriteFile.RES, path, 100);
                     dataStream.end();
                     release();
                 });
 
                 dataStream.on('error', function(err) {
                     if (err) {
-                        socket.emit(self.APISpec.WriteFile.ERR, path, SYSTEM.ERROR.ERROR_FS_IO);
+                        socket.emit(self.wsapi.WriteFile.ERR, path, SYSTEM.ERROR.ERROR_FS_IO);
                         release();
                     }
                 });
@@ -324,11 +324,11 @@ FileManager.prototype.register = function(socket, complete) {
         }
     });
 
-    ss(socket).on(self.APISpec.AppendFile.REQ, function(path, dataStream, dataSize) {
+    ss(socket).on(self.wsapi.AppendFile.REQ, function(path, dataStream, dataSize) {
         var realPath = resolvePath(path);
 
         if (SYSTEM.ERROR.HAS_ERROR(realPath))
-            socket.emit(self.APISpec.AppendFile.ERR, path, realPath);
+            socket.emit(self.wsapi.AppendFile.ERR, path, realPath);
         else {
             rwlock.writeLock(realPath, function(release) {
                 if (fs.existsSync(realPath)) {
@@ -343,18 +343,18 @@ FileManager.prototype.register = function(socket, complete) {
                         progress = (progress > 0) ? progress - 1: 0;
                         if (currentProgress === progress) return;
                         currentProgress = progress;
-                        socket.emit(self.APISpec.AppendFile.RES, path, progress);
+                        socket.emit(self.wsapi.AppendFile.RES, path, progress);
                     });
 
                     dataStream.on('finish', function() {
-                        socket.emit(self.APISpec.AppendFile.RES, path, 100);
+                        socket.emit(self.wsapi.AppendFile.RES, path, 100);
                         dataStream.end();
                         release();
                     });
 
                     dataStream.on('error', function(err) {
                         if (err) {
-                            socket.emit(self.APISpec.AppendFile.ERR, path, SYSTEM.ERROR.ERROR_FS_IO);
+                            socket.emit(self.wsapi.AppendFile.ERR, path, SYSTEM.ERROR.ERROR_FS_IO);
                             release();
                         }
                     });
@@ -362,18 +362,18 @@ FileManager.prototype.register = function(socket, complete) {
                     dataStream.pipe(writeStream);
                 }
                 else {
-                    socket.emit(self.APISpec.AppendFile.ERR, path, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
+                    socket.emit(self.wsapi.AppendFile.ERR, path, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
                     release();
                 }
             });
         }
     });
 
-    socket.on(self.APISpec.SaveURLAs.REQ, function(_path, fileURL) {
+    socket.on(self.wsapi.SaveURLAs.REQ, function(_path, fileURL) {
         var realPath = resolvePath(_path);
 
         if (SYSTEM.ERROR.HAS_ERROR(realPath))
-            socket.emit(self.APISpec.SaveURLAs.ERR, _path, realPath);
+            socket.emit(self.wsapi.SaveURLAs.ERR, _path, realPath);
         else {
             if (fs.existsSync(path.dirname(realPath))) {
                 var fileStream;
@@ -398,7 +398,7 @@ FileManager.prototype.register = function(socket, complete) {
                 };
 
                 if (!options.host || !options.path) {
-                    socket.emit(self.APISpec.SaveURLAs.ERR, _path, SYSTEM.ERROR.ERROR_FS_INVALID_URL);
+                    socket.emit(self.wsapi.SaveURLAs.ERR, _path, SYSTEM.ERROR.ERROR_FS_INVALID_URL);
                 }
                 else {
                     http.get(options, function(res) {
@@ -406,7 +406,7 @@ FileManager.prototype.register = function(socket, complete) {
                             fileStream.write(data);
                         }).on('end', function() {
                             fileStream.end();
-                            socket.emit(self.APISpec.SaveURLAs.RES, _path);
+                            socket.emit(self.wsapi.SaveURLAs.RES, _path);
                         });
                     }).on('error', function(e) {
                         console.log("http.get got error: " + e.message);
@@ -416,11 +416,11 @@ FileManager.prototype.register = function(socket, complete) {
         }
     });
 
-    socket.on(self.APISpec.Grep.REQ, function(path, regex, option) {
+    socket.on(self.wsapi.Grep.REQ, function(path, regex, option) {
         var realPath = resolvePath(path);
 
         if (SYSTEM.ERROR.HAS_ERROR(realPath))
-            socket.emit(self.APISpec.Grep.ERR, path, realPath);
+            socket.emit(self.wsapi.Grep.ERR, path, realPath);
         else {
             var defaultOption = {
                 encoding: 'utf8',
@@ -440,7 +440,7 @@ FileManager.prototype.register = function(socket, complete) {
             if (fs.existsSync(realPath)) {
                 fs.readFile(realPath, option.encoding, function(err, data) {
                     if (err) {
-                        socket.emit(self.APISpec.Grep.ERR, path, SYSTEM.ERROR.ERROR_FS_IO);
+                        socket.emit(self.wsapi.Grep.ERR, path, SYSTEM.ERROR.ERROR_FS_IO);
                     }
                     else {
                         if (option.parseFormat) {
@@ -469,13 +469,13 @@ FileManager.prototype.register = function(socket, complete) {
                         else if (!option.onlyMatching && result)
                             result = data; /* Return full content since onlyMatching is set to false */
 
-                        socket.emit(self.APISpec.Grep.RES, path, result);
+                        socket.emit(self.wsapi.Grep.RES, path, result);
                     }
                 });
 
             }
             else
-                socket.emit(self.APISpec.Grep.ERR, path, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
+                socket.emit(self.wsapi.Grep.ERR, path, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
         }
     });
 
@@ -483,69 +483,69 @@ FileManager.prototype.register = function(socket, complete) {
     /**
      * Protocol Listener: File Handle Events
      */
-    socket.on(self.APISpec.Open.REQ, function(path, flag, mode) {
+    socket.on(self.wsapi.Open.REQ, function(path, flag, mode) {
         var realPath = resolvePath(path);
 
         if (SYSTEM.ERROR.HAS_ERROR(realPath))
-            socket.emit(self.APISpec.Open.ERR, path, realPath);
+            socket.emit(self.wsapi.Open.ERR, path, realPath);
         else {
             if (fs.existsSync(realPath)) {
                 fs.open(realPath, flag, mode, function(err, fd) {
                     if (err) {
-                        socket.emit(self.APISpec.Open.ERR, path, SYSTEM.ERROR.FSIOERR);
+                        socket.emit(self.wsapi.Open.ERR, path, SYSTEM.ERROR.FSIOERR);
                     }
                     else
-                        socket.emit(self.APISpec.Open.RES, path, fd);
+                        socket.emit(self.wsapi.Open.RES, path, fd);
                 });
             }
             else
-                socket.emit(self.APISpec.Open.ERR, path, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
+                socket.emit(self.wsapi.Open.ERR, path, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
         }
     });
 
-    socket.on(self.APISpec.Close.REQ, function(fileHandle) {
+    socket.on(self.wsapi.Close.REQ, function(fileHandle) {
         if (fileHandle) {
             fs.close(fileHandle, function(err) {
                 if (err) {
-                    socket.emit(self.APISpec.Close.ERR, fileHandle, SYSTEM.ERROR.FSIOERR);
+                    socket.emit(self.wsapi.Close.ERR, fileHandle, SYSTEM.ERROR.FSIOERR);
                 }
                 else
-                    socket.emit(self.APISpec.Close.RES, fileHandle);
+                    socket.emit(self.wsapi.Close.RES, fileHandle);
             });
         }
         else
-            socket.emit(self.APISpec.Close.ERR, fileHandle, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
+            socket.emit(self.wsapi.Close.ERR, fileHandle, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
     });
 
-    socket.on(self.APISpec.ReadData.REQ, function(fileHandle, offset, size) {
+    socket.on(self.wsapi.ReadData.REQ, function(fileHandle, offset, size) {
         if (fileHandle) {
             var buffer = new Buffer(size);
             fs.read(fileHandle, buffer, offset, size, 0, function(err, bytesRead, buffer) {
                 if (err) {
-                    socket.emit(self.APISpec.ReadData.ERR, fileHandle, SYSTEM.ERROR.FSIOERR);
+                    socket.emit(self.wsapi.ReadData.ERR, fileHandle, SYSTEM.ERROR.FSIOERR);
                 }
                 else {
-                    socket.emit(self.APISpec.ReadData.RES, fileHandle, buffer, bytesRead);
+                    socket.emit(self.wsapi.ReadData.RES, fileHandle, buffer, bytesRead);
                 }
             });
         }
         else
-            socket.emit(self.APISpec.ReadData.ERR, fileHandle, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
+            socket.emit(self.wsapi.ReadData.ERR, fileHandle, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
     });
 
-    socket.on(self.APISpec.WriteData.REQ, function(fileHandle, offset, size, data) {
+    socket.on(self.wsapi.WriteData.REQ, function(fileHandle, offset, size, data) {
         if (fileHandle) {
             fs.write(fileHandle, data, offset, size, 0, function(err, written, buffer) {
                 if (err) {
-                    socket.emit(self.APISpec.WriteData.ERR, fileHandle, SYSTEM.ERROR.FSIOERR);
+                    socket.emit(self.wsapi.WriteData.ERR, fileHandle, SYSTEM.ERROR.FSIOERR);
                 }
                 else {
-                    socket.emit(self.APISpec.WriteData.RES, fileHandle, written);
+                    socket.emit(self.wsapi.WriteData.RES, fileHandle, written);
                 }
             });
         }
         else
-            socket.emit(self.APISpec.WriteData.ERR, fileHandle, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
+            socket.emit(self.wsapi.WriteData.ERR, fileHandle, SYSTEM.ERROR.ERROR_FS_NOT_EXIST);
     });
 
     complete && complete();
@@ -553,25 +553,25 @@ FileManager.prototype.register = function(socket, complete) {
 
 FileManager.prototype.unregister = function(socket) {
     var self = this;
-    socket.removeAllListeners(self.APISpec.List.REQ);
-    socket.removeAllListeners(self.APISpec.StatList.REQ);
-    socket.removeAllListeners(self.APISpec.CreateFile.REQ);
-    socket.removeAllListeners(self.APISpec.CreateDirectory.REQ);
-    socket.removeAllListeners(self.APISpec.CreateHardLink.REQ);
-    socket.removeAllListeners(self.APISpec.CreateSymbolicLink.REQ);
-    socket.removeAllListeners(self.APISpec.Remove.REQ);
-    socket.removeAllListeners(self.APISpec.Move.REQ);
-    socket.removeAllListeners(self.APISpec.Copy.REQ);
-    socket.removeAllListeners(self.APISpec.Exist.REQ);
-    socket.removeAllListeners(self.APISpec.Stat.REQ);
-    socket.removeAllListeners(self.APISpec.Touch.REQ);
-    socket.removeAllListeners(self.APISpec.ReadFile.REQ);
-    socket.removeAllListeners(self.APISpec.WriteFile.REQ);
-    socket.removeAllListeners(self.APISpec.AppendFile.REQ);
-    socket.removeAllListeners(self.APISpec.SaveURLAs.REQ);
-    socket.removeAllListeners(self.APISpec.Grep.REQ);
-    socket.removeAllListeners(self.APISpec.Open.REQ);
-    socket.removeAllListeners(self.APISpec.Close.REQ);
-    socket.removeAllListeners(self.APISpec.ReadData.REQ);
-    socket.removeAllListeners(self.APISpec.WriteData.REQ);
+    socket.removeAllListeners(self.wsapi.List.REQ);
+    socket.removeAllListeners(self.wsapi.StatList.REQ);
+    socket.removeAllListeners(self.wsapi.CreateFile.REQ);
+    socket.removeAllListeners(self.wsapi.CreateDirectory.REQ);
+    socket.removeAllListeners(self.wsapi.CreateHardLink.REQ);
+    socket.removeAllListeners(self.wsapi.CreateSymbolicLink.REQ);
+    socket.removeAllListeners(self.wsapi.Remove.REQ);
+    socket.removeAllListeners(self.wsapi.Move.REQ);
+    socket.removeAllListeners(self.wsapi.Copy.REQ);
+    socket.removeAllListeners(self.wsapi.Exist.REQ);
+    socket.removeAllListeners(self.wsapi.Stat.REQ);
+    socket.removeAllListeners(self.wsapi.Touch.REQ);
+    socket.removeAllListeners(self.wsapi.ReadFile.REQ);
+    socket.removeAllListeners(self.wsapi.WriteFile.REQ);
+    socket.removeAllListeners(self.wsapi.AppendFile.REQ);
+    socket.removeAllListeners(self.wsapi.SaveURLAs.REQ);
+    socket.removeAllListeners(self.wsapi.Grep.REQ);
+    socket.removeAllListeners(self.wsapi.Open.REQ);
+    socket.removeAllListeners(self.wsapi.Close.REQ);
+    socket.removeAllListeners(self.wsapi.ReadData.REQ);
+    socket.removeAllListeners(self.wsapi.WriteData.REQ);
 }

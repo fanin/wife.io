@@ -30,7 +30,7 @@ function DiligentServer(http) {
     this.ioServer = sio(http, { 'pingTimeout': 300000 });
     this.error = null;
 
-    this.loadWSAPISpec = function(name, version) {
+    this.loadWSApi = function(name, version) {
         var apiSpec = name + '-v' + version;
 
         var jsonString = fs.readFileSync(path.resolve(__dirname, '../api/' + apiSpec + '.json'));
@@ -53,7 +53,7 @@ function DiligentServer(http) {
         }
     }
 
-    this.apiSpec = this.loadWSAPISpec('wsapi-spec', 0);
+    this.apiSpec = this.loadWSApi('wsapi-spec', 0);
     if (!this.apiSpec) {
         console.log('Unable to load API Spec, error = ' + this.error);
         process.exit(1);

@@ -1,18 +1,24 @@
 #wife.io
 
-`Wife.io` is an extensible web control system designed for devices which are capable of running node.js.
+`wife.io` is an extensible web control system designed for devices which are capable of running node.js.
 
 ###Architecture
 
-Backend:   System service provider based on node.js
+Frontend: Application Framework
 
-![Backend Architecture](docs/diligent_be.png)
+![App Framework](docs/app_framework.png)
 
-Frontend: Client applications built with React/Flux architecture
+Frontend: Diligent Agent (Client)
 
 ![Frontend Architecture](docs/diligent_fe.png)
 
-![App Framework](docs/app_framework.png)
+Backend: Diligent Server
+
+![Backend Architecture](docs/diligent_be.png)
+
+###Diligent
+
+`Diligent` is the core spirit of `wife.io`. It maintains socket.io connection between devices (server) and browser (client) and provides a common interface to access all functionalities supported by diligent server.
 
 ###Prepare
 ```
@@ -35,7 +41,7 @@ Remove `mywife/` folder.
 ```
 server   : diligent server runs on node.js
 lib      : 3rd-party libraries (jquery, react, semantic-ui...etc)
-diligent : diligent client framework
+diligent : diligent client framework (diligent agent, diligent clients and diligent ui widgets)
 cutie    : cutie ui framework
 app      : builtin apps
 api      : socket.io api spec
@@ -45,7 +51,7 @@ config   : system configuration files
 
 ###Build individual apps
 ```
-$ cd app/yourapp
+$ cd apps/yourapp
 $ gulp
 $ gulp clean
 ```

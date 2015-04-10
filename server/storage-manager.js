@@ -1,5 +1,21 @@
 "use strict";
 
+/**
+ * Storage Object:
+ *
+ * { used: '163.94 GB',
+ *   available: '68.43 GB',
+ *   mountpoint: '/',
+ *   uuid: '14131988-9579-3A7E-BE21-991936E49CAA',
+ *   name: 'MacintoshHD',
+ *   freePer: '29',
+ *   usedPer: '71',
+ *   total: '232.37 GB',
+ *   drive: '/dev/disk1',
+ *   type: 'System',
+ *   isWorkingDisk: false }
+ */
+
 var fs      = require('fs-extra');
 var path    = require('path');
 var storage = require('./lib/disks.js');
@@ -8,9 +24,9 @@ var SYSTEM  = require('../system');
 
 module.exports = StorageManager;
 
-function StorageManager(_super, apiSpec) {
+function StorageManager(_super, wsapi) {
     this._super = _super;
-    this.APISpec = apiSpec;
+    this.wsapi = wsapi;
     this.notificationCenter = _super.notificationCenter;
     this.securityManager = _super.securityManager;
     this.systemDisk = null;
@@ -38,24 +54,24 @@ StorageManager.prototype.register = function(socket, complete) {
     /**
      * Protocol Listener: Storage Events
      */
-    socket.on(self.APISpec.GetLocalDisks.REQ, function() {
+    socket.on(self.wsapi.GetLocalDisks.REQ, function() {
         self.getLocalDisks(function(disks, error) {
             if (error) {
-                socket.emit(self.APISpec.GetLocalDisks.ERR, SYSTEM.ERROR.ERROR_STOR_DISK_API);
+                socket.emit(self.wsapi.GetLocalDisks.ERR, SYSTEM.ERROR.ERROR_STOR_DISK_API);
             }
             else {
                 if (!disks.system) {
-                    socket.emit(self.APISpec.GetLocalDisks.ERR, SYSTEM.ERROR.ERROR_STOR_DISK_NOT_FOUND);
+                    socket.emit(self.wsapi.GetLocalDisks.ERR, SYSTEM.ERROR.ERROR_STOR_DISK_NOT_FOUND);
                 }
 
-                socket.emit(self.APISpec.GetLocalDisks.RES, disks);
+                socket.emit(self.wsapi.GetLocalDisks.RES, disks);
             }
 
             self.pausePolling = false;
         });
     });
 
-    socket.on(self.APISpec.SetWorkingDisk.REQ, function(disk) {
+    socket.on(self.wsapi.SetWorkingDisk.REQ, function(disk) {
         if (self.securityManager.isExternalUserDataAllowed(socket)) {
             if (self.verifyDiskInfo(disk)) {
                 if (self.userWorkingDisk[socket].mountpoint !== disk.mountpoint) {
@@ -65,10 +81,10 @@ StorageManager.prototype.register = function(socket, complete) {
                 self.notificationCenter.post("Storage", "WorkingDiskSet", disk);
             }
             else
-                socket.emit(self.APISpec.SetWorkingDisk.ERR, SYSTEM.ERROR.ERROR_STOR_BAD_DISK_INFO);
+                socket.emit(self.wsapi.SetWorkingDisk.ERR, SYSTEM.ERROR.ERROR_STOR_BAD_DISK_INFO);
         }
         else
-            socket.emit(self.APISpec.SetWorkingDisk.ERR, SYSTEM.ERROR.ERROR_SECURITY_EXTERNAL_NOT_ALLOWED);
+            socket.emit(self.wsapi.SetWorkingDisk.ERR, SYSTEM.ERROR.ERROR_SECURITY_EXTERNAL_NOT_ALLOWED);
     });
 
     self.getLocalDisks(function(disks, error) {
@@ -103,7 +119,7 @@ StorageManager.prototype.register = function(socket, complete) {
 }
 
 StorageManager.prototype.unregister = function(socket) {
-    socket.removeAllListeners(this.APISpec.GetLocalDisks.REQ);
+    socket.removeAllListeners(this.wsapi.GetLocalDisks.REQ);
     if (this.userWorkingDisk[socket])
         this.userWorkingDisk[socket] = undefined;
 }

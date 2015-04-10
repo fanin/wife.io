@@ -16,9 +16,9 @@ var APP_INFO_FILE    = 'manifest.json';
 
 module.exports = AppManager;
 
-function AppManager(_super, apiSpec) {
+function AppManager(_super, wsapi) {
     this._super = _super;
-    this.APISpec = apiSpec;
+    this.wsapi = wsapi;
     this.securityManager = _super.securityManager;
 
     /* Maintain a 'identifier:manifest' dictionary array for all Apps */
@@ -30,7 +30,7 @@ function AppManager(_super, apiSpec) {
             return false;
         if (manifest.version === undefined)
             return false;
-        if (manifest.ws_api_version === undefined)
+        if (manifest.wsapi_version === undefined)
             return false;
         if (manifest.directory === undefined)
             return false;
@@ -136,21 +136,21 @@ function AppManager(_super, apiSpec) {
         var filename = SYSTEM.SETTINGS.TempPath + path.sep + instid + '.zip';
         var appWriteStream = fs.createWriteStream(filename);
 
-        socket.emit(this.APISpec.Install.RES, "Initiating", instid);
+        socket.emit(this.wsapi.Install.RES, "Initiating", instid);
         this.dataStream[instid].pipe(appWriteStream);
 
         this.dataStream[instid].once('data', function() {
-            socket.emit(this.APISpec.Install.RES, "Uploading", instid);
+            socket.emit(this.wsapi.Install.RES, "Uploading", instid);
         }.bind(this));
 
         this.dataStream[instid].on('finish', function() {
-            socket.emit(this.APISpec.Install.RES, "Installing", instid);
+            socket.emit(this.wsapi.Install.RES, "Installing", instid);
 
             var result = this.install(filename).result;
             if (result === 'OK')
-                socket.emit(this.APISpec.Install.RES, "Installed", instid);
+                socket.emit(this.wsapi.Install.RES, "Installed", instid);
             else
-                socket.emit(this.APISpec.Install.ERR, instid, result);
+                socket.emit(this.wsapi.Install.ERR, instid, result);
 
             this.dataStream[instid].end();
             fs.removeSync(filename);
@@ -160,7 +160,7 @@ function AppManager(_super, apiSpec) {
         }.bind(this));
 
         this.dataStream[instid].on('error', function(err) {
-            socket.emit(this.APISpec.Install.ERR, instid, SYSTEM.ERROR.ERROR_FS_BROKEN_PIPE);
+            socket.emit(this.wsapi.Install.ERR, instid, SYSTEM.ERROR.ERROR_FS_BROKEN_PIPE);
             this.instQueue.shift();
             this._handleNextInstall(socket);
         }.bind(this));
@@ -171,16 +171,16 @@ AppManager.prototype.register = function(socket, complete) {
     /**
      * Protocol Listener: App Management Events
      */
-    socket.on(this.APISpec.List.REQ, function() {
-        socket.emit(this.APISpec.List.RES, this.listApps());
+    socket.on(this.wsapi.List.REQ, function() {
+        socket.emit(this.wsapi.List.RES, this.listApps());
     }.bind(this));
 
-    ss(socket).on(this.APISpec.Install.REQ, function(instid, appBundleDataStream) {
+    ss(socket).on(this.wsapi.Install.REQ, function(instid, appBundleDataStream) {
         if (this.dataStream[instid])
             return;
 
         if (!this.securityManager.canManageApps(socket)) {
-            socket.emit(this.APISpec.Install.ERR, instid, SYSTEM.ERROR.ERROR_SECURITY_ACCESS_DENIED);
+            socket.emit(this.wsapi.Install.ERR, instid, SYSTEM.ERROR.ERROR_SECURITY_ACCESS_DENIED);
             return;
         }
 
@@ -189,9 +189,9 @@ AppManager.prototype.register = function(socket, complete) {
         this._handleNextInstall(socket);
     }.bind(this));
 
-    socket.on(this.APISpec.CancelInstall.REQ, function(instid) {
+    socket.on(this.wsapi.CancelInstall.REQ, function(instid) {
         if (!this.securityManager.canManageApps(socket)) {
-            socket.emit(this.APISpec.CancelInstall.ERR, instid, SYSTEM.ERROR.ERROR_SECURITY_ACCESS_DENIED);
+            socket.emit(this.wsapi.CancelInstall.ERR, instid, SYSTEM.ERROR.ERROR_SECURITY_ACCESS_DENIED);
             return;
         }
 
@@ -210,27 +210,27 @@ AppManager.prototype.register = function(socket, complete) {
         for (var i in this.instQueue) {
             if (this.instQueue[i].instid === instid) {
                 this.instQueue.splice(i, 1);
-                socket.emit(this.APISpec.CancelInstall.RES, instid);
+                socket.emit(this.wsapi.CancelInstall.RES, instid);
                 if (i === 0)
                     this._handleNextInstall(socket);
                 return;
             }
         }
 
-        socket.emit(this.APISpec.CancelInstall.ERR, instid, SYSTEM.ERROR.ERROR_INVALID_ARG);
+        socket.emit(this.wsapi.CancelInstall.ERR, instid, SYSTEM.ERROR.ERROR_INVALID_ARG);
     }.bind(this));
 
-    socket.on(this.APISpec.Uninstall.REQ, function(manifest) {
+    socket.on(this.wsapi.Uninstall.REQ, function(manifest) {
         if (!this.securityManager.canManageApps(socket)) {
-            socket.emit(this.APISpec.Uninstall.ERR, SYSTEM.ERROR.ERROR_SECURITY_ACCESS_DENIED);
+            socket.emit(this.wsapi.Uninstall.ERR, SYSTEM.ERROR.ERROR_SECURITY_ACCESS_DENIED);
             return;
         }
 
         var result = this.uninstall(manifest).result;
         if (result === 'OK')
-            socket.emit(this.APISpec.Uninstall.RES, manifest);
+            socket.emit(this.wsapi.Uninstall.RES, manifest);
         else
-            socket.emit(this.APISpec.Uninstall.ERR, result);
+            socket.emit(this.wsapi.Uninstall.ERR, result);
     }.bind(this));
 
     /* Create user app path if not exist */
@@ -241,10 +241,10 @@ AppManager.prototype.register = function(socket, complete) {
 }
 
 AppManager.prototype.unregister = function(socket) {
-    socket.removeAllListeners(this.APISpec.List.REQ);
-    socket.removeAllListeners(this.APISpec.Install.REQ);
-    socket.removeAllListeners(this.APISpec.CancelInstall.REQ);
-    socket.removeAllListeners(this.APISpec.Uninstall.REQ);
+    socket.removeAllListeners(this.wsapi.List.REQ);
+    socket.removeAllListeners(this.wsapi.Install.REQ);
+    socket.removeAllListeners(this.wsapi.CancelInstall.REQ);
+    socket.removeAllListeners(this.wsapi.Uninstall.REQ);
 }
 
 AppManager.prototype.getAppManifest = function(appType, appDirectory) {

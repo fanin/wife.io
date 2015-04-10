@@ -10,15 +10,15 @@ function GreetingsExtension() {
 
 GreetingsExtension.prototype.activate = function(socket) {
     /* Implement greetings extension commands */
-    socket.on(this.apiSpec[this.version].Say.Hello.REQ, function(from, to) {
+    socket.on(this.wsapi[this.version].Say.Hello.REQ, function(from, to) {
         /* Response test */
-        socket.emit(this.apiSpec[this.version].Say.Hello.RES, "Hello " + to + ", I'm " + from);
+        socket.emit(this.wsapi[this.version].Say.Hello.RES, "Hello " + to + ", I'm " + from);
 
         /* Error test */
-        socket.emit(this.apiSpec[this.version].Say.Hello.ERR, "I feel bad, leave me alone!");
+        socket.emit(this.wsapi[this.version].Say.Hello.ERR, "I feel bad, leave me alone!");
     }.bind(this));
 }
 
 GreetingsExtension.prototype.inactivate = function(socket) {
-    socket.removeAllListeners(this.apiSpec[this.version].Say.Hello.REQ);
+    socket.removeAllListeners(this.wsapi[this.version].Say.Hello.REQ);
 }

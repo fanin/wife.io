@@ -2,9 +2,9 @@
 
 module.exports = NotificationCenter;
 
-function NotificationCenter(_super, apiSpec) {
+function NotificationCenter(_super, wsapi) {
     this._super = _super;
-    this.APISpec = apiSpec;
+    this.wsapi = wsapi;
     this.sockets = [];
 }
 
@@ -21,5 +21,5 @@ NotificationCenter.prototype.unregister = function(socket) {
 
 NotificationCenter.prototype.post = function(category, name, args) {
     for (var i in this.sockets)
-        this.sockets[i].emit(this.APISpec.Post.RES, { category: category, name: name, args: args });
+        this.sockets[i].emit(this.wsapi.Post.RES, { category: category, name: name, args: args });
 }

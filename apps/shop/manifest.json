@@ -1,7 +1,7 @@
 {
     "name": "AppShop",
     "version": "0.1.0",
-    "ws_api_version": "0.1",
+    "wsapi_version": "0.1",
     "directory": "shop",
     "entry": "index.html",
     "extensions": [],
