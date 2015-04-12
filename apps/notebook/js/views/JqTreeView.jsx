@@ -2,6 +2,7 @@ var JqTreeView = React.createClass({
 
     propTypes: {
         data:              React.PropTypes.array.isRequired,
+        exclusives:        React.PropTypes.array,
         onInit:            React.PropTypes.func,
         onOpen:            React.PropTypes.func,
         onClose:           React.PropTypes.func,
@@ -64,8 +65,8 @@ var JqTreeView = React.createClass({
             var targetNode = event.move_info.target_node;
             var position = event.move_info.position;
 
-            //if (movedNode.name === "All Notes" || targetNode.name === "All Notes")
-            //    return;
+            if (this._isExclusiveNode(movedNode) || this._isExclusiveNode(targetNode))
+                return;
 
             if (movedNode.isFolder() && (position === "inside" || (position !== "inside" && targetNode.getLevel() > 1)))
                 return;
@@ -123,15 +124,8 @@ var JqTreeView = React.createClass({
         });
     },
 
-    componentWillUpdate: function(nextProps, nextState) {
-        console.log('will update');
-    },
-
-    componentDidUpdate: function(prevProps, prevState) {
-        console.log('did update');
-    },
-
     shouldComponentUpdate: function(nextProps, nextState) {
+        this.treeInstance.tree("loadData", nextProps.data);
         return false;
     },
 
@@ -139,6 +133,14 @@ var JqTreeView = React.createClass({
         return (
             <div className="jq-treeview" />
         );
+    },
+
+    _isExclusiveNode: function(node) {
+        for (var i in this.props.exclusiveNodes) {
+            if (this.props.exclusiveNodes[i] === node.name)
+                return true;
+        }
+        return false;
     },
 
     _nodeOpen: function(node) {

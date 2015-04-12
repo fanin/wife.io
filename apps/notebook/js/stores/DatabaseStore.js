@@ -1,9 +1,12 @@
 var NotebookDispatcher = require('../dispatcher/NotebookDispatcher');
 var NotebookConstants  = require('../constants/NotebookConstants');
-var EventEmitter       = require('events').EventEmitter;
-var assign             = require('object-assign');
+var EventEmitter = require('events').EventEmitter;
+var assign       = require('object-assign');
 
 var CHANGE_EVENT = 'NOTEBOOK_DATABASE_STORE_CHANGE';
+
+var treeData = null;
+var error = null;
 
 var DatabaseStore = assign({}, EventEmitter.prototype, {
     emitChange: function(changes) {
@@ -24,25 +27,26 @@ var DatabaseStore = assign({}, EventEmitter.prototype, {
         this.removeListener(CHANGE_EVENT, callback);
     },
 
-    /**
-     * Build real path from node or string
-     * @param {object/string} jqTree node object or relative path string
-     */
-    getPath: function(node) {
-        var path = "";
+    getTreeData: function() {
+        return treeData;
+    },
 
-        if (typeof node === "object")
-            path = "/" + node.id;
-        else if (typeof node === "string")
-            path = node;
-
-        return "bookshelf" + path;
+    getError: function() {
+        return error;
     }
 });
 
 DatabaseStore.dispatchToken = NotebookDispatcher.register(function(action) {
     switch (action.actionType) {
-        default:
+        case NotebookConstants.NOTEBOOK_APP_DATABASE_LOADTREE:
+            break;
+        case NotebookConstants.NOTEBOOK_APP_DATABASE_LOADTREE_SUCCESS:
+            treeData = action.treeData;
+            DatabaseStore.emitChange(action.actionType);
+            break;
+        case NotebookConstants.NOTEBOOK_APP_DATABASE_LOADTREE_ERROR:
+            error = action.error;
+            DatabaseStore.emitChange(action.actionType);
             break;
     }
 });

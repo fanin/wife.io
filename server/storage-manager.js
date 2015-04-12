@@ -3,7 +3,8 @@
 /**
  * Storage Object:
  *
- * { used: '163.94 GB',
+ * {
+ *   used: '163.94 GB',
  *   available: '68.43 GB',
  *   mountpoint: '/',
  *   uuid: '14131988-9579-3A7E-BE21-991936E49CAA',
@@ -12,8 +13,16 @@
  *   usedPer: '71',
  *   total: '232.37 GB',
  *   drive: '/dev/disk1',
- *   type: 'System',
- *   isWorkingDisk: false }
+ *   type: 'System'
+ * }
+ *
+ * Storage Notification:
+ *   Category: system.storage
+ *   Notifications:
+ *      disk.inuse.change
+ *      disk.removable.insert
+ *      disk.removable.remove
+ *      disk.error
  */
 
 var fs      = require('fs-extra');
@@ -31,7 +40,7 @@ function StorageManager(_super, wsapi) {
     this.securityManager = _super.securityManager;
     this.systemDisk = null;
     this.systemDataDisk = null;
-    this.userWorkingDisk = [];
+    this.disksInUse = [];
     this.removableDisk = [];
     this.pausePolling = false;
 
@@ -49,54 +58,66 @@ function StorageManager(_super, wsapi) {
 }
 
 StorageManager.prototype.register = function(socket, complete) {
-    var self = this;
-
     /**
      * Protocol Listener: Storage Events
      */
-    socket.on(self.wsapi.GetLocalDisks.REQ, function() {
-        self.getLocalDisks(function(disks, error) {
+    socket.on(this.wsapi.GetLocalDisks.REQ, function() {
+        this.getLocalDisks(function(disks, error) {
             if (error) {
-                socket.emit(self.wsapi.GetLocalDisks.ERR, SYSTEM.ERROR.ERROR_STOR_DISK_API);
+                socket.emit(this.wsapi.GetLocalDisks.ERR, SYSTEM.ERROR.ERROR_STOR_DISK_API);
             }
             else {
                 if (!disks.system) {
-                    socket.emit(self.wsapi.GetLocalDisks.ERR, SYSTEM.ERROR.ERROR_STOR_DISK_NOT_FOUND);
+                    socket.emit(this.wsapi.GetLocalDisks.ERR, SYSTEM.ERROR.ERROR_STOR_DISK_NOT_FOUND);
                 }
 
-                socket.emit(self.wsapi.GetLocalDisks.RES, disks);
+                socket.emit(this.wsapi.GetLocalDisks.RES, disks);
             }
 
-            self.pausePolling = false;
-        });
-    });
+            this.pausePolling = false;
+        }.bind(this));
+    }.bind(this));
 
-    socket.on(self.wsapi.SetWorkingDisk.REQ, function(disk) {
-        if (self.securityManager.isExternalUserDataAllowed(socket)) {
-            if (self.verifyDiskInfo(disk)) {
-                if (self.userWorkingDisk[socket].mountpoint !== disk.mountpoint) {
-                    self.userWorkingDisk[socket] = disk;
-                    self.notificationCenter.post("Storage", "WorkingDiskChange", disk);
+    socket.on(this.wsapi.SetDiskInUse.REQ, function(disk) {
+        if (this.securityManager.isExternalUserDataAllowed(socket)) {
+            if (this.verifyDiskInfo(disk)) {
+                if (this.disksInUse[socket].mountpoint !== disk.mountpoint) {
+                    this.disksInUse[socket] = disk;
+                    this.notificationCenter.post("system.storage", "disk.inuse.change", disk);
                 }
-                self.notificationCenter.post("Storage", "WorkingDiskSet", disk);
+                socket.emit(this.wsapi.SetDiskInUse.RES, disk);
             }
-            else
-                socket.emit(self.wsapi.SetWorkingDisk.ERR, SYSTEM.ERROR.ERROR_STOR_BAD_DISK_INFO);
+            else {
+                if (!this.disksInUse[socket])
+                    this.disksInUse[socket] = this.getDefaultDiskInUse();
+                socket.emit(this.wsapi.SetDiskInUse.ERR, SYSTEM.ERROR.ERROR_STOR_BAD_DISK_INFO);
+            }
         }
-        else
-            socket.emit(self.wsapi.SetWorkingDisk.ERR, SYSTEM.ERROR.ERROR_SECURITY_EXTERNAL_NOT_ALLOWED);
-    });
+        else {
+            if (!this.disksInUse[socket])
+                this.disksInUse[socket] = this.getDefaultDiskInUse();
+            socket.emit(this.wsapi.SetDiskInUse.ERR, SYSTEM.ERROR.ERROR_SECURITY_EXTERNAL_NOT_ALLOWED);
+        }
+    }.bind(this));
 
-    self.getLocalDisks(function(disks, error) {
+    socket.on(this.wsapi.GetDiskInUse.REQ, function() {
+        if (this.disksInUse[socket])
+            socket.emit(this.wsapi.GetDiskInUse.RES, this.disksInUse[socket]);
+        else
+            socket.emit(this.wsapi.GetDiskInUse.ERR, SYSTEM.ERROR.ERROR_STOR_DISK_NOT_FOUND);
+    }.bind(this));
+
+    /* Get local disks initially */
+    this.getLocalDisks(function(disks, error) {
         if (error) {
-            self.notificationCenter.post("Storage", "Error", error);
-            self.pausePolling = true;
+            this.notificationCenter.post("system.storage", "disk.error", error);
+            this.pausePolling = true;
         }
         /* Examine SystemDataPath */
         else if (!fs.existsSync(SYSTEM.SETTINGS.SystemDataPath)) {
             error = SYSTEM.ERROR.ERROR_STOR_SYSDISK_NOT_FOUND;
-            self.notificationCenter.post("Storage", "Error", error);
-            self.pausePolling = true;
+            this.notificationCenter.post("system.storage", "disk.error", error);
+            this.pausePolling = true;
         }
         else {
             try {
@@ -105,23 +126,23 @@ StorageManager.prototype.register = function(socket, complete) {
                 fs.removeSync(SYSTEM.SETTINGS.SystemDataPath + "/test");
 
                 /* If user working disk for the client is not set, set to system disk by default */
-                if (!self.userWorkingDisk[socket])
-                    self.userWorkingDisk[socket] = self.systemDataDisk || self.systemDisk;
+                if (!this.disksInUse[socket])
+                    this.disksInUse[socket] = this.getDefaultDiskInUse();
             }
             catch (e) {
                 error = e.code;
-                self.notificationCenter.post("Storage", "Error", error);
+                this.notificationCenter.post("system.storage", "disk.error", error);
             }
         }
 
         complete && complete(error);
-    });
+    }.bind(this));
 }
 
 StorageManager.prototype.unregister = function(socket) {
     socket.removeAllListeners(this.wsapi.GetLocalDisks.REQ);
-    if (this.userWorkingDisk[socket])
-        this.userWorkingDisk[socket] = undefined;
+    if (this.disksInUse[socket])
+        this.disksInUse[socket] = undefined;
 }
 
 StorageManager.prototype.verifyDiskInfo = function(disk) {
@@ -136,12 +157,11 @@ StorageManager.prototype.verifyDiskInfo = function(disk) {
 }
 
 StorageManager.prototype.getLocalDisks = function(callback) {
-    var self = this;
     var systemDisk = null;
     var systemDataDisk = null;
     var removableDisk = [];
 
-    self.pausePolling = true;
+    this.pausePolling = true;
 
     storage.drives(function (err, drives) {
         if (err) {
@@ -171,37 +191,37 @@ StorageManager.prototype.getLocalDisks = function(callback) {
             }
 
             /* Save disk status */
-            if (self.systemDisk === null) {
+            if (this.systemDisk === null) {
                 /* This is the first time getting disks info */
-                self.systemDisk = systemDisk;
-                if (self.systemDisk) {
-                    self.systemDisk.type = "System";
-                    if (!self.systemDisk.uuid)
-                        self.systemDisk.uuid = uuid.v4();
+                this.systemDisk = systemDisk;
+                if (this.systemDisk) {
+                    this.systemDisk.type = "System";
+                    if (!this.systemDisk.uuid)
+                        this.systemDisk.uuid = uuid.v4();
                 }
 
-                self.systemDataDisk = systemDataDisk;
-                if (self.systemDataDisk) {
-                    self.systemDataDisk.type = "Data";
-                    if (!self.systemDataDisk.uuid)
-                        self.systemDataDisk.uuid = uuid.v4();
+                this.systemDataDisk = systemDataDisk;
+                if (this.systemDataDisk) {
+                    this.systemDataDisk.type = "Data";
+                    if (!this.systemDataDisk.uuid)
+                        this.systemDataDisk.uuid = uuid.v4();
                 }
 
-                self.removableDisk = removableDisk;
-                for (i = 0; i < self.removableDisk.length; i++) {
-                    self.removableDisk[i].type = "Removable";
-                    if (!self.removableDisk[i].uuid)
-                        self.removableDisk[i].uuid = uuid.v4();
+                this.removableDisk = removableDisk;
+                for (i = 0; i < this.removableDisk.length; i++) {
+                    this.removableDisk[i].type = "Removable";
+                    if (!this.removableDisk[i].uuid)
+                        this.removableDisk[i].uuid = uuid.v4();
                 }
             }
             else {
                 /* Backup previous removable disks array to examine disk insertion/removal */
-                var _oldDisk = self.removableDisk;
-                self.removableDisk = removableDisk;
+                var _oldDisk = this.removableDisk;
+                this.removableDisk = removableDisk;
 
                 /* Set disk type */
-                for (var i = 0; i < self.removableDisk.length; i++) {
-                    self.removableDisk[i].type = "Removable";
+                for (var i = 0; i < this.removableDisk.length; i++) {
+                    this.removableDisk[i].type = "Removable";
                 }
 
                 /* Reset present flag */
@@ -210,46 +230,51 @@ StorageManager.prototype.getLocalDisks = function(callback) {
                 }
 
                 /* Examine if removable disk array changes */
-                for (i = 0; i < self.removableDisk.length; i++) {
+                for (i = 0; i < this.removableDisk.length; i++) {
                     for (j = 0; j < _oldDisk.length; j++) {
                         /* To compare two disks by their mountpoint and total capacity */
-                        if (self.removableDisk[i].mountpoint === _oldDisk[j].mountpoint &&
-                            self.removableDisk[i].total === _oldDisk[j].total) {
-                            self.removableDisk[i].uuid = self.removableDisk[i].uuid || _oldDisk[j].uuid;
-                            self.removableDisk[i].present = true;
+                        if (this.removableDisk[i].mountpoint === _oldDisk[j].mountpoint &&
+                            this.removableDisk[i].total === _oldDisk[j].total) {
+                            this.removableDisk[i].uuid = this.removableDisk[i].uuid || _oldDisk[j].uuid;
+                            this.removableDisk[i].present = true;
                             _oldDisk[j].present = true;
                         }
                     }
                 }
 
-                for (i = 0; i < self.removableDisk.length; i++) {
-                    if (!self.removableDisk[i].present) {
-                        self.removableDisk[i].type = "Removable";
+                for (i = 0; i < this.removableDisk.length; i++) {
+                    if (!this.removableDisk[i].present) {
+                        this.removableDisk[i].type = "Removable";
                         /* Create a fake uuid if there's no uuid found for the disk */
-                        if (!self.removableDisk[i].uuid)
-                            self.removableDisk[i].uuid = uuid.v4();
-                        self.notificationCenter.post("Storage", "DiskInsert", self.removableDisk[i]);
+                        if (!this.removableDisk[i].uuid)
+                            this.removableDisk[i].uuid = uuid.v4();
+                        this.notificationCenter.post("system.storage", "disk.removable.insert", this.removableDisk[i]);
                     }
                 }
 
                 for (i = 0; i < _oldDisk.length; i++) {
                     if (!_oldDisk[i].present) {
-                        for (j in self.userWorkingDisk) {
+                        for (j in this.disksInUse) {
                             /* If removed disk is user working disk, reset working disk to system data disk */
-                            if (self.userWorkingDisk[j] === _oldDisk[i]) {
-                                self.userWorkingDisk[j] = self.systemDataDisk || self.systemDisk;
+                            if (this.disksInUse[j].uuid === _oldDisk[i].uuid) {
+                                this.disksInUse[j] = this.getDefaultDiskInUse();
+                                this.notificationCenter.post("system.storage", "disk.inuse.change", this.disksInUse[j]);
                             }
                         }
-                        self.notificationCenter.post("Storage", "DiskRemove", _oldDisk[i]);
+                        this.notificationCenter.post("system.storage", "disk.removable.remove", _oldDisk[i]);
                     }
                 }
             }
 
-            callback && callback({ system: self.systemDisk, data: self.systemDataDisk, removable: self.removableDisk });
+            callback && callback({ system: this.systemDisk, data: this.systemDataDisk, removable: this.removableDisk });
 
-            self.pausePolling = false;
-        });
-    });
+            this.pausePolling = false;
+        }.bind(this));
+    }.bind(this));
+}
+
+StorageManager.prototype.getDefaultDiskInUse = function() {
+    return this.systemDataDisk || this.systemDisk;
 }
 
 StorageManager.prototype.getDiskByUUID = function(uuid) {
@@ -272,10 +297,11 @@ StorageManager.prototype.getUserDataPath = function(socket, _path) {
     if (!socket || !_path)
         return SYSTEM.ERROR.ERROR_INVALID_ARG;
 
-    if (this.userWorkingDisk[socket].uuid === this.systemDisk.uuid)
+    /* System disk is not allowed to be set as user working disk */
+    if (this.disksInUse[socket].uuid === this.systemDisk.uuid)
         userDataPath = SYSTEM.SETTINGS.SystemDataPath + this.securityManager.appUserDataDirectory(socket);
-    else if (this.userWorkingDisk[socket])
-        userDataPath = this.userWorkingDisk[socket].mountpoint + this.securityManager.appUserDataDirectory(socket);
+    else if (this.disksInUse[socket])
+        userDataPath = this.disksInUse[socket].mountpoint + this.securityManager.appUserDataDirectory(socket);
     else
         return SYSTEM.ERROR.ERROR_STOR_DISK_NOT_FOUND;
 
@@ -285,7 +311,7 @@ StorageManager.prototype.getUserDataPath = function(socket, _path) {
     }
     catch (error) {
         if (error.code === 'EACCES') {
-            /* userWorkingDisk is probably removed */
+            /* disksInUse is probably removed */
             return SYSTEM.ERROR.ERROR_SECURITY_ACCESS_DENIED;
         }
         else

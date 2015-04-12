@@ -5,7 +5,7 @@ var assign             = require('object-assign');
 
 var CHANGE_EVENT = 'STORAGE_STORE_CHANGE';
 var disks = [];
-var workingDisk = null;
+var diskInUse = null;
 
 var StorageStore = assign({}, EventEmitter.prototype, {
     emitChange: function(changes) {
@@ -30,8 +30,15 @@ var StorageStore = assign({}, EventEmitter.prototype, {
         return disks;
     },
 
-    getWorkingDisk: function() {
-        return workingDisk;
+    getDiskInUse: function() {
+        return diskInUse;
+    },
+
+    isDiskInUse: function(disk) {
+        if (disk && diskInUse && disk.uuid === diskInUse.uuid)
+            return true;
+        else
+            return false;
     },
 
     getDiskByUUID: function(uuid) {
@@ -50,37 +57,14 @@ StorageStore.dispatchToken = NotebookDispatcher.register(function(action) {
 
             if (action.dataDisk) {
                 action.dataDisk.type = 'Data';
-                if (!workingDisk) {
-                    action.dataDisk.isWorkingDisk = true;
-                    workingDisk = action.dataDisk;
-                }
-                else if (workingDisk.uuid === action.dataDisk.uuid)
-                    action.dataDisk.isWorkingDisk = true;
-                else
-                    action.dataDisk.isWorkingDisk = false;
+                if (!diskInUse)
+                    diskInUse = action.dataDisk;
                 disks.push(action.dataDisk);
-            }
-
-            if (action.systemDisk) {
-                action.systemDisk.type = 'System';
-                if (!workingDisk) {
-                    action.systemDisk.isWorkingDisk = true;
-                    workingDisk = action.systemDisk;
-                }
-                else if (workingDisk.uuid === action.systemDisk.uuid)
-                    action.systemDisk.isWorkingDisk = true;
-                else
-                    action.systemDisk.isWorkingDisk = false;
-                disks.push(action.systemDisk);
             }
 
             if (action.removableDisks && action.removableDisks.length > 0) {
                 for (var i in action.removableDisks) {
                     action.removableDisks[i].type = 'Removable';
-                    if (workingDisk && workingDisk.uuid === action.removableDisks[i].uuid)
-                        action.removableDisks[i].isWorkingDisk = true;
-                    else
-                        action.removableDisks[i].isWorkingDisk = false;
                     disks.push(action.removableDisks[i]);
                 }
             }
@@ -111,25 +95,29 @@ StorageStore.dispatchToken = NotebookDispatcher.register(function(action) {
             for (var i in disks) {
                 if (disks[i].uuid === action.disk.uuid) {
                     disks.splice(i, 1);
-                    if (workingDisk.uuid === action.disk.uuid)
-                        DiligentAgent.getClient().storageManager.setWorkingDisk(disks[0]);
+
+                    if (diskInUse.uuid === action.disk.uuid) {
+                        DiligentAgent.getClient().storageManager.getDiskInUse(function(_disk) {
+                            diskInUse = _disk;
+                            StorageStore.emitChange(action.actionType);
+                        }, function(error) {
+                            diskInUse = disks[0];
+                            StorageStore.emitChange(action.actionType);
+                        });
+                    }
                     else
                         StorageStore.emitChange(action.actionType);
+
+                    break;
                 }
             }
 
             break;
 
-        case NotebookConstants.NOTEBOOK_APP_STORAGE_SET_WORKING_DISK:
+        case NotebookConstants.NOTEBOOK_APP_STORAGE_SET_DISK_INUSE:
             if (action.disk && action.disk.uuid) {
-                for (var i in disks) {
-                    if (disks[i].uuid === action.disk.uuid) {
-                        workingDisk.isWorkingDisk = false;
-                        disks[i].isWorkingDisk = true;
-                        workingDisk = disks[i];
-                        StorageStore.emitChange(action.actionType);
-                    }
-                }
+                diskInUse = action.disk;
+                StorageStore.emitChange(action.actionType);
             }
 
             break;

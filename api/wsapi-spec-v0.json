@@ -150,15 +150,31 @@
                         }
                     }
                 },
-                "SetWorkingDisk": {
-                    "REQ": "WSAPI-0-C-STOR-SET-WORKING-DISK",
-                    "RES": "WSAPI-0-R-STOR-SET-WORKING-DISK",
-                    "ERR": "WSAPI-0-E-STOR-SET-WORKING-DISK",
+                "SetDiskInUse": {
+                    "REQ": "WSAPI-0-C-STOR-SET-DISK-INUSE",
+                    "RES": "WSAPI-0-R-STOR-SET-DISK-INUSE",
+                    "ERR": "WSAPI-0-E-STOR-SET-DISK-INUSE",
                     "DESC": {
                         "REQ Args": {
                             "Disk": "Disk info object"
                         },
-                        "RES Params": {},
+                        "RES Params": {
+                            "Disk": "Disk info object"
+                        },
+                        "ERR Params": {
+                            "Error": "Error code"
+                        }
+                    }
+                },
+                "GetDiskInUse": {
+                    "REQ": "WSAPI-0-C-STOR-GET-DISK-INUSE",
+                    "RES": "WSAPI-0-R-STOR-GET-DISK-INUSE",
+                    "ERR": "WSAPI-0-E-STOR-GET-DISK-INUSE",
+                    "DESC": {
+                        "REQ Args": {},
+                        "RES Params": {
+                            "Disk": "Disk info object"
+                        },
                         "ERR Params": {
                             "Error": "Error code"
                         }
