@@ -118,7 +118,7 @@ gulp.task('diligent', function() {
 });
 
 gulp.task('cutie', function() {
-    /* Create Cutie UI js bundle */
+    /* Create Cutie UI js bundle
     var cutie_js = browserify({
         entries: ['./lib/framework/cutie/cutie.js'],
         paths: LIB_PATHS,
@@ -131,7 +131,7 @@ gulp.task('cutie', function() {
     if (!DEBUG)
         cutie_js = cutie_js.pipe(buffer()).pipe(uglify());
 
-    cutie_js.pipe(gulp.dest(OUTPATH + '/lib/framework/cutie/'));
+    cutie_js.pipe(gulp.dest(OUTPATH + '/lib/framework/cutie/'));*/
 
     var cutie_css = gulp.src('lib/framework/cutie/**/*.css')
         .pipe(concat('cutie.min.css'))
@@ -139,7 +139,7 @@ gulp.task('cutie', function() {
         .pipe(gulp.dest(OUTPATH + '/lib/framework/cutie/'));
 
     return merge(
-        cutie_js,
+        /*cutie_js,*/
         cutie_css
     );
 });
