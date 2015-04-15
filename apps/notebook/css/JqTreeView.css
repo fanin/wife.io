@@ -1,3 +1,24 @@
 .jq-treeview {
-	font-size: 1em;
+    font-size: 1em;
+    -webkit-user-select: none; /* Chrome/Safari */
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* IE10+ */
+    -o-user-select: none;
+    user-select: none;
+    overflow: hidden;
+}
+
+.jqtree-element, .jqtree-title {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.jqtree-toggler {
+    margin: 0 !important;
+    margin-right: .5em !important;
+}
+
+ul.jqtree-tree span.jqtree-border {
+    left: 0 !important;
 }

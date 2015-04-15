@@ -44,14 +44,16 @@ var AlertViewController = React.createClass({
             image = <div className="image">{this.props.image}</div>;
 
         return (
-            <div className="ui small alert modal">
-                <div className="header">
+            <div className="ui small modal">
+                <div className="ui header">
                     {this.props.title}
                 </div>
                 <div className="content">
                     {image}
                     <div className="description">
-                        {this.props.description}
+                        <div className="ui small header">
+                            {this.props.description}
+                        </div>
                     </div>
                 </div>
                 <div className="actions">

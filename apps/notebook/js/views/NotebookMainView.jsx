@@ -1,4 +1,3 @@
-var StorageActionCreators = require('../actions/StorageActionCreators');
 var BookshelfContainer    = require('./BookshelfContainer.jsx');
 var NoteListContainer     = require('./NoteListContainer.jsx');
 var NoteEditorContainer   = require('./NoteEditorContainer.jsx');
@@ -47,7 +46,7 @@ var NotebookMainView = React.createClass({
     },
 
     _onDiligentClientReady: function() {
-        StorageActionCreators.initNotifications();
+
     },
 
     _onDiligentClientStop: function() {
