@@ -121,11 +121,9 @@ var JqTreeViewController = React.createClass({
     },
 
     shouldComponentUpdate: function(nextProps, nextState) {
-        /* Load tree data initially */
-        if (this.treeInstance.tree("getTree").children.length === 0) {
+        /* Reload tree data only when data changes */
+        if (this.props.data !== nextProps.data) {
             this.treeInstance.tree("loadData", nextProps.data);
-            /* Select first node by default */
-            this.nodeSelect(this.treeInstance.tree("getTree").children[0]);
         }
         return false;
     },
@@ -185,6 +183,8 @@ var JqTreeViewController = React.createClass({
          * So we reload tree data refreshly here to avoid the problem.
          */
         this.treeInstance.tree("loadData", JSON.parse(this.treeInstance.tree("toJson")));
+        /* Select renamed node again due to tree has been reloaded */
+        this.treeInstance.tree("selectNode", this.getNodeById(node.id));
     },
 
     nodeMove: function(srcNode, dstNode, pos) {

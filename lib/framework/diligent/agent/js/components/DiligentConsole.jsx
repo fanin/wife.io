@@ -1,9 +1,38 @@
 'use strict';
 
-var DiligentStore     = require('../stores/DiligentStore');
-var DiligentConstants = require('../constants/DiligentConstants');
+var DiligentStore      = require('../stores/DiligentStore');
+var DiligentConstants  = require('../constants/DiligentConstants');
+
+var ExtensionAgentMixin = {
+    extensionWillLoad: function(extensionName) {
+        this.setExtensionState(extensionName);
+    },
+
+    extensionDidLoad: function(extensionName) {
+        this.setExtensionState(extensionName);
+    },
+
+    extensionWillUnload: function(extensionName) {
+        this.setExtensionState(extensionName);
+    },
+
+    extensionDidUnload: function(extensionName) {
+        this.setExtensionState(extensionName);
+    },
+
+    extensionLoadFail: function(extensionName) {
+        this.setExtensionState(extensionName);
+    },
+
+    extensionUnloadFail: function(extensionName) {
+        this.setExtensionState(extensionName);
+    }
+};
 
 var DiligentConsole = React.createClass({
+
+    mixins: [ ExtensionAgentMixin ],
+
     getInitialState: function() {
         return {
             diligentClientVersion: -1,
@@ -18,34 +47,22 @@ var DiligentConsole = React.createClass({
     },
 
     componentDidMount: function() {
-        DiligentStore.addDiligentClientInitListener(this._onDiligentClientInitProcedure);
-        DiligentStore.addDiligentClientReadyListener(this._onDiligentClientReady);
-        DiligentStore.addDiligentClientStopListener(this._onDiligentClientStop);
-        DiligentStore.addExtensionListener(this._onExtensionStatus);
+        DiligentStore.addClientWillLaunchListener(this._onWillLaunch);
+        DiligentStore.addClientDidLaunchListener(this._onDidLaunch);
+        DiligentStore.addClientWillStopListener(this._onWillStop);
+        DiligentStore.addClientDidStopListener(this._onDidStop);
+        ExtensionAgent.attach(this);
     },
 
     componentWillUnmount: function() {
-        DiligentStore.removeExtensionListener(this._onExtensionStatus);
-        DiligentStore.removeDiligentClientStopListener(this._onDiligentClientStop);
-        DiligentStore.removeDiligentClientReadyListener(this._onDiligentClientReady);
-        DiligentStore.removeDiligentClientInitListener(this._onDiligentClientInitProcedure);
+        ExtensionAgent.detach(this);
+        DiligentStore.removeClientWillStopListener(this._onWillLaunch);
+        DiligentStore.removeClientDidLaunchListener(this._onDidLaunch);
+        DiligentStore.removeClientWillStopListener(this._onWillStop);
+        DiligentStore.removeClientDidStopListener(this._onDidStop);
     },
 
-    _onDiligentClientReady: function() {
-        this.setState({
-            diligentClientVersion: DiligentStore.getClientInfo().version,
-            diligentClientStatus: 'RUNNING'
-        });
-    },
-
-    _onDiligentClientStop: function() {
-        this.setState({
-            diligentClientVersion: DiligentStore.getClientInfo().version,
-            diligentClientStatus: 'STOPPED'
-        });
-    },
-
-    _onDiligentClientInitProcedure: function() {
+    _onWillLaunch: function() {
         switch (DiligentStore.getClientInfo().status) {
             case DiligentConstants.DILIGENT_CLIENT_INITIATE:
                 this.setState({
@@ -104,57 +121,34 @@ var DiligentConsole = React.createClass({
         }
     },
 
-    _onExtensionStatus: function(extensionName) {
-        switch (DiligentStore.getExtensionInfo(extensionName).status) {
-            case DiligentConstants.EXTENSION_LOAD:
-                this.setState({
-                    extensionName: extensionName,
-                    extensionStatus: 'LOADING',
-                    extensionVersion: DiligentStore.getExtensionInfo(extensionName).version,
-                    extensionError: ''
-                });
-                break;
-            case DiligentConstants.EXTENSION_UNLOAD:
-                this.setState({
-                    extensionName: extensionName,
-                    extensionStatus: 'UNLOADING',
-                    extensionVersion: DiligentStore.getExtensionInfo(extensionName).version,
-                    extensionError: ''
-                });
-                break;
-            case DiligentConstants.EXTENSION_LOAD_SUCCESS:
-                this.setState({
-                    extensionName: extensionName,
-                    extensionStatus: 'LOADED',
-                    extensionVersion: DiligentStore.getExtensionInfo(extensionName).version,
-                    extensionError: ''
-                });
-                break;
-            case DiligentConstants.EXTENSION_UNLOAD_SUCCESS:
-                this.setState({
-                    extensionName: extensionName,
-                    extensionStatus: 'UNLOADED',
-                    extensionVersion: -1,
-                    extensionError: ''
-                });
-                break;
-            case DiligentConstants.EXTENSION_LOAD_FAIL:
-                this.setState({
-                    extensionName: extensionName,
-                    extensionStatus: 'LOAD FAILED',
-                    extensionVersion: -1,
-                    extensionError: DiligentStore.getExtensionInfo(extensionName).error
-                });
-                break;
-            case DiligentConstants.EXTENSION_UNLOAD_FAIL:
-                this.setState({
-                    extensionName: extensionName,
-                    extensionStatus: 'UNLOAD FAILED',
-                    extensionVersion: DiligentStore.getExtensionInfo(extensionName).version,
-                    extensionError: DiligentStore.getExtensionInfo(extensionName).error
-                });
-                break;
-        }
+    _onDidLaunch: function() {
+        this.setState({
+            diligentClientVersion: DiligentStore.getClientInfo().version,
+            diligentClientStatus: 'RUNNING'
+        });
+    },
+
+    _onWillStop: function() {
+        this.setState({
+            diligentClientVersion: DiligentStore.getClientInfo().version,
+            diligentClientStatus: 'STOPPING'
+        });
+    },
+
+    _onDidStop: function() {
+        this.setState({
+            diligentClientVersion: DiligentStore.getClientInfo().version,
+            diligentClientStatus: 'STOPPED'
+        });
+    },
+
+    setExtensionState: function(extensionName) {
+        this.setState({
+            extensionName: extensionName,
+            extensionStatus: ExtensionAgent.getExtensionInfo(extensionName).status,
+            extensionVersion: ExtensionAgent.getExtensionInfo(extensionName).version,
+            extensionError: ExtensionAgent.getExtensionInfo(extensionName).error
+        });
     },
 
     render: function() {

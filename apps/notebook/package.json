@@ -20,7 +20,7 @@
         "vinyl-transform": "^1.0.0"
     },
     "scripts": {
-        "build": "gulp",
+        "build": "tools/minify-jqtree.sh; gulp",
         "clean": "gulp clean"
     }
 }

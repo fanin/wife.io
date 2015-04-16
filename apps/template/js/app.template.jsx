@@ -1,8 +1,6 @@
 var $TEMPLATE$MainView = require('./views/$TEMPLATE$MainView.jsx');
 
-DiligentAgent.render({ debug: true });
-
-React.render(
+DiligentAgent.render(
     <$TEMPLATE$MainView />,
-    document.getElementById('app-view')
+    { debug: false }
 );

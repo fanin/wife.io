@@ -5,7 +5,28 @@ var LauncherConstants      = require('../constants/LauncherConstants');
 var LauncherActionCreators = require('../actions/LauncherActionCreators');
 var LauncherStore          = require('../stores/LauncherStore');
 
+var DiligentAgentMixin = {
+    diligentAgentWillLaunch: function() {
+
+    },
+
+    diligentAgentDidLaunch: function() {
+        LauncherActionCreators.listApps();
+    },
+
+    diligentAgentWillStop: function() {
+
+    },
+
+    diligentAgentDidStop: function() {
+
+    }
+};
+
 var LauncherMainView = React.createClass({
+
+    mixins: [ DiligentAgentMixin ],
+
     getInitialState: function() {
         return {
             appList: [],
@@ -19,8 +40,7 @@ var LauncherMainView = React.createClass({
     componentWillMount: function() {
         LauncherStore.addChangeListener(this._onLauncherChanges);
         LauncherStore.addErrorListener(this._onLauncherError);
-        DiligentAgent.on('agent.client.ready', this._onDiligentClientReady);
-        DiligentAgent.on('agent.client.stop', this._onDiligentClientStop);
+        DiligentAgent.attach(this);
     },
 
     componentDidMount: function() {
@@ -28,10 +48,9 @@ var LauncherMainView = React.createClass({
     },
 
     componentWillUnmount: function() {
+        DiligentAgent.detach(this);
         LauncherStore.removeErrorListener(this._onLauncherError);
         LauncherStore.removeChangeListener(this._onLauncherChanges);
-        DiligentAgent.off('agent.client.ready', this._onDiligentClientReady);
-        DiligentAgent.off('agent.client.stop', this._onDiligentClientStop);
     },
 
     shouldComponentUpdate: function (nextProps, nextState) {
@@ -118,14 +137,6 @@ var LauncherMainView = React.createClass({
 
     _handleUninstallNegative: function(e) {
         e.stopPropagation();
-    },
-
-    _onDiligentClientReady: function() {
-        LauncherActionCreators.listApps();
-    },
-
-    _onDiligentClientStop: function() {
-
     },
 
     _onLauncherChanges: function(changes) {

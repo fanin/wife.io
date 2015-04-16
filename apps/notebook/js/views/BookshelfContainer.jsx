@@ -1,6 +1,4 @@
-var AlertViewController      = require('framework/cutie/AlertView/js/AlertViewController.jsx');
-var StorageStore             = require("framework/diligent/modules/storage/stores/StorageStore");
-var StorageActionCreators    = require("framework/diligent/modules/storage/actions/StorageActionCreators");
+var AlertViewController      = require("framework/cutie/AlertView/js/AlertViewController.jsx");
 var JqTreeViewController     = require("./JqTreeViewController.jsx");
 var InputModalViewController = require("./InputModalViewController.jsx");
 var NotebookConstants        = require("../constants/NotebookConstants");
@@ -18,7 +16,62 @@ var notebookInputRules = [
     }
 ];
 
+var DiligentAgentMixin = {
+    diligentAgentWillLaunch: function() {
+
+    },
+
+    diligentAgentDidLaunch: function() {
+        StorageAgent.list();
+        DatabaseActionCreators.loadTree();
+    },
+
+    diligentAgentWillStop: function() {
+
+    },
+
+    diligentAgentDidStop: function() {
+
+    }
+};
+
+var StorageAgentMixin = {
+    storageDidReceiveList: function() {
+        this.setState({ disks: StorageAgent.getDisks() });
+    },
+
+    storageDidMount: function() {
+        this.setState({ disks: StorageAgent.getDisks() });
+    },
+
+    storageDidUnmount: function() {
+        this.setState({ disks: StorageAgent.getDisks() });
+    },
+
+    storageWillSetInUse: function() {
+
+    },
+
+    storageDidSetInUse: function() {
+
+    },
+
+    storageSetInUseFail: function() {
+
+    },
+
+    storageInUseDidChange: function() {
+        this.setState({ disks: StorageAgent.getDisks() });
+        DatabaseActionCreators.loadTree();
+    }
+};
+
 var BookshelfContainer = React.createClass({
+
+    mixins: [
+        DiligentAgentMixin,
+        StorageAgentMixin
+    ],
 
     getInitialState: function() {
         return {
@@ -33,10 +86,10 @@ var BookshelfContainer = React.createClass({
     },
 
     componentWillMount: function() {
-        DiligentAgent.on("agent.client.ready", this._onDiligentClientReady);
-        DiligentAgent.on("agent.client.stop", this._onDiligentClientStop);
+        DiligentAgent.attach(this);
+        StorageAgent.attach(this);
+
         DatabaseStore.addChangeListener(this._onDatabaseChange);
-        StorageStore.addChangeListener(this._onStorageChange);
 
         $.fn.form.settings.rules.checkLength = function(text) {
             return (text.length >= 2 && text.length <= 32);
@@ -52,22 +105,21 @@ var BookshelfContainer = React.createClass({
         $(".nb-toolbar-disksel-dropdown").dropdown({
             transition: "drop",
             onChange: function(value, text, $selectedItem) {
-                var _disk = StorageStore.getDiskByUUID(value);
-                StorageActionCreators.setDiskInUse(_disk);
+                var _disk = StorageAgent.getDiskByUUID(value);
+                StorageAgent.setDiskInUse(_disk);
             }
         });
     },
 
     componentWillUnmount: function() {
-        StorageStore.removeChangeListener(this._onStorageChange);
         DatabaseStore.removeChangeListener(this._onDatabaseChange);
-        DiligentAgent.off("agent.client.ready", this._onDiligentClientReady);
-        DiligentAgent.off("agent.client.stop", this._onDiligentClientStop);
+        StorageAgent.detach(this);
+        DiligentAgent.detach(this);
     },
 
     render: function() {
         var diskMenuItems = this.state.disks.map(function(disk) {
-            var iconClass = StorageStore.isDiskInUse(disk) ? "check icon" : "icon";
+            var iconClass = StorageAgent.isDiskInUse(disk) ? "check icon" : "icon";
             return (
                 <div className="item" data-value={disk.uuid} data-text={disk.name}>
                     <i className={iconClass}></i>
@@ -108,7 +160,6 @@ var BookshelfContainer = React.createClass({
                                          data = {this.state.treeData}
                                    exclusives = {[ 1 ]}
                                onCreateFolder = {this._createStackInputDialog}
-                                       onInit = {this._onTreeSelect}
                                        onOpen = {this._saveTree}
                                       onClose = {this._saveTree}
                                        onMove = {this._saveTree}
@@ -130,33 +181,14 @@ var BookshelfContainer = React.createClass({
         );
     },
 
-    _onDiligentClientReady: function() {
-        StorageActionCreators.listenNotifications();
-        StorageActionCreators.list();
-        DatabaseActionCreators.loadTree();
-        DiligentAgent.getClient().notificationCenter.addObserver(
-            "system.storage",
-            "disk.inuse.change",
-            this._onDiskInUseChange
-        );
-    },
-
-    _onDiligentClientStop: function() {
-        DiligentAgent.getClient().notificationCenter.removeObserver(
-            "system.storage",
-            "disk.inuse.change",
-            this._onDiskInUseChange
-        );
-    },
-
-    _onDiskInUseChange: function(disk) {
-        DatabaseActionCreators.loadTree();
-    },
-
     _onDatabaseChange: function(change) {
         switch (change) {
             case NotebookConstants.NOTEBOOK_APP_DATABASE_LOADTREE_SUCCESS:
                 this.setState({ treeData: DatabaseStore.getTreeData() });
+                // FIXME: use timeout function to avoid dispatcher error
+                setTimeout(function() {
+                    this.refs.treeViewController.nodeSelect(this.refs.treeViewController.getNodeById(1));
+                }.bind(this), 1);
                 break;
             case NotebookConstants.NOTEBOOK_APP_DATABASE_SAVETREE_SUCCESS:
                 break;
@@ -175,25 +207,14 @@ var BookshelfContainer = React.createClass({
                 var nb = DatabaseStore.getTrashedNotebook();
                 this.refs.treeViewController.nodeRemove(nb.id);
                 this._saveTree();
+                //TODO: select default notebook
                 break;
             case NotebookConstants.NOTEBOOK_APP_DATABASE_LOADTREE_ERROR:
             case NotebookConstants.NOTEBOOK_APP_DATABASE_SAVETREE_ERROR:
             case NotebookConstants.NOTEBOOK_APP_DATABASE_CREATE_NOTEBOOK_ERROR:
             case NotebookConstants.NOTEBOOK_APP_DATABASE_TRASH_NOTEBOOK_ERROR:
                 // TODO: show error
-                console.log(DatabaseStore.getError());
-                break;
-        }
-    },
-
-    _onStorageChange: function(change) {
-        this.setState({ disks: StorageStore.getDisks() });
-
-        switch (change) {
-            case NotebookConstants.STORAGE_LIST:
-            case NotebookConstants.STORAGE_ADD:
-            case NotebookConstants.STORAGE_REMOVE:
-            case NotebookConstants.STORAGE_SET_DISK_INUSE:
+                console.log(change + ": " + DatabaseStore.getError());
                 break;
         }
     },

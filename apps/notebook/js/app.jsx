@@ -1,8 +1,6 @@
 var NotebookMainView = require('./views/NotebookMainView.jsx');
 
-DiligentAgent.render({ debug: true });
-
-React.render(
+DiligentAgent.render(
     <NotebookMainView />,
-    document.getElementById('app-view')
+    { debug: true }
 );

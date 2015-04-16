@@ -2,7 +2,28 @@ var ShopSectionMyApp   = require('./ShopSectionMyApp.jsx');
 var ShopActionCreators = require('../actions/ShopActionCreators');
 var ShopStore          = require('../stores/ShopStore');
 
+var DiligentAgentMixin = {
+    diligentAgentWillLaunch: function() {
+
+    },
+
+    diligentAgentDidLaunch: function() {
+
+    },
+
+    diligentAgentWillStop: function() {
+
+    },
+
+    diligentAgentDidStop: function() {
+
+    }
+};
+
 var ShopMainView = React.createClass({
+
+    mixins: [ DiligentAgentMixin ],
+
     getDefaultProps: function() {
         return {};
     },
@@ -16,9 +37,8 @@ var ShopMainView = React.createClass({
     },
 
     componentWillMount: function() {
-        DiligentAgent.on('agent.client.ready', this._onDiligentClientReady);
-        DiligentAgent.on('agent.client.stop', this._onDiligentClientStop);
         ShopStore.addChangeListener(this._onStoreChange);
+        DiligentAgent.attach(this);
     },
 
     componentDidMount: function() {
@@ -26,9 +46,8 @@ var ShopMainView = React.createClass({
     },
 
     componentWillUnmount: function() {
+        DiligentAgent.detach(this);
         ShopStore.removeChangeListener(this._onStoreChange);
-        DiligentAgent.off('agent.client.ready', this._onDiligentClientReady);
-        DiligentAgent.off('agent.client.stop', this._onDiligentClientStop);
     },
 
     shouldComponentUpdate: function (nextProps, nextState) {
@@ -49,14 +68,6 @@ var ShopMainView = React.createClass({
                 <ShopSectionMyApp />
             </div>
         );
-    },
-
-    _onDiligentClientReady: function() {
-
-    },
-
-    _onDiligentClientStop: function() {
-
     },
 
     _onStoreChange: function(change) {

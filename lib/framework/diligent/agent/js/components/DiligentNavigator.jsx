@@ -2,7 +2,7 @@
 
 var DiligentNavigator = React.createClass({
     componentWillMount: function() {
-        DiligentAgent.register();
+
     },
 
     componentDidMount: function() {
@@ -10,7 +10,7 @@ var DiligentNavigator = React.createClass({
     },
 
     componentWillUnmount: function() {
-        DiligentAgent.unregister();
+        DiligentAgent.deinit();
     },
 
     toggleDock: function(event) {

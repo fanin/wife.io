@@ -99,16 +99,17 @@ var DatabaseActionCreators = {
                         else {
                             try {
                                 treeData = JSON.parse(data);
-
-                                NotebookDispatcher.dispatch({
-                                    actionType: NotebookConstants.NOTEBOOK_APP_DATABASE_LOADTREE_SUCCESS,
-                                    treeData: treeData
-                                });
                             }
                             catch (error) {
                                 NotebookDispatcher.dispatch({
                                     actionType: NotebookConstants.NOTEBOOK_APP_DATABASE_LOADTREE_ERROR,
                                     error: "parse tree data error: " + error + "\ndata:\n" + data
+                                });
+                            }
+                            finally {
+                                NotebookDispatcher.dispatch({
+                                    actionType: NotebookConstants.NOTEBOOK_APP_DATABASE_LOADTREE_SUCCESS,
+                                    treeData: treeData
                                 });
                             }
                         }

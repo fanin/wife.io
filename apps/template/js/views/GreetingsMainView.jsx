@@ -1,20 +1,71 @@
-var GreetingsActionCreators = require('../actions/GreetingsActionCreators');
-var GreetingsStore          = require('../stores/GreetingsStore');
+var GreetingsActionCreators = require("../actions/GreetingsActionCreators");
+var GreetingsStore          = require("../stores/GreetingsStore");
+
+var DiligentAgentMixin = {
+    diligentAgentWillLaunch: function() {
+
+    },
+
+    diligentAgentDidLaunch: function() {
+        this.setState({ disabled: false });
+    },
+
+    diligentAgentWillStop: function() {
+
+    },
+
+    diligentAgentDidStop: function() {
+        this.setState({ disabled: true });
+    }
+};
+
+var ExtensionAgentMixin = {
+    extensionWillLoad: function(extensionName) {
+
+    },
+
+    extensionDidLoad: function(extensionName) {
+        this.setState({ greetingsExtentionLoaded: true });
+    },
+
+    extensionWillUnload: function(extensionName) {
+
+    },
+
+    extensionDidUnload: function(extensionName) {
+        this.setState({ greetingsExtentionLoaded: false });
+        this.setState({ greetingsMsg: "", rudeMsg: "" });
+    },
+
+    extensionLoadFail: function(extensionName) {
+
+    },
+
+    extensionUnloadFail: function(extensionName) {
+
+    }
+};
 
 var GreetingsMainView = React.createClass({
+
+    mixins: [
+        DiligentAgentMixin,
+        ExtensionAgentMixin
+    ],
+
     getInitialState: function() {
         return {
+            disabled: true,
             greetingsExtentionLoaded: false,
-            greetingsMsg: '',
-            rudeMsg: ''
+            greetingsMsg: "",
+            rudeMsg: ""
         };
     },
 
     componentWillMount: function() {
-        DiligentAgent.on('agent.client.ready', this._onDiligentClientReady);
-        DiligentAgent.on('agent.client.stop', this._onDiligentClientStop);
-        DiligentAgent.on('agent.extension.status', this._onExtensionStatus);
         GreetingsStore.addChangeListener(this._onReceiveMessage);
+        DiligentAgent.attach(this);
+        ExtensionAgent.attach(this);
     },
 
     componentDidMount: function() {
@@ -22,58 +73,28 @@ var GreetingsMainView = React.createClass({
     },
 
     componentWillUnmount: function() {
+        ExtensionAgent.detach(this);
+        DiligentAgent.detach(this);
         GreetingsStore.removeChangeListener(this._onReceiveMessage);
-        DiligentAgent.off('agent.extension.status', this._onExtensionStatus);
-        DiligentAgent.off('agent.client.ready', this._onDiligentClientReady);
-        DiligentAgent.off('agent.client.stop', this._onDiligentClientStop);
-    },
-
-    handleExtensionLoad: function(event) {
-        if (DiligentAgent.getExtensionInfo('Greetings').status !== DiligentAgent.constants.EXTENSION_LOAD_SUCCESS) {
-            GreetingsActionCreators.loadExtension();
-        }
-        else {
-            GreetingsActionCreators.unloadExtension();
-        }
-    },
-
-    _onDiligentClientReady: function() {
-
-    },
-
-    _onDiligentClientStop: function() {
-
-    },
-
-    _onExtensionStatus: function(extensionName) {
-        if (DiligentAgent.getExtensionInfo(extensionName).status === DiligentAgent.constants.EXTENSION_LOAD_SUCCESS) {
-            this.setState({ greetingsExtentionLoaded: true });
-        }
-        else {
-            this.setState({ greetingsExtentionLoaded: false });
-            this.setState({ greetingsMsg: '', rudeMsg: '' });
-        }
-    },
-
-    handleExtensionTest: function(event) {
-        this.setState({ greetingsMsg: '', rudeMsg: '' });
-        GreetingsActionCreators.sayHello('Mac', 'Kenny');
     },
 
     render: function() {
+        var buttonClass = this.state.disabled ? "ui disabled button" : "ui button";
+
         return (
             <div>
+                <p>&nbsp;</p>
                 <h1>Greetings!</h1>
                 <h2>This is a React + Flux application template.</h2>
                 <p>&nbsp;</p>
 
-                <div className="ui button" onClick={this.handleExtensionLoad}>
+                <div className={buttonClass} onClick={this.toggleExtension}>
                     {(this.state.greetingsExtentionLoaded ? "Unload" : "Load") + " Greetings Extension"}
                 </div>
 
                 <div className="greetings" style={{display: this.state.greetingsExtentionLoaded ? "block" : "none"}}>
                     <p>
-                        <div className="ui button" onClick={this.handleExtensionTest}>
+                        <div className={buttonClass} onClick={this.testExtension}>
                             Test Greetings Extension
                         </div>
                     </p>
@@ -100,6 +121,26 @@ var GreetingsMainView = React.createClass({
                 </div>
             </div>
         );
+    },
+
+    toggleExtension: function(event) {
+        if (this.state.disabled)
+            return;
+
+        if (ExtensionAgent.getExtensionInfo("Greetings").status !== "Loaded") {
+            GreetingsActionCreators.loadExtension();
+        }
+        else {
+            GreetingsActionCreators.unloadExtension();
+        }
+    },
+
+    testExtension: function(event) {
+        if (this.state.disabled)
+            return;
+
+        this.setState({ greetingsMsg: "", rudeMsg: "" });
+        GreetingsActionCreators.sayHello("Mu", "Kenny");
     },
 
     _onReceiveMessage: function() {

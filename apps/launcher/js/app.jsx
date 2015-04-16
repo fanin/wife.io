@@ -1,8 +1,6 @@
 var LauncherMainView = require('./views/LauncherMainView.jsx');
 
-DiligentAgent.render({ debug: true });
-
-React.render(
+DiligentAgent.render(
     <LauncherMainView />,
-    document.getElementById('app-view')
+    { debug: true }
 );

@@ -1,15 +1,15 @@
-var GreetingsDispatcher    = require('../dispatcher/GreetingsDispatcher');
-var GreetingsExtension     = require('../extension/greetings');
-var GreetingsConstants     = require('../constants/GreetingsConstants');
+var GreetingsDispatcher = require('../dispatcher/GreetingsDispatcher');
+var GreetingsExtension  = require('../extension/greetings');
+var GreetingsConstants  = require('../constants/GreetingsConstants');
 
 var GreetingsActionCreators = {
 
     loadExtension: function() {
-        DiligentAgent.loadExtension(GreetingsExtension);
+        ExtensionAgent.load(GreetingsExtension);
     },
 
     unloadExtension: function() {
-        DiligentAgent.unloadExtension(GreetingsExtension);
+        ExtensionAgent.unload(GreetingsExtension);
     },
 
     sayHello: function(from, to) {

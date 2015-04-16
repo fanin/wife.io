@@ -1,7 +1,28 @@
 var $TEMPLATE$ActionCreators = require('../actions/$TEMPLATE$ActionCreators');
 var $TEMPLATE$Store          = require('../stores/$TEMPLATE$Store');
 
+var DiligentAgentMixin = {
+    diligentAgentWillLaunch: function() {
+
+    },
+
+    diligentAgentDidLaunch: function() {
+
+    },
+
+    diligentAgentWillStop: function() {
+
+    },
+
+    diligentAgentDidStop: function() {
+
+    }
+};
+
 var $TEMPLATE$MainView = React.createClass({
+
+    mixins: [ DiligentAgentMixin ],
+
     getDefaultProps: function() {
         return {};
     },
@@ -15,11 +36,8 @@ var $TEMPLATE$MainView = React.createClass({
     },
 
     componentWillMount: function() {
-        DiligentAgent.on('agent.client.ready', this._onDiligentClientReady);
-        DiligentAgent.on('agent.client.stop', this._onDiligentClientStop);
-        // Uncomment this to listen extension events
-        //DiligentAgent.on('agent.extension.status', this._onExtensionStatus);
         $TEMPLATE$Store.addChangeListener(this._onStoreChange);
+        DiligentAgent.attach(this);
     },
 
     componentDidMount: function() {
@@ -27,11 +45,8 @@ var $TEMPLATE$MainView = React.createClass({
     },
 
     componentWillUnmount: function() {
-        // Uncomment this to listen extension events
-        //DiligentAgent.off('agent.extension.status', this._onExtensionStatus);
+        DiligentAgent.detach(this);
         $TEMPLATE$Store.removeChangeListener(this._onStoreChange);
-        DiligentAgent.off('agent.client.ready', this._onDiligentClientReady);
-        DiligentAgent.off('agent.client.stop', this._onDiligentClientStop);
     },
 
     shouldComponentUpdate: function (nextProps, nextState) {
