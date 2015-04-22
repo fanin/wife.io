@@ -1,6 +1,6 @@
-var LauncherMainView = require('./views/LauncherMainView.jsx');
+var AppMainView = require('./views/AppMainView.jsx');
 
 DiligentAgent.render(
-    <LauncherMainView />,
+    <AppMainView />,
     { debug: true }
 );

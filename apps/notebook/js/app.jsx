@@ -1,6 +1,6 @@
-var NotebookMainView = require('./views/NotebookMainView.jsx');
+var AppMainView = require('./views/AppMainView.jsx');
 
 DiligentAgent.render(
-    <NotebookMainView />,
+    <AppMainView />,
     { debug: true }
 );

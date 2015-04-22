@@ -19,7 +19,7 @@ var JQUERY_VERSION      = '1.11.2',
     OUTPATH             = 'mywife',
     DEBUG               = true,
     SEMANTIC_UI_THEME   = 'default',
-    BUILD_APPS          = [ 'launcher', 'shop', 'notebook', 'template' ],
+    BUILD_APPS          = [ 'launcher', 'shop', 'notebook', 'greetings' ],
     LIB_PATHS           = ['./lib'];
 
 var targets = [

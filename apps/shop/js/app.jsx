@@ -1,6 +1,6 @@
-var ShopMainView = require('./views/ShopMainView.jsx');
+var AppMainView = require('./views/AppMainView.jsx');
 
 DiligentAgent.render(
-    <ShopMainView />,
+    <AppMainView />,
     { debug: true }
 );

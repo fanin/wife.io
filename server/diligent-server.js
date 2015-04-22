@@ -10,7 +10,6 @@ var sio                = require('socket.io'),
     util               = require('util'),
     fs                 = require('fs-extra'),
     path               = require('path'),
-    ip                 = require('ip'),
     mime               = require('mime'),
     async              = require('async'),
     EventEmitter       = require('events').EventEmitter,
@@ -59,12 +58,12 @@ function DiligentServer(http) {
         process.exit(1);
     }
 
-    this.securityManager = new SecurityManager(this);
-    this.extensionManager = new ExtensionManager(this, this.apiSpec[0].Extension);
+    this.securityManager    = new SecurityManager(this);
+    this.extensionManager   = new ExtensionManager(this, this.apiSpec[0].Extension);
     this.notificationCenter = new NotificationCenter(this, this.apiSpec[0].Notification);
-    this.storageManager = new StorageManager(this, this.apiSpec[0].Storage);
-    this.appManager = new AppManager(this, this.apiSpec[0].APP);
-    this.fileManager = new FileManager(this, this.apiSpec[0].FileSystem);
+    this.storageManager     = new StorageManager(this, this.apiSpec[0].Storage);
+    this.appManager         = new AppManager(this, this.apiSpec[0].APP);
+    this.fileManager        = new FileManager(this, this.apiSpec[0].FileSystem);
 }
 
 DiligentServer.prototype.listen = function() {
@@ -147,6 +146,9 @@ DiligentServer.prototype.handleRequest = function(req, res) {
     var query = url.query;
     var rootdir = path.dirname(__dirname);
     var filepath = path.join(rootdir, filename);
+
+    if (req.headers.host.split(":")[0] === 'localhost' || req.headers.host.split(":")[0] === '127.0.0.1')
+        res.setHeader('Access-Control-Allow-Origin', SYSTEM.SETTINGS.Protocol + '://' + req.headers.host);
 
     function backToLauncher() {
         // Redirect to launcher
@@ -261,8 +263,8 @@ DiligentServer.prototype.handleRequest = function(req, res) {
 
             if (ctype.indexOf('text') > -1 || ctype.indexOf('javascript') > -1) {
                 var contentString = content.toString().replace(/%PROTO%/g, SYSTEM.SETTINGS.Protocol);
-                contentString = contentString.replace(/%SYSIP%/g, ip.address());
-                contentString = contentString.replace(/%SYSPORT%/g, process.env.npm_package_config_port || '8001');
+                contentString = contentString.replace(/%SYSIP%/g, req.headers.host.split(":")[0]);
+                contentString = contentString.replace(/%SYSPORT%/g, req.headers.host.split(":")[1] || '8001');
                 contentString = contentString.replace(/%SYSNAME%/g, SYSTEM.SETTINGS.SystemName);
                 contentString = contentString.replace(/%BRAND%/g, SYSTEM.SETTINGS.Brand);
                 contentString = contentString.replace(/%COPYRIGHT%/g, SYSTEM.SETTINGS.Copyright);

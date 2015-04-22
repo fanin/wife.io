@@ -17,52 +17,60 @@ var notebookInputRules = [
 ];
 
 var DiligentAgentMixin = {
-    diligentAgentWillLaunch: function() {
+    diligentClientWillLaunch: function() {
 
     },
 
-    diligentAgentDidLaunch: function() {
+    diligentClientDidLaunch: function() {
         StorageAgent.list();
         DatabaseActionCreators.loadTree();
     },
 
-    diligentAgentWillStop: function() {
+    diligentClientWillTerminate: function() {
 
     },
 
-    diligentAgentDidStop: function() {
+    diligentClientDidTerminate: function() {
+
+    },
+
+    diligentConnectionDidFail: function() {
 
     }
 };
 
 var StorageAgentMixin = {
-    storageDidReceiveList: function() {
+    storageDidReceiveList: function(disks) {
+        this.setState({ disks: disks });
+    },
+
+    storageDidMount: function(disk) {
         this.setState({ disks: StorageAgent.getDisks() });
     },
 
-    storageDidMount: function() {
+    storageDidUnmount: function(disk) {
         this.setState({ disks: StorageAgent.getDisks() });
     },
 
-    storageDidUnmount: function() {
-        this.setState({ disks: StorageAgent.getDisks() });
-    },
-
-    storageWillSetInUse: function() {
+    storageWillSetInUse: function(disk) {
 
     },
 
-    storageDidSetInUse: function() {
+    storageDidSetInUse: function(disk) {
 
     },
 
-    storageSetInUseFail: function() {
-
+    storageSetInUseFail: function(args) {
+        // TODO: prompt args.disk & args.error
     },
 
-    storageInUseDidChange: function() {
+    storageInUseDidChange: function(disk) {
         this.setState({ disks: StorageAgent.getDisks() });
         DatabaseActionCreators.loadTree();
+    },
+
+    storageHasError: function(error) {
+
     }
 };
 

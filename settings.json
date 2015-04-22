@@ -1,9 +1,9 @@
 {
     "SystemName": "wife.io",
-    "Brand": "Mac!",
+    "Brand": "Muchen",
     "DiligentServer": "diligent-server",
+    "Copyright": "Copyright 2014-2015 Chen, Shou-Yuan",
     "Protocol": "http",
     "SystemDataPath": "/Volumes/UserStorage",
-    "TempPath": "/tmp",
-    "Copyright": "Copyright 2014 Chen, Shou-Yuan"
+    "TempPath": "/tmp"
 }
