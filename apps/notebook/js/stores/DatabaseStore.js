@@ -52,33 +52,33 @@ var DatabaseStore = assign({}, EventEmitter.prototype, {
 
 DatabaseStore.dispatchToken = NotebookDispatcher.register(function(action) {
     switch (action.actionType) {
-        case NotebookConstants.NOTEBOOK_APP_DATABASE_LOADTREE_SUCCESS:
-        case NotebookConstants.NOTEBOOK_APP_DATABASE_SAVETREE_SUCCESS:
+        case NotebookConstants.NOTEBOOK_DATABASE_LOADTREE_SUCCESS:
+        case NotebookConstants.NOTEBOOK_DATABASE_SAVETREE_SUCCESS:
             treeData = action.treeData;
             DatabaseStore.emitChange(action.actionType);
             break;
-        case NotebookConstants.NOTEBOOK_APP_DATABASE_CREATE_STACK:
+        case NotebookConstants.NOTEBOOK_DATABASE_CREATE_STACK:
             createdStack.id = action.id;
             createdStack.name = action.name;
             DatabaseStore.emitChange(action.actionType);
             break;
-        case NotebookConstants.NOTEBOOK_APP_DATABASE_CREATE_NOTEBOOK_SUCCESS:
+        case NotebookConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK_SUCCESS:
             createdNotebook.id = action.id;
             createdNotebook.name = action.name;
             DatabaseStore.emitChange(action.actionType);
             break;
-        case NotebookConstants.NOTEBOOK_APP_DATABASE_TRASH_NOTEBOOK_SUCCESS:
+        case NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTEBOOK_SUCCESS:
             trashedNotebook.id = action.id;
             DatabaseStore.emitChange(action.actionType);
             break;
-        case NotebookConstants.NOTEBOOK_APP_DATABASE_SELECT:
+        case NotebookConstants.NOTEBOOK_DATABASE_SELECT:
             selectedNotebook.id = action.id;
             DatabaseStore.emitChange(action.actionType);
             break;
-        case NotebookConstants.NOTEBOOK_APP_DATABASE_LOADTREE_ERROR:
-        case NotebookConstants.NOTEBOOK_APP_DATABASE_SAVETREE_ERROR:
-        case NotebookConstants.NOTEBOOK_APP_DATABASE_CREATE_NOTEBOOK_ERROR:
-        case NotebookConstants.NOTEBOOK_APP_DATABASE_TRASH_NOTEBOOK_ERROR:
+        case NotebookConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR:
+        case NotebookConstants.NOTEBOOK_DATABASE_SAVETREE_ERROR:
+        case NotebookConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK_ERROR:
+        case NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTEBOOK_ERROR:
             error = action.error;
             DatabaseStore.emitChange(action.actionType);
             break;

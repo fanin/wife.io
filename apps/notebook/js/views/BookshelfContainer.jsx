@@ -191,36 +191,36 @@ var BookshelfContainer = React.createClass({
 
     _onDatabaseChange: function(change) {
         switch (change) {
-            case NotebookConstants.NOTEBOOK_APP_DATABASE_LOADTREE_SUCCESS:
+            case NotebookConstants.NOTEBOOK_DATABASE_LOADTREE_SUCCESS:
                 this.setState({ treeData: DatabaseStore.getTreeData() });
                 // FIXME: use timeout function to avoid dispatcher error
                 setTimeout(function() {
                     this.refs.treeViewController.nodeSelect(this.refs.treeViewController.getNodeById(1));
                 }.bind(this), 1);
                 break;
-            case NotebookConstants.NOTEBOOK_APP_DATABASE_SAVETREE_SUCCESS:
+            case NotebookConstants.NOTEBOOK_DATABASE_SAVETREE_SUCCESS:
                 break;
-            case NotebookConstants.NOTEBOOK_APP_DATABASE_CREATE_STACK:
+            case NotebookConstants.NOTEBOOK_DATABASE_CREATE_STACK:
                 var stack = DatabaseStore.getCreatedStack();
                 this.treeViewCreateFolderHelper(stack.id, stack.name);
                 this.treeViewCreateFolderHelper = undefined;
                 this._saveTree();
                 break;
-            case NotebookConstants.NOTEBOOK_APP_DATABASE_CREATE_NOTEBOOK_SUCCESS:
+            case NotebookConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK_SUCCESS:
                 var nb = DatabaseStore.getCreatedNotebook();
                 this.refs.treeViewController.nodeCreate(nb.id, nb.name);
                 this._saveTree();
                 break;
-            case NotebookConstants.NOTEBOOK_APP_DATABASE_TRASH_NOTEBOOK_SUCCESS:
+            case NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTEBOOK_SUCCESS:
                 var nb = DatabaseStore.getTrashedNotebook();
                 this.refs.treeViewController.nodeRemove(nb.id);
                 this._saveTree();
                 //TODO: select default notebook
                 break;
-            case NotebookConstants.NOTEBOOK_APP_DATABASE_LOADTREE_ERROR:
-            case NotebookConstants.NOTEBOOK_APP_DATABASE_SAVETREE_ERROR:
-            case NotebookConstants.NOTEBOOK_APP_DATABASE_CREATE_NOTEBOOK_ERROR:
-            case NotebookConstants.NOTEBOOK_APP_DATABASE_TRASH_NOTEBOOK_ERROR:
+            case NotebookConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR:
+            case NotebookConstants.NOTEBOOK_DATABASE_SAVETREE_ERROR:
+            case NotebookConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK_ERROR:
+            case NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTEBOOK_ERROR:
                 // TODO: show error
                 console.log(change + ": " + DatabaseStore.getError());
                 break;

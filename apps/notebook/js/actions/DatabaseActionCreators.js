@@ -23,14 +23,14 @@ var DatabaseActionCreators = {
         var treeData = [{ label: DATABASE_FIRST_ENTRY_LABEL, id: 1 }];
 
         NotebookDispatcher.dispatch({
-            actionType: NotebookConstants.NOTEBOOK_APP_DATABASE_LOADTREE
+            actionType: NotebookConstants.NOTEBOOK_DATABASE_LOADTREE
         });
 
         /* Create /bookshelf if necessary */
         DiligentAgent.getClient().fileManager.exist(this.__getPath(), function(path, exist, isDir, error) {
             if (error) {
                 NotebookDispatcher.dispatch({
-                    actionType: NotebookConstants.NOTEBOOK_APP_DATABASE_LOADTREE_ERROR,
+                    actionType: NotebookConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR,
                     error: "fs error: " + error
                 });
 
@@ -43,7 +43,7 @@ var DatabaseActionCreators = {
                     function(path, error) {
                         if (error) {
                             NotebookDispatcher.dispatch({
-                                actionType: NotebookConstants.NOTEBOOK_APP_DATABASE_LOADTREE_ERROR,
+                                actionType: NotebookConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR,
                                 error: "unable to create " + path + ", error: " + error
                             });
                         }
@@ -54,7 +54,7 @@ var DatabaseActionCreators = {
                 DiligentAgent.getClient().fileManager.remove(this.__getPath(), function(path, error) {
                     if (error) {
                         NotebookDispatcher.dispatch({
-                            actionType: NotebookConstants.NOTEBOOK_APP_DATABASE_LOADTREE_ERROR,
+                            actionType: NotebookConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR,
                             error: "unable to remove " + path + ", error: " + error
                         });
                     }
@@ -64,7 +64,7 @@ var DatabaseActionCreators = {
                         function(path, error) {
                             if (error) {
                                 NotebookDispatcher.dispatch({
-                                    actionType: NotebookConstants.NOTEBOOK_APP_DATABASE_LOADTREE_ERROR,
+                                    actionType: NotebookConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR,
                                     error: "unable to create " + path + ", error: " + error
                                 });
                             }
@@ -78,7 +78,7 @@ var DatabaseActionCreators = {
         DiligentAgent.getClient().fileManager.exist(DATABASE_TREE_FILE, function(path, exist, isDir, error) {
             if (error) {
                 NotebookDispatcher.dispatch({
-                    actionType: NotebookConstants.NOTEBOOK_APP_DATABASE_LOADTREE_ERROR,
+                    actionType: NotebookConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR,
                     error: "fs error: " + error
                 });
 
@@ -92,7 +92,7 @@ var DatabaseActionCreators = {
                     function(path, data, error) {
                         if (error) {
                             NotebookDispatcher.dispatch({
-                                actionType: NotebookConstants.NOTEBOOK_APP_DATABASE_LOADTREE_ERROR,
+                                actionType: NotebookConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR,
                                 error: "unable to read tree data: " + error
                             });
                         }
@@ -102,13 +102,13 @@ var DatabaseActionCreators = {
                             }
                             catch (error) {
                                 NotebookDispatcher.dispatch({
-                                    actionType: NotebookConstants.NOTEBOOK_APP_DATABASE_LOADTREE_ERROR,
+                                    actionType: NotebookConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR,
                                     error: "parse tree data error: " + error + "\ndata:\n" + data
                                 });
                             }
                             finally {
                                 NotebookDispatcher.dispatch({
-                                    actionType: NotebookConstants.NOTEBOOK_APP_DATABASE_LOADTREE_SUCCESS,
+                                    actionType: NotebookConstants.NOTEBOOK_DATABASE_LOADTREE_SUCCESS,
                                     treeData: treeData
                                 });
                             }
@@ -123,13 +123,13 @@ var DatabaseActionCreators = {
                     function(path, progress, error) {
                         if (error) {
                             NotebookDispatcher.dispatch({
-                                actionType: NotebookConstants.NOTEBOOK_APP_DATABASE_LOADTREE_ERROR,
+                                actionType: NotebookConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR,
                                 error: "unable to write tree data: " + error
                             });
                         }
                         else {
                             NotebookDispatcher.dispatch({
-                                actionType: NotebookConstants.NOTEBOOK_APP_DATABASE_LOADTREE_SUCCESS,
+                                actionType: NotebookConstants.NOTEBOOK_DATABASE_LOADTREE_SUCCESS,
                                 treeData: treeData
                             });
                         }
@@ -150,7 +150,7 @@ var DatabaseActionCreators = {
             saveWaitTimer = undefined;
 
             NotebookDispatcher.dispatch({
-                actionType: NotebookConstants.NOTEBOOK_APP_DATABASE_SAVETREE
+                actionType: NotebookConstants.NOTEBOOK_DATABASE_SAVETREE
             });
 
             DiligentAgent.getClient().fileManager.writeFile(
@@ -159,13 +159,13 @@ var DatabaseActionCreators = {
                 function(path, progress, error) {
                     if (error) {
                         NotebookDispatcher.dispatch({
-                            actionType: NotebookConstants.NOTEBOOK_APP_DATABASE_SAVETREE_ERROR,
+                            actionType: NotebookConstants.NOTEBOOK_DATABASE_SAVETREE_ERROR,
                             error: "unable to write tree data: " + error
                         });
                     }
                     else {
                         NotebookDispatcher.dispatch({
-                            actionType: NotebookConstants.NOTEBOOK_APP_DATABASE_SAVETREE_SUCCESS,
+                            actionType: NotebookConstants.NOTEBOOK_DATABASE_SAVETREE_SUCCESS,
                             treeData: treeData
                         });
                     }
@@ -176,7 +176,7 @@ var DatabaseActionCreators = {
 
     createStack: function(name) {
         NotebookDispatcher.dispatch({
-            actionType: NotebookConstants.NOTEBOOK_APP_DATABASE_CREATE_STACK,
+            actionType: NotebookConstants.NOTEBOOK_DATABASE_CREATE_STACK,
             id: parseInt(StringCode.getTimecode()),
             name: name
         });
@@ -187,13 +187,13 @@ var DatabaseActionCreators = {
         var notebookPath = this.__getPath("/" + code);
 
         NotebookDispatcher.dispatch({
-            actionType: NotebookConstants.NOTEBOOK_APP_DATABASE_CREATE_NOTEBOOK
+            actionType: NotebookConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK
         });
 
         DiligentAgent.getClient().fileManager.exist(notebookPath, function(path, exist, isDir, error) {
             if (error) {
                 NotebookDispatcher.dispatch({
-                    actionType: NotebookConstants.NOTEBOOK_APP_DATABASE_CREATE_NOTEBOOK_ERROR,
+                    actionType: NotebookConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK_ERROR,
                     error: "fs operation error: " + error
                 });
 
@@ -202,7 +202,7 @@ var DatabaseActionCreators = {
 
             if (exist) {
                 NotebookDispatcher.dispatch({
-                    actionType: NotebookConstants.NOTEBOOK_APP_DATABASE_CREATE_NOTEBOOK_ERROR,
+                    actionType: NotebookConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK_ERROR,
                     error: "given path is already exist"
                 });
 
@@ -212,13 +212,13 @@ var DatabaseActionCreators = {
             DiligentAgent.getClient().fileManager.createDirectory(notebookPath, function(path, error) {
                 if (error) {
                     NotebookDispatcher.dispatch({
-                        actionType: NotebookConstants.NOTEBOOK_APP_DATABASE_CREATE_NOTEBOOK_ERROR,
+                        actionType: NotebookConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK_ERROR,
                         error: "unable to create " + path + ", error: " + error
                     });
                 }
                 else {
                     NotebookDispatcher.dispatch({
-                        actionType: NotebookConstants.NOTEBOOK_APP_DATABASE_CREATE_NOTEBOOK_SUCCESS,
+                        actionType: NotebookConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK_SUCCESS,
                         id: parseInt(code),
                         name: name
                     });
@@ -231,14 +231,14 @@ var DatabaseActionCreators = {
         var notebookPath = this.__getPath("/" + notebookId);
 
         NotebookDispatcher.dispatch({
-            actionType: NotebookConstants.NOTEBOOK_APP_DATABASE_TRASH_NOTEBOOK,
+            actionType: NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTEBOOK,
             id: notebookId
         });
 
         DiligentAgent.getClient().fileManager.exist(notebookPath, function(path, exist, isDir, error) {
             if (error) {
                 NotebookDispatcher.dispatch({
-                    actionType: NotebookConstants.NOTEBOOK_APP_DATABASE_TRASH_NOTEBOOK_ERROR,
+                    actionType: NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTEBOOK_ERROR,
                     error: "fs error: " + error
                 });
 
@@ -247,7 +247,7 @@ var DatabaseActionCreators = {
 
             if (!exist) {
                 NotebookDispatcher.dispatch({
-                    actionType: NotebookConstants.NOTEBOOK_APP_DATABASE_TRASH_NOTEBOOK_ERROR,
+                    actionType: NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTEBOOK_ERROR,
                     error: "notebook (id = " + notebookId + ") not found"
                 });
 
@@ -257,13 +257,13 @@ var DatabaseActionCreators = {
             DiligentAgent.getClient().fileManager.remove(notebookPath, function(path, error) {
                 if (error) {
                     NotebookDispatcher.dispatch({
-                        actionType: NotebookConstants.NOTEBOOK_APP_DATABASE_TRASH_NOTEBOOK_ERROR,
+                        actionType: NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTEBOOK_ERROR,
                         error: "unable to remove notebook (id = " + notebookId + ") : " + error
                     });
                 }
 
                 NotebookDispatcher.dispatch({
-                    actionType: NotebookConstants.NOTEBOOK_APP_DATABASE_TRASH_NOTEBOOK_SUCCESS,
+                    actionType: NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTEBOOK_SUCCESS,
                     id: notebookId
                 });
             });
@@ -272,7 +272,7 @@ var DatabaseActionCreators = {
 
     selectNotebook: function(notebookId) {
         NotebookDispatcher.dispatch({
-            actionType: NotebookConstants.NOTEBOOK_APP_DATABASE_SELECT,
+            actionType: NotebookConstants.NOTEBOOK_DATABASE_SELECT,
             id: notebookId
         });
     }
