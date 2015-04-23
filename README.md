@@ -80,6 +80,7 @@ Refer to [Wife IDE Installation Guide](https://www.evernote.com/l/AMv_ZRQaZ0lEEK
 
 #### Prepare ####
 ```
+$ cd wife.io
 $ npm install
 $ source envsetup.sh
 ```
@@ -167,7 +168,7 @@ diligentConnectionDidEstablish()
 diligentConnectionDidClose()
 diligentConnectionDidFail()
 diligentApiDidLoad()
-diligentApiLoadFail()
+diligentApiLoadDidFail()
 ```
 
 #### Extension Agent ####
@@ -184,8 +185,8 @@ extensionWillLoad(extensionName)
 extensionWillUnload(extensionName)
 extensionDidLoad(extensionName)
 extensionDidUnload(extensionName)
-extensionLoadFail(extensionName)
-extensionUnloadFail(extensionName)
+extensionLoadDidFail(extensionName)
+extensionUnloadDidFail(extensionName)
 ```
 
 #### Storage Agent ####
@@ -194,7 +195,6 @@ Methods
 ```
 list              : fire query storage list request
 setDiskInUse      : set disk as current working disk
-getDisks          : get storage list responsed from server
 getDiskInUse      : get current working disk
 isDiskInUse       : check if disk is working disk
 getDiskByUUID     : get disk by uuid
@@ -204,12 +204,12 @@ getDiskError      : get most recent disk error
 ```
 Callbacks
 ```
-storageDidReceiveList
-storageDidMount
-storageDidUnmount
-storageWillSetInUse
-storageDidSetInUse
-storageSetInUseFail
-storageInUseDidChange
-storageHasError
+storageListDidReceive(disks)
+storageDidMount(disk)
+storageDidUnmount(disk)
+storageWillSetInUse(disk)
+storageDidSetInUse(disk)
+storageSetInUseDidFail(args)
+storageInUseDidChange(disk)
+storageHasError(error)
 ```

@@ -19,7 +19,7 @@ var JQUERY_VERSION      = '1.11.2',
     OUTPATH             = 'mywife',
     DEBUG               = true,
     SEMANTIC_UI_THEME   = 'default',
-    BUILD_APPS          = [ 'launcher', 'shop', 'notebook', 'greetings' ],
+    BUILD_APPS          = [ 'launcher', 'shop', 'notebook' ],
     LIB_PATHS           = ['./lib'];
 
 var targets = [
@@ -92,21 +92,21 @@ gulp.task('diligent', function() {
     */
 
     var agent_js = browserify({
-        entries: ['./lib/framework/diligent/agent/js/agent.js'],
+        entries: ['./lib/framework/diligent/agents/js/agents.js'],
             paths: LIB_PATHS,
             debug: DEBUG
         })
         .transform(reactify)
         .bundle()
-        .pipe(source('agent.min.js'));
+        .pipe(source('agents.min.js'));
 
     if (!DEBUG)
         agent_js = agent_js.pipe(buffer()).pipe(uglify());
 
     agent_js.pipe(gulp.dest(OUTPATH + '/lib/framework/diligent/'));
 
-    var agent_css = gulp.src('lib/framework/diligent/agent/css/*.css')
-        .pipe(concat('agent.min.css'))
+    var agent_css = gulp.src('lib/framework/diligent/agents/css/*.css')
+        .pipe(concat('agents.min.css'))
         .pipe(minifycss())
         .pipe(gulp.dest(OUTPATH + '/lib/framework/diligent/'));
 

@@ -146,11 +146,11 @@ function AppManager(_super, wsapi) {
         this.dataStream[instid].on('finish', function() {
             socket.emit(this.wsapi.Install.RES, "Installing", instid);
 
-            var result = this.install(filename).result;
-            if (result === 'OK')
-                socket.emit(this.wsapi.Install.RES, "Installed", instid);
+            var inst = this.install(filename);
+            if (inst.result === 'OK')
+                socket.emit(this.wsapi.Install.RES, "Installed", instid, inst.manifest);
             else
-                socket.emit(this.wsapi.Install.ERR, instid, result);
+                socket.emit(this.wsapi.Install.ERR, instid, inst.result);
 
             this.dataStream[instid].end();
             fs.removeSync(filename);
@@ -408,7 +408,7 @@ AppManager.prototype.install = function(appBundlePath) {
         fs.removeSync(SYSTEM.SETTINGS.TempPath + path.sep + manifest.directory);
     }
 
-    return { result: 'OK' };
+    return { result: 'OK', manifest: manifest };
 }
 
 AppManager.prototype.uninstall = function(manifest) {

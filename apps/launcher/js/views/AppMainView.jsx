@@ -11,7 +11,7 @@ var DiligentAgentMixin = {
     },
 
     diligentClientDidLaunch: function() {
-        LauncherActionCreators.listApps();
+        AppManagerAgent.list();
     },
 
     diligentClientWillTerminate: function() {
@@ -27,9 +27,62 @@ var DiligentAgentMixin = {
     }
 };
 
+var AppManagerAgentMixin = {
+    appListDidReceive: function(apps) {
+        LauncherActionCreators.sortAppList(apps);
+    },
+
+    appWillInstall: function(instInfo) {
+
+    },
+
+    appIsUploading: function(instInfo) {
+
+    },
+
+    appIsInstalling: function(instInfo) {
+
+    },
+
+    appDidInstall: function(instInfo) {
+
+    },
+
+    appInstallDidFail: function(instInfo) {
+
+    },
+
+    appWillCancelInstall: function(instInfo) {
+
+    },
+
+    appDidCancelInstall: function(instInfo) {
+
+    },
+
+    appCancelInstallDidFail: function(instInfo) {
+
+    },
+
+    appWillUninstall: function(uninstInfo) {
+
+    },
+
+    appDidUninstall: function(uninstInfo) {
+        LauncherActionCreators.removeAppFromSortList(uninstInfo.manifest);
+    },
+
+    appUninstallDidFail: function(uninstInfo) {
+
+    }
+};
+
 var AppMainView = React.createClass({
 
-    mixins: [ DiligentAgentMixin ],
+    mixins: [
+        DiligentAgentMixin,
+        AppManagerAgentMixin
+    ],
 
     getInitialState: function() {
         return {
@@ -45,6 +98,7 @@ var AppMainView = React.createClass({
         LauncherStore.addChangeListener(this._onLauncherChanges);
         LauncherStore.addErrorListener(this._onLauncherError);
         DiligentAgent.attach(this);
+        AppManagerAgent.attach(this);
     },
 
     componentDidMount: function() {
@@ -52,6 +106,7 @@ var AppMainView = React.createClass({
     },
 
     componentWillUnmount: function() {
+        AppManagerAgent.detach(this);
         DiligentAgent.detach(this);
         LauncherStore.removeErrorListener(this._onLauncherError);
         LauncherStore.removeChangeListener(this._onLauncherChanges);
@@ -59,13 +114,13 @@ var AppMainView = React.createClass({
 
     shouldComponentUpdate: function (nextProps, nextState) {
         if (this.state.manageable && !nextState.manageable)
-            LauncherActionCreators.writeAppList(this.state.appList);
+            LauncherActionCreators.writeSortedAppList(this.state.appList);
         return true;
     },
 
     render: function() {
         var appIcons = this.state.appList.map(function(manifest) {
-            var type = LauncherStore.getAppType(manifest);
+            var type = AppManagerAgent.getAppType(manifest);
 
             if (type === 'builtin') {
                 return (
@@ -114,11 +169,11 @@ var AppMainView = React.createClass({
         var newList = newOrder.map(function(index) {
             return this.state.appList[index];
         }.bind(this));
-        this.setState({appList: newList});
+        this.setState({ appList: newList });
     },
 
     _handleUninstall: function(dir) {
-        this._manifest = LauncherStore.getAppManifest(dir);
+        this._manifest = AppManagerAgent.getAppManifest(dir);
         this.setState({
             alertTitle: 'Uninstall APP',
             alertDescription: 'Are you sure to uninstall ' + this._manifest.name + ' ?'
@@ -128,7 +183,7 @@ var AppMainView = React.createClass({
 
     _handleUninstallAffirmative: function(e) {
         e.stopPropagation();
-        LauncherActionCreators.removeApp(this._manifest);
+        AppManagerAgent.uninstall(this._manifest);
     },
 
     _handleUninstallNegative: function(e) {
@@ -137,34 +192,30 @@ var AppMainView = React.createClass({
 
     _onLauncherChanges: function(changes) {
         switch (changes.type) {
-            case LauncherConstants.LAUNCHER_APP_LIST:
-                this.setState({ appList: LauncherStore.getAppList() });
+            case LauncherConstants.LAUNCHER_SORT_APP_LIST:
+                this.setState({ appList: LauncherStore.getAppSortList() });
                 break;
-            case LauncherConstants.LAUNCHER_APP_UNINSTALL_SUCCESS:
-                this._manifest = null;
-                this.setState({ appList: LauncherStore.getAppList() });
+            case LauncherConstants.LAUNCHER_WRITE_SORT_APP_LIST:
                 break;
-            case LauncherConstants.LAUNCHER_APP_WRITE_SORT_LIST:
+            case LauncherConstants.LAUNCHER_REMOVE_APP_FROM_SORT_LIST:
+                this.setState({ appList: LauncherStore.getAppSortList() });
                 break;
-            case LauncherConstants.LAUNCHER_APP_ENTER_MANAGE_MODE:
+            case LauncherConstants.LAUNCHER_ENTER_MANAGE_MODE:
                 this.setState({ manageable: true });
                 break;
-            case LauncherConstants.LAUNCHER_APP_LEAVE_MANAGE_MODE:
+            case LauncherConstants.LAUNCHER_LEAVE_MANAGE_MODE:
                 this.setState({ manageable: false });
                 break;
-            case LauncherConstants.LAUNCHER_APP_ICON_MOVE:
+            case LauncherConstants.LAUNCHER_MOVE_APP_ICON:
                 break;
         }
     },
 
     _onLauncherError: function(error) {
         switch (error.type) {
-            case LauncherConstants.LAUNCHER_APP_LIST:
+            case LauncherConstants.LAUNCHER_WRITE_SORT_APP_LIST:
                 break;
-            case LauncherConstants.LAUNCHER_APP_UNINSTALL:
-                alert(error.type);
-                break;
-            case LauncherConstants.LAUNCHER_APP_WRITE_SORT_LIST:
+            case LauncherConstants.LAUNCHER_REMOVE_APP_FROM_SORT_LIST:
                 break;
         }
     }

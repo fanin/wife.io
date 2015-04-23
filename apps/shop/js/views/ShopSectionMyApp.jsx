@@ -8,7 +8,96 @@ var APP_COLORS = [
     'blue', 'green', 'orange', 'pink', 'purple', 'red', 'teal', 'yellow'
 ];
 
+var AppManagerAgentMixin = {
+    appListDidReceive: function(apps) {
+
+    },
+
+    appWillInstall: function(instInfo) {
+
+    },
+
+    appIsUploading: function(instInfo) {
+        this.setState({
+            dimmerTitle: "Uploading...",
+            dimmerDescription: "Please wait...",
+            installProgress: instInfo.progress
+        });
+    },
+
+    appIsInstalling: function(instInfo) {
+        this.setState({
+            hideDimmerButton: true,
+            dimmerTitle: "Installing...",
+            dimmerDescription: "Please wait..."
+        });
+    },
+
+    appDidInstall: function(instInfo) {
+        setTimeout(function() {
+            this.setState({ hideDimmer: true });
+        }.bind(this), 600);
+    },
+
+    appInstallDidFail: function(instInfo) {
+        switch (instInfo.error) {
+            case "ERROR_SECURITY_ACCESS_DENIED":
+                this.setState({
+                    dimmerTitle: "Error",
+                    dimmerDescription: "You are not allowed to install offline APPs."
+                });
+                break;
+            case "ERROR_APP_BAD_FILE_FORMAT":
+            case "ERROR_APP_BAD_STRUCT":
+                this.setState({
+                    dimmerTitle: "Error",
+                    dimmerDescription: "Not a supported APP format."
+                });
+                break;
+            default:
+                this.setState({
+                    dimmerTitle: "Error",
+                    dimmerDescription: instInfo.error
+                });
+                break;
+        }
+    },
+
+    appWillCancelInstall: function(instInfo) {
+        this.setState({
+            dimmerTitle: "Cancelling...",
+            dimmerDescription: "Wait for cancelling installation."
+        });
+    },
+
+    appDidCancelInstall: function(instInfo) {
+        this.setState({
+            dimmerTitle: "Cancelled",
+            dimmerDescription: "You cancelled installation."
+        });
+    },
+
+    appCancelInstallDidFail: function(instInfo) {
+
+    },
+
+    appWillUninstall: function(uninstInfo) {
+
+    },
+
+    appDidUninstall: function(uninstInfo) {
+
+    },
+
+    appUninstallDidFail: function(uninstInfo) {
+
+    }
+};
+
 var OfflineAppCard = React.createClass({
+
+    mixins: [ AppManagerAgentMixin ],
+
     propTypes: {
         id:              React.PropTypes.string.isRequired,
         name:            React.PropTypes.string.isRequired,
@@ -29,8 +118,16 @@ var OfflineAppCard = React.createClass({
         };
     },
 
+    componentWillMount: function () {
+        AppManagerAgent.attach(this);
+    },
+
     componentDidMount: function() {
         ShopStore.addChangeListener(this._onInstallChanges);
+    },
+
+    componentWillUnmount: function () {
+        AppManagerAgent.detach(this);
     },
 
     shouldComponentUpdate: function (nextProps, nextState) {
@@ -42,70 +139,7 @@ var OfflineAppCard = React.createClass({
     },
 
     _onInstallChanges: function(change) {
-        if (change.instid !== this.props.id) {
-            return;
-        }
 
-        switch (change.actionType) {
-            case ShopConstants.SHOP_APP_INSTALL:
-                break;
-            case ShopConstants.SHOP_APP_STATE_UPLOADING:
-                this.setState({
-                    dimmerTitle: "Uploading...",
-                    dimmerDescription: "Please wait...",
-                    installProgress: change.progress
-                });
-                break;
-            case ShopConstants.SHOP_APP_STATE_INSTALLING:
-                this.setState({
-                    hideDimmerButton: true,
-                    dimmerTitle: "Installing...",
-                    dimmerDescription: "Please wait..."
-                });
-                break;
-            case ShopConstants.SHOP_APP_INSTALL_SUCCESS:
-                setTimeout(function() {
-                    this.setState({ hideDimmer: true });
-                }.bind(this), 600);
-                break;
-            case ShopConstants.SHOP_APP_INSTALL_FAIL:
-                switch (change.error) {
-                    case "ERROR_SECURITY_ACCESS_DENIED":
-                        this.setState({
-                            dimmerTitle: "Error",
-                            dimmerDescription: "You are not allowed to install offline APPs."
-                        });
-                        break;
-                    case "ERROR_APP_BAD_FILE_FORMAT":
-                    case "ERROR_APP_BAD_STRUCT":
-                        this.setState({
-                            dimmerTitle: "Error",
-                            dimmerDescription: "Not a supported APP format."
-                        });
-                        break;
-                    default:
-                        this.setState({
-                            dimmerTitle: "Error",
-                            dimmerDescription: change.error
-                        });
-                        break;
-                }
-                break;
-            case ShopConstants.SHOP_APP_CANCEL_INSTALL:
-                this.setState({
-                    dimmerTitle: "Cancelling...",
-                    dimmerDescription: "Wait for cancelling installation."
-                });
-                break;
-            case ShopConstants.SHOP_APP_CANCEL_INSTALL_SUCCESS:
-                this.setState({
-                    dimmerTitle: "Cancelled",
-                    dimmerDescription: "You cancelled installation."
-                });
-                break;
-            case ShopConstants.SHOP_APP_CANCEL_INSTALL_FAIL:
-                break;
-        }
     },
 
     _onButtonClick: function() {
@@ -280,7 +314,7 @@ var ShopSectionMyApp = React.createClass({
 
         for (var i = 0; i < files.length; i++) {
             list.unshift(files[i]);
-            files[i].instid = ShopActionCreators.offlineAppInstall(files[i]);
+            files[i].instid = AppManagerAgent.install(files[i]);
         }
 
         if (files.length > 0)
@@ -288,7 +322,7 @@ var ShopSectionMyApp = React.createClass({
     },
 
     cancelOfflineApp: function(instid) {
-        return ShopActionCreators.offlineAppCancelInstall(instid);
+        return AppManagerAgent.cancelInstall(instid);
     },
 
     removeFailedApp: function(instid) {
@@ -309,7 +343,7 @@ var ShopSectionMyApp = React.createClass({
                 <OfflineAppCard key={file.instid}
                                  id={file.instid}
                                name={file.name}
-                              group="GwInstek"
+                              group="Chardi"
                     onCancelInstall={this.cancelOfflineApp}
                        onRemoveCard={this.removeFailedApp} />
             );

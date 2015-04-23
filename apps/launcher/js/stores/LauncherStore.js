@@ -7,24 +7,9 @@ var CHANGE_EVENT = 'LAUNCHER_CHANGE';
 var ERROR_EVENT  = 'LAUNCHER_ERROR';
 var APPSORT_FILE = 'appsort.json';
 
-var appList = [];
+var appSortList = null;
 
 var LauncherStore = assign({}, EventEmitter.prototype, {
-    getAppList: function() {
-        return appList;
-    },
-
-    getAppManifest: function(directory) {
-        for (var key in appList)
-            if (appList[key].directory === directory)
-                return appList[key];
-        return null;
-    },
-
-    getAppType: function(manifest) {
-        return DiligentAgent.getClient().appManager.getType(manifest);
-    },
-
     /**
      * @param {object} changes object
      */
@@ -65,6 +50,10 @@ var LauncherStore = assign({}, EventEmitter.prototype, {
      */
     removeErrorListener: function(callback) {
         this.removeListener(ERROR_EVENT, callback);
+    },
+
+    getAppSortList: function() {
+        return appSortList;
     }
 });
 
@@ -72,26 +61,34 @@ function mergeSortList(list) {
     DiligentAgent.getClient().fileManager.readFile(APPSORT_FILE, 'utf8', function(path, data, error) {
         if (error) {
             LauncherStore.emitError({
-                type: LauncherConstants.LAUNCHER_APP_LIST,
+                type: LauncherConstants.LAUNCHER_SORT_APP_LIST,
                 msg: 'Unable to read APP list (' + error + ')'
             });
         }
         else {
-            var _key;
+            var i;
             var _sorted = JSON.parse(data);
 
             /* Build sorted app list dictionary to speed up merge process */
-            var _dictionary = [];
-            for (_key in _sorted)
-                _dictionary[_sorted[_key].directory] = _sorted[_key];
+            var _sortedDict = [];
+            for (i in _sorted)
+                _sortedDict[_sorted[i].identifier] = _sorted[i];
+
+            var _newDict = [];
+            for (i in list)
+                _newDict[list[i].identifier] = list[i];
 
             /* Merge sorted list & latest app list */
-            for (_key in list)
-                if (_dictionary[list[_key].directory] === undefined)
-                    _sorted.push(list[_key]);
+            for (i in _sorted)
+                if (_newDict[_sorted[i].identifier] === undefined)
+                    _sorted.splice(i, 1);
 
-            appList = _sorted;
-            LauncherStore.emitChange({ type: LauncherConstants.LAUNCHER_APP_LIST });
+            for (i in list)
+                if (_sortedDict[list[i].identifier] === undefined)
+                    _sorted.push(list[i]);
+
+            appSortList = _sorted;
+            LauncherStore.emitChange({ type: LauncherConstants.LAUNCHER_SORT_APP_LIST });
         }
     });
 }
@@ -106,39 +103,39 @@ function writeSortList(list, actionType) {
             });
         }
         else {
-            appList = list;
+            appSortList = list;
             LauncherStore.emitChange({ type: actionType });
         }
     });
 }
 
 function removeAppFromSortList(manifest) {
-    /* Remove manifest from appList */
-    for (var i = 0, len = appList.length; i < len; i++) {
-        if (appList[i].directory === manifest.directory) {
-            appList.splice(i, 1);
+    /* Remove manifest from appSortList */
+    for (var i = 0, len = appSortList.length; i < len; i++) {
+        if (appSortList[i].identifier === manifest.identifier) {
+            appSortList.splice(i, 1);
             break;
         }
     }
 
     /* Update appsort.json */
-    var _appsort = JSON.stringify(appList, null, 4);
+    var _appsort = JSON.stringify(appSortList, null, 4);
     DiligentAgent.getClient().fileManager.writeFile(APPSORT_FILE, _appsort, function(path, progress, error) {
         if (error) {
             LauncherStore.emitError({
-                type: LauncherConstants.LAUNCHER_APP_UNINSTALL,
+                type: LauncherConstants.LAUNCHER_REMOVE_APP_FROM_SORT_LIST,
                 msg: 'Unable to write APP list'
             });
         }
         else {
-            LauncherStore.emitChange({ type: LauncherConstants.LAUNCHER_APP_UNINSTALL_SUCCESS });
+            LauncherStore.emitChange({ type: LauncherConstants.LAUNCHER_REMOVE_APP_FROM_SORT_LIST });
         }
     });
 }
 
 LauncherDispatcher.register(function(action) {
     switch (action.actionType) {
-        case LauncherConstants.LAUNCHER_APP_LIST:
+        case LauncherConstants.LAUNCHER_SORT_APP_LIST:
             DiligentAgent.getClient().fileManager.exist(APPSORT_FILE, function(path, exist, isDir, error) {
                 if (error) throw new Error('File system operation error');
 
@@ -148,27 +145,19 @@ LauncherDispatcher.register(function(action) {
                     writeSortList(action.list, action.actionType);
             });
             break;
-        case LauncherConstants.LAUNCHER_APP_UNINSTALL:
-            break;
-        case LauncherConstants.LAUNCHER_APP_UNINSTALL_SUCCESS:
+        case LauncherConstants.LAUNCHER_REMOVE_APP_FROM_SORT_LIST:
             removeAppFromSortList(action.manifest);
             break;
-        case LauncherConstants.LAUNCHER_APP_UNINSTALL_FAIL:
-            LauncherStore.emitError({
-                type: LauncherConstants.LAUNCHER_APP_UNINSTALL,
-                msg: 'Uninstall APP failed (' + action.error + ')'
-            });
-            break;
-        case LauncherConstants.LAUNCHER_APP_WRITE_SORT_LIST:
+        case LauncherConstants.LAUNCHER_WRITE_SORT_APP_LIST:
             writeSortList(action.list, action.actionType);
             break;
-        case LauncherConstants.LAUNCHER_APP_ENTER_MANAGE_MODE:
+        case LauncherConstants.LAUNCHER_ENTER_MANAGE_MODE:
             LauncherStore.emitChange({ type: action.actionType });
             break;
-        case LauncherConstants.LAUNCHER_APP_LEAVE_MANAGE_MODE:
+        case LauncherConstants.LAUNCHER_LEAVE_MANAGE_MODE:
             LauncherStore.emitChange({ type: action.actionType });
             break;
-        case LauncherConstants.LAUNCHER_APP_ICON_MOVE:
+        case LauncherConstants.LAUNCHER_MOVE_APP_ICON:
             LauncherStore.emitChange({
                 type: action.actionType,
                 manifest: action.manifest,

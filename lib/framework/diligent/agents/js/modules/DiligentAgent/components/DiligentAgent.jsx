@@ -26,6 +26,7 @@ var DiligentAgent = assign({}, EventEmitter.prototype, {
                 DiligentAgent.emit('agent.clientWillLaunch');
                 StorageAgent.init();
                 ExtensionAgent.init();
+                AppManagerAgent.init();
                 break;
             case DiligentConstants.DILIGENT_CLIENT_TERMINATE:
                 DiligentAgent.emit('agent.clientWillStop');
@@ -43,7 +44,7 @@ var DiligentAgent = assign({}, EventEmitter.prototype, {
                 DiligentAgent.emit('agent.apiDidLoad');
                 break;
             case DiligentConstants.DILIGENT_WSAPI_LOAD_FAIL:
-                DiligentAgent.emit('agent.apiLoadFail');
+                DiligentAgent.emit('agent.apiLoadDidFail');
                 break;
             case DiligentConstants.DILIGENT_CLIENT_RUNNING:
                 DiligentAgent.emit('agent.clientDidLaunch');
@@ -51,6 +52,7 @@ var DiligentAgent = assign({}, EventEmitter.prototype, {
             case DiligentConstants.DILIGENT_CLIENT_STOPPED:
                 StorageAgent.deinit();
                 ExtensionAgent.deinit();
+                AppManagerAgent.deinit();
                 DiligentAgent.emit('agent.clientDidStop');
                 break;
         }
@@ -73,8 +75,8 @@ var DiligentAgent = assign({}, EventEmitter.prototype, {
             DiligentAgent.on('agent.connectionDidFail', component.diligentConnectionDidFail);
         if (component.diligentApiDidLoad)
             DiligentAgent.on('agent.apiDidLoad', component.diligentApiDidLoad);
-        if (component.diligentApiLoadFail)
-            DiligentAgent.on('agent.apiLoadFail', component.diligentApiLoadFail);
+        if (component.diligentApiLoadDidFail)
+            DiligentAgent.on('agent.apiLoadDidFail', component.diligentApiLoadDidFail);
 
     },
 
@@ -95,8 +97,8 @@ var DiligentAgent = assign({}, EventEmitter.prototype, {
             DiligentAgent.off('agent.connectionDidFail', component.diligentConnectionDidFail);
         if (component.diligentApiDidLoad)
             DiligentAgent.off('agent.apiDidLoad', component.diligentApiDidLoad);
-        if (component.diligentApiLoadFail)
-            DiligentAgent.off('agent.apiLoadFail', component.diligentApiLoadFail);
+        if (component.diligentApiLoadDidFail)
+            DiligentAgent.off('agent.apiLoadDidFail', component.diligentApiLoadDidFail);
     },
 
     getClient: function() {

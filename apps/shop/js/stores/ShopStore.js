@@ -25,17 +25,9 @@ var ShopStore = assign({}, EventEmitter.prototype, {
     }
 });
 
-// Register callback to handle all updates
 ShopDispatcher.register(function(action) {
     switch (action.actionType) {
-        case ShopConstants.SHOP_APP_INSTALL:
-        case ShopConstants.SHOP_APP_STATE_UPLOADING:
-        case ShopConstants.SHOP_APP_STATE_INSTALLING:
-        case ShopConstants.SHOP_APP_INSTALL_SUCCESS:
-        case ShopConstants.SHOP_APP_INSTALL_FAIL:
-        case ShopConstants.SHOP_APP_CANCEL_INSTALL:
-        case ShopConstants.SHOP_APP_CANCEL_INSTALL_SUCCESS:
-        case ShopConstants.SHOP_APP_CANCEL_INSTALL_FAIL:
+        default:
             ShopStore.emitChange(action);
             break;
     }

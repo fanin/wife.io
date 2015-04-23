@@ -40,7 +40,7 @@ var DiligentAgentMixin = {
 };
 
 var StorageAgentMixin = {
-    storageDidReceiveList: function(disks) {
+    storageListDidReceive: function(disks) {
         this.setState({ disks: disks });
     },
 
