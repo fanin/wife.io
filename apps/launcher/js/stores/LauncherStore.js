@@ -58,7 +58,7 @@ var LauncherStore = assign({}, EventEmitter.prototype, {
 });
 
 function mergeSortList(list) {
-    DiligentAgent.getClient().fileManager.readFile(APPSORT_FILE, 'utf8', function(path, data, error) {
+    FileAgent.readFile(APPSORT_FILE, 'utf8', function(path, data, error) {
         if (error) {
             LauncherStore.emitError({
                 type: LauncherConstants.LAUNCHER_SORT_APP_LIST,
@@ -95,7 +95,7 @@ function mergeSortList(list) {
 
 function writeSortList(list, actionType) {
     var _appsort = JSON.stringify(list, null, 4);
-    DiligentAgent.getClient().fileManager.writeFile(APPSORT_FILE, _appsort, function(path, progress, error) {
+    FileAgent.writeFile(APPSORT_FILE, _appsort, function(path, progress, error) {
         if (error) {
             LauncherStore.emitError({
                 type: actionType,
@@ -120,7 +120,7 @@ function removeAppFromSortList(manifest) {
 
     /* Update appsort.json */
     var _appsort = JSON.stringify(appSortList, null, 4);
-    DiligentAgent.getClient().fileManager.writeFile(APPSORT_FILE, _appsort, function(path, progress, error) {
+    FileAgent.writeFile(APPSORT_FILE, _appsort, function(path, progress, error) {
         if (error) {
             LauncherStore.emitError({
                 type: LauncherConstants.LAUNCHER_REMOVE_APP_FROM_SORT_LIST,
@@ -136,7 +136,7 @@ function removeAppFromSortList(manifest) {
 LauncherDispatcher.register(function(action) {
     switch (action.actionType) {
         case LauncherConstants.LAUNCHER_SORT_APP_LIST:
-            DiligentAgent.getClient().fileManager.exist(APPSORT_FILE, function(path, exist, isDir, error) {
+            FileAgent.exist(APPSORT_FILE, function(path, exist, isDir, error) {
                 if (error) throw new Error('File system operation error');
 
                 if (exist)

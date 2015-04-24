@@ -25,6 +25,7 @@ var DiligentAgent = assign({}, EventEmitter.prototype, {
             case DiligentConstants.DILIGENT_CLIENT_INITIATE:
                 DiligentAgent.emit('agent.clientWillLaunch');
                 StorageAgent.init();
+                DummyFileAgent.init();
                 ExtensionAgent.init();
                 AppManagerAgent.init();
                 break;
@@ -50,9 +51,10 @@ var DiligentAgent = assign({}, EventEmitter.prototype, {
                 DiligentAgent.emit('agent.clientDidLaunch');
                 break;
             case DiligentConstants.DILIGENT_CLIENT_STOPPED:
-                StorageAgent.deinit();
                 ExtensionAgent.deinit();
                 AppManagerAgent.deinit();
+                FileAgent.deinit();
+                StorageAgent.deinit();
                 DiligentAgent.emit('agent.clientDidStop');
                 break;
         }
