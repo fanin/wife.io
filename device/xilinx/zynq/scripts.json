@@ -1,0 +1,7 @@
+{
+    "scripts": {
+        "start": "LD_PRELOAD=device/xilinx/zynq/zynq-memchr-fix/memchr.so NODE_PATH=/usr/local/lib/node_modules node --expose-gc server/index.js &",
+        "start-forever": "LD_PRELOAD=device/xilinx/zynq/zynq-memchr-fix/memchr.so NODE_PATH=/usr/local/lib/node_modules forever start -c \"node --expose-gc\" server/index.js",
+        "stop": "killall wife.io"
+    }
+}

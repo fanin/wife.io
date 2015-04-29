@@ -21,7 +21,7 @@ var sio                = require('socket.io'),
     FileManager        = require('./file-manager'),
     StorageManager     = require('./storage-manager');
 
-var SYSTEM = require('../system');
+var SYSTEM = require('./system');
 
 module.exports = DiligentServer;
 
@@ -148,12 +148,12 @@ DiligentServer.prototype.handleRequest = function(req, res) {
     var filepath = path.join(rootdir, filename);
 
     if (req.headers.host.split(":")[0] === 'localhost' || req.headers.host.split(":")[0] === '127.0.0.1')
-        res.setHeader('Access-Control-Allow-Origin', SYSTEM.SETTINGS.Protocol + '://' + req.headers.host);
+        res.setHeader('Access-Control-Allow-Origin', SYSTEM.SETTINGS.web_protocol + '://' + req.headers.host);
 
     function backToLauncher() {
         // Redirect to launcher
         res.writeHead(301, {
-            "location" : SYSTEM.SETTINGS.Protocol + '://' + req.headers.host + '/apps/b/launcher/'
+            "location" : SYSTEM.SETTINGS.web_protocol + '://' + req.headers.host + '/apps/b/launcher/'
         });
         res.end();
     }
@@ -169,8 +169,8 @@ DiligentServer.prototype.handleRequest = function(req, res) {
         }
         else if (appType === 'u') {
             filename = filename.replace('u' + path.sep, '');
-            filepath = SYSTEM.SETTINGS.SystemDataPath + path.sep +
-                SYSTEM.SETTINGS.SystemName.replace(/\s/g, '').toLocaleLowerCase() + filename;
+            filepath = SYSTEM.SETTINGS.sys_data_path + path.sep +
+                SYSTEM.SETTINGS.sys_name.replace(/\s/g, '').toLocaleLowerCase() + filename;
         }
         else {
             console.log('Access denied: ' + req.url);
@@ -216,16 +216,16 @@ DiligentServer.prototype.handleRequest = function(req, res) {
                         /* Inavlid disk uuid specified, ignore this request */
                         dataPath = null;
                     else if (disk.mountpoint === this.storageManager.systemDisk.mountpoint)
-                        dataPath = SYSTEM.SETTINGS.SystemDataPath;
+                        dataPath = SYSTEM.SETTINGS.sys_data_path;
                     else
                         dataPath = disk.mountpoint;
                 }
                 else {
-                    dataPath = SYSTEM.SETTINGS.SystemDataPath;
+                    dataPath = SYSTEM.SETTINGS.sys_data_path;
                 }
 
                 if (dataPath)
-                    filepath = dataPath + path.sep + SYSTEM.SETTINGS.SystemName.replace(/\s/g, '').toLocaleLowerCase() + filename;
+                    filepath = dataPath + path.sep + SYSTEM.SETTINGS.sys_name.replace(/\s/g, '').toLocaleLowerCase() + filename;
                 else
                     filepath = '';
             }
@@ -262,13 +262,13 @@ DiligentServer.prototype.handleRequest = function(req, res) {
             res.writeHead(200, {'Content-Type': ctype});
 
             if (ctype.indexOf('text') > -1 || ctype.indexOf('javascript') > -1) {
-                var contentString = content.toString().replace(/%PROTO%/g, SYSTEM.SETTINGS.Protocol);
+                var contentString = content.toString().replace(/%PROTO%/g, SYSTEM.SETTINGS.web_protocol);
                 contentString = contentString.replace(/%SYSIP%/g, req.headers.host.split(":")[0]);
                 contentString = contentString.replace(/%SYSPORT%/g, req.headers.host.split(":")[1] || '8001');
-                contentString = contentString.replace(/%SYSNAME%/g, SYSTEM.SETTINGS.SystemName);
-                contentString = contentString.replace(/%BRAND%/g, SYSTEM.SETTINGS.Brand);
-                contentString = contentString.replace(/%COPYRIGHT%/g, SYSTEM.SETTINGS.Copyright);
-                contentString = contentString.replace(/%APPBACKGROUND%/g, SYSTEM.SETTINGS.AppBackground || '/resources/img/background.jpg');
+                contentString = contentString.replace(/%SYSNAME%/g, SYSTEM.SETTINGS.sys_name);
+                contentString = contentString.replace(/%BRAND%/g, SYSTEM.SETTINGS.brand);
+                contentString = contentString.replace(/%COPYRIGHT%/g, SYSTEM.SETTINGS.copyright);
+                contentString = contentString.replace(/%APPBACKGROUND%/g, SYSTEM.SETTINGS.app_background || '/resources/img/background.jpg');
                 res.end(contentString);
             }
             else {

@@ -1,6 +1,6 @@
 "use strict";
 
-var SYSTEM = require('../system');
+var SYSTEM = require('./system');
 
 module.exports = ExtensionManager;
 

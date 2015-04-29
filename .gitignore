@@ -2,4 +2,4 @@ build
 mywife
 node_modules
 .DS_Store
-.sublime-*
+*.sublime-*

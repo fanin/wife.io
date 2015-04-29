@@ -66,6 +66,7 @@ function mergeSortList(list) {
             });
         }
         else {
+            /* FIXME: seem like failed to merge new builtin apps */
             var i;
             var _sorted = JSON.parse(data);
 

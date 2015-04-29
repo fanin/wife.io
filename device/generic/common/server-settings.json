@@ -1,0 +1,10 @@
+{
+    "sys_name"       : "wife.io",
+    "brand"          : "Chardi",
+    "server"         : "diligent-server",
+    "web_protocol"   : "http",
+    "port"           : 8001,
+    "sys_data_path"  : "/Volumes/UserStorage",
+    "temp_data_path" : "/tmp",
+    "copyright"      : "Copyright 2014-2015 Chen, Shou-Yuan"
+}

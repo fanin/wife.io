@@ -9,8 +9,8 @@ var fs           = require('fs-extra'),
 
 fs.jsonfile.spaces = 4;
 
-var SYSTEM           = require('../system');
-var USER_APP_PATH    = SYSTEM.SETTINGS.SystemDataPath + path.sep + SYSTEM.SETTINGS.SystemName + path.sep + 'apps';
+var SYSTEM           = require('./system');
+var USER_APP_PATH    = SYSTEM.SETTINGS.sys_data_path + path.sep + SYSTEM.SETTINGS.sys_name + path.sep + 'apps';
 var BUILTIN_APP_PATH = path.resolve(__dirname, '..' + path.sep + 'apps');
 var APP_INFO_FILE    = 'manifest.json';
 
@@ -133,7 +133,7 @@ function AppManager(_super, wsapi) {
         this.instQueue[0].busy = true;
 
         var instid = this.instQueue[0].instid;
-        var filename = SYSTEM.SETTINGS.TempPath + path.sep + instid + '.zip';
+        var filename = SYSTEM.SETTINGS.temp_data_path + path.sep + instid + '.zip';
         var appWriteStream = fs.createWriteStream(filename);
 
         socket.emit(this.wsapi.Install.RES, "Initiating", instid);
@@ -195,7 +195,7 @@ AppManager.prototype.register = function(socket, complete) {
             return;
         }
 
-        var filename = SYSTEM.SETTINGS.TempPath + path.sep + instid + '.zip';
+        var filename = SYSTEM.SETTINGS.temp_data_path + path.sep + instid + '.zip';
 
         if (fs.existsSync(filename))
             fs.removeSync(filename);
@@ -317,7 +317,7 @@ AppManager.prototype.install = function(appBundlePath) {
 
     /* Extract APP bundle */
     try {
-        appBundle.extractAllTo(SYSTEM.SETTINGS.TempPath, true);
+        appBundle.extractAllTo(SYSTEM.SETTINGS.temp_data_path, true);
     }
     catch (err) {
         return { result: SYSTEM.ERROR.ERROR_APP_EXTRACT };
@@ -365,7 +365,7 @@ AppManager.prototype.install = function(appBundlePath) {
     function installApp(appPath, manifest) {
         try {
             /* Install extracted APP */
-            fse.moveSync(SYSTEM.SETTINGS.TempPath + path.sep + manifest.directory, appPath);
+            fse.moveSync(SYSTEM.SETTINGS.temp_data_path + path.sep + manifest.directory, appPath);
         }
         catch (error) {
             console.log("installApp: " + error);
@@ -391,7 +391,7 @@ AppManager.prototype.install = function(appBundlePath) {
 
         try {
             /* Install extracted APP */
-            fs.copySync(SYSTEM.SETTINGS.TempPath + path.sep + manifest.directory, appPath);
+            fs.copySync(SYSTEM.SETTINGS.temp_data_path + path.sep + manifest.directory, appPath);
         }
         catch (error) {
             console.log("upgradeApp: " + error);
@@ -405,7 +405,7 @@ AppManager.prototype.install = function(appBundlePath) {
         }
 
         /* Remove tmp path */
-        fs.removeSync(SYSTEM.SETTINGS.TempPath + path.sep + manifest.directory);
+        fs.removeSync(SYSTEM.SETTINGS.temp_data_path + path.sep + manifest.directory);
     }
 
     return { result: 'OK', manifest: manifest };

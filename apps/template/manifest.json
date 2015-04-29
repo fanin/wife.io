@@ -4,9 +4,7 @@
     "wsapi_version": "0.1",
     "directory": "template",
     "entry": "index.html",
-    "extensions": [
-        "Greetings"
-    ],
+    "extensions": [],
     "localizations": [
         "en_US",
         "zh_TW"

@@ -29,7 +29,7 @@ var fs      = require('fs-extra');
 var path    = require('path');
 var storage = require('./lib/disks.js');
 var uuid    = require('node-uuid');
-var SYSTEM  = require('../system');
+var SYSTEM  = require('./system');
 
 module.exports = StorageManager;
 
@@ -113,17 +113,17 @@ StorageManager.prototype.register = function(socket, complete) {
             this.notificationCenter.post("system.storage", "disk.error", error);
             this.pausePolling = true;
         }
-        /* Examine SystemDataPath */
-        else if (!fs.existsSync(SYSTEM.SETTINGS.SystemDataPath)) {
+        /* Examine sys_data_path */
+        else if (!fs.existsSync(SYSTEM.SETTINGS.sys_data_path)) {
             error = SYSTEM.ERROR.ERROR_STOR_SYSDISK_NOT_FOUND;
             this.notificationCenter.post("system.storage", "disk.error", error);
             this.pausePolling = true;
         }
         else {
             try {
-                /* Test SystemDataPath write permission */
-                fs.createFileSync(SYSTEM.SETTINGS.SystemDataPath + "/test");
-                fs.removeSync(SYSTEM.SETTINGS.SystemDataPath + "/test");
+                /* Test sys_data_path write permission */
+                fs.createFileSync(SYSTEM.SETTINGS.sys_data_path + "/test");
+                fs.removeSync(SYSTEM.SETTINGS.sys_data_path + "/test");
 
                 /* If user working disk for the client is not set, set to system disk by default */
                 if (!this.disksInUse[socket])
@@ -179,7 +179,7 @@ StorageManager.prototype.getLocalDisks = function(callback) {
                 if (data[i].mountpoint === '/' || data[i].mountpoint === 'C:') {
                     systemDisk = data[i];
                 }
-                else if (path.resolve(SYSTEM.SETTINGS.SystemDataPath).indexOf(path.resolve(data[i].mountpoint)) === 0) {
+                else if (path.resolve(SYSTEM.SETTINGS.sys_data_path).indexOf(path.resolve(data[i].mountpoint)) === 0) {
                     systemDataDisk = data[i];
                 }
                 else if (data[i].mountpoint.indexOf('/mnt') === 0 ||
@@ -299,7 +299,7 @@ StorageManager.prototype.getUserDataPath = function(socket, _path) {
 
     /* System disk is not allowed to be set as user working disk */
     if (this.disksInUse[socket].uuid === this.systemDisk.uuid)
-        userDataPath = SYSTEM.SETTINGS.SystemDataPath + this.securityManager.appUserDataDirectory(socket);
+        userDataPath = SYSTEM.SETTINGS.sys_data_path + this.securityManager.appUserDataDirectory(socket);
     else if (this.disksInUse[socket])
         userDataPath = this.disksInUse[socket].mountpoint + this.securityManager.appUserDataDirectory(socket);
     else

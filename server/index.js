@@ -1,9 +1,9 @@
-var server = require('http').createServer(handler),
-    fs = require('fs'),
-    path = require('path');
-
+var http   = require('http').createServer(handler);
+var fs     = require('fs');
+var path   = require('path');
 var SYSTEM = require('./system');
-var settingsFile = 'settings.json';
+
+var settingsFile = 'server-settings.json';
 
 try {
     if (process.argv.length == 3)
@@ -19,17 +19,22 @@ catch (err) {
 }
 
 /* Set default settings if needed */
-if (!SYSTEM.SETTINGS.DiligentServer) SYSTEM.SETTINGS.DiligentServer = "diligent-server";
-if (!SYSTEM.SETTINGS.SystemDataPath) throw new Error('Missing system setting "SystemDataPath" in the settings.json');
-if (!SYSTEM.SETTINGS.TempPath) SYSTEM.SETTINGS.TempPath = "/tmp";
+if (!SYSTEM.SETTINGS.server)
+    SYSTEM.SETTINGS.server = 'diligent-server';
+
+if (!SYSTEM.SETTINGS.sys_data_path)
+    throw new Error('Missing system setting "sys_data_path" in the settings.json');
+
+if (!SYSTEM.SETTINGS.temp_data_path)
+    SYSTEM.SETTINGS.temp_data_path = '/tmp';
 
 /* Set process name */
-process.title = SYSTEM.SETTINGS.SystemName;
+process.title = SYSTEM.SETTINGS.sys_name;
 
-server.listen(process.env.npm_package_config_port || 8001, function() {
-    var DiligentServer = require('./server/' + SYSTEM.SETTINGS.DiligentServer);
+http.listen(SYSTEM.SETTINGS.port || 8001, function() {
+    var Server = require(path.resolve(__dirname, SYSTEM.SETTINGS.server));
     if (!SYSTEM.SERVER) {
-        SYSTEM.SERVER = new DiligentServer(server);
+        SYSTEM.SERVER = new Server(http);
         SYSTEM.SERVER.listen();
     }
 });
@@ -39,7 +44,7 @@ if (global.gc) {
         var rss = (process.memoryUsage().rss / (1024 * 1024));
         if (rss > 32) {
             global.gc();
-            //console.log("[Force GC] RSS: " + rss.toFixed(2) + "MB");
+            //console.log('[Force GC] RSS: ' + rss.toFixed(2) + 'MB');
         }
     }, 2000);
 }

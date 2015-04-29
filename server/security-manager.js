@@ -1,7 +1,7 @@
 "use strict";
 
 var path   = require('path');
-var SYSTEM = require('../system');
+var SYSTEM = require('./system');
 
 module.exports = SecurityManager;
 
@@ -42,7 +42,7 @@ SecurityManager.prototype.canManageApps = function(socket) {
 SecurityManager.prototype.appUserDataDirectory = function(socket) {
     if (!this.manifests[socket])
         return '';
-    return path.normalize('/' + SYSTEM.SETTINGS.SystemName.replace(/\s/g, '').toLocaleLowerCase() +
+    return path.normalize('/' + SYSTEM.SETTINGS.sys_name.replace(/\s/g, '').toLocaleLowerCase() +
                           '/apps/' + this.manifests[socket].directory + '/userdata');
 }
 

@@ -10,7 +10,7 @@ var fs            = require('graceful-fs'),
     ReadWriteLock = require('rwlock'),
     htmlToText    = require('html-to-text');
 
-var SYSTEM = require('../system');
+var SYSTEM = require('./system');
 var rwlock = new ReadWriteLock();
 
 module.exports = FileManager;

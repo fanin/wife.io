@@ -4,10 +4,10 @@
 
 ## Quick Start ##
 
-1. `npm install`
+1. `$ npm install`
 2. [Configure system settings](#user-content-wife-system-configuration)
-2. `gulp`
-3. `node mywife/index.js`
+2. `$ gulp`
+3. `$ node mywife/index.js`
 4. Go http://localhost:8001 and enjoy your wife
 
 
@@ -17,9 +17,9 @@ You should edit system configuration file (`settings.json`) for the system to ru
 
 ### System Settings ###
 ```
-Protocol       : http | https
-SystemDataPath : Data disk mountpoint for installing user apps and saving user data
-TempPath       : Temp path for server runtime temporary files
+protocol       : http | https
+sys_data_path  : Data disk mountpoint for installing user apps and saving user data
+temp_data_path : Temp path for server runtime temporary files
 ```
 
 
@@ -132,17 +132,21 @@ You may need to modify LIB_PATH in `gulpfile.js` to correct your wife.io library
 ```
 var LIB_PATH = '/your/path/to/wife.io/lib'
 ```
-#### Build and archive ####
+#### Build ####
 ```
-$ npm run-script build
-$ npm run-script archive
+$ gulp build
 ```
-The production source codes of your app is under `build/{app_name}` folder,
-and your app archive for installer is `build/{app_name}.zip`.
+The production (uglified) source codes of your app is under `build/{app_name}` folder.
 
-#### Clean build ####
+#### Archive ####
 ```
-$ npm run-script clean
+$ gulp archive
+```
+The production app archive for installer is `build/{app_name}.zip`.
+
+#### Clean ####
+```
+$ gulp clean
 ```
 
 ### Wife App Life Cycle ###
