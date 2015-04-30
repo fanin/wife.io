@@ -1,6 +1,7 @@
 build
 mywife
 .build-device
+.build-runstop.sh
 node_modules
 .DS_Store
 *.sublime-*

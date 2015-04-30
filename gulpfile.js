@@ -2,7 +2,8 @@ var gulp = require('gulp'),
     del  = require('del'),
     fs   = require('fs'),
     fse  = require('fs-extra'),
-    os   = require('os');
+    os   = require('os'),
+    util = require('util');
 
 del.sync('.sublime-gulp.cache');
 
@@ -16,11 +17,37 @@ else {
 }
 
 function addBuildTargets() {
-    global.DEVICE         = fs.readFileSync('.build-device', 'ascii').split(os.EOL)[0];
-    global.DEBUG          = false;
-    global.LIB_PATHS      = [ __dirname + '/lib' ];
-    global.BUILD_SETTINGS = fse.readJsonSync('device/' + DEVICE + '/build-settings.json');
-    global.BUILD_PATH     = __dirname + '/' + BUILD_SETTINGS.build_dir;
+    global.DEVICE          = fs.readFileSync('.build-device', 'ascii').split(os.EOL)[0];
+    global.DEBUG           = false;
+    global.LIB_PATHS       = [ __dirname + '/lib' ];
+    global.SERVER_SETTINGS = fse.readJsonSync('device/' + DEVICE + '/server-settings.json');
+    global.BUILD_SETTINGS  = fse.readJsonSync('device/' + DEVICE + '/build-settings.json');
+    global.BUILD_PATH      = __dirname + '/' + BUILD_SETTINGS.build_dir;
+
+    var RunStopScript = util.format(
+            'case "$1" in' + os.EOL +
+            '    run)' + os.EOL +
+            '        echo Running %s...; ' + os.EOL +
+            '        killall %s 2>/dev/null; ' + os.EOL +
+            '        [ ! -e %s ] && echo Please build %s first \\' + os.EOL +
+            '                    || (cd %s; /usr/local/bin/npm start)' + os.EOL +
+            '        ;;' + os.EOL +
+            '    stop)' + os.EOL +
+            '        echo Stopping %s...; ' + os.EOL +
+            '        killall %s' + os.EOL +
+            '        ;;' + os.EOL +
+            '    *)' + os.EOL +
+            'esac' + os.EOL,
+            global.SERVER_SETTINGS.sys_name,
+            global.SERVER_SETTINGS.sys_name,
+            global.BUILD_PATH,
+            global.SERVER_SETTINGS.sys_name,
+            global.BUILD_PATH,
+            global.SERVER_SETTINGS.sys_name,
+            global.SERVER_SETTINGS.sys_name
+        );
+
+    fs.writeFileSync('.build-runstop.sh', RunStopScript, 'ascii');
 
     targets = [
         'server',
@@ -43,12 +70,13 @@ function addBuildTargets() {
     });
 
     gulp.task('clean', function(cb) {
-        del(BUILD_PATH, cb);
+        del(global.BUILD_PATH, cb);
     });
 
     gulp.task('distclean', function(cb) {
         del.sync('.build-device');
-        del(BUILD_PATH, cb);
+        del.sync('.build-runstop.sh');
+        del(global.BUILD_PATH, cb);
     });
 }
 
