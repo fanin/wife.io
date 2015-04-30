@@ -1,5 +1,6 @@
 build
 mywife
+.build-device
 node_modules
 .DS_Store
 *.sublime-*

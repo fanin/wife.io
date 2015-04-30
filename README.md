@@ -5,20 +5,45 @@
 ## Quick Start ##
 
 1. `$ npm install`
-2. [Configure system settings](#user-content-wife-system-configuration)
-2. `$ gulp`
-3. `$ node mywife/index.js`
-4. Go http://localhost:8001 and enjoy your wife
+2. [Choose a device](#user-content-device-support)
+2. [Configure server settings](#user-content-wife-server-configuration)
+3. `$ gulp`
+4. `$ node mywife/index.js`
+5. Go http://localhost:8001 and enjoy your wife
+
+## Device Support ##
+
+You can find the device support list:
+```
+$ gulp distclean (for not the first time building the system)
+$ gulp
+```
+You should see a device support list like below:
+```
+Device Support List
+------------------------------
+ 0: generic/common
+ 1: xilinx/zynq
+------------------------------
+```
+
+If there is no customization or hot fix required for your device, `generic/common` is okay to run on your system.
+
+Choose a device to build:
+```
+$ gulp generic/common
+```
 
 
-## Wife System Configuration ##
+## Wife Server Configuration ##
 
-You should edit system configuration file (`settings.json`) for the system to run in your environment.
+Each of devices has its own server settings file (`server-settings.json`).
+Modify the [settings](#user-content-server-settings) for your device if needed.
 
-### System Settings ###
+### Server Settings ###
 ```
 protocol       : http | https
-sys_data_path  : Data disk mountpoint for installing user apps and saving user data
+sys_data_path  : Data disk mountpoint for storing user apps and user data
 temp_data_path : Temp path for server runtime temporary files
 ```
 
@@ -72,42 +97,29 @@ This section is to take a look into Diligent Connection flow.
 
 TBD
 
-### Build Your Wife From IDE (Sublime Text 2) ###
+### Build Your Wife Using IDE (Sublime Text 2) ###
 
-Refer to [Wife IDE Installation Guide](https://www.evernote.com/l/AMv_ZRQaZ0lEEKXZF28E_ojXFXSz_YWQz-s)
+Refer to [Wife IDE Installation Guide](https://www.evernote.com/l/AMv_ZRQaZ0lEEKXZF28E_ojXFXSz_YWQz-s).
 
 ### Build Your Wife From Scratch ###
 
-#### Prepare ####
-```
-$ cd wife.io
-$ npm install
-$ source envsetup.sh
-```
-
-#### Build Your Wife ####
-```
-$ gulp
-```
-This will build and install your wife to `mywife/` folder.
-```
-$ gulp clean
-```
-Remove `mywife/` folder.
-
+Refer to [Quick Start](#user-content-quick-start).
 
 #### All Build Targets ####
-```
-server   : diligent server runs on node.js
-lib      : 3rd-party libraries (jquery, react, semantic-ui...etc)
-diligent : diligent framework (agents, clients and ui widgets)
-cutie    : cutie ui framework
-app      : builtin apps
-api      : socket.io api spec
-resource : copy resource files
-config   : system configuration files
-```
 
+Once device selection is done, press 'Alt + B' in Sublime Text will list all build targets.
+
+```
+server        : diligent server runs on node.js
+device        : device specific system configuration and binaries
+lib/external  : 3rd-party libraries
+lib/framework : diligent & cutie ui framework
+apps          : builtin apps
+api           : socket.io api spec
+resource      : copy resource files
+clean         : remove build
+distclean     : remove build and device selection
+```
 
 ## Wife App Developer Guide ##
 
