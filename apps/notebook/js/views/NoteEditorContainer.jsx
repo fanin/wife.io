@@ -1,13 +1,33 @@
 var NoteEditorContainer = React.createClass({
 
 	componentDidMount: function() {
-		CKEDITOR.config.readOnly = true;
+		CKEDITOR.config.readOnly = false;
 		CKEDITOR.config.resize_enabled = false;
-		CKEDITOR.config.extraPlugins = "font,customsave,screenshotarea,dragresize";
-		CKEDITOR.config.removePlugins = "format,link,unlink,anchor,elementspath,about";
-		CKEDITOR.config.skin = "icy_orange";
+		CKEDITOR.config.extraPlugins = "customsave,screenshotarea,dragresize,tableresize,justify";
+		CKEDITOR.config.removePlugins = "uploadcare,image,link,unlink,anchor,elementspath,about";
+		CKEDITOR.config.skin = "minimalist";
+		CKEDITOR.config.codeSnippet_theme = 'xcode';
 		CKEDITOR.addCss(".cke_editable { word-wrap: break-word }");
-		CKEDITOR.replace("nb-editor");
+		CKEDITOR.replace("nb-editor", {
+			removeButtons: "Source, Maximize",
+			toolbar: [
+				[ 'Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', '-',
+				  'Undo', 'Redo', '-',
+				  'Find', 'Replace', '-',
+				  'Scayt', '-',
+				  'NumberedList', 'BulletedList', '-',
+				  'Table', 'HorizontalRule', 'SpecialChar', 'CodeSnippet', 'MathJax', '-',
+				  'Youtube', 'wenzgmap', 'ScreenshotArea', '-',
+				  'Save' ],
+				'/',
+				[ 'Font', 'FontSize', 'Bold', 'Italic', 'Underline', 'Strike',
+				  'Subscript', 'Superscript', 'TextColor', 'BGColor', '-',
+				  'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock', '-',
+				  'Indent', 'Outdent', '-',
+				  'Blockquote', '-',
+				  'RemoveFormat' ]
+			]
+		});
 	},
 
 	render: function() {
@@ -27,7 +47,7 @@ var NoteEditorContainer = React.createClass({
 				        </div>
 				    </div>
 				</div>
-				<div className="nb-column-content">
+				<div className="nb-column-content nb-editor-container">
 					<textarea id="nb-editor" name="nb-editor" />
                 </div>
 			</div>

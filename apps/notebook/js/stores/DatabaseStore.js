@@ -2,14 +2,15 @@ var NotebookDispatcher = require('../dispatcher/NotebookDispatcher');
 var NotebookConstants  = require('../constants/NotebookConstants');
 var EventEmitter       = require('events').EventEmitter;
 var assign             = require('object-assign');
+var basename           = require('utils/client-utils').basename;
 
 var CHANGE_EVENT = 'NOTEBOOK_DATABASE_STORE_CHANGE';
 
 var treeData = null;
-var createdStack = { id: null, name: '' };
-var createdNotebook = { id: null, name: '' };
-var trashedNotebook = { id: null };
-var selectedNotebook = { id: null };
+var selectedNotebookNode = null;
+var noteList = null;
+var selectedNoteIndex = -1;
+var sortMethod = null;
 var error = null;
 
 var DatabaseStore = assign({}, EventEmitter.prototype, {
@@ -29,20 +30,19 @@ var DatabaseStore = assign({}, EventEmitter.prototype, {
         return treeData;
     },
 
-    getCreatedStack: function() {
-        return createdStack;
-    },
-
-    getCreatedNotebook: function() {
-        return createdNotebook;
-    },
-
-    getTrashedNotebook: function() {
-        return trashedNotebook;
-    },
-
     getSelectedNotebook: function() {
-        return selectedNotebook;
+        return selectedNotebookNode;
+    },
+
+    getNoteList: function() {
+        return noteList;
+    },
+
+    getSelectedNote: function() {
+        if (selectedNoteIndex >= 0)
+            return noteList[selectedNoteIndex];
+        else
+            return null;
     },
 
     getError: function() {
@@ -55,32 +55,121 @@ DatabaseStore.dispatchToken = NotebookDispatcher.register(function(action) {
         case NotebookConstants.NOTEBOOK_DATABASE_LOADTREE_SUCCESS:
         case NotebookConstants.NOTEBOOK_DATABASE_SAVETREE_SUCCESS:
             treeData = action.treeData;
-            DatabaseStore.emitChange(action.actionType);
+            DatabaseStore.emitChange({ actionType: action.actionType });
             break;
         case NotebookConstants.NOTEBOOK_DATABASE_CREATE_STACK:
-            createdStack.id = action.id;
-            createdStack.name = action.name;
-            DatabaseStore.emitChange(action.actionType);
+            DatabaseStore.emitChange({
+                actionType: action.actionType,
+                stack: {
+                    id: action.id,
+                    name: action.name
+                }
+            });
             break;
         case NotebookConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK_SUCCESS:
-            createdNotebook.id = action.id;
-            createdNotebook.name = action.name;
-            DatabaseStore.emitChange(action.actionType);
+            DatabaseStore.emitChange({
+                actionType: action.actionType,
+                notebook: {
+                    id: action.id,
+                    name: action.name
+                }
+            });
             break;
         case NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTEBOOK_SUCCESS:
-            trashedNotebook.id = action.id;
-            DatabaseStore.emitChange(action.actionType);
+            DatabaseStore.emitChange({
+                actionType: action.actionType,
+                notebookNode: action.notebookNode
+            });
             break;
-        case NotebookConstants.NOTEBOOK_DATABASE_SELECT:
-            selectedNotebook.id = action.id;
-            DatabaseStore.emitChange(action.actionType);
+        case NotebookConstants.NOTEBOOK_DATABASE_SELECT_NOTEBOOK:
+            selectedNotebookNode = action.notebookNode;
+            DatabaseStore.emitChange({ actionType: action.actionType });
             break;
+
+        case NotebookConstants.NOTEBOOK_DATABASE_SET_NOTE_SORT_METHOD:
+            var _index = -1;
+
+            if (sortMethod !== action.method) {
+                sortMethod = action.method;
+
+                if (noteList) {
+                    var _selectNote = DatabaseStore.getSelectedNote();
+                    noteList.sort(sortMethod);
+                    index = noteList.map(function(note) { return note.id; }).indexOf(_selectNote.id);
+                }
+
+                DatabaseStore.emitChange({
+                    actionType: action.actionType,
+                    method: sortMethod,
+                    index: index
+                });
+            }
+            break;
+        case NotebookConstants.NOTEBOOK_DATABASE_LOADNOTES_SUCCESS:
+            noteList = action.notes.sort(sortMethod);
+            DatabaseStore.emitChange({ actionType: action.actionType });
+            break;
+        case NotebookConstants.NOTEBOOK_DATABASE_SELECT_NOTE:
+            if (
+                action.index >= 0 &&
+                action.index < noteList.length &&
+                action.index !== selectedNoteIndex
+            ) {
+                selectedNoteIndex = action.index;
+                DatabaseStore.emitChange({ actionType: action.actionType });
+            }
+            break;
+        case NotebookConstants.NOTEBOOK_DATABASE_ADD_NOTE_SUCCESS:
+            if (selectedNotebookNode.id === action.note.notebookNode.id) {
+                noteList.unshift(action.note);
+                noteList.sort(sortMethod);
+                var index = noteList.map(function(note) { return note.id; }).indexOf(action.note.id);
+                DatabaseStore.emitChange({
+                    actionType: action.actionType,
+                    note: action.note,
+                    index: index
+                });
+            }
+            break;
+        case NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTE_SUCCESS:
+            for (var i = 0; i < noteList.length; i++) {
+                if (noteList[i].id === action.note.id) {
+                    noteList.splice(i, 1);
+                    DatabaseStore.emitChange({
+                        actionType: action.actionType,
+                        index: i
+                    });
+                    break;
+                }
+            }
+            break;
+        case NotebookConstants.NOTEBOOK_DATABASE_COPY_NOTE_SUCCESS:
+            if (
+                selectedNotebookNode.id === action.note.notebookNode.id ||
+                selectedNotebookNode.id === 1 ||
+                selectedNotebookNode.isFolder()
+            ) {
+                noteList.unshift(action.note);
+                noteList.sort(sortMethod);
+                var index = noteList.map(function(note) { return note.id; }).indexOf(action.note.id);
+                DatabaseStore.emitChange({
+                    actionType: action.actionType,
+                    note: action.note,
+                    index: index
+                });
+            }
+            break;
+
         case NotebookConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR:
         case NotebookConstants.NOTEBOOK_DATABASE_SAVETREE_ERROR:
         case NotebookConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK_ERROR:
         case NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTEBOOK_ERROR:
+        case NotebookConstants.NOTEBOOK_DATABASE_LOADNOTES_ERROR:
+        case NotebookConstants.NOTEBOOK_DATABASE_ADD_NOTE_ERROR:
+        case NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTE_ERROR:
+        case NotebookConstants.NOTEBOOK_DATABASE_COPY_NOTE_ERROR:
             error = action.error;
-            DatabaseStore.emitChange(action.actionType);
+            DatabaseStore.emitChange({ actionType: action.actionType });
             break;
     }
 });

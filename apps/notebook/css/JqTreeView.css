@@ -1,10 +1,17 @@
-.jq-treeview {
-    font-size: 1em;
+.jq-treeview-container {
+    height: 100%;
+    overflow-y: auto;
+    font-size: 1.2em;
     -webkit-user-select: none; /* Chrome/Safari */
     -moz-user-select: none; /* Firefox */
     -ms-user-select: none; /* IE10+ */
+    -ie-user-select: none;
     -o-user-select: none;
+    -khtml-user-select: none;
     user-select: none;
+}
+
+.jq-treeview {
     overflow: hidden;
 }
 
@@ -16,7 +23,7 @@
 
 .jqtree-toggler {
     margin: 0 !important;
-    margin-right: .5em !important;
+    margin-right: .1em !important;
 }
 
 ul.jqtree-tree span.jqtree-border {

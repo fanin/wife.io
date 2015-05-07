@@ -30,11 +30,11 @@
 .nb-column-toolbar {
 	border-radius: 0 !important;
 	height: 36px !important;
+    margin: 0 !important;
 }
 
 .nb-column-content {
 	height: calc(100% - 64px); /* (toolbar 36px + padding-top 14px + padding-bottom 14px) */
     padding: 0 !important;
-    overflow-y: auto !important;
-    margin: 0 14px;
+    margin: 14px;
 }

@@ -1,11 +1,27 @@
+.nb-editor-container {
+    margin: 0px !important;
+}
+
 .nb-column-toolbar-title-input {
-	width: calc(100% - 250px);
+	width: calc(100% - 245px);
 }
 
 .nb-column-toolbar-search-input {
 	width: 245px;
 }
 
-.cke_reset {
+.cke_editor_nb-editor {
 	height: 100% !important;
+}
+
+.cke_top {
+    background-color: rgb(240, 240, 240) !important;
+}
+
+.cke_reset {
+    height: calc(100% - 14px) !important;
+}
+
+.cke_contents {
+    height:calc(100% - 1px) !important;
 }

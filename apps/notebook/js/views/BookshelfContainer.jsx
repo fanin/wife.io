@@ -88,15 +88,11 @@ var BookshelfContainer = React.createClass({
             inputDialogTitle: '',
             inputDialogDefaultValue: '',
             inputDialogOnAffirmative: null,
-            disableRenameButton: false,
-            disableTrashButton: false
+            disableMoreOperationButton: false
         };
     },
 
     componentWillMount: function() {
-        DiligentAgent.attach(this);
-        StorageAgent.attach(this);
-
         DatabaseStore.addChangeListener(this._onDatabaseChange);
 
         $.fn.form.settings.rules.checkLength = function(text) {
@@ -107,6 +103,9 @@ var BookshelfContainer = React.createClass({
             var regExp = /[`~,.<>\-;':"/[\]|{}()=+!@#$%^&*]/;
             return !regExp.test(text);
         };
+
+        DiligentAgent.attach(this);
+        StorageAgent.attach(this);
     },
 
     componentDidMount: function() {
@@ -117,12 +116,17 @@ var BookshelfContainer = React.createClass({
                 StorageAgent.setDiskInUse(_disk);
             }
         });
+
+        $(".nb-toolbar-moreop-dropdown").dropdown({
+            transition: "drop",
+            action: "nothing"
+        });
     },
 
     componentWillUnmount: function() {
-        DatabaseStore.removeChangeListener(this._onDatabaseChange);
         StorageAgent.detach(this);
         DiligentAgent.detach(this);
+        DatabaseStore.removeChangeListener(this._onDatabaseChange);
     },
 
     render: function() {
@@ -136,10 +140,9 @@ var BookshelfContainer = React.createClass({
             );
         });
 
-        var renameButtonClass = this.state.disableRenameButton ? "ui pointing link disabled item"
-                                                               : "ui pointing link item";
-        var trashButtonClass = this.state.disableTrashButton ? "ui pointing link disabled item"
-                                                             : "ui pointing link item";
+        var moreOpButtonClass = this.state.disableMoreOperationButton ?
+                                "ui disabled pointing dropdown link item nb-toolbar-moreop-dropdown" :
+                                "ui pointing dropdown link item nb-toolbar-moreop-dropdown";
 
         return (
             <div className="nb-column-container">
@@ -154,13 +157,18 @@ var BookshelfContainer = React.createClass({
                         <i className="plus icon"></i>
                         New
                     </div>
-                    <div className={renameButtonClass} onClick={this._renameInputDialog}>
-                        <i className="write icon"></i>
-                        Rename
-                    </div>
-                    <div className={trashButtonClass} onClick={this._trashConfirmDialog}>
-                        <i className="trash outline icon"></i>
-                        Trash
+                    <div className={moreOpButtonClass}>
+                        <i className="ellipsis vertical icon"></i>
+                        <div className="menu">
+                            <div className="item" data-value="rename" data-text="Rename" onClick={this._renameInputDialog}>
+                                <i className="write icon"></i>
+                                Rename
+                            </div>
+                            <div className="item" data-value="trash" data-text="Trash" onClick={this._trashConfirmDialog}>
+                                <i className="trash outline icon"></i>
+                                Trash
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div className="nb-column-content">
@@ -178,9 +186,6 @@ var BookshelfContainer = React.createClass({
                                  defaultValue = {this.state.inputDialogDefaultValue}
                                         rules = {notebookInputRules}
                           onActionAffirmative = {this.state.inputDialogOnAffirmative} />
-                {
-                // BUG
-                }
                 <AlertViewController ref = 'alertViewController'
                                    title = {this.state.alertTitle}
                              description = {this.state.alertDescription}
@@ -190,10 +195,9 @@ var BookshelfContainer = React.createClass({
     },
 
     _onDatabaseChange: function(change) {
-        switch (change) {
+        switch (change.actionType) {
             case NotebookConstants.NOTEBOOK_DATABASE_LOADTREE_SUCCESS:
                 this.setState({ treeData: DatabaseStore.getTreeData() });
-                // FIXME: use timeout function to avoid dispatcher error
                 setTimeout(function() {
                     this.refs.treeViewController.nodeSelect(this.refs.treeViewController.getNodeById(1));
                 }.bind(this), 1);
@@ -201,21 +205,17 @@ var BookshelfContainer = React.createClass({
             case NotebookConstants.NOTEBOOK_DATABASE_SAVETREE_SUCCESS:
                 break;
             case NotebookConstants.NOTEBOOK_DATABASE_CREATE_STACK:
-                var stack = DatabaseStore.getCreatedStack();
-                this.treeViewCreateFolderHelper(stack.id, stack.name);
+                this.treeViewCreateFolderHelper(change.stack.id, change.stack.name);
                 this.treeViewCreateFolderHelper = undefined;
                 this._saveTree();
                 break;
             case NotebookConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK_SUCCESS:
-                var nb = DatabaseStore.getCreatedNotebook();
-                this.refs.treeViewController.nodeCreate(nb.id, nb.name);
+                this.refs.treeViewController.nodeCreate(change.notebook.id, change.notebook.name);
                 this._saveTree();
                 break;
             case NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTEBOOK_SUCCESS:
-                var nb = DatabaseStore.getTrashedNotebook();
-                this.refs.treeViewController.nodeRemove(nb.id);
+                this.refs.treeViewController.nodeRemove(change.notebookNode);
                 this._saveTree();
-                //TODO: select default notebook
                 break;
             case NotebookConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR:
             case NotebookConstants.NOTEBOOK_DATABASE_SAVETREE_ERROR:
@@ -271,7 +271,7 @@ var BookshelfContainer = React.createClass({
     },
 
     _renameInputDialog: function() {
-        if (this.state.disableRenameButton)
+        if (this.state.disableMoreOperationButton)
             return;
 
         var node = this.refs.treeViewController.getSelectedNode();
@@ -295,7 +295,7 @@ var BookshelfContainer = React.createClass({
     },
 
     _trashConfirmDialog: function() {
-        if (this.state.disableTrashButton)
+        if (this.state.disableMoreOperationButton)
             return;
 
         var node = this.refs.treeViewController.getSelectedNode();
@@ -319,27 +319,30 @@ var BookshelfContainer = React.createClass({
 
     _trashSelected: function() {
         var node = this.refs.treeViewController.getSelectedNode();
+        var superNode = this.refs.treeViewController.getNodeById(1);
 
         if (node.isFolder()) {
             node.iterate(function(node) {
-                DatabaseActionCreators.trashNotebook(node.id);
+                DatabaseActionCreators.trashNotebook(node);
             });
             return true;
         }
         else {
-            DatabaseActionCreators.trashNotebook(node.id);
+            DatabaseActionCreators.trashNotebook(node);
         }
+
+        this.refs.treeViewController.nodeSelect(superNode);
     },
 
     _onTreeSelect: function(node) {
         if (!node) return;
 
         if (node.id === 1)
-            this.setState({ disableRenameButton: true, disableTrashButton: true });
+            this.setState({ disableMoreOperationButton: true });
         else
-            this.setState({ disableRenameButton: false, disableTrashButton: false });
+            this.setState({ disableMoreOperationButton: false });
 
-        DatabaseActionCreators.selectNotebook(node.id);
+        DatabaseActionCreators.selectNotebook(node);
     }
 
 });

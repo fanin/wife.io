@@ -3,12 +3,14 @@ var ListViewItem = require('./ListViewItem.jsx')
 var ListViewController = React.createClass({
 
     propTypes: {
+        setDataSourceByRef: React.PropTypes.bool,
+        onDataLoad: React.PropTypes.func,
         onSelectRow: React.PropTypes.func
     },
 
     getDefaultProps: function() {
         return {
-
+            setDataSourceByRef: false
         };
     },
 
@@ -20,8 +22,8 @@ var ListViewController = React.createClass({
     },
 
     render: function() {
-        var items = this.state.dataSource.map(function(data, index) {
-            var isActive = (index === this.state.selectedRowIndex);
+        var rows = this.state.dataSource.map(function(data, index) {
+            var isActive = (index == this.state.selectedRowIndex);
             return <ListViewItem index={index}
                                 active={isActive}
                              titleText={data.titleText}
@@ -31,32 +33,63 @@ var ListViewController = React.createClass({
         }, this);
 
         return (
-            <div className="ui selection celled list">
-                {items}
+            <div className="cutie-listview-container">
+                <div className="ui selection celled list">
+                    {rows}
+                </div>
             </div>
         );
     },
 
     setDataSource: function(dataList) {
-        this.setState({ dataSource: dataList });
+        this.setState({ dataSource: (this.props.setDataSourceByRef ? dataList : dataList.slice(0)) });
+        this.props.onDataLoad && this.props.onDataLoad();
     },
 
     selectRowAtIndex: function(index) {
-        if (index < this.state.dataSource.length) {
-            this.setState({ selectedRowIndex: index });
-            this.props.onSelectRow && this.props.onSelectRow(index);
-        }
+        this.setState({ selectedRowIndex: index });
+        if (this.props.setDataSourceByRef)
+            this.forceUpdate();
+        this.props.onSelectRow && this.props.onSelectRow(index);
+        this.scrollToRowAtIndex(index, true);
     },
 
-    addRowAtIndex: function(rowData, index) {
-        if (index >= this.state.dataSource.length)
-            index = this.state.dataSource.length - 1;
+    addRowAtIndex: function(data, index) {
+        if (!this.props.setDataSourceByRef) {
+            var dataSource = this.state.dataSource;
+            dataSource.splice(index, 0, data);
+            dataSource.join();
+            this.setState({ dataSource: dataSource });
+        }
 
+        this.selectRowAtIndex(index);
     },
 
     removeRowAtIndex: function(index) {
-        if (index < this.state.dataSource.length)
-            ;
+        if (!this.props.setDataSourceByRef) {
+            var dataSource = this.state.dataSource;
+            dataSource.splice(index, 1);
+            this.setState({ dataSource: dataSource });
+        }
+
+        if (index >= this.state.dataSource.length)
+            this.selectRowAtIndex(this.state.dataSource.length - 1);
+        else
+            this.selectRowAtIndex(index);
+    },
+
+    scrollToRowAtIndex: function(index, animated) {
+        var _containerHeight = $(".cutie-listview-container").height();
+        var _rowHeight = $( $(".ui.selection.celled.list").children().eq(index) ).outerHeight();
+        var _containerMiddlePos = _containerHeight / 2 - _rowHeight / 2;
+        var _posScrollTo = (_rowHeight * index) - _containerMiddlePos;
+
+        if (animated)
+            $(".cutie-listview-container").stop(true, true).animate({
+                scrollTop: _posScrollTo
+            }, 600);
+        else
+            $(".cutie-listview-container").scrollTop(_posScrollTo);
     }
 
 });

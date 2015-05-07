@@ -130,7 +130,9 @@ var JqTreeViewController = React.createClass({
 
     render: function() {
         return (
-            <div className="jq-treeview" />
+            <div className="jq-treeview-container">
+                <div className="jq-treeview" />
+            </div>
         );
     },
 
@@ -163,11 +165,10 @@ var JqTreeViewController = React.createClass({
     },
 
     nodeCreate: function(id, name) {
-        this.treeInstance.tree("appendNode", { label: name, id: id });
+        this.treeInstance.tree("appendNode", { id: id, label: name });
     },
 
-    nodeRemove: function(id) {
-        var node = this.getNodeById(id);
+    nodeRemove: function(node) {
         var parent = node.parent;
         this.treeInstance.tree("removeNode", node);
         if (parent && parent.children.length === 0)

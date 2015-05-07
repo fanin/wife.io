@@ -13,11 +13,13 @@ div.shake-app img {
     height: 64px;
 */
     cursor: default;
-    -webkit-user-select: none;
-    -moz-user-select: none;
+    -webkit-user-select: none; /* Chrome/Safari */
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* IE10+ */
     -ie-user-select: none;
     -o-user-select: none;
     -khtml-user-select: none;
+    user-select: none;
 }
 
 div.shake-app:nth-child(even) {

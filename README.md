@@ -54,15 +54,15 @@ temp_data_path : Temp path for server runtime temporary files
 
 #### Diligent Server (Backend) ####
 
-![Backend](site/diligent_be.png)
+![Backend](website/diligent_be.png)
 
 #### Diligent Framework (Frontend) ####
 
-![Frontend](site/diligent_fe.png)
+![Frontend](website/diligent_fe.png)
 
 #### Application Framework (Frontend) ####
 
-![App Framework](site/app_framework.png)
+![App Framework](website/app_framework.png)
 
 
 ### Diligent Framework ###
@@ -163,7 +163,7 @@ $ gulp clean
 
 ### Wife App Life Cycle ###
 
-![App Life Cycle](site/app_life_cycle.png)
+![App Life Cycle](website/app_life_cycle.png)
 
 ### Working With Agents API ###
 

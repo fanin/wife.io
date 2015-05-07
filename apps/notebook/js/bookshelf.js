@@ -1,7 +1,3 @@
-// FIXME:
-//  1. Avoid drag notebook on top of "All Notes"
-//  2. Any notebook dragged on, on top of or on bottom of "All Notes", move it on bottom of "All Notes"
-
 function Bookshelf(viewController) {
     var self = this;
 
