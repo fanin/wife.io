@@ -2,12 +2,14 @@ var NotebookDispatcher = require('../dispatcher/NotebookDispatcher');
 var NotebookConstants  = require('../constants/NotebookConstants');
 var getTimecode        = require('utils/string-code').getTimecode;
 var dirname            = require('utils/client-utils').dirname;
+var base64ToBlob       = require('utils/buffer-utils').base64ToBlob;
 
 var DATABASE_ROOT_FOLDER = "bookshelf";
 var DATABASE_TREE_FILE   = "bookshelf-tree.json";
 var DATABASE_NOTE_FILE   = "index.html";
 var DATABASE_FIRST_ENTRY_LABEL = "All Notes";
 
+var databaseStorage;
 var saveWaitTimer;
 
 var DatabaseActionCreators = {
@@ -23,9 +25,21 @@ var DatabaseActionCreators = {
         return DATABASE_ROOT_FOLDER + "/" + path;
     },
 
-    __getLastModifiedDate: function(stat) {
-        var _mtime = new Date(stat.mtime);
-        return _mtime.toLocaleDateString() + " " + _mtime.toLocaleTimeString();
+    /**
+     * Open notebook database on given storage
+     * @method openDatabase
+     * @param storage {Object} Storage object where database is stored
+     */
+    openDatabase: function(storage) {
+        databaseStorage = storage;
+    },
+
+    /**
+     * Close notebook database
+     * @method closeDatabase
+     */
+    closeDatabase: function() {
+        databaseStorage = null;
     },
 
     /**
@@ -33,6 +47,8 @@ var DatabaseActionCreators = {
      * @method loadTree
      */
     loadTree: function() {
+        if (!databaseStorage) return;
+
         var treeData = [{ label: DATABASE_FIRST_ENTRY_LABEL, id: 1 }];
 
         NotebookDispatcher.dispatch({
@@ -141,6 +157,8 @@ var DatabaseActionCreators = {
      * @param wait {Number} Wait a period of time in millisecond before saving tree data
      */
     saveTree: function(treeData, wait) {
+        if (!databaseStorage) return;
+
         wait = wait || 0;
 
         if (saveWaitTimer) {
@@ -177,10 +195,12 @@ var DatabaseActionCreators = {
      * @param name {String} Stack name
      */
     createStack: function(name) {
+        if (!databaseStorage) return;
+
         NotebookDispatcher.dispatch({
             actionType: NotebookConstants.NOTEBOOK_DATABASE_CREATE_STACK,
-            id: parseInt(getTimecode()),
-            name: name
+            stackId: parseInt(getTimecode()),
+            stackName: name
         });
     },
 
@@ -190,6 +210,8 @@ var DatabaseActionCreators = {
      * @param name {String} Notebook name
      */
     createNotebook: function(name) {
+        if (!databaseStorage) return;
+
         var code = getTimecode();
         var notebookPath = this.__getPath(code);
 
@@ -222,8 +244,8 @@ var DatabaseActionCreators = {
                 else {
                     NotebookDispatcher.dispatch({
                         actionType: NotebookConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK_SUCCESS,
-                        id: parseInt(code),
-                        name: name
+                        NotebookId: parseInt(code),
+                        NotebookName: name
                     });
                 }
             });
@@ -236,6 +258,8 @@ var DatabaseActionCreators = {
      * @param notebookNode {Object} jqTree node of notebook to be removed
      */
     trashNotebook: function(notebookNode) {
+        if (!databaseStorage) return;
+
         var notebookPath = this.__getPath(notebookNode.id);
 
         NotebookDispatcher.dispatch({
@@ -277,9 +301,11 @@ var DatabaseActionCreators = {
     /**
      * Select a notebook
      * @method selectNotebook
-     * @param notebookNode {Number} jqTree node of notebook to be selected
+     * @param notebookNode {Object} jqTree node of notebook to be selected
      */
     selectNotebook: function(notebookNode) {
+        if (!databaseStorage) return;
+
         NotebookDispatcher.dispatch({
             actionType: NotebookConstants.NOTEBOOK_DATABASE_SELECT_NOTEBOOK,
             notebookNode: notebookNode
@@ -289,11 +315,13 @@ var DatabaseActionCreators = {
     /**
      * Load notes from notebook
      * @method loadNotes
-     * @param notebookNode {Number} jqTree node of notebook to be loaded
+     * @param notebookNode {Object} jqTree node of notebook to be loaded
      */
     loadNotes: function(notebookNode) {
+        if (!databaseStorage) return;
+
         var __loadNotes = function(_this, node, cb) {
-            var _notes = [];
+            var _noteDescriptors = [];
             var _notebookPath = _this.__getPath(node.id);
 
             FileAgent.statList(_notebookPath, function(path, ids, stats, error) {
@@ -325,20 +353,16 @@ var DatabaseActionCreators = {
                                 });
                             }
 
-                            var _noteTitle = data[1];
-                            var _noteLastModDate = _this.__getLastModifiedDate(stats[i]);
-
-                            _notes.push({
+                            _noteDescriptors.push({
                                 notebookNode: node,
-                                id: noteId,
-                                stat: stats[i],
-                                titleText: _noteTitle,
-                                subtitleText: _noteLastModDate,
-                                detailText: ""
+                                noteId: noteId,
+                                noteStat: stats[i],
+                                noteTitle: data[1],
+                                noteContent: ""
                             });
 
                             if (i === ids.length - 1)
-                                cb(_notes);
+                                cb(_noteDescriptors);
                         }
                     );
                 });
@@ -352,7 +376,7 @@ var DatabaseActionCreators = {
 
         if (notebookNode.id === 1) {
             var _rootNode = notebookNode.parent;
-            var _allNotes = [];
+            var _noteMergedDescriptors = [];
             var _total = 0, _count = 0;
 
             for (var _i = 0; _i < _rootNode.children.length; _i++) {
@@ -369,13 +393,13 @@ var DatabaseActionCreators = {
                 if (child.children.length > 0)
                     return true;
 
-                __loadNotes(this, child, function(notes) {
-                    _allNotes = _allNotes.concat(notes);
+                __loadNotes(this, child, function(noteDescriptors) {
+                    _noteMergedDescriptors = _noteMergedDescriptors.concat(noteDescriptors);
                     if (++_count === _total) {
                         NotebookDispatcher.dispatch({
                             actionType: NotebookConstants.NOTEBOOK_DATABASE_LOADNOTES_SUCCESS,
                             notebookNode: notebookNode,
-                            notes: _allNotes
+                            noteDescriptors: _noteMergedDescriptors
                         });
                     }
                 });
@@ -387,13 +411,13 @@ var DatabaseActionCreators = {
             var _stackNotes = [];
             var _count = 0;
             notebookNode.iterate(function(child, level) {
-                __loadNotes(this, child, function(notes) {
-                    _stackNotes = _stackNotes.concat(notes);
+                __loadNotes(this, child, function(noteDescriptors) {
+                    _stackNotes = _stackNotes.concat(noteDescriptors);
                     if (++_count === notebookNode.children.length) {
                         NotebookDispatcher.dispatch({
                             actionType: NotebookConstants.NOTEBOOK_DATABASE_LOADNOTES_SUCCESS,
                             notebookNode: notebookNode,
-                            notes: _stackNotes
+                            noteDescriptors: _stackNotes
                         });
                     }
                 });
@@ -401,11 +425,11 @@ var DatabaseActionCreators = {
             }.bind(this));
         }
         else {
-            __loadNotes(this, notebookNode, function(notes) {
+            __loadNotes(this, notebookNode, function(noteDescriptors) {
                 NotebookDispatcher.dispatch({
                     actionType: NotebookConstants.NOTEBOOK_DATABASE_LOADNOTES_SUCCESS,
                     notebookNode: notebookNode,
-                    notes: notes
+                    noteDescriptors: noteDescriptors
                 });
             });
         }
@@ -417,6 +441,8 @@ var DatabaseActionCreators = {
      * @param index {Number} Index of selected note
      */
     selectNote: function(index) {
+        if (!databaseStorage) return;
+
         NotebookDispatcher.dispatch({
             actionType: NotebookConstants.NOTEBOOK_DATABASE_SELECT_NOTE,
             index: index
@@ -429,6 +455,8 @@ var DatabaseActionCreators = {
      * @param method {Function} Sort method function
      */
     setNoteSortMethod: function(method) {
+        if (!databaseStorage) return;
+
         NotebookDispatcher.dispatch({
             actionType: NotebookConstants.NOTEBOOK_DATABASE_SET_NOTE_SORT_METHOD,
             method: method
@@ -436,13 +464,15 @@ var DatabaseActionCreators = {
     },
 
     /**
-     * Add a new note
+     * Add a new note and dispatch a new NoteDescriptor object to NotebookStore.
      * @method addNote
      * @param notebookNode {Object} jqTree node of notebook where new note to be added
      * @param title {String} Note title string
      * @param content {String} Note content string
      */
     addNote: function(notebookNode, title, content) {
+        if (!databaseStorage) return;
+
         var self = this;
 
         NotebookDispatcher.dispatch({
@@ -506,15 +536,22 @@ var DatabaseActionCreators = {
                                     });
                                 }
 
+                                /**
+                                 * @define NoteDescriptor
+                                 * @member notebookNode {Object} Notebook node object
+                                 * @member noteId       {Number} Note ID
+                                 * @member noteStat     {Object} Note file state information
+                                 * @member noteTitle    {String} Note list item title text
+                                 * @member noteContent  {String} Note content in HTML format
+                                 */
                                 NotebookDispatcher.dispatch({
                                     actionType: NotebookConstants.NOTEBOOK_DATABASE_ADD_NOTE_SUCCESS,
-                                    note: {
+                                    noteDescriptor: {
                                         notebookNode: notebookNode,
-                                        id: noteId,
-                                        stat: stat,
-                                        titleText: title,
-                                        subtitleText: self.__getLastModifiedDate(stat),
-                                        detailText: ""
+                                        noteId: noteId,
+                                        noteStat: stat,
+                                        noteTitle: title,
+                                        noteContent: ""
                                     }
                                 });
                             });
@@ -532,24 +569,26 @@ var DatabaseActionCreators = {
     /**
      * Copy note
      * @method copyNote
-     * @param note {Object} Note summary object to be copied
+     * @param noteDescriptor {Object} NoteDescriptor object of note to be copied
      */
-    copyNote: function(note) {
+    copyNote: function(noteDescriptor) {
+        if (!databaseStorage) return;
+
         var self = this;
-        var notebookNode = note.notebookNode;
+        var notebookNode = noteDescriptor.notebookNode;
 
         NotebookDispatcher.dispatch({
             actionType: NotebookConstants.NOTEBOOK_DATABASE_COPY_NOTE,
-            srcNote: note
+            srcNoteDescriptor: noteDescriptor
         });
 
-        var notePath = this.__getPath(notebookNode.id + "/" + note.id);
+        var notePath = this.__getPath(notebookNode.id + "/" + noteDescriptor.noteId);
 
         FileAgent.exist(notePath, function(path, exist, isDir, error) {
             if (error) {
                 return NotebookDispatcher.dispatch({
                     actionType: NotebookConstants.NOTEBOOK_DATABASE_COPY_NOTE_ERROR,
-                    srcNote: note,
+                    srcNoteDescriptor: noteDescriptor,
                     error: "fs error: " + error
                 });
             }
@@ -562,7 +601,7 @@ var DatabaseActionCreators = {
                     if (error) {
                         return NotebookDispatcher.dispatch({
                             actionType: NotebookConstants.NOTEBOOK_DATABASE_COPY_NOTE_ERROR,
-                            srcNote: note,
+                            srcNoteDescriptor: noteDescriptor,
                             error: "unable to copy " + notePath + ": " + error
                         });
                     }
@@ -571,7 +610,7 @@ var DatabaseActionCreators = {
                         if (error) {
                             return NotebookDispatcher.dispatch({
                                 actionType: NotebookConstants.NOTEBOOK_DATABASE_COPY_NOTE_ERROR,
-                                srcNote: note,
+                                srcNoteDescriptor: noteDescriptor,
                                 error: "unable to read " + path + ": " + error
                             });
                         }
@@ -585,7 +624,7 @@ var DatabaseActionCreators = {
                                 if (error) {
                                     return NotebookDispatcher.dispatch({
                                         actionType: NotebookConstants.NOTEBOOK_DATABASE_COPY_NOTE_ERROR,
-                                        srcNote: note,
+                                        srcNoteDescriptor: noteDescriptor,
                                         error: "grep src error: " + error
                                     });
                                 }
@@ -599,7 +638,7 @@ var DatabaseActionCreators = {
                                     if (error) {
                                         return NotebookDispatcher.dispatch({
                                             actionType: NotebookConstants.NOTEBOOK_DATABASE_COPY_NOTE_ERROR,
-                                            srcNote: note,
+                                            srcNoteDescriptor: noteDescriptor,
                                             error: "unable to write " + path + ": " + error
                                         });
                                     }
@@ -608,21 +647,19 @@ var DatabaseActionCreators = {
                                         if (error) {
                                             return NotebookDispatcher.dispatch({
                                                 actionType: NotebookConstants.NOTEBOOK_DATABASE_COPY_NOTE_ERROR,
-                                                srcNote: note,
+                                                srcNote: noteDescriptor,
                                                 error: "unable to get stat of " + path + ": " + error
                                             });
                                         }
 
                                         NotebookDispatcher.dispatch({
                                             actionType: NotebookConstants.NOTEBOOK_DATABASE_COPY_NOTE_SUCCESS,
-                                            srcNote: note,
-                                            note: {
+                                            srcNoteDescriptor: noteDescriptor,
+                                            dstNoteDescriptor: {
                                                 notebookNode: notebookNode,
-                                                id: _copyNoteId,
-                                                stat: stat,
-                                                titleText: _noteTitle,
-                                                subtitleText: self.__getLastModifiedDate(stat),
-                                                detailText: ""
+                                                noteId: _copyNoteId,
+                                                noteStat: stat,
+                                                noteTitle: _noteTitle
                                             }
                                         });
                                     });
@@ -638,21 +675,23 @@ var DatabaseActionCreators = {
     /**
      * Trash note
      * @method trashNote
-     * @param note {Object} Note summary object
+     * @param noteDescriptor {Object} NoteDescriptor object of note to be removed
      */
-    trashNote: function(note) {
-        var notePath = this.__getPath(note.notebookNode.id + "/" + note.id);
+    trashNote: function(noteDescriptor) {
+        if (!databaseStorage) return;
+
+        var notePath = this.__getPath(noteDescriptor.notebookNode.id + "/" + noteDescriptor.noteId);
 
         NotebookDispatcher.dispatch({
             actionType: NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTE,
-            note: note
+            noteDescriptor: noteDescriptor
         });
 
         FileAgent.exist(notePath, function(path, exist, isDir, error) {
             if (error) {
                 return NotebookDispatcher.dispatch({
                     actionType: NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTE_ERROR,
-                    note: note,
+                    noteDescriptor: noteDescriptor,
                     error: "fs error: " + error
                 });
             }
@@ -662,18 +701,333 @@ var DatabaseActionCreators = {
                     if (error) {
                         return NotebookDispatcher.dispatch({
                             actionType: NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTE_ERROR,
-                            note: note,
+                            noteDescriptor: noteDescriptor,
                             error: "unable to remove " + notePath + ": " + error
                         });
                     }
 
                     NotebookDispatcher.dispatch({
                         actionType: NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTE_SUCCESS,
-                        note: note
+                        noteDescriptor: noteDescriptor
                     });
                 });
             }
         });
+    },
+
+    /**
+     * Load note content
+     * @method loadNoteContent
+     * @param noteDescriptor {Object} NoteDescriptor object of note to be loaded
+     */
+    loadNoteContent: function(noteDescriptor) {
+        if (!databaseStorage) return;
+
+        function __replaceQueryString(url, param, value) {
+            var re = new RegExp("([?|&])" + param + "=.*?(&|$|\")","ig");
+            if (url.match(re))
+                return url.replace(re,'$1' + param + "=" + value + '$2');
+            else
+                return url;
+        }
+
+        var notePath = this.__getPath(noteDescriptor.notebookNode.id + "/" + noteDescriptor.noteId);
+
+        NotebookDispatcher.dispatch({
+            actionType: NotebookConstants.NOTEBOOK_DATABASE_LOAD_NOTE_CONTENT,
+            noteDescriptor: noteDescriptor
+        });
+
+        FileAgent.readFile(notePath + "/" + DATABASE_NOTE_FILE, "utf8", function(path, data, error) {
+            if (error) {
+                return NotebookDispatcher.dispatch({
+                    actionType: NotebookConstants.NOTEBOOK_DATABASE_LOAD_NOTE_CONTENT_ERROR,
+                    noteDescriptor: noteDescriptor,
+                    error: "unable to read " + path + ": " + error
+                });
+            }
+
+            /* Remove all single &nbsp between tags, and extract contents inside <body></body> */
+            var content = data.replace(/\>&nbsp;\</gi,'\>\<')
+                              .match(/\<body[^>]*\>([^]*)\<\/body/m)[1] || "";
+            noteDescriptor.noteContent = __replaceQueryString(content, "uuid", databaseStorage.uuid);
+
+            NotebookDispatcher.dispatch({
+                actionType: NotebookConstants.NOTEBOOK_DATABASE_LOAD_NOTE_CONTENT_SUCCESS,
+                noteDescriptor: noteDescriptor
+            });
+        });
+    },
+
+    /**
+     * Save note content
+     * @mehotd saveNoteContent
+     * @param noteDescriptor {Object} NoteDescriptor object of note to be saved
+     * @param title {String} Note title
+     * @param content {String} Note content
+     * @param onWriteSummary {Function} Callback function for adding summaries
+     * @param onSave {Function} Callback function after note is saved
+     */
+    saveNoteContent: function(noteDescriptor, title, content, onWriteSummary, onSave) {
+        if (!databaseStorage) return;
+
+        var notePath = this.__getPath(noteDescriptor.notebookNode.id + "/" + noteDescriptor.noteId);
+
+        NotebookDispatcher.dispatch({
+            actionType: NotebookConstants.NOTEBOOK_DATABASE_SAVE_NOTE_CONTENT,
+            noteDescriptor: noteDescriptor
+        });
+
+        /**
+         * Grab HTML resources procedure:
+         * 1) Find cross site resources (<img src='http://www.somewhere.com/image.jpg'>)
+         * 2) Download cross site resources to our assets folder
+         * 3) Replace cross site resource URL with our assets URL
+         */
+        function __grabResources(content, cb) {
+            var _imgs = content.match(/<img[^>]+src="?([^"\s]+)"?[^>]*\/>/gi);
+
+            if (_imgs && _imgs.length > 0) {
+                var _imgName = getTimecode();
+
+                function __replaceResource(i) {
+                    var _src = $(_imgs[i]).attr('src');
+                    var _ext = _src.split(".").pop().split("?")[0];
+                    var _fileName = (parseInt(_imgName) + i).toString() + (_ext ? "." + _ext : "");
+
+                    function __grabNext() {
+                        if (i === _imgs.length - 1)
+                            cb && cb(content);
+                        else
+                            __replaceResource(i + 1);
+                    }
+
+                    /* Test if resource is from local URL, if note, download it to userdata */
+                    if (
+                        !(new RegExp(/^(userdata)/)).test(_src) &&
+                        !(new RegExp(/^(\/apps\/[bc]\/)/)).test(_src)
+                    ) {
+                        FileAgent.saveUrlAs(notePath + "/assets/" + _fileName, _src, function(path, error) {
+                            if (error) {
+                                // TODO: embed error message in content
+                                console.log("Unable to save file from URL " + _src);
+                            }
+                            else
+                                content = content.replace(
+                                    new RegExp(_src, 'g'),
+                                    "userdata/" + path + (databaseStorage.uuid ? "?uuid=" + databaseStorage.uuid : "")
+                                );
+
+                            __grabNext();
+                        });
+                    }
+                    else {
+                        __grabNext();
+                    }
+                }
+
+                __replaceResource(0);
+            }
+            else
+                cb && cb(content);
+        }
+
+        /**
+         * Write note summary to summary.json
+         * 1) Add basic info into summary (i.e: title)
+         * 2) Call onWriteSummary to get further summary data
+         * 4) Write summary to summary.json
+         */
+        function __updateNoteSummary(title, content, cb) {
+            var summary = { title: title };
+
+            if (onWriteSummary)
+                summary = onWriteSummary(summary);
+
+            FileAgent.writeFile(notePath + "/summary.json", JSON.stringify(summary), function(path, progress, error) {
+                cb && cb("unable to update " + path + ": " + error);
+            });
+        }
+
+        /**
+         * Saving the note:
+         * 1) Build full note document with title and content
+         * 2) Write note to file
+         * 3) Generate latest note summary
+         * 4) Update latest modified date by touch
+         */
+        function __save(title, content, cb) {
+            if (!title || title.trim() === "")
+                title = "Untitled";
+
+            var _doc = "<html><head><title>" + title + "</title></head><body>" + content + "</body></html>";
+
+            if (noteDescriptor.noteTitle === title && noteDescriptor.noteContent === content)
+                return (cb && cb());
+
+            FileAgent.writeFile(notePath  + "/" + DATABASE_NOTE_FILE, _doc, function(path, progress, error) {
+                if (error)
+                    return (cb && cb("unable to write " + path + ": " + error));
+
+                /* Update summary.json */
+                __updateNoteSummary(title, content, function(error) {
+                    if (error)
+                        return (cb && cb(error));
+
+                    /* Update last modified time */
+                    FileAgent.touch(notePath, function(path, error) {
+                        if (error)
+                            return (cb && cb("unable to touch " + path + ": " + error));
+
+                        noteDescriptor.title = title;
+                        noteDescriptor.content = content;
+
+                        onSave && onSave();
+
+                        return (cb && cb());
+                    });
+                });
+            });
+        }
+
+        __grabResources(content, function(grabbedContent) {
+            __save(title, grabbedContent, function(error) {
+                if (error)
+                    return NotebookDispatcher.dispatch({
+                        actionType: NotebookConstants.NOTEBOOK_DATABASE_SAVE_NOTE_CONTENT_ERROR,
+                        noteDescriptor: noteDescriptor,
+                        error: error
+                    });
+
+                NotebookDispatcher.dispatch({
+                    actionType: NotebookConstants.NOTEBOOK_DATABASE_SAVE_NOTE_CONTENT_SUCCESS,
+                    noteDescriptor: noteDescriptor
+                });
+            });
+        });
+    },
+
+    /**
+     * Clear unused note assets
+     * @method clearUselessAssets
+     * @param noteDescriptor {Object} NoteDescriptor object of note to be clearring useless assets
+     * @param afterDelay {Number} Delay a period of time (in millisecond) before clearing useless assets
+     */
+    clearUselessAssets: function(noteDescriptor, afterDelay) {
+        if (!databaseStorage) return;
+
+        var notePath = this.__getPath(noteDescriptor.notebookNode.id + "/" + noteDescriptor.noteId);
+
+        function __removeUseless(items, i, cb) {
+            FileAgent.grep(notePath  + "/" + DATABASE_NOTE_FILE, items[i], null, function(path, data, error) {
+                if (error)
+                    return (cb && cb("unable to read " + path + ": " + error));
+
+                if (!data) {
+                    FileAgent.remove(notePath + "/assets/" + items[i], function(path, error) {
+                        if (error)
+                            return (cb && cb("unable to remove " + path + ": " + error));
+
+                        //console.log("Unused asset '" + items[i] + "' removed");
+                        if (i === items.length - 1)
+                            cb && cb();
+                        else
+                            __removeUseless(items, i + 1, cb);
+                    });
+                }
+                else {
+                    if (i === items.length - 1)
+                        cb && cb();
+                    else
+                        __removeUseless(items, i + 1, cb);
+                }
+            });
+        }
+
+        setTimeout(function() {
+            NotebookDispatcher.dispatch({
+                actionType: NotebookConstants.NOTEBOOK_DATABASE_CLEAR_USELESS_NOTE_ASSETS,
+                noteDescriptor: noteDescriptor
+            });
+
+            FileAgent.list(notePath + "/assets", function(path, items, error) {
+                if (error)
+                    return NotebookDispatcher.dispatch({
+                        actionType: NotebookConstants.NOTEBOOK_DATABASE_CLEAR_USELESS_NOTE_ASSETS_ERROR,
+                        noteDescriptor: noteDescriptor,
+                        error: "unable to list " + path + ": " + error
+                    });
+
+                if (items.length > 0)
+                    __removeUseless(items, 0, function(error) {
+                        if (error)
+                            NotebookDispatcher.dispatch({
+                                actionType: NotebookConstants.NOTEBOOK_DATABASE_CLEAR_USELESS_NOTE_ASSETS_ERROR,
+                                noteDescriptor: noteDescriptor,
+                                error: error
+                            });
+                        else
+                            NotebookDispatcher.dispatch({
+                                actionType: NotebookConstants.NOTEBOOK_DATABASE_CLEAR_USELESS_NOTE_ASSETS_SUCCESS,
+                                noteDescriptor: noteDescriptor
+                            });
+                    });
+                else
+                    NotebookDispatcher.dispatch({
+                        actionType: NotebookConstants.NOTEBOOK_DATABASE_CLEAR_USELESS_NOTE_ASSETS_SUCCESS,
+                        noteDescriptor: noteDescriptor
+                    });
+            });
+        }, afterDelay);
+    },
+
+    /**
+     * Take note snapshot
+     * @method takeNoteSnapshot
+     * @param noteDescriptor {Object} NoteDescriptor object of note to be taking snapshot
+     * @param snapshotDOMContainer {Object} jQuery object of note snapshot container
+     */
+    takeNoteSnapshot: function(noteDescriptor, snapshotDOMContainer) {
+        if (!databaseStorage) return;
+
+        require("../../lib/html2canvas/html2canvas.js");
+
+        NotebookDispatcher.dispatch({
+            actionType: NotebookConstants.NOTEBOOK_DATABASE_TAKE_NOTE_SNAPSHOT,
+            noteDescriptor: noteDescriptor
+        });
+
+        try {
+            html2canvas(snapshotDOMContainer, {
+                allowTaint: false,
+                taintTest: false,
+                onrendered: function(canvas) {
+                    var dataUrl = canvas.toDataURL("image/png");
+                    var data = dataUrl.replace(/^data:image\/png;base64,/, "");
+
+                    FileAgent.writeFile(saveTo, base64ToBlob(data), function(path, progress, error) {
+                        if (error)
+                            NotebookDispatcher.dispatch({
+                                actionType: NotebookConstants.NOTEBOOK_DATABASE_TAKE_NOTE_SNAPSHOT_ERROR,
+                                noteDescriptor: noteDescriptor,
+                                error: "unable to write snapshot to " + path + ": " + error
+                            });
+                        else
+                            NotebookDispatcher.dispatch({
+                                actionType: NotebookConstants.NOTEBOOK_DATABASE_TAKE_NOTE_SNAPSHOT_SUCCESS,
+                                noteDescriptor: noteDescriptor
+                            });
+                    });
+                }
+            });
+        }
+        catch (error) {
+            NotebookDispatcher.dispatch({
+                actionType: NotebookConstants.NOTEBOOK_DATABASE_TAKE_NOTE_SNAPSHOT_ERROR,
+                noteDescriptor: noteDescriptor,
+                error: "html2canvas error: " + error
+            });
+        }
     }
 }
 

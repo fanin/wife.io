@@ -209,6 +209,7 @@ DiligentServer.prototype.handleRequest = function(req, res) {
             else if (filename.indexOf('userdata') > 0 && filename.indexOf('assets') > 0) {
                 var dataPath = null;
 
+                /* FIXME: Notebook app need this for render doc in editor, should be fixed after migrating to RESTful APIs */
                 if (query.uuid) {
                     var disk = this.storageManager.getDiskByUUID(query.uuid);
 

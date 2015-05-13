@@ -23,7 +23,6 @@ var DiligentAgentMixin = {
 
     diligentClientDidLaunch: function() {
         StorageAgent.list();
-        DatabaseActionCreators.loadTree();
     },
 
     diligentClientWillTerminate: function() {
@@ -42,6 +41,8 @@ var DiligentAgentMixin = {
 var StorageAgentMixin = {
     storageListDidReceive: function(disks) {
         this.setState({ disks: disks });
+        DatabaseActionCreators.openDatabase(StorageAgent.getDiskInUse());
+        DatabaseActionCreators.loadTree();
     },
 
     storageDidMount: function(disk) {
@@ -66,11 +67,13 @@ var StorageAgentMixin = {
 
     storageInUseDidChange: function(disk) {
         this.setState({ disks: StorageAgent.getDisks() });
+        DatabaseActionCreators.closeDatabase();
+        DatabaseActionCreators.openDatabase(disk);
         DatabaseActionCreators.loadTree();
     },
 
     storageHasError: function(error) {
-
+        DatabaseActionCreators.closeDatabase();
     }
 };
 
@@ -94,10 +97,6 @@ var BookshelfContainer = React.createClass({
 
     componentWillMount: function() {
         DatabaseStore.addChangeListener(this._onDatabaseChange);
-
-        $.fn.form.settings.rules.checkLength = function(text) {
-            return (text.length >= 2 && text.length <= 32);
-        };
 
         $.fn.form.settings.rules.hasSpecialChar = function(text) {
             var regExp = /[`~,.<>\-;':"/[\]|{}()=+!@#$%^&*]/;
@@ -133,9 +132,9 @@ var BookshelfContainer = React.createClass({
         var diskMenuItems = this.state.disks.map(function(disk) {
             var iconClass = StorageAgent.isDiskInUse(disk) ? "check icon" : "icon";
             return (
-                <div className="item" data-value={disk.uuid} data-text={disk.name}>
+                <div className="item" data-value={disk.uuid} data-text={(disk.name || disk.drive)}>
                     <i className={iconClass}></i>
-                    {disk.name + " (" + disk.type + ")"}
+                    {(disk.name || disk.drive) + " (" + disk.type + ")"}
                 </div>
             );
         });
@@ -153,39 +152,47 @@ var BookshelfContainer = React.createClass({
                             {diskMenuItems}
                         </div>
                     </div>
-                    <div className="ui pointing link item" onClick={this._createNotebookInputDialog}>
+                    <div className="ui pointing link item" onClick={this._showCreateNotebookInputDialog}>
                         <i className="plus icon"></i>
                         New
                     </div>
                     <div className={moreOpButtonClass}>
                         <i className="ellipsis vertical icon"></i>
                         <div className="menu">
-                            <div className="item" data-value="rename" data-text="Rename" onClick={this._renameInputDialog}>
+                            <div className="item" data-value="rename" data-text="Rename" onClick={this._showRenameInputDialog}>
                                 <i className="write icon"></i>
                                 Rename
                             </div>
-                            <div className="item" data-value="trash" data-text="Trash" onClick={this._trashConfirmDialog}>
+                            <div className="item" data-value="trash" data-text="Trash" onClick={this._showTrashConfirmDialog}>
                                 <i className="trash outline icon"></i>
                                 Trash
+                            </div>
+                            <div className="item" data-value="search" data-text="Search" onClick={this._showSearchNotebookModal}>
+                                <i className="search icon"></i>
+                                Search
                             </div>
                         </div>
                     </div>
                 </div>
+
                 <div className="nb-column-content">
                     <JqTreeViewController ref = "treeViewController"
                                          data = {this.state.treeData}
                                    exclusives = {[ 1 ]}
-                               onCreateFolder = {this._createStackInputDialog}
+                                 onCreateNode = {this._onTreeCreateNode}
+                               onCreateFolder = {this._showCreateStackInputDialog}
                                        onOpen = {this._saveTree}
                                       onClose = {this._saveTree}
                                        onMove = {this._saveTree}
                                      onSelect = {this._onTreeSelect} />
                 </div>
+
                 <InputModalViewController ref = "inputViewController"
                                         title = {this.state.inputDialogTitle}
                                  defaultValue = {this.state.inputDialogDefaultValue}
                                         rules = {notebookInputRules}
                           onActionAffirmative = {this.state.inputDialogOnAffirmative} />
+
                 <AlertViewController ref = 'alertViewController'
                                    title = {this.state.alertTitle}
                              description = {this.state.alertDescription}
@@ -205,12 +212,12 @@ var BookshelfContainer = React.createClass({
             case NotebookConstants.NOTEBOOK_DATABASE_SAVETREE_SUCCESS:
                 break;
             case NotebookConstants.NOTEBOOK_DATABASE_CREATE_STACK:
-                this.treeViewCreateFolderHelper(change.stack.id, change.stack.name);
+                this.treeViewCreateFolderHelper(change.stack.stackId, change.stack.stackName);
                 this.treeViewCreateFolderHelper = undefined;
                 this._saveTree();
                 break;
             case NotebookConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK_SUCCESS:
-                this.refs.treeViewController.nodeCreate(change.notebook.id, change.notebook.name);
+                this.refs.treeViewController.nodeCreate(change.notebook.notebookId, change.notebook.notebookName);
                 this._saveTree();
                 break;
             case NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTEBOOK_SUCCESS:
@@ -227,7 +234,12 @@ var BookshelfContainer = React.createClass({
         }
     },
 
+    _onTreeCreateNode: function(node) {
+        node.disk = StorageAgent.getDiskInUse();
+    },
+
     _saveTree: function() {
+        // TODO: add delay timer to reduce server loading with high freq requests
         DatabaseActionCreators.saveTree(this.refs.treeViewController.getTreeData(), 0);
     },
 
@@ -251,7 +263,7 @@ var BookshelfContainer = React.createClass({
         this._saveTree();
     },
 
-    _createStackInputDialog: function(createFolderHelper) {
+    _showCreateStackInputDialog: function(createFolderHelper) {
         this.treeViewCreateFolderHelper = createFolderHelper;
         this.setState({
             inputDialogTitle: "Create a stack",
@@ -261,7 +273,7 @@ var BookshelfContainer = React.createClass({
         this.refs.inputViewController.show();
     },
 
-    _createNotebookInputDialog: function() {
+    _showCreateNotebookInputDialog: function() {
         this.setState({
             inputDialogTitle: "Create a notebook",
             inputDialogDefaultValue: "",
@@ -270,7 +282,7 @@ var BookshelfContainer = React.createClass({
         this.refs.inputViewController.show();
     },
 
-    _renameInputDialog: function() {
+    _showRenameInputDialog: function() {
         if (this.state.disableMoreOperationButton)
             return;
 
@@ -294,7 +306,7 @@ var BookshelfContainer = React.createClass({
         }
     },
 
-    _trashConfirmDialog: function() {
+    _showTrashConfirmDialog: function() {
         if (this.state.disableMoreOperationButton)
             return;
 

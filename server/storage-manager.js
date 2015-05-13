@@ -16,6 +16,11 @@
  *   type: 'System'
  * }
  *
+ * Storage Type:
+ *   System Disk:      Read only
+ *   System Data Disk: User app & app user data
+ *   Removable Disk:   USB disks, SD Cards
+ *
  * Storage Notification:
  *   Category: system.storage
  *   Notifications:
@@ -246,8 +251,10 @@ StorageManager.prototype.getLocalDisks = function(callback) {
                     if (!this.removableDisk[i].present) {
                         this.removableDisk[i].type = "Removable";
                         /* Create a fake uuid if there's no uuid found for the disk */
-                        if (!this.removableDisk[i].uuid)
+                        if (!this.removableDisk[i].uuid) {
                             this.removableDisk[i].uuid = uuid.v4();
+                            // TODO: should support uuid for all disks
+                        }
                         this.notificationCenter.post("system.storage", "disk.removable.insert", this.removableDisk[i]);
                     }
                 }
@@ -274,7 +281,11 @@ StorageManager.prototype.getLocalDisks = function(callback) {
 }
 
 StorageManager.prototype.getDefaultDiskInUse = function() {
-    return this.systemDataDisk || this.systemDisk;
+    return this.systemDataDisk;
+}
+
+StorageManager.prototype.getDiskInUse = function(socket) {
+    return this.disksInUse[socket];
 }
 
 StorageManager.prototype.getDiskByUUID = function(uuid) {
@@ -298,7 +309,7 @@ StorageManager.prototype.getUserDataPath = function(socket, _path) {
         return SYSTEM.ERROR.ERROR_INVALID_ARG;
 
     /* System disk is not allowed to be set as user working disk */
-    if (this.disksInUse[socket].uuid === this.systemDisk.uuid)
+    if (this.disksInUse[socket].uuid === this.systemDataDisk.uuid)
         userDataPath = SYSTEM.SETTINGS.sys_data_path + this.securityManager.appUserDataDirectory(socket);
     else if (this.disksInUse[socket])
         userDataPath = this.disksInUse[socket].mountpoint + this.securityManager.appUserDataDirectory(socket);

@@ -3,14 +3,16 @@ var ListViewItem = require('./ListViewItem.jsx')
 var ListViewController = React.createClass({
 
     propTypes: {
-        setDataSourceByRef: React.PropTypes.bool,
+        canManageDataSource: React.PropTypes.bool,
         onDataLoad: React.PropTypes.func,
-        onSelectRow: React.PropTypes.func
+        onSelectRow: React.PropTypes.func,
+        onRenderListViewItem: React.PropTypes.func
     },
 
     getDefaultProps: function() {
         return {
-            setDataSourceByRef: false
+            canManageDataSource: false,
+            onRenderListViewItem: function(data) { return data }
         };
     },
 
@@ -24,6 +26,7 @@ var ListViewController = React.createClass({
     render: function() {
         var rows = this.state.dataSource.map(function(data, index) {
             var isActive = (index == this.state.selectedRowIndex);
+            data = this.props.onRenderListViewItem(data);
             return <ListViewItem index={index}
                                 active={isActive}
                              titleText={data.titleText}
@@ -42,20 +45,20 @@ var ListViewController = React.createClass({
     },
 
     setDataSource: function(dataList) {
-        this.setState({ dataSource: (this.props.setDataSourceByRef ? dataList : dataList.slice(0)) });
+        this.setState({ dataSource: dataList });
         this.props.onDataLoad && this.props.onDataLoad();
     },
 
     selectRowAtIndex: function(index) {
         this.setState({ selectedRowIndex: index });
-        if (this.props.setDataSourceByRef)
+        if (!this.props.canManageDataSource)
             this.forceUpdate();
         this.props.onSelectRow && this.props.onSelectRow(index);
         this.scrollToRowAtIndex(index, true);
     },
 
     addRowAtIndex: function(data, index) {
-        if (!this.props.setDataSourceByRef) {
+        if (this.props.canManageDataSource) {
             var dataSource = this.state.dataSource;
             dataSource.splice(index, 0, data);
             dataSource.join();
@@ -66,7 +69,7 @@ var ListViewController = React.createClass({
     },
 
     removeRowAtIndex: function(index) {
-        if (!this.props.setDataSourceByRef) {
+        if (this.props.canManageDataSource) {
             var dataSource = this.state.dataSource;
             dataSource.splice(index, 1);
             this.setState({ dataSource: dataSource });
@@ -81,8 +84,8 @@ var ListViewController = React.createClass({
     scrollToRowAtIndex: function(index, animated) {
         var _containerHeight = $(".cutie-listview-container").height();
         var _rowHeight = $( $(".ui.selection.celled.list").children().eq(index) ).outerHeight();
-        var _containerMiddlePos = _containerHeight / 2 - _rowHeight / 2;
-        var _posScrollTo = (_rowHeight * index) - _containerMiddlePos;
+        var _containerScrollToPos = _containerHeight / 3 - _rowHeight / 2;
+        var _posScrollTo = (_rowHeight * index) - _containerScrollToPos;
 
         if (animated)
             $(".cutie-listview-container").stop(true, true).animate({

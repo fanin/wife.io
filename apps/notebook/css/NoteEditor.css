@@ -2,11 +2,11 @@
     margin: 0px !important;
 }
 
-.nb-column-toolbar-title-input {
+.nb-column-toolbar-title-container {
 	width: calc(100% - 245px);
 }
 
-.nb-column-toolbar-search-input {
+.nb-column-toolbar-search-container {
 	width: 245px;
 }
 

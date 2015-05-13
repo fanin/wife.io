@@ -1,5 +1,7 @@
 # *wife.io* #
 
+**DEAL WITH LITTLE THINGS IN LIFE**
+
 `wife.io` is an extensible web operating system designed for devices which are providing specific services to a small group of users, such as SmartHome Controller, NAS, Media  Center in Car, Factory Management...etc.
 
 ## Quick Start ##

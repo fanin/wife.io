@@ -8,7 +8,7 @@ var CHANGE_EVENT = 'NOTEBOOK_DATABASE_STORE_CHANGE';
 
 var treeData = null;
 var selectedNotebookNode = null;
-var noteList = null;
+var noteDescriptorList = null;
 var selectedNoteIndex = -1;
 var sortMethod = null;
 var error = null;
@@ -30,17 +30,17 @@ var DatabaseStore = assign({}, EventEmitter.prototype, {
         return treeData;
     },
 
-    getSelectedNotebook: function() {
+    getSelectedNotebookNode: function() {
         return selectedNotebookNode;
     },
 
-    getNoteList: function() {
-        return noteList;
+    getNoteDescriptorList: function() {
+        return noteDescriptorList;
     },
 
-    getSelectedNote: function() {
+    getSelectedNoteDescriptor: function() {
         if (selectedNoteIndex >= 0)
-            return noteList[selectedNoteIndex];
+            return noteDescriptorList[selectedNoteIndex];
         else
             return null;
     },
@@ -61,8 +61,8 @@ DatabaseStore.dispatchToken = NotebookDispatcher.register(function(action) {
             DatabaseStore.emitChange({
                 actionType: action.actionType,
                 stack: {
-                    id: action.id,
-                    name: action.name
+                    stackId: action.stackId,
+                    stackName: action.stackName
                 }
             });
             break;
@@ -70,8 +70,8 @@ DatabaseStore.dispatchToken = NotebookDispatcher.register(function(action) {
             DatabaseStore.emitChange({
                 actionType: action.actionType,
                 notebook: {
-                    id: action.id,
-                    name: action.name
+                    notebookId: action.notebookId,
+                    notebookName: action.notebookName
                 }
             });
             break;
@@ -92,49 +92,51 @@ DatabaseStore.dispatchToken = NotebookDispatcher.register(function(action) {
             if (sortMethod !== action.method) {
                 sortMethod = action.method;
 
-                if (noteList) {
-                    var _selectNote = DatabaseStore.getSelectedNote();
-                    noteList.sort(sortMethod);
-                    index = noteList.map(function(note) { return note.id; }).indexOf(_selectNote.id);
+                if (noteDescriptorList) {
+                    var _selectNote = DatabaseStore.getSelectedNoteDescriptor();
+                    noteDescriptorList.sort(sortMethod);
+                    _index = noteDescriptorList.map(function(noteDescriptor) {
+                        return noteDescriptor.noteId;
+                    }).indexOf(_selectNote.noteId);
                 }
 
                 DatabaseStore.emitChange({
                     actionType: action.actionType,
                     method: sortMethod,
-                    index: index
+                    index: _index
                 });
             }
             break;
         case NotebookConstants.NOTEBOOK_DATABASE_LOADNOTES_SUCCESS:
-            noteList = action.notes.sort(sortMethod);
+            noteDescriptorList = action.noteDescriptors.sort(sortMethod);
             DatabaseStore.emitChange({ actionType: action.actionType });
             break;
         case NotebookConstants.NOTEBOOK_DATABASE_SELECT_NOTE:
             if (
                 action.index >= 0 &&
-                action.index < noteList.length &&
-                action.index !== selectedNoteIndex
+                action.index < noteDescriptorList.length
             ) {
                 selectedNoteIndex = action.index;
                 DatabaseStore.emitChange({ actionType: action.actionType });
             }
             break;
         case NotebookConstants.NOTEBOOK_DATABASE_ADD_NOTE_SUCCESS:
-            if (selectedNotebookNode.id === action.note.notebookNode.id) {
-                noteList.unshift(action.note);
-                noteList.sort(sortMethod);
-                var index = noteList.map(function(note) { return note.id; }).indexOf(action.note.id);
+            if (selectedNotebookNode.id === action.noteDescriptor.notebookNode.id) {
+                noteDescriptorList.unshift(action.noteDescriptor);
+                noteDescriptorList.sort(sortMethod);
+                var _index = noteDescriptorList.map(function(noteDescriptor) { return noteDescriptor.noteId })
+                                               .indexOf(action.noteDescriptor.noteId);
                 DatabaseStore.emitChange({
                     actionType: action.actionType,
-                    note: action.note,
-                    index: index
+                    noteDescriptor: action.noteDescriptor,
+                    index: _index
                 });
             }
             break;
         case NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTE_SUCCESS:
-            for (var i = 0; i < noteList.length; i++) {
-                if (noteList[i].id === action.note.id) {
-                    noteList.splice(i, 1);
+            for (var i = 0; i < noteDescriptorList.length; i++) {
+                if (noteDescriptorList[i].noteId === action.noteDescriptor.noteId) {
+                    noteDescriptorList.splice(i, 1);
                     DatabaseStore.emitChange({
                         actionType: action.actionType,
                         index: i
@@ -145,19 +147,30 @@ DatabaseStore.dispatchToken = NotebookDispatcher.register(function(action) {
             break;
         case NotebookConstants.NOTEBOOK_DATABASE_COPY_NOTE_SUCCESS:
             if (
-                selectedNotebookNode.id === action.note.notebookNode.id ||
+                selectedNotebookNode.id === action.dstNoteDescriptor.notebookNode.id ||
                 selectedNotebookNode.id === 1 ||
                 selectedNotebookNode.isFolder()
             ) {
-                noteList.unshift(action.note);
-                noteList.sort(sortMethod);
-                var index = noteList.map(function(note) { return note.id; }).indexOf(action.note.id);
+                noteDescriptorList.unshift(action.dstNoteDescriptor);
+                noteDescriptorList.sort(sortMethod);
+                var _index = noteDescriptorList.map(function(noteDescriptor) { return noteDescriptor.noteId })
+                                               .indexOf(action.dstNoteDescriptor.noteId);
                 DatabaseStore.emitChange({
                     actionType: action.actionType,
-                    note: action.note,
-                    index: index
+                    noteDescriptor: action.dstNoteDescriptor,
+                    index: _index
                 });
             }
+            break;
+
+        case NotebookConstants.NOTEBOOK_DATABASE_LOAD_NOTE_CONTENT_SUCCESS:
+        case NotebookConstants.NOTEBOOK_DATABASE_SAVE_NOTE_CONTENT_SUCCESS:
+        case NotebookConstants.NOTEBOOK_DATABASE_CLEAR_USELESS_NOTE_ASSETS_SUCCESS:
+        case NotebookConstants.NOTEBOOK_DATABASE_TAKE_NOTE_SNAPSHOT_SUCCESS:
+            DatabaseStore.emitChange({
+                actionType: action.actionType,
+                noteDescriptor: action.noteDescriptor
+            });
             break;
 
         case NotebookConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR:
@@ -168,6 +181,10 @@ DatabaseStore.dispatchToken = NotebookDispatcher.register(function(action) {
         case NotebookConstants.NOTEBOOK_DATABASE_ADD_NOTE_ERROR:
         case NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTE_ERROR:
         case NotebookConstants.NOTEBOOK_DATABASE_COPY_NOTE_ERROR:
+        case NotebookConstants.NOTEBOOK_DATABASE_LOAD_NOTE_CONTENT_ERROR:
+        case NotebookConstants.NOTEBOOK_DATABASE_SAVE_NOTE_CONTENT_ERROR:
+        case NotebookConstants.NOTEBOOK_DATABASE_CLEAR_USELESS_NOTE_ASSETS_ERROR:
+        case NotebookConstants.NOTEBOOK_DATABASE_TAKE_NOTE_SNAPSHOT_ERROR:
             error = action.error;
             DatabaseStore.emitChange({ actionType: action.actionType });
             break;

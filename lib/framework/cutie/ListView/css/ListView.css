@@ -9,6 +9,7 @@
 .cutie-listview-container {
     height: 100%;
     overflow-y: auto;
+    font-family: Arial, Georgia, Times, 'Times New Roman', serif;
     -webkit-user-select: none; /* Chrome/Safari */
     -moz-user-select: none; /* Firefox */
     -ms-user-select: none; /* IE10+ */
@@ -39,7 +40,7 @@
 .cutie-listview-subtitle {
     color: darkgray;
     font-style: italic;
-    font-family: verdana;
+    font-family: Arial, Georgia, Times, 'Times New Roman', serif;
     font-size: .85em;
     padding-bottom: 12px;
 }

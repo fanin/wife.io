@@ -3,6 +3,7 @@ var JqTreeViewController = React.createClass({
     propTypes: {
         data:           React.PropTypes.array.isRequired,
         exclusives:     React.PropTypes.array.isRequired,
+        onCreateNode:   React.PropTypes.func,
         onOpen:         React.PropTypes.func,
         onClose:        React.PropTypes.func,
         onSelect:       React.PropTypes.func,
@@ -14,6 +15,7 @@ var JqTreeViewController = React.createClass({
     getDefaultProps: function() {
         return {
             exclusives:     [],
+            onCreateNode:   function(node) {},
             onOpen:         function(node) {},
             onClose:        function(node) {},
             onSelect:       function(node) {},
@@ -97,7 +99,9 @@ var JqTreeViewController = React.createClass({
                     $li.find(".jqtree-title").before("<i class='list icon'></i>&nbsp;");
                 else
                     $li.find(".jqtree-title").before("<i class='inverted book icon'></i>&nbsp;");
-            },
+
+                this.props.onCreateNode && this.props.onCreateNode(node);
+            }.bind(this),
 
             onCanMove:   function(node) {
                 return !this._isExclusiveNode(node);

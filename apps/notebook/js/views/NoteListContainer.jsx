@@ -3,60 +3,36 @@ var NotebookConstants      = require("../constants/NotebookConstants");
 var DatabaseStore          = require("../stores/DatabaseStore");
 var ListViewController     = require('framework/cutie/ListView/js/ListViewController.jsx');
 
-var DiligentAgentMixin = {
-    diligentClientWillLaunch: function() {
-
-    },
-
-    diligentClientDidLaunch: function() {
-
-    },
-
-    diligentClientWillTerminate: function() {
-
-    },
-
-    diligentClientDidTerminate: function() {
-
-    },
-
-    diligentConnectionDidFail: function() {
-
-    }
-};
-
 var SortMethods = {
     /* Sort by last modified date */
     sortByLastModifiedDate: function(a, b) {
-        if (a.stat.mtime > b.stat.mtime) return -1;
-        if (a.stat.mtime < b.stat.mtime) return 1;
+        if (a.noteStat.mtime > b.noteStat.mtime) return -1;
+        if (a.noteStat.mtime < b.noteStat.mtime) return 1;
         return 0;
     },
     /* Sort by creation date (newest first) */
     sortByCreationDateNewestFirst: function(a, b) {
-        return (b.id - a.id);
+        return (b.noteId - a.noteId);
     },
     /* Sort by creation date (oldest first) */
     sortByCreationDateOldestFirst: function(a, b) {
-        return (a.id - b.id);
+        return (a.noteId - b.noteId);
     },
     /* Sort by title (ascending) */
     sortByTitleAscending: function(a, b) {
-        if (a.titleText < b.titleText) return -1;
-        if (a.titleText > b.titleText) return 1;
+        if (a.noteTitle < b.noteTitle) return -1;
+        if (a.noteTitle > b.noteTitle) return 1;
         return 0;
     },
     /* Sort by title (descending) */
     sortByTitleDescending: function(a, b) {
-        if (a.titleText > b.titleText) return -1;
-        if (a.titleText < b.titleText) return 1;
+        if (a.noteTitle > b.noteTitle) return -1;
+        if (a.noteTitle < b.noteTitle) return 1;
         return 0;
     }
 };
 
 var NoteListContainer = React.createClass({
-
-    mixins: [ DiligentAgentMixin ],
 
     getDefaultProps: function() {
         return {
@@ -76,7 +52,6 @@ var NoteListContainer = React.createClass({
     componentWillMount: function() {
         DatabaseActionCreators.setNoteSortMethod(this.state.sortMethod);
         DatabaseStore.addChangeListener(this._onDatabaseChange);
-        DiligentAgent.attach(this);
     },
 
     componentDidMount: function() {
@@ -87,7 +62,6 @@ var NoteListContainer = React.createClass({
     },
 
     componentWillUnmount: function() {
-        DiligentAgent.detach(this);
         DatabaseStore.removeChangeListener(this._onDatabaseChange);
     },
 
@@ -169,9 +143,10 @@ var NoteListContainer = React.createClass({
                 </div>
                 <div className="nb-column-content" onScroll={this._onScroll}>
                     <ListViewController ref="noteListController"
-                         setDataSourceByRef={true}
+                        canManageDataSource={false}
                                  onDataLoad={this._onListDataLoaded}
-                                onSelectRow={this._onSelectNote} />
+                                onSelectRow={this._onSelectNote}
+                       onRenderListViewItem={this._onRenderListViewItem} />
                 </div>
             </div>
         );
@@ -180,7 +155,7 @@ var NoteListContainer = React.createClass({
     _onDatabaseChange: function(change) {
         switch (change.actionType) {
             case NotebookConstants.NOTEBOOK_DATABASE_SELECT_NOTEBOOK:
-                var notebook = DatabaseStore.getSelectedNotebook();
+                var notebook = DatabaseStore.getSelectedNotebookNode();
                 if (notebook && (notebook.id === 1 || notebook.isFolder()))
                     this.setState({ disableNewNoteButton: true });
                 else
@@ -191,7 +166,7 @@ var NoteListContainer = React.createClass({
                 }, 100);
                 break;
             case NotebookConstants.NOTEBOOK_DATABASE_LOADNOTES_SUCCESS:
-                var notes = DatabaseStore.getNoteList();
+                var notes = DatabaseStore.getNoteDescriptorList();
                 this.refs.noteListController.setDataSource(notes);
                 if (notes.length === 0)
                     this.setState({
@@ -206,7 +181,7 @@ var NoteListContainer = React.createClass({
                 break;
             case NotebookConstants.NOTEBOOK_DATABASE_ADD_NOTE_SUCCESS:
             case NotebookConstants.NOTEBOOK_DATABASE_COPY_NOTE_SUCCESS:
-                this.refs.noteListController.addRowAtIndex(change.note, change.index);
+                this.refs.noteListController.addRowAtIndex(change.noteDescriptor, change.index);
                 this.setState({
                     disableCopyButton: false,
                     disableTrashButton: false
@@ -214,13 +189,11 @@ var NoteListContainer = React.createClass({
                 break;
             case NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTE_SUCCESS:
                 this.refs.noteListController.removeRowAtIndex(change.index);
-                if (DatabaseStore.getNoteList().length === 0)
+                if (DatabaseStore.getNoteDescriptorList().length === 0)
                     this.setState({
                         disableCopyButton: true,
                         disableTrashButton: true
                     });
-                break;
-            case NotebookConstants.NOTEBOOK_DATABASE_SELECT_NOTE:
                 break;
             case NotebookConstants.NOTEBOOK_DATABASE_SET_NOTE_SORT_METHOD:
                 this.setState({ sortMethod: change.method });
@@ -271,23 +244,34 @@ var NoteListContainer = React.createClass({
         }, 100);
     },
 
+    _onRenderListViewItem: function(data) {
+        var _mtime = new Date(data.noteStat.mtime);
+        var _lmd = _mtime.toLocaleDateString() + " " + _mtime.toLocaleTimeString();
+
+        return {
+            titleText: data.noteTitle,
+            subtitleText: _lmd,
+            detailText: ''
+        };
+    },
+
     _writeNote: function() {
         if (!this.state.disableNewNoteButton)
-            DatabaseActionCreators.addNote(DatabaseStore.getSelectedNotebook(), "", "");
+            DatabaseActionCreators.addNote(DatabaseStore.getSelectedNotebookNode(), "", "");
     },
 
     _copyNote: function() {
         if (this.state.disableCopyButton)
             return;
 
-        DatabaseActionCreators.copyNote(DatabaseStore.getSelectedNote());
+        DatabaseActionCreators.copyNote(DatabaseStore.getSelectedNoteDescriptor());
     },
 
     _trashNote: function() {
         if (this.state.disableTrashButton)
             return;
 
-        DatabaseActionCreators.trashNote(DatabaseStore.getSelectedNote());
+        DatabaseActionCreators.trashNote(DatabaseStore.getSelectedNoteDescriptor());
     }
 });
 
