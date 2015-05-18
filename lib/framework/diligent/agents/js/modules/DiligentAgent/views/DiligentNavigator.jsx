@@ -1,10 +1,10 @@
 'use strict';
 
-var EventNotifier = require('framework/cutie/EventNotifier/js/EventNotifier');
+var GritterView = require('framework/cutie/GritterView/js/GritterViewController');
 
 var StorageAgentMixin = {
     storageDidMount: function(disk) {
-        EventNotifier.add(
+        GritterView.add(
             "Disk added",
             "A disk is inserted and mounted at " + disk.mountpoint,
             "/apps/b/storage/img/icon.png",
@@ -13,7 +13,7 @@ var StorageAgentMixin = {
     },
 
     storageDidUnmount: function(disk) {
-        EventNotifier.add(
+        GritterView.add(
             "Disk removed",
             "Disk which was mounted at " + disk.mountpoint + " is removed",
             "/apps/b/storage/img/icon.png",
@@ -23,14 +23,14 @@ var StorageAgentMixin = {
 
     storageHasError: function(error) {
         if (error === "ERROR-STOR-NO-USER-DISK")
-            EventNotifier.add(
+            GritterView.add(
                 "Storage Error",
                 "No internal user storage found",
                 "/apps/b/storage/img/icon.png",
                 0
             );
         else
-            EventNotifier.add(
+            GritterView.add(
                 "Storage Error",
                 error,
                 "/apps/b/storage/img/icon.png",
@@ -39,7 +39,7 @@ var StorageAgentMixin = {
     },
 
     storageInUseDidChange: function(disk) {
-        EventNotifier.add(
+        GritterView.add(
             "Working disk changed",
             "Switching working disk to " + disk.name,
             "/apps/b/storage/img/icon.png",

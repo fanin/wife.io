@@ -66,7 +66,7 @@ var NoteEditorContainer = React.createClass({
                 //editor.document.getBody().on("drop", dropFiles);
                 //editor.document.getBody().on("dragover", dragoverEffect);
 
-                editor.focus();
+                //editor.focus();
             });
 
             editor.on("paste", function(event) {

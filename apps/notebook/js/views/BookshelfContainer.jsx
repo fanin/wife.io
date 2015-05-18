@@ -1,4 +1,5 @@
 var AlertViewController      = require("framework/cutie/AlertView/js/AlertViewController.jsx");
+var DropdownViewController   = require("framework/cutie/DropdownView/js/DropdownViewController.jsx");
 var JqTreeViewController     = require("./JqTreeViewController.jsx");
 var InputModalViewController = require("./InputModalViewController.jsx");
 var NotebookConstants        = require("../constants/NotebookConstants");
@@ -79,10 +80,7 @@ var StorageAgentMixin = {
 
 var BookshelfContainer = React.createClass({
 
-    mixins: [
-        DiligentAgentMixin,
-        StorageAgentMixin
-    ],
+    mixins: [ DiligentAgentMixin, StorageAgentMixin ],
 
     getInitialState: function() {
         return {
@@ -90,8 +88,7 @@ var BookshelfContainer = React.createClass({
             treeData: [],
             inputDialogTitle: '',
             inputDialogDefaultValue: '',
-            inputDialogOnAffirmative: null,
-            disableMoreOperationButton: false
+            inputDialogOnAffirmative: null
         };
     },
 
@@ -108,18 +105,7 @@ var BookshelfContainer = React.createClass({
     },
 
     componentDidMount: function() {
-        $(".nb-toolbar-disksel-dropdown").dropdown({
-            transition: "drop",
-            onChange: function(value, text, $selectedItem) {
-                var _disk = StorageAgent.getDiskByUUID(value);
-                StorageAgent.setDiskInUse(_disk);
-            }
-        });
 
-        $(".nb-toolbar-moreop-dropdown").dropdown({
-            transition: "drop",
-            action: "nothing"
-        });
     },
 
     componentWillUnmount: function() {
@@ -129,50 +115,44 @@ var BookshelfContainer = React.createClass({
     },
 
     render: function() {
-        var diskMenuItems = this.state.disks.map(function(disk) {
-            var iconClass = StorageAgent.isDiskInUse(disk) ? "check icon" : "icon";
-            return (
-                <div className="item" data-value={disk.uuid} data-text={(disk.name || disk.drive)}>
-                    <i className={iconClass}></i>
-                    {(disk.name || disk.drive) + " (" + disk.type + ")"}
-                </div>
-            );
+        var diskMenuDropdownItems = this.state.disks.map(function(disk) {
+            var itemIconClass = StorageAgent.isDiskInUse(disk) ? "check" : "";
+            return {
+                text: (disk.name || disk.drive) + " (" + disk.type + ")",
+                value: disk.uuid,
+                icon: itemIconClass
+            };
         });
 
-        var moreOpButtonClass = this.state.disableMoreOperationButton ?
-                                "ui disabled pointing dropdown link item nb-toolbar-moreop-dropdown" :
-                                "ui pointing dropdown link item nb-toolbar-moreop-dropdown";
+        var diskMenuSelectHandler = function(value, text) {
+            var _disk = StorageAgent.getDiskByUUID(value);
+            StorageAgent.setDiskInUse(_disk);
+        };
+
+        var moreOpDropdownItems = [
+            { text: "Rename", value: "rename", icon: "write",         onSelect: this._showRenameInputDialog },
+            { text: "Trash",  value: "trash",  icon: "trash outline", onSelect: this._showTrashConfirmDialog },
+            { text: "Search", value: "search", icon: "search",        onSelect: this._showSearchNotebookModal }
+        ];
 
         return (
             <div className="nb-column-container">
                 <div className="ui menu nb-column-toolbar">
-                    <div className="ui pointing dropdown item nb-toolbar-disksel-dropdown">
-                        <i className="disk outline icon"></i>
-                        <div className="menu">
-                            {diskMenuItems}
-                        </div>
-                    </div>
+                    <DropdownViewController ref = "diskSelectDropdownViewController"
+                                 itemDataSource = {diskMenuDropdownItems}
+                                      iconClass = "disk outline"
+                                   useSelectBar = {true}
+                                       onChange = {diskMenuSelectHandler} />
+
                     <div className="ui pointing link item" onClick={this._showCreateNotebookInputDialog}>
                         <i className="plus icon"></i>
                         New
                     </div>
-                    <div className={moreOpButtonClass}>
-                        <i className="ellipsis vertical icon"></i>
-                        <div className="menu">
-                            <div className="item" data-value="rename" data-text="Rename" onClick={this._showRenameInputDialog}>
-                                <i className="write icon"></i>
-                                Rename
-                            </div>
-                            <div className="item" data-value="trash" data-text="Trash" onClick={this._showTrashConfirmDialog}>
-                                <i className="trash outline icon"></i>
-                                Trash
-                            </div>
-                            <div className="item" data-value="search" data-text="Search" onClick={this._showSearchNotebookModal}>
-                                <i className="search icon"></i>
-                                Search
-                            </div>
-                        </div>
-                    </div>
+
+                    <DropdownViewController ref = "moreOpDropdownViewController"
+                                 itemDataSource = {moreOpDropdownItems}
+                                      iconClass = "ellipsis vertical"
+                                   useSelectBar = {false} />
                 </div>
 
                 <div className="nb-column-content">
@@ -283,7 +263,7 @@ var BookshelfContainer = React.createClass({
     },
 
     _showRenameInputDialog: function() {
-        if (this.state.disableMoreOperationButton)
+        if (this.refs.moreOpDropdownViewController.state.disable)
             return;
 
         var node = this.refs.treeViewController.getSelectedNode();
@@ -307,7 +287,7 @@ var BookshelfContainer = React.createClass({
     },
 
     _showTrashConfirmDialog: function() {
-        if (this.state.disableMoreOperationButton)
+        if (this.refs.moreOpDropdownViewController.state.disable)
             return;
 
         var node = this.refs.treeViewController.getSelectedNode();
@@ -350,9 +330,9 @@ var BookshelfContainer = React.createClass({
         if (!node) return;
 
         if (node.id === 1)
-            this.setState({ disableMoreOperationButton: true });
+            this.refs.moreOpDropdownViewController.setState({ disable: true });
         else
-            this.setState({ disableMoreOperationButton: false });
+            this.refs.moreOpDropdownViewController.setState({ disable: false });
 
         DatabaseActionCreators.selectNotebook(node);
     }

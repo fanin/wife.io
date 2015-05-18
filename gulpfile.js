@@ -30,7 +30,7 @@ function addBuildTargets() {
             '        echo Running %s...; ' + os.EOL +
             '        killall %s 2>/dev/null; ' + os.EOL +
             '        [ ! -e %s ] && echo Please build %s first \\' + os.EOL +
-            '                    || (cd %s; /usr/local/bin/npm start)' + os.EOL +
+            '                    || (cd %s; npm start)' + os.EOL +
             '        ;;' + os.EOL +
             '    stop)' + os.EOL +
             '        echo Stopping %s...; ' + os.EOL +
