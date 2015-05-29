@@ -4,24 +4,62 @@
 
 .nb-column-toolbar-title-container {
 	width: calc(100% - 245px);
+    height: 100%;
 }
 
 .nb-column-toolbar-search-container {
 	width: 245px;
+    height: 100%;
 }
 
 .cke_editor_nb-editor {
-	height: 100% !important;
+	height: calc(100% - 36px) !important;
+}
+
+@-moz-document url-prefix() {
+    .cke_editor_nb-editor {
+        height: 100% !important;
+    }
+}
+
+.cke_chrome {
+    border-top: 0px !important;
+    border-bottom: 0px !important;
+}
+
+.cke_inner {
+    height: 100% !important;
 }
 
 .cke_top {
     background-color: rgb(240, 240, 240) !important;
-}
-
-.cke_reset {
-    height: calc(100% - 14px) !important;
+    border-top: 1px solid #b6b6b6 !important;
 }
 
 .cke_contents {
-    height:calc(100% - 1px) !important;
+    height: calc(100% - 76px) !important;
+}
+
+.cke_wysiwyg_frame {
+    height: 100%;
+}
+
+.nb-snapshot-container {
+    height: auto;
+    background-color: #fff;
+    position: absolute;
+    top: -35px; /* minus #app-view:padding-top to align to basement */
+    left: 0px;
+    z-index: -9999;
+}
+
+.nb-snapshot-container > div {
+    /* copy from ckeditor/contents.css */
+    font-family: sans-serif, Arial, Verdana, "Trebuchet MS";
+    color: #333;
+    background-color: #fff;
+    margin: 0 20px;
+    font-size: 13px;
+    line-height: 1.6;
+    word-wrap: break-word;
 }

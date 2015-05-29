@@ -1,5 +1,5 @@
 .jq-treeview-container {
-    height: 100%;
+    height: calc(100% - 36px);
     overflow-y: auto;
     font-size: 1.2em;
     font-family: Arial, Georgia, Times, 'Times New Roman', serif;
@@ -12,6 +12,12 @@
     user-select: none;
 }
 
+@-moz-document url-prefix() {
+    .jq-treeview-container {
+        height: 100% !important;
+    }
+}
+
 .jq-treeview {
     overflow: hidden;
 }
@@ -22,10 +28,13 @@
     overflow: hidden;
 }
 
+.jqtree-element {
+    padding: 0 10px;
+}
+
 .jqtree-title-folder {
     font-family: Arial, Georgia, Times, 'Times New Roman', serif;
     font-weight: bolder;
-
 }
 
 .jqtree-toggler {

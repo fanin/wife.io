@@ -1,4 +1,4 @@
-html, body {
+body {
     height: 100%;
     background-color: black;
 }
@@ -13,7 +13,6 @@ html, body {
 
 #diligent-console {
     z-index: 9998;
-    border-top: 1px;
     max-height: 40%;
     overflow-y: auto !important;
 }
@@ -26,7 +25,7 @@ html, body {
 #app-view {
     /*height: calc(100% - 44px);*/
     height: 100%;
-    padding-top: 35px;
+    padding-top: 36px;
 }
 
 .background-image {

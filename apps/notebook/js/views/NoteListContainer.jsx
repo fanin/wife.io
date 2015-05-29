@@ -2,6 +2,7 @@ var DatabaseActionCreators = require("../actions/DatabaseActionCreators");
 var NotebookConstants      = require("../constants/NotebookConstants");
 var DatabaseStore          = require("../stores/DatabaseStore");
 var ListViewController     = require('framework/cutie/ListView/js/ListViewController.jsx');
+var AlertViewController    = require("framework/cutie/AlertView/js/AlertViewController.jsx");
 
 var SortMethods = {
     /* Sort by last modified date */
@@ -50,7 +51,6 @@ var NoteListContainer = React.createClass({
     },
 
     componentWillMount: function() {
-        DatabaseActionCreators.setNoteSortMethod(this.state.sortMethod);
         DatabaseStore.addChangeListener(this._onDatabaseChange);
     },
 
@@ -141,13 +141,22 @@ var NoteListContainer = React.createClass({
                         Trash
                     </div>
                 </div>
-                <div className="nb-column-content" onScroll={this._onScroll}>
-                    <ListViewController ref="noteListController"
-                        canManageDataSource={false}
-                                 onDataLoad={this._onListDataLoaded}
-                                onSelectRow={this._onSelectNote}
-                       onRenderListViewItem={this._onRenderListViewItem} />
-                </div>
+
+                <ListViewController ref="noteListController" className="nb-column-content"
+                    canManageDataSource={false}
+                             onDataLoad={this._onListDataLoaded}
+                            onSelectRow={this._onSelectNote}
+                   onRenderListViewItem={this._onRenderListViewItem} />
+
+                <AlertViewController ref = "errorAlerter"
+                                   title = {this.state.errorTitle}
+                                 message = {this.state.errorMessage}
+                           actionButtons = {[{
+                                                title: "Got It",
+                                                color: "red",
+                                                actionType: "approve",
+                                            }]}
+                      actionButtonsAlign = "center" />
             </div>
         );
     },
@@ -162,9 +171,12 @@ var NoteListContainer = React.createClass({
                     this.setState({ disableNewNoteButton: false });
 
                 setTimeout(function() {
+                    if (!DatabaseStore.getNoteListSortMethod())
+                        DatabaseActionCreators.setNoteSortMethod(this.state.sortMethod);
                     DatabaseActionCreators.loadNotes(notebook);
-                }, 100);
+                }.bind(this), 10);
                 break;
+
             case NotebookConstants.NOTEBOOK_DATABASE_LOADNOTES_SUCCESS:
                 var notes = DatabaseStore.getNoteDescriptorList();
                 this.refs.noteListController.setDataSource(notes);
@@ -179,6 +191,7 @@ var NoteListContainer = React.createClass({
                         disableTrashButton: false
                     });
                 break;
+
             case NotebookConstants.NOTEBOOK_DATABASE_ADD_NOTE_SUCCESS:
             case NotebookConstants.NOTEBOOK_DATABASE_COPY_NOTE_SUCCESS:
                 this.refs.noteListController.addRowAtIndex(change.noteDescriptor, change.index);
@@ -187,6 +200,7 @@ var NoteListContainer = React.createClass({
                     disableTrashButton: false
                 });
                 break;
+
             case NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTE_SUCCESS:
                 this.refs.noteListController.removeRowAtIndex(change.index);
                 if (DatabaseStore.getNoteDescriptorList().length === 0)
@@ -195,11 +209,25 @@ var NoteListContainer = React.createClass({
                         disableTrashButton: true
                     });
                 break;
+
             case NotebookConstants.NOTEBOOK_DATABASE_SET_NOTE_SORT_METHOD:
-                this.setState({ sortMethod: change.method });
-                if (change.index >= 0)
-                    this.refs.noteListController.selectRowAtIndex(change.index);
+                this.setState({ sortMethod: DatabaseStore.getNoteListSortMethod() });
+                var _i = DatabaseStore.getNoteDescriptorIndex(DatabaseStore.getSelectedNoteDescriptor());
+                if (_i >= 0)
+                    this.refs.noteListController.selectRowAtIndex(_i);
                 break;
+
+            case NotebookConstants.NOTEBOOK_DATABASE_SAVE_NOTE:
+                this.refs.noteListController.setEnable(false);
+                break;
+
+            case NotebookConstants.NOTEBOOK_DATABASE_SAVE_NOTE_SUCCESS:
+                this.refs.noteListController.refresh();
+                this.refs.noteListController.setEnable(true);
+                break;
+
+            case NotebookConstants.NOTEBOOK_DATABASE_SAVE_NOTE_ERROR:
+                this.refs.noteListController.setEnable(true);
             case NotebookConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR:
             case NotebookConstants.NOTEBOOK_DATABASE_SAVETREE_ERROR:
             case NotebookConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK_ERROR:
@@ -208,8 +236,7 @@ var NoteListContainer = React.createClass({
             case NotebookConstants.NOTEBOOK_DATABASE_ADD_NOTE_ERROR:
             case NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTE_ERROR:
             case NotebookConstants.NOTEBOOK_DATABASE_COPY_NOTE_ERROR:
-                // TODO: show error
-                console.log(change.actionType + ": " + DatabaseStore.getError());
+                this._showErrorAlert("Notebook Database Error", change + ":\n" + DatabaseStore.getError());
                 break;
         }
     },
@@ -241,7 +268,7 @@ var NoteListContainer = React.createClass({
     _onSelectNote: function(index) {
         setTimeout(function() {
             DatabaseActionCreators.selectNote(index);
-        }, 100);
+        }, 10);
     },
 
     _onRenderListViewItem: function(data) {
@@ -261,17 +288,21 @@ var NoteListContainer = React.createClass({
     },
 
     _copyNote: function() {
-        if (this.state.disableCopyButton)
-            return;
-
-        DatabaseActionCreators.copyNote(DatabaseStore.getSelectedNoteDescriptor());
+        if (!this.state.disableCopyButton)
+            DatabaseActionCreators.copyNote(DatabaseStore.getSelectedNoteDescriptor());
     },
 
     _trashNote: function() {
-        if (this.state.disableTrashButton)
-            return;
+        if (!this.state.disableTrashButton)
+            DatabaseActionCreators.trashNote(DatabaseStore.getSelectedNoteDescriptor());
+    },
 
-        DatabaseActionCreators.trashNote(DatabaseStore.getSelectedNoteDescriptor());
+    _showErrorAlert: function(errorTitle, errorMessage) {
+        this.setState({
+            errorTitle: errorTitle,
+            errorMessage: errorMessage
+        });
+        this.refs.errorAlerter.show();
     }
 });
 

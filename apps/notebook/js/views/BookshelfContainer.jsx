@@ -13,7 +13,7 @@ var notebookInputRules = [
     },
     {
         type   : "hasSpecialChar",
-        prompt : "Only underline (_) is allowed special character"
+        prompt : "Only _ is allowed special character"
     }
 ];
 
@@ -63,7 +63,7 @@ var StorageAgentMixin = {
     },
 
     storageSetInUseFail: function(args) {
-        // TODO: prompt args.disk & args.error
+        this._showErrorAlert("Storage Error", "Select disk '" + args.disk.name + "' error:\n" + args.error);
     },
 
     storageInUseDidChange: function(disk) {
@@ -74,11 +74,13 @@ var StorageAgentMixin = {
     },
 
     storageHasError: function(error) {
+        this._showErrorAlert("Storage Error", "Error: " + args.error);
         DatabaseActionCreators.closeDatabase();
     }
 };
 
 var BookshelfContainer = React.createClass({
+    _timerSaveTreeDelay: null,
 
     mixins: [ DiligentAgentMixin, StorageAgentMixin ],
 
@@ -102,10 +104,6 @@ var BookshelfContainer = React.createClass({
 
         DiligentAgent.attach(this);
         StorageAgent.attach(this);
-    },
-
-    componentDidMount: function() {
-
     },
 
     componentWillUnmount: function() {
@@ -173,10 +171,32 @@ var BookshelfContainer = React.createClass({
                                         rules = {notebookInputRules}
                           onActionAffirmative = {this.state.inputDialogOnAffirmative} />
 
-                <AlertViewController ref = 'alertViewController'
-                                   title = {this.state.alertTitle}
-                             description = {this.state.alertDescription}
-                     onActionAffirmative = {this._trashSelected} />
+                <AlertViewController ref = "confirmAlerter"
+                                   title = {this.state.confirmTitle}
+                                 message = {this.state.confirmMessage}
+                           actionButtons = {[{
+                                                title: "No",
+                                                iconType: "remove",
+                                                color: "red",
+                                                actionType: "deny"
+                                            },
+                                            {
+                                                title: "Yes",
+                                                iconType: "checkmark",
+                                                color: "green",
+                                                actionType: "approve",
+                                                onClick: this._trashSelected
+                                            }]} />
+
+                <AlertViewController ref = "errorAlerter"
+                                   title = {this.state.errorTitle}
+                                 message = {this.state.errorMessage}
+                           actionButtons = {[{
+                                                title: "Got It",
+                                                color: "red",
+                                                actionType: "approve",
+                                            }]}
+                      actionButtonsAlign = "center" />
             </div>
         );
     },
@@ -187,29 +207,33 @@ var BookshelfContainer = React.createClass({
                 this.setState({ treeData: DatabaseStore.getTreeData() });
                 setTimeout(function() {
                     this.refs.treeViewController.nodeSelect(this.refs.treeViewController.getNodeById(1));
-                }.bind(this), 1);
+                }.bind(this), 10);
                 break;
+
             case NotebookConstants.NOTEBOOK_DATABASE_SAVETREE_SUCCESS:
                 break;
+
             case NotebookConstants.NOTEBOOK_DATABASE_CREATE_STACK:
                 this.treeViewCreateFolderHelper(change.stack.stackId, change.stack.stackName);
                 this.treeViewCreateFolderHelper = undefined;
                 this._saveTree();
                 break;
+
             case NotebookConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK_SUCCESS:
                 this.refs.treeViewController.nodeCreate(change.notebook.notebookId, change.notebook.notebookName);
                 this._saveTree();
                 break;
+
             case NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTEBOOK_SUCCESS:
                 this.refs.treeViewController.nodeRemove(change.notebookNode);
                 this._saveTree();
                 break;
+
             case NotebookConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR:
             case NotebookConstants.NOTEBOOK_DATABASE_SAVETREE_ERROR:
             case NotebookConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK_ERROR:
             case NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTEBOOK_ERROR:
-                // TODO: show error
-                console.log(change + ": " + DatabaseStore.getError());
+                this._showErrorAlert("Notebook Database Error", change + ":\n" + DatabaseStore.getError());
                 break;
         }
     },
@@ -218,9 +242,13 @@ var BookshelfContainer = React.createClass({
         node.disk = StorageAgent.getDiskInUse();
     },
 
-    _saveTree: function() {
-        // TODO: add delay timer to reduce server loading with high freq requests
-        DatabaseActionCreators.saveTree(this.refs.treeViewController.getTreeData(), 0);
+    _saveTree: function(node, immediately) {
+        if (this._timerSaveTreeDelay)
+            clearTimeout(this._timerSaveTreeDelay);
+        this._timerSaveTreeDelay = setTimeout(function() {
+            DatabaseActionCreators.saveTree(this.refs.treeViewController.getTreeData(), 0);
+            this._timerSaveTreeDelay = null;
+        }.bind(this), immediately ? 0 : 1000);
     },
 
     _onCreateStack: function(name) {
@@ -294,19 +322,27 @@ var BookshelfContainer = React.createClass({
 
         if (node.isFolder()) {
             this.setState({
-                alertTitle: 'Trash notebook stack',
-                alertDescription: 'Are you sure to trash "' + node.name +
-                                  '" ? (includes ' + node.children.length + ' notebooks)'
+                confirmTitle: 'Trash notebook stack',
+                confirmMessage: 'Are you sure to trash "' + node.name +
+                                '" ? (includes ' + node.children.length + ' notebooks)'
             });
         }
         else {
             this.setState({
-                alertTitle: 'Trash notebook',
-                alertDescription: 'Are you sure to trash "' + node.name + '" ?'
+                confirmTitle: 'Trash notebook',
+                confirmMessage: 'Are you sure to trash "' + node.name + '" ?'
             });
         }
 
-        this.refs.alertViewController.show();
+        this.refs.confirmAlerter.show();
+    },
+
+    _showErrorAlert: function(errorTitle, errorMessage) {
+        this.setState({
+            errorTitle: errorTitle,
+            errorMessage: errorMessage
+        });
+        this.refs.errorAlerter.show();
     },
 
     _trashSelected: function() {

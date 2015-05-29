@@ -90,7 +90,7 @@ var AppMainView = React.createClass({
             manageable: false,
             /* AlertView parameters */
             alertTitle: '',
-            alertDescription: ''
+            alertMessage: ''
         };
     },
 
@@ -150,9 +150,21 @@ var AppMainView = React.createClass({
                 </LauncherSortable>
                 <AlertViewController ref = 'alertViewController'
                                    title = {this.state.alertTitle}
-                             description = {this.state.alertDescription}
-                     onActionAffirmative = {this._handleUninstallAffirmative}
-                        onActionNegative = {this._handleUninstallNegative} />
+                                 message = {this.state.alertMessage}
+                           actionButtons = {[{
+                                                title: "No",
+                                                iconType: "remove",
+                                                color: "red",
+                                                actionType: "deny",
+                                                onClick: this._handleUninstallNegative
+                                            },
+                                            {
+                                                title: "Yes",
+                                                iconType: "checkmark",
+                                                color: "green",
+                                                actionType: "approve",
+                                                onClick: this._handleUninstallAffirmative
+                                            }]} />
             </div>
         );
     },
@@ -176,7 +188,7 @@ var AppMainView = React.createClass({
         this._manifest = AppManagerAgent.getAppManifest(dir);
         this.setState({
             alertTitle: 'Uninstall APP',
-            alertDescription: 'Are you sure to uninstall ' + this._manifest.name + ' ?'
+            alertMessage: 'Are you sure to uninstall ' + this._manifest.name + ' ?'
         });
         this.refs.alertViewController.show();
     },

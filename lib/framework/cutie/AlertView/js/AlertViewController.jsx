@@ -5,13 +5,10 @@ var AlertViewController = React.createClass({
         return {
             title: "",
             image: "",
-            description: "",
-            affirmativeButtonText: "Yes",
-            affirmativeButtonColor: "green",
-            negativeButtonText: "No",
-            negativeButtonColor: "red",
-            onActionNegative: function() {},
-            onActionAffirmative: function() {}
+            message: "",
+            customViewComponent: null,
+            actionButtons: [],
+            actionButtonsAlign: "right"
         };
     },
 
@@ -29,6 +26,10 @@ var AlertViewController = React.createClass({
         this.modalInstance.modal('hide');
     },
 
+    componentDidMount: function () {
+        $(this.getDOMNode()).find(".actions").css("text-align", this.props.actionButtonsAlign);
+    },
+
     componentWillUnmount: function () {
         if (this.modalInstance) {
             this.modalInstance.modal('destroy');
@@ -36,12 +37,18 @@ var AlertViewController = React.createClass({
     },
 
     render: function() {
-        var image;
-        var negativeButtonClass = "ui right labeled icon " + this.props.negativeButtonColor + " button deny";
-        var affirmativeButtonClass = "ui right labeled icon " + this.props.affirmativeButtonColor + " button approve";
+        var image = this.props.image ? <div className="image">{this.props.image}</div> : null;
 
-        if (this.props.image)
-            image = <div className="image">{this.props.image}</div>;
+        var actionButtons = this.props.actionButtons.map(function(button) {
+            var buttonClass = "ui " + (button.iconType ? "center labeled " : "center ") + "icon " + button.color + " button " + button.actionType;
+            var buttonIcon = button.iconType ? <i className={button.iconType + " icon"}></i> : null;
+            return (
+                <div className={buttonClass} onClick={button.onClick}>
+                    {buttonIcon}
+                    {button.title}
+                </div>
+            );
+        });
 
         return (
             <div className="ui small modal">
@@ -50,21 +57,15 @@ var AlertViewController = React.createClass({
                 </div>
                 <div className="content">
                     {image}
-                    <div className="description">
+                    <div className="message">
                         <div className="ui small header">
-                            {this.props.description}
+                            {this.props.message}
                         </div>
                     </div>
+                    {this.props.customViewComponent}
                 </div>
                 <div className="actions">
-                    <div className={negativeButtonClass} onClick={this.props.onActionNegative}>
-                        <i className="remove icon"></i>
-                        {this.props.negativeButtonText}
-                    </div>
-                    <div className={affirmativeButtonClass} onClick={this.props.onActionAffirmative}>
-                        <i className="checkmark icon"></i>
-                        {this.props.affirmativeButtonText}
-                    </div>
+                    {actionButtons}
                 </div>
             </div>
         );

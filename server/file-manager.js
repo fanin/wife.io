@@ -285,6 +285,7 @@ FileManager.prototype.register = function(socket, complete) {
         }
     });
 
+    // FIXME: handle uncaught execeptions
     ss(socket).on(self.wsapi.WriteFile.REQ, function(path, dataStream, dataSize) {
         var realPath = resolvePath(path);
 

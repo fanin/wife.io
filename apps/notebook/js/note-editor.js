@@ -36,7 +36,7 @@ function NoteEditor(viewController, config) {
     /* Initialize editor */
     CKEDITOR.config.readOnly = true;
     CKEDITOR.config.resize_enabled = false;
-    CKEDITOR.config.extraPlugins = "font,customsave,screenshotarea,dragresize";
+    CKEDITOR.config.extraPlugins = "font,customsave,dsoscreenshot,dragresize";
     CKEDITOR.config.removePlugins = "format,link,unlink,anchor,elementspath,about";
     CKEDITOR.config.skin = "icy_orange";
     CKEDITOR.addCss(".cke_editable { word-wrap: break-word }");
@@ -506,7 +506,7 @@ function NoteEditor(viewController, config) {
             editorSaveHandler();
         });
 
-        editor.on("screenshotarea", function(event) {
+        editor.on("dsoscreenshot", function(event) {
             var area = event.data;
             var screenshotId = "screenshot-" + self.getTimecode();
 
@@ -518,9 +518,9 @@ function NoteEditor(viewController, config) {
                     if (error)
                         console.log("Unable to write screenshot-area.png to " + path + " (error = " + error + ")");
                     else {
-                        var screenshotarea = editor.document.getById("new-screenshot-area");
-                        screenshotarea.setAttribute("src", "userdata/" + path + (self.storageUUID ? "?uuid=" + self.storageUUID : ""));
-                        screenshotarea.setAttribute("id", screenshotId);
+                        var dsoscreenshot = editor.document.getById("new-screenshot-area");
+                        dsoscreenshot.setAttribute("src", "userdata/" + path + (self.storageUUID ? "?uuid=" + self.storageUUID : ""));
+                        dsoscreenshot.setAttribute("id", screenshotId);
                     }
                 }
             );

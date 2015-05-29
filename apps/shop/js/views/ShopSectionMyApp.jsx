@@ -20,7 +20,7 @@ var AppManagerAgentMixin = {
     appIsUploading: function(instInfo) {
         this.setState({
             dimmerTitle: "Uploading...",
-            dimmerDescription: "Please wait...",
+            dimmerMessage: "Please wait...",
             installProgress: instInfo.progress
         });
     },
@@ -29,7 +29,7 @@ var AppManagerAgentMixin = {
         this.setState({
             hideDimmerButton: true,
             dimmerTitle: "Installing...",
-            dimmerDescription: "Please wait..."
+            dimmerMessage: "Please wait..."
         });
     },
 
@@ -44,20 +44,20 @@ var AppManagerAgentMixin = {
             case "ERROR_SECURITY_ACCESS_DENIED":
                 this.setState({
                     dimmerTitle: "Error",
-                    dimmerDescription: "You are not allowed to install offline APPs."
+                    dimmerMessage: "You are not allowed to install offline APPs."
                 });
                 break;
             case "ERROR_APP_BAD_FILE_FORMAT":
             case "ERROR_APP_BAD_STRUCT":
                 this.setState({
                     dimmerTitle: "Error",
-                    dimmerDescription: "Not a supported APP format."
+                    dimmerMessage: "Not a supported APP format."
                 });
                 break;
             default:
                 this.setState({
                     dimmerTitle: "Error",
-                    dimmerDescription: instInfo.error
+                    dimmerMessage: instInfo.error
                 });
                 break;
         }
@@ -66,14 +66,14 @@ var AppManagerAgentMixin = {
     appWillCancelInstall: function(instInfo) {
         this.setState({
             dimmerTitle: "Cancelling...",
-            dimmerDescription: "Wait for cancelling installation."
+            dimmerMessage: "Wait for cancelling installation."
         });
     },
 
     appDidCancelInstall: function(instInfo) {
         this.setState({
             dimmerTitle: "Cancelled",
-            dimmerDescription: "You cancelled installation."
+            dimmerMessage: "You cancelled installation."
         });
     },
 
@@ -113,7 +113,7 @@ var OfflineAppCard = React.createClass({
             hideDimmer: false,
             hideDimmerButton: false,
             dimmerTitle: "Waiting...",
-            dimmerDescription: "",
+            dimmerMessage: "",
             installProgress: 0,
         };
     },
@@ -149,7 +149,7 @@ var OfflineAppCard = React.createClass({
             if (this.props.onCancelInstall(this.props.id)) {
                 this.setState({
                     dimmerTitle: "Cancelled",
-                    dimmerDescription: "You cancelled installation."
+                    dimmerMessage: "You cancelled installation."
                 });
             }
         }
@@ -184,7 +184,7 @@ var OfflineAppCard = React.createClass({
                             <div className="ui inverted header">
                                 {this.state.dimmerTitle}
                             </div>
-                            <p>&nbsp;{this.state.dimmerDescription}&nbsp;</p>
+                            <p>&nbsp;{this.state.dimmerMessage}&nbsp;</p>
                             <div className={progressbarClass}>
                                 <div className="bar" style={{width: (this.state.installProgress + "%")}}></div>
                             </div>

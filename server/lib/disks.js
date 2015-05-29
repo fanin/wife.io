@@ -250,6 +250,11 @@ function detail(drive, callback) {
             }
             catch (error) {
                 console.log("disks.js error: " + error);
+                console.log('disk name: ' + results.name);
+                console.log('mountpoint: ' + results.mountpoint);
+                console.log('free: ' + results.freePer + '%');
+                console.log('used: ' + results.usedPer + '%');
+                console.log('total: ' + results.total);
             }
 
             callback(null, results);
