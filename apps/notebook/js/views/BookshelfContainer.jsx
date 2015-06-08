@@ -3,18 +3,22 @@ var DropdownViewController   = require("framework/cutie/DropdownView/js/Dropdown
 var JqTreeViewController     = require("./JqTreeViewController.jsx");
 var InputModalViewController = require("./InputModalViewController.jsx");
 var NotebookConstants        = require("../constants/NotebookConstants");
+var NotebookActionConstants  = require("../constants/NotebookActionConstants");
 var DatabaseStore            = require("../stores/DatabaseStore");
 var DatabaseActionCreators   = require("../actions/DatabaseActionCreators");
+var assign                   = require("object-assign");
 
 var notebookInputRules = [
     {
         type   : "empty",
         prompt : "Notebook name is empty"
     },
+    /*
     {
         type   : "hasSpecialChar",
         prompt : "Only _ is allowed special character"
     }
+    */
 ];
 
 var DiligentAgentMixin = {
@@ -88,9 +92,17 @@ var BookshelfContainer = React.createClass({
         return {
             disks: [],
             treeData: [],
-            inputDialogTitle: '',
-            inputDialogDefaultValue: '',
-            inputDialogOnAffirmative: null
+            exclusiveTreeNodes: [ NotebookConstants.DATABASE_NOTEBOOK_ALL_ID ],
+            notebookSearchString: "",
+            loadingSearch: false,
+            clearingSearch: false,
+            inputDialogTitle: "",
+            inputDialogDefaultValue: "",
+            inputDialogOnAffirmative: null,
+            disableMenuItemNew: false,
+            disableMenuItemRename: true,
+            disableMenuItemTrash: true,
+            disableMenuItemSearch: false
         };
     },
 
@@ -128,9 +140,27 @@ var BookshelfContainer = React.createClass({
         };
 
         var moreOpDropdownItems = [
-            { text: "Rename", value: "rename", icon: "write",         onSelect: this._showRenameInputDialog },
-            { text: "Trash",  value: "trash",  icon: "trash outline", onSelect: this._showTrashConfirmDialog },
-            { text: "Search", value: "search", icon: "search",        onSelect: this._showSearchNotebookModal }
+            {
+                text:  "Rename",
+                value: "rename",
+                icon:  "write",
+                disabled: this.state.disableMenuItemRename,
+                onSelect: this._showRenameInputDialog
+            },
+            {
+                text:  "Trash",
+                value: "trash",
+                icon:  "trash outline",
+                disabled: this.state.disableMenuItemTrash,
+                onSelect: this._showTrashConfirmDialog
+            },
+            {
+                text:  this.state.notebookSearchString ? "Clear search" : "Search",
+                value: "search",
+                icon:  "search",
+                disabled: this.state.disableMenuItemSearch,
+                onSelect: this.state.notebookSearchString ? this._clearSearch : this._showSearchInputDialog
+            }
         ];
 
         return (
@@ -142,8 +172,10 @@ var BookshelfContainer = React.createClass({
                                    useSelectBar = {true}
                                        onChange = {diskMenuSelectHandler} />
 
-                    <div className="ui pointing link item" onClick={this._showCreateNotebookInputDialog}>
-                        <i className="plus icon"></i>
+                    <div className = {this.state.disableMenuItemNew ? "ui pointing link item disabled"
+                                                                    : "ui pointing link item"}
+                           onClick = {this._showCreateNotebookInputDialog}>
+                        <i className = "plus icon"></i>
                         New
                     </div>
 
@@ -156,20 +188,29 @@ var BookshelfContainer = React.createClass({
                 <div className="nb-column-content">
                     <JqTreeViewController ref = "treeViewController"
                                          data = {this.state.treeData}
-                                   exclusives = {[ 1 ]}
+                                   exclusives = {this.state.exclusiveTreeNodes}
                                  onCreateNode = {this._onTreeCreateNode}
                                onCreateFolder = {this._showCreateStackInputDialog}
                                        onOpen = {this._saveTree}
                                       onClose = {this._saveTree}
                                        onMove = {this._saveTree}
-                                     onSelect = {this._onTreeSelect} />
+                                     onSelect = {this._onTreeSelect}
+                                    onRefresh = {this._onTreeRefresh} />
                 </div>
 
-                <InputModalViewController ref = "inputViewController"
+                <InputModalViewController ref = "editInputViewController"
+                                   identifier = "edit-input-view"
                                         title = {this.state.inputDialogTitle}
                                  defaultValue = {this.state.inputDialogDefaultValue}
                                         rules = {notebookInputRules}
                           onActionAffirmative = {this.state.inputDialogOnAffirmative} />
+
+                <InputModalViewController ref = "searchInputViewController"
+                                   identifier = "search-input-view"
+                                        title = "Search notebook"
+                                 defaultValue = ""
+                                        rules = {notebookInputRules}
+                          onActionAffirmative = {this._onSearchNotebook} />
 
                 <AlertViewController ref = "confirmAlerter"
                                    title = {this.state.confirmTitle}
@@ -184,9 +225,9 @@ var BookshelfContainer = React.createClass({
                                                 title: "Yes",
                                                 iconType: "checkmark",
                                                 color: "green",
-                                                actionType: "approve",
-                                                onClick: this._trashSelected
-                                            }]} />
+                                                actionType: "approve"
+                                            }]}
+                               onApprove = {this._trashSelected} />
 
                 <AlertViewController ref = "errorAlerter"
                                    title = {this.state.errorTitle}
@@ -202,49 +243,94 @@ var BookshelfContainer = React.createClass({
     },
 
     _onDatabaseChange: function(change) {
+        var _searchNode;
+        var _searchString;
         switch (change.actionType) {
-            case NotebookConstants.NOTEBOOK_DATABASE_LOADTREE_SUCCESS:
-                this.setState({ treeData: DatabaseStore.getTreeData() });
+            case NotebookActionConstants.NOTEBOOK_DATABASE_LOADTREE_SUCCESS:
+                this.setState({
+                    clearingSearch: false,
+                    notebookSearchString: "",
+                    treeData: DatabaseStore.getTreeData()
+                });
+
                 setTimeout(function() {
-                    this.refs.treeViewController.nodeSelect(this.refs.treeViewController.getNodeById(1));
+                    this.refs.treeViewController.nodeSelect(
+                        this.refs.treeViewController.getNodeById(
+                            NotebookConstants.DATABASE_NOTEBOOK_ALL_ID
+                        )
+                    );
                 }.bind(this), 10);
                 break;
 
-            case NotebookConstants.NOTEBOOK_DATABASE_SAVETREE_SUCCESS:
+            case NotebookActionConstants.NOTEBOOK_DATABASE_SAVETREE_SUCCESS:
                 break;
 
-            case NotebookConstants.NOTEBOOK_DATABASE_CREATE_STACK:
+            case NotebookActionConstants.NOTEBOOK_DATABASE_CREATE_STACK:
                 this.treeViewCreateFolderHelper(change.stack.stackId, change.stack.stackName);
                 this.treeViewCreateFolderHelper = undefined;
                 this._saveTree();
                 break;
 
-            case NotebookConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK_SUCCESS:
+            case NotebookActionConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK_SUCCESS:
                 this.refs.treeViewController.nodeCreate(change.notebook.notebookId, change.notebook.notebookName);
                 this._saveTree();
                 break;
 
-            case NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTEBOOK_SUCCESS:
+            case NotebookActionConstants.NOTEBOOK_DATABASE_TRASH_NOTEBOOK_SUCCESS:
+                var superNode = this.refs.treeViewController.getNodeById(
+                    NotebookConstants.DATABASE_NOTEBOOK_ALL_ID
+                );
                 this.refs.treeViewController.nodeRemove(change.notebookNode);
+                this.refs.treeViewController.nodeSelect(superNode);
                 this._saveTree();
                 break;
 
-            case NotebookConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR:
-            case NotebookConstants.NOTEBOOK_DATABASE_SAVETREE_ERROR:
-            case NotebookConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK_ERROR:
-            case NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTEBOOK_ERROR:
-                this._showErrorAlert("Notebook Database Error", change + ":\n" + DatabaseStore.getError());
+            case NotebookActionConstants.NOTEBOOK_DATABASE_LOADNOTES:
+                _searchString = DatabaseStore.getSearchString();
+                if (_searchString) {
+                    this.refs.treeViewController.nodeCreate(
+                        NotebookConstants.DATABASE_NOTEBOOK_SEARCH_ID,
+                        "Search notes for `" + _searchString + "`",
+                        "before",
+                        DatabaseStore.getSuperNotebookNode()
+                    );
+                    _searchNode = this.refs.treeViewController.getNodeById(
+                                        NotebookConstants.DATABASE_NOTEBOOK_SEARCH_ID);
+                    this.refs.treeViewController.nodeSelect(_searchNode);
+                }
+                else {
+                    _searchNode = this.refs.treeViewController.getNodeById(
+                                        NotebookConstants.DATABASE_NOTEBOOK_SEARCH_ID);
+                    if (_searchNode) {
+                        this.refs.treeViewController.nodeRemove(_searchNode);
+                        this.refs.treeViewController.nodeSelect(DatabaseStore.getSelectedNotebookNode());
+                    }
+                }
+                break;
+
+            case NotebookActionConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR:
+            case NotebookActionConstants.NOTEBOOK_DATABASE_SAVETREE_ERROR:
+            case NotebookActionConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK_ERROR:
+            case NotebookActionConstants.NOTEBOOK_DATABASE_TRASH_NOTEBOOK_ERROR:
+                this._showErrorAlert(
+                    "Notebook Database Error",
+                    "Error Code: " + change.actionType + "\n\n" + DatabaseStore.getError()
+                );
                 break;
         }
     },
 
     _onTreeCreateNode: function(node) {
-        node.disk = StorageAgent.getDiskInUse();
+        //
     },
 
     _saveTree: function(node, immediately) {
+        if (this.state.notebookSearchString)
+            return;
+
         if (this._timerSaveTreeDelay)
             clearTimeout(this._timerSaveTreeDelay);
+
         this._timerSaveTreeDelay = setTimeout(function() {
             DatabaseActionCreators.saveTree(this.refs.treeViewController.getTreeData(), 0);
             this._timerSaveTreeDelay = null;
@@ -271,6 +357,78 @@ var BookshelfContainer = React.createClass({
         this._saveTree();
     },
 
+    _onSearchNotebook: function(name) {
+        function clone(obj) {
+            var copy;
+
+            // Handle the 3 simple types, and null or undefined
+            if (null == obj || "object" != typeof obj) return obj;
+
+            // Handle Date
+            if (obj instanceof Date) {
+                copy = new Date();
+                copy.setTime(obj.getTime());
+                return copy;
+            }
+
+            // Handle Array
+            if (obj instanceof Array) {
+                copy = [];
+                for (var i = 0, len = obj.length; i < len; i++) {
+                    copy[i] = clone(obj[i]);
+                }
+                return copy;
+            }
+
+            // Handle Object
+            if (obj instanceof Object) {
+                copy = {};
+                for (var attr in obj) {
+                    if (obj.hasOwnProperty(attr)) copy[attr] = clone(obj[attr]);
+                }
+                return copy;
+            }
+
+            throw new Error("Unable to copy obj! Its type isn't supported.");
+        }
+
+        var _searchTreeData = clone(DatabaseStore.getTreeData());
+        var _i = 0;
+
+        while (_i < _searchTreeData.length) {
+            if (_searchTreeData[_i].name) {
+                if (_searchTreeData[_i].id === NotebookConstants.DATABASE_NOTEBOOK_ALL_ID
+                    || _searchTreeData[_i].name.toLowerCase().indexOf(name.toLowerCase()) >= 0)
+                    _i++;
+                else if (_searchTreeData[_i].children) {
+                    var _children = _searchTreeData[_i].children;
+                    var _j = 0;
+                    while (_j < _children.length) {
+                        if (_children[_j].name.toLowerCase().indexOf(name.toLowerCase()) >= 0)
+                            _j++;
+                        else
+                            _children.splice(_j, 1);
+                    }
+
+                    if (_children.length === 0)
+                        _searchTreeData.splice(_i, 1);
+                    else
+                        _i++;
+                }
+                else
+                    _searchTreeData.splice(_i, 1);
+            }
+            else
+                _i++;
+        }
+
+        this.setState({
+            loadingSearch: true,
+            notebookSearchString: name,
+            treeData: _searchTreeData
+        });
+    },
+
     _showCreateStackInputDialog: function(createFolderHelper) {
         this.treeViewCreateFolderHelper = createFolderHelper;
         this.setState({
@@ -278,22 +436,23 @@ var BookshelfContainer = React.createClass({
             inputDialogDefaultValue: "",
             inputDialogOnAffirmative: this._onCreateStack
         });
-        this.refs.inputViewController.show();
+
+        this.refs.editInputViewController.show();
     },
 
     _showCreateNotebookInputDialog: function() {
+        if (this.state.disableMenuItemNew) return;
+
         this.setState({
             inputDialogTitle: "Create a notebook",
             inputDialogDefaultValue: "",
             inputDialogOnAffirmative: this._onCreateNotebook
         });
-        this.refs.inputViewController.show();
+
+        this.refs.editInputViewController.show();
     },
 
     _showRenameInputDialog: function() {
-        if (this.refs.moreOpDropdownViewController.state.disable)
-            return;
-
         var node = this.refs.treeViewController.getSelectedNode();
 
         if (node.isFolder()) {
@@ -302,7 +461,8 @@ var BookshelfContainer = React.createClass({
                 inputDialogDefaultValue: node.name,
                 inputDialogOnAffirmative: this._onRenameStack
             });
-            this.refs.inputViewController.show();
+
+            this.refs.editInputViewController.show();
         }
         else {
             this.setState({
@@ -310,14 +470,12 @@ var BookshelfContainer = React.createClass({
                 inputDialogDefaultValue: node.name,
                 inputDialogOnAffirmative: this._onRenameNotebook
             });
-            this.refs.inputViewController.show();
+
+            this.refs.editInputViewController.show();
         }
     },
 
     _showTrashConfirmDialog: function() {
-        if (this.refs.moreOpDropdownViewController.state.disable)
-            return;
-
         var node = this.refs.treeViewController.getSelectedNode();
 
         if (node.isFolder()) {
@@ -337,17 +495,29 @@ var BookshelfContainer = React.createClass({
         this.refs.confirmAlerter.show();
     },
 
+    _showSearchInputDialog: function() {
+        this.refs.searchInputViewController.show();
+    },
+
+    _clearSearch: function() {
+        this.setState({
+            clearingSearch: true,
+            notebookSearchString: "",
+            treeData: DatabaseStore.getTreeData()
+        });
+    },
+
     _showErrorAlert: function(errorTitle, errorMessage) {
         this.setState({
             errorTitle: errorTitle,
             errorMessage: errorMessage
         });
+
         this.refs.errorAlerter.show();
     },
 
     _trashSelected: function() {
         var node = this.refs.treeViewController.getSelectedNode();
-        var superNode = this.refs.treeViewController.getNodeById(1);
 
         if (node.isFolder()) {
             node.iterate(function(node) {
@@ -358,19 +528,71 @@ var BookshelfContainer = React.createClass({
         else {
             DatabaseActionCreators.trashNotebook(node);
         }
-
-        this.refs.treeViewController.nodeSelect(superNode);
     },
 
     _onTreeSelect: function(node) {
         if (!node) return;
 
-        if (node.id === 1)
-            this.refs.moreOpDropdownViewController.setState({ disable: true });
-        else
-            this.refs.moreOpDropdownViewController.setState({ disable: false });
+        if (node.id === NotebookConstants.DATABASE_NOTEBOOK_ALL_ID) {
+            if (this.state.notebookSearchString)
+                this.setState({
+                    disableMenuItemNew: true,
+                    disableMenuItemRename: true,
+                    disableMenuItemTrash: true
+                });
+            else
+                this.setState({
+                    disableMenuItemNew: false,
+                    disableMenuItemRename: true,
+                    disableMenuItemTrash: true
+                });
+        }
+        else if (node.id === NotebookConstants.DATABASE_NOTEBOOK_SEARCH_ID) {
+            return this.setState({
+                disableMenuItemNew: true,
+                disableMenuItemRename: true,
+                disableMenuItemTrash: true
+            });
+        }
+        else {
+            if (this.state.notebookSearchString)
+                this.setState({
+                    disableMenuItemNew: true,
+                    disableMenuItemRename: false,
+                    disableMenuItemTrash: false
+                });
+            else
+                this.setState({
+                    disableMenuItemNew: false,
+                    disableMenuItemRename: false,
+                    disableMenuItemTrash: false
+                });
+        }
 
-        DatabaseActionCreators.selectNotebook(node);
+        if (this.state.notebookSearchString)
+            node.isSearching = true;
+        else
+            delete node.isSearching;
+
+        setTimeout(function() {
+            DatabaseActionCreators.selectNotebook(node);
+        }, 1);
+    },
+
+    _onTreeRefresh: function() {
+        if (this.state.loadingSearch) {
+            var searchTree = this.refs.treeViewController.getTree();
+            if (searchTree.children.length > 0) {
+                var node = this.refs.treeViewController.getNodeById(searchTree.children[0].id);
+                this.refs.treeViewController.nodeSelect(node);
+            }
+            this.setState({ loadingSearch: false });
+        }
+        else if (this.state.clearingSearch) {
+            var node = this.refs.treeViewController.getNodeById(DatabaseStore.getSelectedNotebookNode().id);
+            this.refs.treeViewController.nodeSelect(node);
+            this.setState({ clearingSearch: false });
+        }
     }
 
 });

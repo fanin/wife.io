@@ -3,12 +3,17 @@
 var AlertViewController = React.createClass({
     getDefaultProps: function() {
         return {
+            size: "small",
             title: "",
             image: "",
             message: "",
             customViewComponent: null,
             actionButtons: [],
-            actionButtonsAlign: "right"
+            actionButtonsAlign: "right",
+            onShow: function() {},
+            onHide: function() {},
+            onApprove: function() {},
+            onDeny: function() {}
         };
     },
 
@@ -16,7 +21,11 @@ var AlertViewController = React.createClass({
         if (!this.modalInstance)
             this.modalInstance = $(this.getDOMNode()).modal({
                 closable: false,
-                detachable: false
+                detachable: false,
+                onShow: this.props.onShow,
+                onHidden: this.props.onHide,
+                onApprove: this.props.onApprove,
+                onDeny: this.props.onDeny
             });
 
         this.modalInstance.modal('show');
@@ -40,10 +49,11 @@ var AlertViewController = React.createClass({
         var image = this.props.image ? <div className="image">{this.props.image}</div> : null;
 
         var actionButtons = this.props.actionButtons.map(function(button) {
-            var buttonClass = "ui " + (button.iconType ? "center labeled " : "center ") + "icon " + button.color + " button " + button.actionType;
+            var buttonClass = "ui " + (button.iconType ? "center labeled " : "center ")
+                                    + "icon " + button.color + " button " + button.actionType;
             var buttonIcon = button.iconType ? <i className={button.iconType + " icon"}></i> : null;
             return (
-                <div className={buttonClass} onClick={button.onClick}>
+                <div className={buttonClass}>
                     {buttonIcon}
                     {button.title}
                 </div>
@@ -51,7 +61,7 @@ var AlertViewController = React.createClass({
         });
 
         return (
-            <div className="ui small modal">
+            <div className={"ui long " + this.props.size + " modal"}>
                 <div className="ui header">
                     {this.props.title}
                 </div>

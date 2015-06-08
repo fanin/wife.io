@@ -1,6 +1,11 @@
 "use strict";
 
 var InputModalViewController = React.createClass({
+
+    propTypes: {
+        identifier: React.PropTypes.string.isRequired
+    },
+
     getDefaultProps: function() {
         return {
             title: "",
@@ -34,20 +39,20 @@ var InputModalViewController = React.createClass({
     },
 
     reset: function() {
-        $(".input-form").form("reset");
-        $(".input-form").removeClass("error");
+        $(".input-form-" + this.props.identifier).form("reset");
+        $(".input-form-" + this.props.identifier).removeClass("error");
     },
 
     componentDidMount: function() {
-        $(".input-form").form({
+        $(".input-form-" + this.props.identifier).form({
             name: {
-                identifier: "input-modal-view-name",
+                identifier: this.props.identifier,
                 rules: this.props.rules
             }
         }, {
             onSuccess: function() {
                 this.props.onActionAffirmative(
-                    $(".input-form").form("get value", "input-modal-view-name").trim()
+                    $(".input-form-" + this.props.identifier).form("get value", this.props.identifier).trim()
                 );
                 this.hide();
                 this.reset();
@@ -67,11 +72,11 @@ var InputModalViewController = React.createClass({
          * BUG (Semantic-UI):
          * If set default value in render() like below, the input box will be non-editable.
          * --
-         *    <input name="input-modal-view-name" type="text" value={this.props.defaultValue} />
+         *    <input name=this.props.identifier type="text" value={this.props.defaultValue} />
          * --
          * Here is a workaround to set default value by jQuery directly.
          */
-        $("input[name='input-modal-view-name']").val(nextProps.defaultValue);
+        $("input[name='" + this.props.identifier + "']").val(nextProps.defaultValue);
         return true;
     },
 
@@ -81,11 +86,11 @@ var InputModalViewController = React.createClass({
                 <div className="header">
                     {this.props.title}
                 </div>
-                <form className="ui form input-form">
+                <form className={"ui form input-form-" + this.props.identifier}>
                     <div className="content input-modal-view-content">
                         <div className="description">
                             <div className="field">
-                                <input name="input-modal-view-name" type="text" />
+                                <input name={this.props.identifier} type="text" />
                                 <div className="ui error message"></div>
                             </div>
                         </div>

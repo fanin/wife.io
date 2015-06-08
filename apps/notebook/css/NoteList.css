@@ -2,3 +2,7 @@
 .dropdown > .icon {
 	height: 1em !important;
 }
+
+.nb-notelist-guide {
+    padding: 5%;
+}

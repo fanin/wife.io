@@ -16,7 +16,7 @@ var DropdownViewController = React.createClass({
 
     getInitialState: function() {
         return {
-            disable: false
+            disabled: false
         };
     },
 
@@ -30,33 +30,35 @@ var DropdownViewController = React.createClass({
             onChange: _onChange
         } : {
             transition: "drop",
-            action: "nothing",
+            action: "hide",
             onChange: _onChange
         };
 
         $(this.getDOMNode()).dropdown(_settings);
     },
 
-    shouldComponentUpdate: function (nextProps, nextState) {
-        return true;
-    },
-
     componentWillUpdate: function(nextProps, nextState) {
-        if (nextState.disable)
+        if (nextState.disabled)
             $(this.getDOMNode()).addClass("disabled");
         else
             $(this.getDOMNode()).removeClass("disabled");
     },
 
+    shouldComponentUpdate: function (nextProps, nextState) {
+        return true;
+    },
+
     render: function() {
         var items = this.props.itemDataSource.map(function(data) {
             return (
-                <div className="item" data-value={data.value} onClick={data.onSelect}>
+                <div className = {data.disabled ? "item disabled" : "item"}
+                    data-value = {data.value}
+                       onClick = {(this.state.disabled || data.disabled) ? null : data.onSelect}>
                     <i className={data.icon + " icon"} />
                     {data.text}
                 </div>
             );
-        });
+        }.bind(this));
 
         var buttonIcon = this.props.iconClass ? <i className={this.props.iconClass + " icon"} /> : null;
 

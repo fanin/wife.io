@@ -1,8 +1,10 @@
-var DatabaseActionCreators = require("../actions/DatabaseActionCreators");
-var NotebookConstants      = require("../constants/NotebookConstants");
-var DatabaseStore          = require("../stores/DatabaseStore");
-var ListViewController     = require('framework/cutie/ListView/js/ListViewController.jsx');
-var AlertViewController    = require("framework/cutie/AlertView/js/AlertViewController.jsx");
+var DatabaseActionCreators  = require("../actions/DatabaseActionCreators");
+var NotebookConstants       = require("../constants/NotebookConstants");
+var NotebookActionConstants = require("../constants/NotebookActionConstants");
+var DatabaseStore           = require("../stores/DatabaseStore");
+var ListViewController      = require("framework/cutie/ListView/js/ListViewController.jsx");
+var AlertViewController     = require("framework/cutie/AlertView/js/AlertViewController.jsx");
+var DropdownViewController  = require("framework/cutie/DropdownView/js/DropdownViewController.jsx");
 
 var SortMethods = {
     /* Sort by last modified date */
@@ -35,17 +37,12 @@ var SortMethods = {
 
 var NoteListContainer = React.createClass({
 
-    getDefaultProps: function() {
-        return {
-
-        };
-    },
-
     getInitialState: function() {
         return {
             disableNewNoteButton: false,
             disableCopyButton: false,
             disableTrashButton: false,
+            showGuide: false,
             sortMethod: SortMethods.sortByLastModifiedDate
         };
     },
@@ -69,14 +66,6 @@ var NoteListContainer = React.createClass({
         return true;
     },
 
-    componentWillUpdate: function(nextProps, nextState) {
-
-    },
-
-    componentDidUpdate: function(prevProps, prevState) {
-
-    },
-
     render: function() {
         var sortLastModDateClass = (
                 this.state.sortMethod === SortMethods.sortByLastModifiedDate
@@ -93,6 +82,23 @@ var NoteListContainer = React.createClass({
         var sortTitleDscClass = (
                 this.state.sortMethod === SortMethods.sortByTitleDescending
             ) ? "check icon" : "icon";
+
+        var moreOpDropdownItems = [
+            {
+                text:  "Copy",
+                value: "copy",
+                icon:  "copy",
+                disabled: this.state.disableCopyButton,
+                onSelect: this._copyNote
+            },
+            {
+                text:  "Trash",
+                value: "trash",
+                icon:  "trash outline",
+                disabled: this.state.disableTrashButton,
+                onSelect: this._trashNote
+            }
+        ];
 
         return (
             <div className="nb-column-container">
@@ -122,23 +128,25 @@ var NoteListContainer = React.createClass({
                             </div>
                         </div>
                     </div>
-                    <div className={this.state.disableNewNoteButton ? "ui pointing link disabled item" :
-                                                                      "ui pointing link item"}
+                    <div className={this.state.disableNewNoteButton ? "ui pointing link disabled item"
+                                                                    : "ui pointing link item"}
                            onClick={this._writeNote}>
                         <i className="edit icon"></i>
                         New
                     </div>
-                    <div className={this.state.disableCopyButton ? "ui pointing link disabled item" :
-                                                                   "ui pointing link item"}
-                           onClick={this._copyNote}>
-                        <i className="copy icon"></i>
-                        Copy
-                    </div>
-                    <div className={this.state.disableTrashButton ? "ui pointing link disabled item" :
-                                                                    "ui pointing link item"}
-                           onClick={this._trashNote}>
-                        <i className="trash outline icon"></i>
-                        Trash
+                    <DropdownViewController itemDataSource = {moreOpDropdownItems}
+                                                 iconClass = "ellipsis vertical"
+                                              useSelectBar = {false} />
+                </div>
+
+                <div className="nb-notelist-guide" style={{display: this.state.showGuide ? "block" : "none"}}>
+                    <div className="ui info message">
+                        <div className="header">
+                            This notebook is empty.
+                        </div>
+                        <ul className="list">
+                            <li>Press 'New' to create a note.</li>
+                        </ul>
                     </div>
                 </div>
 
@@ -163,9 +171,12 @@ var NoteListContainer = React.createClass({
 
     _onDatabaseChange: function(change) {
         switch (change.actionType) {
-            case NotebookConstants.NOTEBOOK_DATABASE_SELECT_NOTEBOOK:
-                var notebook = DatabaseStore.getSelectedNotebookNode();
-                if (notebook && (notebook.id === 1 || notebook.isFolder()))
+            case NotebookActionConstants.NOTEBOOK_DATABASE_SELECT_NOTEBOOK:
+                var notebook = change.notebookNode;
+                if (notebook &&
+                       (notebook.id === NotebookConstants.DATABASE_NOTEBOOK_ALL_ID ||
+                        notebook.isFolder())
+                )
                     this.setState({ disableNewNoteButton: true });
                 else
                     this.setState({ disableNewNoteButton: false });
@@ -177,66 +188,73 @@ var NoteListContainer = React.createClass({
                 }.bind(this), 10);
                 break;
 
-            case NotebookConstants.NOTEBOOK_DATABASE_LOADNOTES_SUCCESS:
+            case NotebookActionConstants.NOTEBOOK_DATABASE_LOADNOTES_SUCCESS:
                 var notes = DatabaseStore.getNoteDescriptorList();
                 this.refs.noteListController.setDataSource(notes);
                 if (notes.length === 0)
                     this.setState({
                         disableCopyButton: true,
-                        disableTrashButton: true
+                        disableTrashButton: true,
+                        showGuide: true
                     });
                 else
                     this.setState({
                         disableCopyButton: false,
-                        disableTrashButton: false
+                        disableTrashButton: false,
+                        showGuide: false
                     });
                 break;
 
-            case NotebookConstants.NOTEBOOK_DATABASE_ADD_NOTE_SUCCESS:
-            case NotebookConstants.NOTEBOOK_DATABASE_COPY_NOTE_SUCCESS:
+            case NotebookActionConstants.NOTEBOOK_DATABASE_ADD_NOTE_SUCCESS:
+            case NotebookActionConstants.NOTEBOOK_DATABASE_COPY_NOTE_SUCCESS:
                 this.refs.noteListController.addRowAtIndex(change.noteDescriptor, change.index);
                 this.setState({
                     disableCopyButton: false,
-                    disableTrashButton: false
+                    disableTrashButton: false,
+                    showGuide: false
                 });
                 break;
 
-            case NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTE_SUCCESS:
+            case NotebookActionConstants.NOTEBOOK_DATABASE_TRASH_NOTE_SUCCESS:
                 this.refs.noteListController.removeRowAtIndex(change.index);
                 if (DatabaseStore.getNoteDescriptorList().length === 0)
                     this.setState({
                         disableCopyButton: true,
-                        disableTrashButton: true
+                        disableTrashButton: true,
+                        showGuide: true
                     });
                 break;
 
-            case NotebookConstants.NOTEBOOK_DATABASE_SET_NOTE_SORT_METHOD:
+            case NotebookActionConstants.NOTEBOOK_DATABASE_SET_NOTE_SORT_METHOD:
                 this.setState({ sortMethod: DatabaseStore.getNoteListSortMethod() });
                 var _i = DatabaseStore.getNoteDescriptorIndex(DatabaseStore.getSelectedNoteDescriptor());
                 if (_i >= 0)
                     this.refs.noteListController.selectRowAtIndex(_i);
                 break;
 
-            case NotebookConstants.NOTEBOOK_DATABASE_SAVE_NOTE:
+            case NotebookActionConstants.NOTEBOOK_DATABASE_SAVE_NOTE:
                 this.refs.noteListController.setEnable(false);
                 break;
 
-            case NotebookConstants.NOTEBOOK_DATABASE_SAVE_NOTE_SUCCESS:
+            case NotebookActionConstants.NOTEBOOK_DATABASE_SAVE_NOTE_SUCCESS:
                 this.refs.noteListController.refresh();
                 this.refs.noteListController.setEnable(true);
                 break;
 
-            case NotebookConstants.NOTEBOOK_DATABASE_SAVE_NOTE_ERROR:
+            case NotebookActionConstants.NOTEBOOK_DATABASE_SAVE_NOTE_ERROR:
                 this.refs.noteListController.setEnable(true);
-            case NotebookConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR:
-            case NotebookConstants.NOTEBOOK_DATABASE_SAVETREE_ERROR:
-            case NotebookConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK_ERROR:
-            case NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTEBOOK_ERROR:
-            case NotebookConstants.NOTEBOOK_DATABASE_LOADNOTES_ERROR:
-            case NotebookConstants.NOTEBOOK_DATABASE_ADD_NOTE_ERROR:
-            case NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTE_ERROR:
-            case NotebookConstants.NOTEBOOK_DATABASE_COPY_NOTE_ERROR:
-                this._showErrorAlert("Notebook Database Error", change + ":\n" + DatabaseStore.getError());
+            case NotebookActionConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR:
+            case NotebookActionConstants.NOTEBOOK_DATABASE_SAVETREE_ERROR:
+            case NotebookActionConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK_ERROR:
+            case NotebookActionConstants.NOTEBOOK_DATABASE_TRASH_NOTEBOOK_ERROR:
+            case NotebookActionConstants.NOTEBOOK_DATABASE_LOADNOTES_ERROR:
+            case NotebookActionConstants.NOTEBOOK_DATABASE_ADD_NOTE_ERROR:
+            case NotebookActionConstants.NOTEBOOK_DATABASE_TRASH_NOTE_ERROR:
+            case NotebookActionConstants.NOTEBOOK_DATABASE_COPY_NOTE_ERROR:
+                this._showErrorAlert(
+                    "Notebook Database Error",
+                    "Error Code: " + change.actionType + "\n\n" + DatabaseStore.getError()
+                );
                 break;
         }
     },

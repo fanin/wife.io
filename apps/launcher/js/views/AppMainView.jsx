@@ -155,16 +155,16 @@ var AppMainView = React.createClass({
                                                 title: "No",
                                                 iconType: "remove",
                                                 color: "red",
-                                                actionType: "deny",
-                                                onClick: this._handleUninstallNegative
+                                                actionType: "deny"
                                             },
                                             {
                                                 title: "Yes",
                                                 iconType: "checkmark",
                                                 color: "green",
-                                                actionType: "approve",
-                                                onClick: this._handleUninstallAffirmative
-                                            }]} />
+                                                actionType: "approve"
+                                            }]}
+                                  onDeny = {this._handleUninstallNegative}
+                               onApprove = {this._handleUninstallAffirmative} />
             </div>
         );
     },

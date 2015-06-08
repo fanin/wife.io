@@ -1,15 +1,11 @@
-var NotebookDispatcher = require('../dispatcher/NotebookDispatcher');
-var NotebookConstants  = require('../constants/NotebookConstants');
-var getTimecode        = require('utils/string-code').getTimecode;
-var dirname            = require('utils/client-utils').dirname;
-var base64ToBlob       = require('utils/buffer-utils').base64ToBlob;
-var assign             = require('object-assign');
-
-var DATABASE_ROOT_FOLDER = "bookshelf";
-var DATABASE_TREE_FILE   = "bookshelf-tree.json";
-var DATABASE_NOTE_FILE   = "index.html";
-var DATABASE_NOTE_SNAPSHOT_FILE = "snapshot.png";
-var DATABASE_FIRST_ENTRY_LABEL  = "All Notes";
+var NotebookDispatcher      = require("../dispatcher/NotebookDispatcher");
+var NotebookConstants       = require("../constants/NotebookConstants");
+var NotebookActionConstants = require("../constants/NotebookActionConstants");
+var getTimecode             = require("utils/string-code").getTimecode;
+var dirname                 = require("utils/client-utils").dirname;
+var base64ToBlob            = require("utils/buffer-utils").base64ToBlob;
+var assign                  = require("object-assign");
+var async                   = require('async');
 
 var databaseStorage;
 var saveWaitTimer;
@@ -25,7 +21,7 @@ var DatabaseActionCreators = {
      */
     __getBookshelfPath: function(path) {
         path = path || "";
-        return DATABASE_ROOT_FOLDER + "/" + path;
+        return NotebookConstants.DATABASE_ROOT_FOLDER + "/" + path;
     },
 
     /**
@@ -75,17 +71,20 @@ var DatabaseActionCreators = {
     loadTree: function() {
         if (!databaseStorage) return;
 
-        var treeData = [{ label: DATABASE_FIRST_ENTRY_LABEL, id: 1 }];
+        var treeData = [{
+            label: NotebookConstants.DATABASE_NOTEBOOK_ALL_LABEL,
+            id: NotebookConstants.DATABASE_NOTEBOOK_ALL_ID
+        }];
 
         NotebookDispatcher.dispatch({
-            actionType: NotebookConstants.NOTEBOOK_DATABASE_LOADTREE
+            actionType: NotebookActionConstants.NOTEBOOK_DATABASE_LOADTREE
         });
 
         /* Create /bookshelf if necessary */
         FileAgent.exist(this.__getBookshelfPath(), function(path, exist, isDir, error) {
             if (error) {
                 return NotebookDispatcher.dispatch({
-                    actionType: NotebookConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR,
+                    actionType: NotebookActionConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR,
                     error: "fs error: " + error
                 });
             }
@@ -94,7 +93,7 @@ var DatabaseActionCreators = {
                 FileAgent.createDirectory(this.__getBookshelfPath(), function(path, error) {
                     if (error) {
                         NotebookDispatcher.dispatch({
-                            actionType: NotebookConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR,
+                            actionType: NotebookActionConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR,
                             error: "unable to create " + path + ", error: " + error
                         });
                     }
@@ -104,7 +103,7 @@ var DatabaseActionCreators = {
                 FileAgent.remove(this.__getBookshelfPath(), function(path, error) {
                     if (error) {
                         NotebookDispatcher.dispatch({
-                            actionType: NotebookConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR,
+                            actionType: NotebookActionConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR,
                             error: "unable to remove " + path + ", error: " + error
                         });
                     }
@@ -112,7 +111,7 @@ var DatabaseActionCreators = {
                     FileAgent.createDirectory(this.__getBookshelfPath(), function(path, error) {
                         if (error) {
                             NotebookDispatcher.dispatch({
-                                actionType: NotebookConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR,
+                                actionType: NotebookActionConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR,
                                 error: "unable to create " + path + ", error: " + error
                             });
                         }
@@ -122,19 +121,19 @@ var DatabaseActionCreators = {
         }.bind(this));
 
         /* Load notebook tree data from bookshelf-tree.json */
-        FileAgent.exist(DATABASE_TREE_FILE, function(path, exist, isDir, error) {
+        FileAgent.exist(NotebookConstants.DATABASE_TREE_FILE, function(path, exist, isDir, error) {
             if (error) {
                 return NotebookDispatcher.dispatch({
-                    actionType: NotebookConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR,
+                    actionType: NotebookActionConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR,
                     error: "fs error: " + error
                 });
             }
 
             if (exist) {
-                FileAgent.readFile(DATABASE_TREE_FILE, "utf8", function(path, data, error) {
+                FileAgent.readFile(NotebookConstants.DATABASE_TREE_FILE, "utf8", function(path, data, error) {
                     if (error) {
                         NotebookDispatcher.dispatch({
-                            actionType: NotebookConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR,
+                            actionType: NotebookActionConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR,
                             error: "unable to read tree data: " + error
                         });
                     }
@@ -144,13 +143,13 @@ var DatabaseActionCreators = {
                         }
                         catch (error) {
                             NotebookDispatcher.dispatch({
-                                actionType: NotebookConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR,
+                                actionType: NotebookActionConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR,
                                 error: "parse tree data error: " + error + "\ndata:\n" + data
                             });
                         }
                         finally {
                             NotebookDispatcher.dispatch({
-                                actionType: NotebookConstants.NOTEBOOK_DATABASE_LOADTREE_SUCCESS,
+                                actionType: NotebookActionConstants.NOTEBOOK_DATABASE_LOADTREE_SUCCESS,
                                 treeData: treeData
                             });
                         }
@@ -158,16 +157,16 @@ var DatabaseActionCreators = {
                 });
             }
             else {
-                FileAgent.writeFile(DATABASE_TREE_FILE, JSON.stringify(treeData), function(path, progress, error) {
+                FileAgent.writeFile(NotebookConstants.DATABASE_TREE_FILE, JSON.stringify(treeData), function(path, progress, error) {
                     if (error) {
                         NotebookDispatcher.dispatch({
-                            actionType: NotebookConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR,
+                            actionType: NotebookActionConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR,
                             error: "unable to write tree data: " + error
                         });
                     }
                     else {
                         NotebookDispatcher.dispatch({
-                            actionType: NotebookConstants.NOTEBOOK_DATABASE_LOADTREE_SUCCESS,
+                            actionType: NotebookActionConstants.NOTEBOOK_DATABASE_LOADTREE_SUCCESS,
                             treeData: treeData
                         });
                     }
@@ -179,10 +178,12 @@ var DatabaseActionCreators = {
     /**
      * Save notebook tree to database
      * @method saveTree
-     * @param treeData {Object} jqTree tree data object
+     * @param treeJsonData {String} jqTree tree data JSON string
      * @param wait {Number} Wait a period of time in millisecond before saving tree data
      */
-    saveTree: function(treeData, wait) {
+    saveTree: function(treeJsonData, wait) {
+        var treeData;
+
         if (!databaseStorage) return;
 
         wait = wait || 0;
@@ -195,23 +196,34 @@ var DatabaseActionCreators = {
             saveWaitTimer = undefined;
 
             NotebookDispatcher.dispatch({
-                actionType: NotebookConstants.NOTEBOOK_DATABASE_SAVETREE
+                actionType: NotebookActionConstants.NOTEBOOK_DATABASE_SAVETREE
             });
 
-            FileAgent.writeFile(DATABASE_TREE_FILE, treeData, function(path, progress, error) {
-                if (error) {
-                    NotebookDispatcher.dispatch({
-                        actionType: NotebookConstants.NOTEBOOK_DATABASE_SAVETREE_ERROR,
-                        error: "unable to write tree data: " + error
-                    });
-                }
-                else {
-                    NotebookDispatcher.dispatch({
-                        actionType: NotebookConstants.NOTEBOOK_DATABASE_SAVETREE_SUCCESS,
-                        treeData: treeData
-                    });
-                }
-            });
+            try {
+                treeData = JSON.parse(treeJsonData);
+            }
+            catch (error) {
+                NotebookDispatcher.dispatch({
+                    actionType: NotebookActionConstants.NOTEBOOK_DATABASE_SAVETREE_ERROR,
+                    error: "parse tree data error: " + error + "\ndata:\n" + treeJsonData
+                });
+            }
+            finally {
+                FileAgent.writeFile(NotebookConstants.DATABASE_TREE_FILE, treeJsonData, function(path, progress, error) {
+                    if (error) {
+                        NotebookDispatcher.dispatch({
+                            actionType: NotebookActionConstants.NOTEBOOK_DATABASE_SAVETREE_ERROR,
+                            error: "unable to write tree data: " + error
+                        });
+                    }
+                    else {
+                        NotebookDispatcher.dispatch({
+                            actionType: NotebookActionConstants.NOTEBOOK_DATABASE_SAVETREE_SUCCESS,
+                            treeData: treeData
+                        });
+                    }
+                });
+            }
         }, wait);
     },
 
@@ -224,7 +236,7 @@ var DatabaseActionCreators = {
         if (!databaseStorage) return;
 
         NotebookDispatcher.dispatch({
-            actionType: NotebookConstants.NOTEBOOK_DATABASE_CREATE_STACK,
+            actionType: NotebookActionConstants.NOTEBOOK_DATABASE_CREATE_STACK,
             stackId: parseInt(getTimecode()),
             stackName: name
         });
@@ -242,20 +254,20 @@ var DatabaseActionCreators = {
         var notebookPath = this.__getBookshelfPath(code);
 
         NotebookDispatcher.dispatch({
-            actionType: NotebookConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK
+            actionType: NotebookActionConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK
         });
 
         FileAgent.exist(notebookPath, function(path, exist, isDir, error) {
             if (error) {
                 return NotebookDispatcher.dispatch({
-                    actionType: NotebookConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK_ERROR,
+                    actionType: NotebookActionConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK_ERROR,
                     error: "fs operation error: " + error
                 });
             }
 
             if (exist) {
                 return NotebookDispatcher.dispatch({
-                    actionType: NotebookConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK_ERROR,
+                    actionType: NotebookActionConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK_ERROR,
                     error: "given path is already exist"
                 });
             }
@@ -263,15 +275,15 @@ var DatabaseActionCreators = {
             FileAgent.createDirectory(notebookPath, function(path, error) {
                 if (error) {
                     NotebookDispatcher.dispatch({
-                        actionType: NotebookConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK_ERROR,
+                        actionType: NotebookActionConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK_ERROR,
                         error: "unable to create " + path + ", error: " + error
                     });
                 }
                 else {
                     NotebookDispatcher.dispatch({
-                        actionType: NotebookConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK_SUCCESS,
-                        NotebookId: parseInt(code),
-                        NotebookName: name
+                        actionType: NotebookActionConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK_SUCCESS,
+                        notebookId: parseInt(code),
+                        notebookName: name
                     });
                 }
             });
@@ -289,21 +301,21 @@ var DatabaseActionCreators = {
         var notebookPath = this.__getBookshelfPath(notebookNode.id);
 
         NotebookDispatcher.dispatch({
-            actionType: NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTEBOOK,
+            actionType: NotebookActionConstants.NOTEBOOK_DATABASE_TRASH_NOTEBOOK,
             notebookNode: notebookNode
         });
 
         FileAgent.exist(notebookPath, function(path, exist, isDir, error) {
             if (error) {
                 return NotebookDispatcher.dispatch({
-                    actionType: NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTEBOOK_ERROR,
+                    actionType: NotebookActionConstants.NOTEBOOK_DATABASE_TRASH_NOTEBOOK_ERROR,
                     error: "fs error: " + error
                 });
             }
 
             if (!exist) {
                 return NotebookDispatcher.dispatch({
-                    actionType: NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTEBOOK_ERROR,
+                    actionType: NotebookActionConstants.NOTEBOOK_DATABASE_TRASH_NOTEBOOK_ERROR,
                     error: "notebook (id = " + notebookNode.id + ") not found"
                 });
             }
@@ -311,13 +323,13 @@ var DatabaseActionCreators = {
             FileAgent.remove(notebookPath, function(path, error) {
                 if (error) {
                     NotebookDispatcher.dispatch({
-                        actionType: NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTEBOOK_ERROR,
+                        actionType: NotebookActionConstants.NOTEBOOK_DATABASE_TRASH_NOTEBOOK_ERROR,
                         error: "unable to remove notebook (id = " + notebookNode.id + ") : " + error
                     });
                 }
 
                 NotebookDispatcher.dispatch({
-                    actionType: NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTEBOOK_SUCCESS,
+                    actionType: NotebookActionConstants.NOTEBOOK_DATABASE_TRASH_NOTEBOOK_SUCCESS,
                     notebookNode: notebookNode
                 });
             });
@@ -333,7 +345,7 @@ var DatabaseActionCreators = {
         if (!databaseStorage) return;
 
         NotebookDispatcher.dispatch({
-            actionType: NotebookConstants.NOTEBOOK_DATABASE_SELECT_NOTEBOOK,
+            actionType: NotebookActionConstants.NOTEBOOK_DATABASE_SELECT_NOTEBOOK,
             notebookNode: notebookNode
         });
     },
@@ -342,8 +354,9 @@ var DatabaseActionCreators = {
      * Load notes from notebook
      * @method loadNotes
      * @param notebookNode {Object} jqTree node of notebook to be loaded
+     * @param searchString {String} Load notes which contain search string only
      */
-    loadNotes: function(notebookNode) {
+    loadNotes: function(notebookNode, searchString) {
         if (!databaseStorage) return;
 
         var __loadNotes = function(_this, node, cb) {
@@ -353,9 +366,10 @@ var DatabaseActionCreators = {
             FileAgent.statList(_notebookPath, function(path, ids, stats, error) {
                 if (error) {
                     return NotebookDispatcher.dispatch({
-                        actionType: NotebookConstants.NOTEBOOK_DATABASE_LOADNOTES_ERROR,
-                        notebookNode: notebookNode,
-                        error: "stat list error: " + error
+                        actionType: NotebookActionConstants.NOTEBOOK_DATABASE_LOADNOTES_ERROR,
+                        notebookNode: node,
+                        searchString: searchString,
+                        error: "stat list error: " + _notebookPath + " : " + error
                     });
                 }
 
@@ -363,71 +377,143 @@ var DatabaseActionCreators = {
                     return cb([]);
                 }
 
-                ids.map(function(noteId, i) {
-                    var _noteIndexPath = path + "/" + noteId + "/" + DATABASE_NOTE_FILE;
-                    FileAgent.grep(_noteIndexPath, "<title>(.*?)<\/title>",
-                        {
-                            regExpModifiers: 'i',
-                            onlyMatching: true
-                        },
-                        function(path, data, error) {
-                            if (error) {
-                                return NotebookDispatcher.dispatch({
-                                    actionType: NotebookConstants.NOTEBOOK_DATABASE_LOADNOTES_ERROR,
-                                    notebookNode: notebookNode,
-                                    error: "grep error: " + error
-                                });
-                            }
+                (function __iterateIds(i) {
+                    var noteId = ids[i];
+                    var _noteIndexPath = path + "/" + noteId + "/" + NotebookConstants.DATABASE_NOTE_FILE;
 
-                            _noteDescriptors.push({
+                    async.series([
+                        function(callback) {
+                            if (!searchString)
+                                return callback(null, true);
+
+                            FileAgent.grep(_noteIndexPath, searchString, {
+                                    encoding: 'utf8',
+                                    regExpModifiers: 'gi',
+                                    onlyMatching: false,
+                                    onlyTesting: true,
+                                    parseFormat: true
+                                },
+                                function(_path, data, error) {
+                                    if (error)
+                                        return callback("Operation: File.Grep\n\nMessage: " + error, false);
+
+                                    if (data)
+                                        callback(null, true);
+                                    else
+                                        callback("NO_MATCH", true);
+                                }
+                            );
+                        },
+                        function(callback) {
+                            FileAgent.grep(_noteIndexPath, "<title>(.*?)<\/title>",
+                                {
+                                    regExpModifiers: 'i',
+                                    onlyMatching: true
+                                },
+                                function(path, data, error) {
+                                    if (error)
+                                        return callback("Operation: File.Grep\n\nMessage: " + error, false);
+
+                                    if (!data)
+                                        return callback("Operation: File.Grep\n\nMessage: Invalid Format\n\nFile: " + _noteIndexPath, true);
+
+                                    _noteDescriptors.push({
+                                        notebookNode: node,
+                                        noteId: noteId,
+                                        noteStat: stats[i],
+                                        noteTitle: data[1],
+                                        noteContent: ""
+                                    });
+
+                                    callback(null, true);
+                                }
+                            );
+                        }
+                    ], function(error, results) {
+                        if (error && error !== "NO_MATCH") {
+                            NotebookDispatcher.dispatch({
+                                actionType: NotebookActionConstants.NOTEBOOK_DATABASE_LOADNOTES_ERROR,
                                 notebookNode: node,
-                                noteId: noteId,
-                                noteStat: stats[i],
-                                noteTitle: data[1],
-                                noteContent: ""
+                                searchString: searchString,
+                                error: error
                             });
 
-                            if (i === ids.length - 1)
-                                cb(_noteDescriptors);
+                            if (!results[0] || !results[1])
+                                return;
                         }
-                    );
-                });
+
+                        if (i === ids.length - 1)
+                            cb(_noteDescriptors);
+                        else
+                            setTimeout(__iterateIds, 1, i + 1);
+                    });
+                })(0);
             });
         }
 
         NotebookDispatcher.dispatch({
-            actionType: NotebookConstants.NOTEBOOK_DATABASE_LOADNOTES,
-            notebookNode: notebookNode
+            actionType: NotebookActionConstants.NOTEBOOK_DATABASE_LOADNOTES,
+            notebookNode: notebookNode,
+            searchString: searchString
         });
 
-        if (notebookNode.id === 1) {
+        if (notebookNode.id === NotebookConstants.DATABASE_NOTEBOOK_ALL_ID) {
             var _rootNode = notebookNode.parent;
             var _noteMergedDescriptors = [];
-            var _total = 0, _count = 0;
+            var _total = 0, _count = 0, _busy = false;
+            var _timerWaitBusy = null;
 
             for (var _i = 0; _i < _rootNode.children.length; _i++) {
                 var _node = _rootNode.children[_i];
-                if (_node.id === 1)
+                if (_node.id === NotebookConstants.DATABASE_NOTEBOOK_ALL_ID
+                    || _node.id === NotebookConstants.DATABASE_NOTEBOOK_SEARCH_ID)
                     continue;
                 _total += _node.children.length || 1;
             }
 
+            if (_total === 0)
+                return NotebookDispatcher.dispatch({
+                    actionType: NotebookActionConstants.NOTEBOOK_DATABASE_LOADNOTES_SUCCESS,
+                    notebookNode: notebookNode,
+                    searchString: searchString,
+                    noteDescriptors: []
+                });
+
             _rootNode.iterate(function(child, level) {
-                if (child.id === 1 || level > 2)
+                if (child.id === NotebookConstants.DATABASE_NOTEBOOK_ALL_ID
+                    || child.id === NotebookConstants.DATABASE_NOTEBOOK_SEARCH_ID
+                    || level > 2)
                     return false;
 
                 if (child.children.length > 0)
                     return true;
 
                 __loadNotes(this, child, function(noteDescriptors) {
-                    _noteMergedDescriptors = _noteMergedDescriptors.concat(noteDescriptors);
-                    if (++_count === _total) {
-                        NotebookDispatcher.dispatch({
-                            actionType: NotebookConstants.NOTEBOOK_DATABASE_LOADNOTES_SUCCESS,
-                            notebookNode: notebookNode,
-                            noteDescriptors: _noteMergedDescriptors
-                        });
+                    function __mergeNotes(noteDescriptors) {
+                        if (_busy) {
+                            _timerWaitBusy = setTimeout(__mergeNotes, 50, noteDescriptors);
+                            return;
+                        }
+
+                        _busy = true;
+                        _noteMergedDescriptors = _noteMergedDescriptors.concat(noteDescriptors);
+
+                        if (++_count === _total) {
+                            NotebookDispatcher.dispatch({
+                                actionType: NotebookActionConstants.NOTEBOOK_DATABASE_LOADNOTES_SUCCESS,
+                                notebookNode: notebookNode,
+                                searchString: searchString,
+                                noteDescriptors: _noteMergedDescriptors
+                            });
+                        }
+
+                        _busy = false;
                     }
+
+                    if (_busy)
+                        _timerWaitBusy = setTimeout(__mergeNotes, 50, noteDescriptors);
+                    else
+                        __mergeNotes(noteDescriptors);
                 });
 
                 return true;
@@ -435,17 +521,42 @@ var DatabaseActionCreators = {
         }
         else if (notebookNode.isFolder()) {
             var _stackNotes = [];
-            var _count = 0;
+            var _count = 0, _busy = false;
+            var _timerWaitBusy = null;
+
+            if (notebookNode.children.length === 0)
+                return NotebookDispatcher.dispatch({
+                    actionType: NotebookActionConstants.NOTEBOOK_DATABASE_LOADNOTES_SUCCESS,
+                    notebookNode: notebookNode,
+                    noteDescriptors: []
+                });
+
             notebookNode.iterate(function(child, level) {
                 __loadNotes(this, child, function(noteDescriptors) {
-                    _stackNotes = _stackNotes.concat(noteDescriptors);
-                    if (++_count === notebookNode.children.length) {
-                        NotebookDispatcher.dispatch({
-                            actionType: NotebookConstants.NOTEBOOK_DATABASE_LOADNOTES_SUCCESS,
-                            notebookNode: notebookNode,
-                            noteDescriptors: _stackNotes
-                        });
+                    function __mergeNotes(noteDescriptors) {
+                        if (_busy) {
+                            _timerWaitBusy = setTimeout(__mergeNotes, 50, noteDescriptors);
+                            return;
+                        }
+
+                        _busy = true;
+                        _stackNotes = _stackNotes.concat(noteDescriptors);
+
+                        if (++_count === notebookNode.children.length) {
+                            NotebookDispatcher.dispatch({
+                                actionType: NotebookActionConstants.NOTEBOOK_DATABASE_LOADNOTES_SUCCESS,
+                                notebookNode: notebookNode,
+                                noteDescriptors: _stackNotes
+                            });
+                        }
+
+                        _busy = false;
                     }
+
+                    if (_busy)
+                        _timerWaitBusy = setTimeout(__mergeNotes, 50, noteDescriptors);
+                    else
+                        __mergeNotes(noteDescriptors);
                 });
                 return true;
             }.bind(this));
@@ -453,7 +564,7 @@ var DatabaseActionCreators = {
         else {
             __loadNotes(this, notebookNode, function(noteDescriptors) {
                 NotebookDispatcher.dispatch({
-                    actionType: NotebookConstants.NOTEBOOK_DATABASE_LOADNOTES_SUCCESS,
+                    actionType: NotebookActionConstants.NOTEBOOK_DATABASE_LOADNOTES_SUCCESS,
                     notebookNode: notebookNode,
                     noteDescriptors: noteDescriptors
                 });
@@ -470,7 +581,7 @@ var DatabaseActionCreators = {
         if (!databaseStorage) return;
 
         NotebookDispatcher.dispatch({
-            actionType: NotebookConstants.NOTEBOOK_DATABASE_SELECT_NOTE,
+            actionType: NotebookActionConstants.NOTEBOOK_DATABASE_SELECT_NOTE,
             index: index
         });
     },
@@ -484,7 +595,7 @@ var DatabaseActionCreators = {
         if (!databaseStorage) return;
 
         NotebookDispatcher.dispatch({
-            actionType: NotebookConstants.NOTEBOOK_DATABASE_SET_NOTE_SORT_METHOD,
+            actionType: NotebookActionConstants.NOTEBOOK_DATABASE_SET_NOTE_SORT_METHOD,
             method: method
         });
     },
@@ -502,7 +613,7 @@ var DatabaseActionCreators = {
         var self = this;
 
         NotebookDispatcher.dispatch({
-            actionType: NotebookConstants.NOTEBOOK_DATABASE_ADD_NOTE,
+            actionType: NotebookActionConstants.NOTEBOOK_DATABASE_ADD_NOTE,
             notebookNode: notebookNode
         });
 
@@ -512,7 +623,7 @@ var DatabaseActionCreators = {
         FileAgent.exist(notePath, function(path, exist, isDir, error) {
             if (error) {
                 return NotebookDispatcher.dispatch({
-                    actionType: NotebookConstants.NOTEBOOK_DATABASE_ADD_NOTE_ERROR,
+                    actionType: NotebookActionConstants.NOTEBOOK_DATABASE_ADD_NOTE_ERROR,
                     notebookNode: notebookNode,
                     error: "fs error: " + error
                 });
@@ -522,32 +633,32 @@ var DatabaseActionCreators = {
                 FileAgent.createDirectory(path, function(path, error) {
                     if (error) {
                         return NotebookDispatcher.dispatch({
-                            actionType: NotebookConstants.NOTEBOOK_DATABASE_ADD_NOTE_ERROR,
+                            actionType: NotebookActionConstants.NOTEBOOK_DATABASE_ADD_NOTE_ERROR,
                             notebookNode: notebookNode,
                             error: "unable to create directory: " + error
                         });
                     }
 
                     if (!title || title.trim() === "")
-                        title = "Untitled " + noteId;
+                        title = "Untitled";
 
                     content = content || "<p></p>";
                     var emptyNote = "<html><head><title>" + title + "</title></head>" +
                                     "<body style='margin:0 auto;'>" + content + "</body></html>";
 
-                    FileAgent.writeFile(path + "/" + DATABASE_NOTE_FILE, emptyNote, function(indexPath, progress, error) {
+                    FileAgent.writeFile(path + "/" + NotebookConstants.DATABASE_NOTE_FILE, emptyNote, function(indexPath, progress, error) {
                         if (error) {
                             return NotebookDispatcher.dispatch({
-                                actionType: NotebookConstants.NOTEBOOK_DATABASE_ADD_NOTE_ERROR,
+                                actionType: NotebookActionConstants.NOTEBOOK_DATABASE_ADD_NOTE_ERROR,
                                 notebookNode: notebookNode,
-                                error: "unable to write " + DATABASE_NOTE_FILE + ": " + error
+                                error: "unable to write " + NotebookConstants.DATABASE_NOTE_FILE + ": " + error
                             });
                         }
 
                         FileAgent.stat(indexPath, function(indexPath, stat, error) {
                             if (error) {
                                 return NotebookDispatcher.dispatch({
-                                    actionType: NotebookConstants.NOTEBOOK_DATABASE_ADD_NOTE_ERROR,
+                                    actionType: NotebookActionConstants.NOTEBOOK_DATABASE_ADD_NOTE_ERROR,
                                     notebookNode: notebookNode,
                                     error: "unable to get stat (" + path + "): " + error
                                 });
@@ -556,7 +667,7 @@ var DatabaseActionCreators = {
                             FileAgent.createDirectory(path + "/assets", function(assetsPath, error) {
                                 if (error) {
                                     return NotebookDispatcher.dispatch({
-                                        actionType: NotebookConstants.NOTEBOOK_DATABASE_ADD_NOTE_ERROR,
+                                        actionType: NotebookActionConstants.NOTEBOOK_DATABASE_ADD_NOTE_ERROR,
                                         notebookNode: notebookNode,
                                         error: "unable to create assets directory: " + error
                                     });
@@ -571,7 +682,7 @@ var DatabaseActionCreators = {
                                  * @member noteContent  {String} Note content in HTML format
                                  */
                                 NotebookDispatcher.dispatch({
-                                    actionType: NotebookConstants.NOTEBOOK_DATABASE_ADD_NOTE_SUCCESS,
+                                    actionType: NotebookActionConstants.NOTEBOOK_DATABASE_ADD_NOTE_SUCCESS,
                                     noteDescriptor: {
                                         notebookNode: notebookNode,
                                         noteId: noteId,
@@ -603,7 +714,7 @@ var DatabaseActionCreators = {
         var self = this;
 
         NotebookDispatcher.dispatch({
-            actionType: NotebookConstants.NOTEBOOK_DATABASE_COPY_NOTE,
+            actionType: NotebookActionConstants.NOTEBOOK_DATABASE_COPY_NOTE,
             srcNoteDescriptor: noteDescriptor
         });
 
@@ -612,7 +723,7 @@ var DatabaseActionCreators = {
         FileAgent.exist(notePath, function(path, exist, isDir, error) {
             if (error) {
                 return NotebookDispatcher.dispatch({
-                    actionType: NotebookConstants.NOTEBOOK_DATABASE_COPY_NOTE_ERROR,
+                    actionType: NotebookActionConstants.NOTEBOOK_DATABASE_COPY_NOTE_ERROR,
                     srcNoteDescriptor: noteDescriptor,
                     error: "fs error: " + error
                 });
@@ -625,16 +736,16 @@ var DatabaseActionCreators = {
                 FileAgent.copy(notePath, _copyNotePath, function(srcPath, dstPath, error) {
                     if (error) {
                         return NotebookDispatcher.dispatch({
-                            actionType: NotebookConstants.NOTEBOOK_DATABASE_COPY_NOTE_ERROR,
+                            actionType: NotebookActionConstants.NOTEBOOK_DATABASE_COPY_NOTE_ERROR,
                             srcNoteDescriptor: noteDescriptor,
                             error: "unable to copy " + notePath + ": " + error
                         });
                     }
 
-                    FileAgent.readFile(dstPath + "/" + DATABASE_NOTE_FILE, "utf8", function(path, data, error) {
+                    FileAgent.readFile(dstPath + "/" + NotebookConstants.DATABASE_NOTE_FILE, "utf8", function(path, data, error) {
                         if (error) {
                             return NotebookDispatcher.dispatch({
-                                actionType: NotebookConstants.NOTEBOOK_DATABASE_COPY_NOTE_ERROR,
+                                actionType: NotebookActionConstants.NOTEBOOK_DATABASE_COPY_NOTE_ERROR,
                                 srcNoteDescriptor: noteDescriptor,
                                 error: "unable to read " + path + ": " + error
                             });
@@ -648,7 +759,7 @@ var DatabaseActionCreators = {
                             function(path, title, error) {
                                 if (error) {
                                     return NotebookDispatcher.dispatch({
-                                        actionType: NotebookConstants.NOTEBOOK_DATABASE_COPY_NOTE_ERROR,
+                                        actionType: NotebookActionConstants.NOTEBOOK_DATABASE_COPY_NOTE_ERROR,
                                         srcNoteDescriptor: noteDescriptor,
                                         error: "grep src error: " + error
                                     });
@@ -659,10 +770,10 @@ var DatabaseActionCreators = {
                                 var re = new RegExp(srcPath, "g");
                                 data = data.replace(re, dstPath);
 
-                                FileAgent.writeFile(dstPath + "/" + DATABASE_NOTE_FILE, data, function(path, progress, error) {
+                                FileAgent.writeFile(dstPath + "/" + NotebookConstants.DATABASE_NOTE_FILE, data, function(path, progress, error) {
                                     if (error) {
                                         return NotebookDispatcher.dispatch({
-                                            actionType: NotebookConstants.NOTEBOOK_DATABASE_COPY_NOTE_ERROR,
+                                            actionType: NotebookActionConstants.NOTEBOOK_DATABASE_COPY_NOTE_ERROR,
                                             srcNoteDescriptor: noteDescriptor,
                                             error: "unable to write " + path + ": " + error
                                         });
@@ -671,14 +782,14 @@ var DatabaseActionCreators = {
                                     FileAgent.stat(dstPath, function(path, stat, error) {
                                         if (error) {
                                             return NotebookDispatcher.dispatch({
-                                                actionType: NotebookConstants.NOTEBOOK_DATABASE_COPY_NOTE_ERROR,
+                                                actionType: NotebookActionConstants.NOTEBOOK_DATABASE_COPY_NOTE_ERROR,
                                                 srcNote: noteDescriptor,
                                                 error: "unable to get stat of " + path + ": " + error
                                             });
                                         }
 
                                         NotebookDispatcher.dispatch({
-                                            actionType: NotebookConstants.NOTEBOOK_DATABASE_COPY_NOTE_SUCCESS,
+                                            actionType: NotebookActionConstants.NOTEBOOK_DATABASE_COPY_NOTE_SUCCESS,
                                             srcNoteDescriptor: noteDescriptor,
                                             dstNoteDescriptor: {
                                                 notebookNode: noteDescriptor.notebookNode,
@@ -708,14 +819,14 @@ var DatabaseActionCreators = {
         var notePath = this.__getNotePath(noteDescriptor);
 
         NotebookDispatcher.dispatch({
-            actionType: NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTE,
+            actionType: NotebookActionConstants.NOTEBOOK_DATABASE_TRASH_NOTE,
             noteDescriptor: noteDescriptor
         });
 
         FileAgent.exist(notePath, function(path, exist, isDir, error) {
             if (error) {
                 return NotebookDispatcher.dispatch({
-                    actionType: NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTE_ERROR,
+                    actionType: NotebookActionConstants.NOTEBOOK_DATABASE_TRASH_NOTE_ERROR,
                     noteDescriptor: noteDescriptor,
                     error: "fs error: " + error
                 });
@@ -725,14 +836,14 @@ var DatabaseActionCreators = {
                 FileAgent.remove(notePath, function(path, error) {
                     if (error) {
                         return NotebookDispatcher.dispatch({
-                            actionType: NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTE_ERROR,
+                            actionType: NotebookActionConstants.NOTEBOOK_DATABASE_TRASH_NOTE_ERROR,
                             noteDescriptor: noteDescriptor,
                             error: "unable to remove " + notePath + ": " + error
                         });
                     }
 
                     NotebookDispatcher.dispatch({
-                        actionType: NotebookConstants.NOTEBOOK_DATABASE_TRASH_NOTE_SUCCESS,
+                        actionType: NotebookActionConstants.NOTEBOOK_DATABASE_TRASH_NOTE_SUCCESS,
                         noteDescriptor: noteDescriptor
                     });
                 });
@@ -759,26 +870,26 @@ var DatabaseActionCreators = {
         var notePath = this.__getNotePath(noteDescriptor);
 
         NotebookDispatcher.dispatch({
-            actionType: NotebookConstants.NOTEBOOK_DATABASE_READ_NOTE,
+            actionType: NotebookActionConstants.NOTEBOOK_DATABASE_READ_NOTE,
             noteDescriptor: noteDescriptor
         });
 
-        FileAgent.readFile(notePath + "/" + DATABASE_NOTE_FILE, "utf8", function(path, data, error) {
+        FileAgent.readFile(notePath + "/" + NotebookConstants.DATABASE_NOTE_FILE, "utf8", function(path, data, error) {
             if (error) {
                 return NotebookDispatcher.dispatch({
-                    actionType: NotebookConstants.NOTEBOOK_DATABASE_READ_NOTE_ERROR,
+                    actionType: NotebookActionConstants.NOTEBOOK_DATABASE_READ_NOTE_ERROR,
                     noteDescriptor: noteDescriptor,
                     error: "unable to read " + path + ": " + error
                 });
             }
 
-            /* Remove all single &nbsp between tags, and extract contents inside <body></body> */
+            /* Remove all single &nbsp; between tags, and extract contents inside <body></body> */
             var content = data.replace(/\>&nbsp;\</gi,'\>\<')
                               .match(/\<body[^>]*\>([^]*)\<\/body/m)[1] || "";
             noteDescriptor.noteContent = __replaceQueryString(content, "uuid", databaseStorage.uuid);
 
             NotebookDispatcher.dispatch({
-                actionType: NotebookConstants.NOTEBOOK_DATABASE_READ_NOTE_SUCCESS,
+                actionType: NotebookActionConstants.NOTEBOOK_DATABASE_READ_NOTE_SUCCESS,
                 noteDescriptor: noteDescriptor
             });
         });
@@ -797,7 +908,7 @@ var DatabaseActionCreators = {
             noteDescriptor.dirtyNoteContent = dirtyContent;
 
             NotebookDispatcher.dispatch({
-                actionType: NotebookConstants.NOTEBOOK_DATABASE_CACHE_DIRTY_NOTE,
+                actionType: NotebookActionConstants.NOTEBOOK_DATABASE_CACHE_DIRTY_NOTE,
                 noteDescriptor: noteDescriptor
             });
         }
@@ -821,7 +932,7 @@ var DatabaseActionCreators = {
         var notePath = this.__getNotePath(noteDescriptor);
 
         NotebookDispatcher.dispatch({
-            actionType: NotebookConstants.NOTEBOOK_DATABASE_SAVE_NOTE,
+            actionType: NotebookActionConstants.NOTEBOOK_DATABASE_SAVE_NOTE,
             noteDescriptor: noteDescriptor
         });
 
@@ -862,7 +973,7 @@ var DatabaseActionCreators = {
                             else
                                 content = content.replace(
                                     new RegExp(_src, 'g'),
-                                    "userdata/" + path + (databaseStorage.uuid ? "?uuid=" + databaseStorage.uuid : "")
+                                    "userdata/" + path + (databaseStorage.uuid? "?uuid=" + databaseStorage.uuid : "")
                                 );
 
                             __grabNext();
@@ -895,7 +1006,7 @@ var DatabaseActionCreators = {
             if (noteDescriptor.noteTitle === title && noteDescriptor.noteContent === content)
                 return (cb && cb());
 
-            FileAgent.writeFile(notePath  + "/" + DATABASE_NOTE_FILE, _doc, function(path, progress, error) {
+            FileAgent.writeFile(notePath  + "/" + NotebookConstants.DATABASE_NOTE_FILE, _doc, function(path, progress, error) {
                 if (error)
                     return (cb && cb("unable to write " + path + ": " + error));
 
@@ -930,13 +1041,13 @@ var DatabaseActionCreators = {
             __save(noteDescriptor.dirtyNoteTitle, grabbedContent, function(error) {
                 if (error)
                     return NotebookDispatcher.dispatch({
-                        actionType: NotebookConstants.NOTEBOOK_DATABASE_SAVE_NOTE_ERROR,
+                        actionType: NotebookActionConstants.NOTEBOOK_DATABASE_SAVE_NOTE_ERROR,
                         noteDescriptor: noteDescriptor,
                         error: error
                     });
 
                 NotebookDispatcher.dispatch({
-                    actionType: NotebookConstants.NOTEBOOK_DATABASE_SAVE_NOTE_SUCCESS,
+                    actionType: NotebookActionConstants.NOTEBOOK_DATABASE_SAVE_NOTE_SUCCESS,
                     noteDescriptor: noteDescriptor
                 });
             });
@@ -1024,11 +1135,13 @@ var DatabaseActionCreators = {
         var notePath = this.__getNotePath(noteDescriptor);
 
         function __removeUseless(items, i, cb) {
-            FileAgent.grep(notePath  + "/" + DATABASE_NOTE_FILE, items[i], null, function(path, data, error) {
+            FileAgent.grep(notePath  + "/" + NotebookConstants.DATABASE_NOTE_FILE, items[i], null, function(path, data, error) {
                 if (error)
                     return (cb && cb("unable to read " + path + ": " + error));
 
                 if (!data) {
+                    console.log("Prepare to remove unused asset '" + items[i]);
+
                     FileAgent.remove(notePath + "/assets/" + items[i], function(path, error) {
                         if (error)
                             return (cb && cb("unable to remove " + path + ": " + error));
@@ -1051,14 +1164,14 @@ var DatabaseActionCreators = {
 
         setTimeout(function() {
             NotebookDispatcher.dispatch({
-                actionType: NotebookConstants.NOTEBOOK_DATABASE_CLEAR_USELESS_NOTE_ASSETS,
+                actionType: NotebookActionConstants.NOTEBOOK_DATABASE_CLEAR_USELESS_NOTE_ASSETS,
                 noteDescriptor: noteDescriptor
             });
 
             FileAgent.list(notePath + "/assets", function(path, items, error) {
                 if (error)
                     return NotebookDispatcher.dispatch({
-                        actionType: NotebookConstants.NOTEBOOK_DATABASE_CLEAR_USELESS_NOTE_ASSETS_ERROR,
+                        actionType: NotebookActionConstants.NOTEBOOK_DATABASE_CLEAR_USELESS_NOTE_ASSETS_ERROR,
                         noteDescriptor: noteDescriptor,
                         error: "unable to list " + path + ": " + error
                     });
@@ -1067,19 +1180,19 @@ var DatabaseActionCreators = {
                     __removeUseless(items, 0, function(error) {
                         if (error)
                             NotebookDispatcher.dispatch({
-                                actionType: NotebookConstants.NOTEBOOK_DATABASE_CLEAR_USELESS_NOTE_ASSETS_ERROR,
+                                actionType: NotebookActionConstants.NOTEBOOK_DATABASE_CLEAR_USELESS_NOTE_ASSETS_ERROR,
                                 noteDescriptor: noteDescriptor,
                                 error: error
                             });
                         else
                             NotebookDispatcher.dispatch({
-                                actionType: NotebookConstants.NOTEBOOK_DATABASE_CLEAR_USELESS_NOTE_ASSETS_SUCCESS,
+                                actionType: NotebookActionConstants.NOTEBOOK_DATABASE_CLEAR_USELESS_NOTE_ASSETS_SUCCESS,
                                 noteDescriptor: noteDescriptor
                             });
                     });
                 else
                     NotebookDispatcher.dispatch({
-                        actionType: NotebookConstants.NOTEBOOK_DATABASE_CLEAR_USELESS_NOTE_ASSETS_SUCCESS,
+                        actionType: NotebookActionConstants.NOTEBOOK_DATABASE_CLEAR_USELESS_NOTE_ASSETS_SUCCESS,
                         noteDescriptor: noteDescriptor
                     });
             });
@@ -1098,11 +1211,11 @@ var DatabaseActionCreators = {
         if (!databaseStorage) return;
 
         var snapshotPath = this.__getBookshelfPath(
-            noteDescriptor.notebookNode.id + "/" + noteDescriptor.noteId + "/" + DATABASE_NOTE_SNAPSHOT_FILE
+            noteDescriptor.notebookNode.id + "/" + noteDescriptor.noteId + "/" + NotebookConstants.DATABASE_NOTE_SNAPSHOT_FILE
         );
 
         NotebookDispatcher.dispatch({
-            actionType: NotebookConstants.NOTEBOOK_DATABASE_TAKE_NOTE_SNAPSHOT,
+            actionType: NotebookActionConstants.NOTEBOOK_DATABASE_TAKE_NOTE_SNAPSHOT,
             noteDescriptor: noteDescriptor
         });
 
@@ -1116,13 +1229,13 @@ var DatabaseActionCreators = {
                 FileAgent.writeFile(snapshotPath, base64ToBlob(data), function(path, progress, error) {
                     if (error)
                         NotebookDispatcher.dispatch({
-                            actionType: NotebookConstants.NOTEBOOK_DATABASE_TAKE_NOTE_SNAPSHOT_ERROR,
+                            actionType: NotebookActionConstants.NOTEBOOK_DATABASE_TAKE_NOTE_SNAPSHOT_ERROR,
                             noteDescriptor: noteDescriptor,
                             error: "unable to write snapshot to " + path + ": " + error
                         });
                     else
                         NotebookDispatcher.dispatch({
-                            actionType: NotebookConstants.NOTEBOOK_DATABASE_TAKE_NOTE_SNAPSHOT_SUCCESS,
+                            actionType: NotebookActionConstants.NOTEBOOK_DATABASE_TAKE_NOTE_SNAPSHOT_SUCCESS,
                             noteDescriptor: noteDescriptor
                         });
                 });
@@ -1142,12 +1255,18 @@ var DatabaseActionCreators = {
         var notePath = this.__getNotePath(noteDescriptor);
 
         NotebookDispatcher.dispatch({
-            actionType: NotebookConstants.NOTEBOOK_DATABASE_ATTACH_FILE_TO_NOTE,
+            actionType: NotebookActionConstants.NOTEBOOK_DATABASE_ATTACH_FILE_TO_NOTE,
             noteDescriptor: noteDescriptor,
             files: files
         });
 
         function __uploadFile(fileObject, onComplete, onProgress, onError) {
+            if (!fileObject.type) {
+                onError("Directory uploading is not supported");
+                onComplete();
+                return;
+            }
+
             var _ext = fileObject.name.split(".").pop();
             _ext = _ext ? "." + _ext : "";
 
@@ -1180,31 +1299,31 @@ var DatabaseActionCreators = {
         (function __iterate(index, files) {
             if (index < files.length) {
                 __uploadFile(files[index], function() {
-                    __iterate(index + 1, files);
-                },
-                function(progress) {
-                    var _frag = 100 / files.length;
-                    NotebookDispatcher.dispatch({
-                        actionType: NotebookConstants.NOTEBOOK_DATABASE_ATTACH_FILE_TO_NOTE_PROGRESS,
-                        noteDescriptor: noteDescriptor,
-                        fileObject: files[index],
-                        progress: progress,
-                        overallProgress: Math.ceil((_frag * index) + (_frag * progress / 100))
+                        __iterate(index + 1, files);
+                    },
+                    function(progress) {
+                        var _frag = 100 / files.length;
+                        NotebookDispatcher.dispatch({
+                            actionType: NotebookActionConstants.NOTEBOOK_DATABASE_ATTACH_FILE_TO_NOTE_PROGRESS,
+                            noteDescriptor: noteDescriptor,
+                            fileObject: files[index],
+                            progress: progress,
+                            overallProgress: Math.ceil((_frag * index) + (_frag * progress / 100))
+                        });
+                    },
+                    function(error) {
+                        NotebookDispatcher.dispatch({
+                            actionType: NotebookActionConstants.NOTEBOOK_DATABASE_ATTACH_FILE_TO_NOTE_ERROR,
+                            noteDescriptor: noteDescriptor,
+                            fileObject: files[index],
+                            error: error
+                        });
                     });
-                },
-                function(error) {
-                    NotebookDispatcher.dispatch({
-                        actionType: NotebookConstants.NOTEBOOK_DATABASE_ATTACH_FILE_TO_NOTE_ERROR,
-                        noteDescriptor: noteDescriptor,
-                        fileObject: files[index],
-                        error: error
-                    });
-                });
             }
             else {
                 FileAgent.touch(notePath + "/assets");
                 NotebookDispatcher.dispatch({
-                    actionType: NotebookConstants.NOTEBOOK_DATABASE_ATTACH_FILE_TO_NOTE_SUCCESS,
+                    actionType: NotebookActionConstants.NOTEBOOK_DATABASE_ATTACH_FILE_TO_NOTE_SUCCESS,
                     noteDescriptor: noteDescriptor,
                     files: files
                 });
@@ -1225,7 +1344,7 @@ var DatabaseActionCreators = {
             );
 
             NotebookDispatcher.dispatch({
-                actionType: NotebookConstants.NOTEBOOK_DATABASE_CANCEL_ATTACH_FILE_TO_NOTE,
+                actionType: NotebookActionConstants.NOTEBOOK_DATABASE_CANCEL_ATTACH_FILE_TO_NOTE,
                 noteDescriptor: noteDescriptor
             });
         }

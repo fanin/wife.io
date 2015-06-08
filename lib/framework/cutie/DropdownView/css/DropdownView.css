@@ -1,0 +1,5 @@
+.ui.menu .item.disabled {
+    cursor: default !important;
+    color: rgba(40,40,40,.3) !important;
+    background-color: transparent !important;
+}

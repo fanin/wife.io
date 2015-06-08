@@ -94,7 +94,7 @@ var JqTreeViewController = React.createClass({
             autoOpen:    false,
             data:        this.props.data,
 
-            onCreateLi:  function(node, $li) {
+            onCreateLi: function(node, $li) {
                 if (node.isFolder())
                     $li.find(".jqtree-title").before("<i class='list icon'></i>&nbsp;");
                 else
@@ -103,7 +103,7 @@ var JqTreeViewController = React.createClass({
                 this.props.onCreateNode && this.props.onCreateNode(node);
             }.bind(this),
 
-            onCanMove:   function(node) {
+            onCanMove: function(node) {
                 return !this._isExclusiveNode(node);
             }.bind(this),
 
@@ -142,7 +142,9 @@ var JqTreeViewController = React.createClass({
 
     _isExclusiveNode: function(node) {
         for (var i in this.props.exclusives) {
-            if (this.props.exclusives[i] === node.id || this.props.exclusives[i] === node.name)
+            if (this.props.exclusives[i] === node.id
+                || this.props.exclusives[i] === node.name
+                || this.props.exclusives[i] === "*")
                 return true;
         }
         return false;
@@ -150,6 +152,10 @@ var JqTreeViewController = React.createClass({
 
     getNodeById: function(id) {
         return this.treeInstance.tree("getNodeById", id);
+    },
+
+    getTree: function() {
+        return this.treeInstance.tree("getTree");
     },
 
     getTreeData: function() {
@@ -168,8 +174,14 @@ var JqTreeViewController = React.createClass({
         this.treeInstance.tree("selectNode", node);
     },
 
-    nodeCreate: function(id, name) {
-        this.treeInstance.tree("appendNode", { id: id, label: name });
+    nodeCreate: function(id, name, pos, node) {
+        var _newNode = { id: id, label: name};
+        if (pos === "before" && node)
+            this.treeInstance.tree("addNodeBefore", _newNode, node);
+        else if (pos === "after" && node)
+            this.treeInstance.tree("addNodeAfter", _newNode, node);
+        else
+            this.treeInstance.tree("appendNode", _newNode);
     },
 
     nodeRemove: function(node) {

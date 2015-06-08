@@ -3,13 +3,37 @@
 }
 
 .nb-column-toolbar-title-container {
-	width: calc(100% - 245px);
+	width: 70%;
     height: 100%;
 }
 
 .nb-column-toolbar-search-container {
-	width: 245px;
+	width: 30%;
     height: 100%;
+}
+
+.nb-column-toolbar-search-input {
+    width: 100%;
+}
+
+.nb-editor-upload-dialog-container {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    overflow-y: auto;
+    z-index: -1;
+}
+
+.ui.transparent.icon.input > .nb-column-toolbar-title-input {
+    padding-right: 0 !important;
+}
+
+.ui.input.search input {
+    background-color: #fff8e2;
+    border-color: #dbc49b;
+    color: #9d5e1e;
 }
 
 .cke_editor_nb-editor {
