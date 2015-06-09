@@ -5,6 +5,7 @@ var gulp       = require('gulp'),
     reactify   = require('reactify'),
     uglify     = require('gulp-uglify'),
     minifycss  = require('gulp-minify-css'),
+    cssjoin    = require('gulp-cssjoin'),
     concat     = require('gulp-concat'),
     transform  = require('vinyl-transform'),
     source     = require('vinyl-source-stream'),
@@ -36,11 +37,14 @@ gulp.task(APP_TARGET, function() {
     b.pipe(gulp.dest(APP_BUILD_PATH + APP_NAME + '/js/'));
 
     /* Build app css bundle */
-    var app_css = gulp.src(__dirname + '/css**/*.css')
-        .pipe(concat('app.css'));
+    var app_css = gulp.src(__dirname + '/css**/*.css');
 
-    if (!APP_DEBUG)
-        app_css = app_css.pipe(minifycss());
+    if (APP_DEBUG)
+        app_css = app_css.pipe(cssjoin())
+                         .pipe(concat('app.css'));
+    else
+        app_css = app_css.pipe(concat('app.css'))
+                         .pipe(minifycss());
 
     app_css = app_css.pipe(gulp.dest(APP_BUILD_PATH + APP_NAME + '/css'));
 
