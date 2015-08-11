@@ -1,7 +1,8 @@
+var emitter            = require('events').EventEmitter;
+var assign             = require('object-assign');
+var FSAPI              = require('diligent/FileSystem/FSAPI');
 var LauncherDispatcher = require('../dispatcher/LauncherDispatcher');
 var LauncherConstants  = require('../constants/LauncherConstants');
-var EventEmitter       = require('events').EventEmitter;
-var assign             = require('object-assign');
 
 var CHANGE_EVENT = 'LAUNCHER_CHANGE';
 var ERROR_EVENT  = 'LAUNCHER_ERROR';
@@ -9,7 +10,7 @@ var APPSORT_FILE = 'appsort.json';
 
 var appSortList = null;
 
-var LauncherStore = assign({}, EventEmitter.prototype, {
+var LauncherStore = assign({}, emitter.prototype, {
     /**
      * @param {object} changes object
      */
@@ -58,15 +59,8 @@ var LauncherStore = assign({}, EventEmitter.prototype, {
 });
 
 function mergeSortList(list) {
-    FileAgent.readFile(APPSORT_FILE, 'utf8', function(path, data, error) {
-        if (error) {
-            LauncherStore.emitError({
-                type: LauncherConstants.LAUNCHER_SORT_APP_LIST,
-                msg: 'Unable to read APP list (' + error + ')'
-            });
-        }
-        else {
-            /* FIXME: seem like failed to merge new builtin apps */
+    FSAPI.readFile(APPSORT_FILE, { encoding: 'utf8' }, {
+        onSuccess: function(data) {
             var i;
             var _sorted = JSON.parse(data);
 
@@ -90,22 +84,30 @@ function mergeSortList(list) {
 
             appSortList = _sorted;
             LauncherStore.emitChange({ type: LauncherConstants.LAUNCHER_SORT_APP_LIST });
+
+        },
+        onError: function(error) {
+            LauncherStore.emitError({
+                type: LauncherConstants.LAUNCHER_SORT_APP_LIST,
+                msg: 'Unable to read APP list (' + error + ')'
+            });
         }
     });
 }
 
 function writeSortList(list, actionType) {
     var _appsort = JSON.stringify(list, null, 4);
-    FileAgent.writeFile(APPSORT_FILE, _appsort, function(path, progress, error) {
-        if (error) {
+
+    FSAPI.writeFile(APPSORT_FILE, _appsort, {
+        onSuccess: function() {
+            appSortList = list;
+            LauncherStore.emitChange({ type: actionType });
+        },
+        onError: function(error) {
             LauncherStore.emitError({
                 type: actionType,
                 msg: 'Unable to write APP list'
             });
-        }
-        else {
-            appSortList = list;
-            LauncherStore.emitChange({ type: actionType });
         }
     });
 }
@@ -121,15 +123,15 @@ function removeAppFromSortList(manifest) {
 
     /* Update appsort.json */
     var _appsort = JSON.stringify(appSortList, null, 4);
-    FileAgent.writeFile(APPSORT_FILE, _appsort, function(path, progress, error) {
-        if (error) {
+    FSAPI.writeFile(APPSORT_FILE, _appsort, {
+        onSuccess: function() {
+            LauncherStore.emitChange({ type: LauncherConstants.LAUNCHER_REMOVE_APP_FROM_SORT_LIST });
+        },
+        onError: function(error) {
             LauncherStore.emitError({
                 type: LauncherConstants.LAUNCHER_REMOVE_APP_FROM_SORT_LIST,
                 msg: 'Unable to write APP list'
             });
-        }
-        else {
-            LauncherStore.emitChange({ type: LauncherConstants.LAUNCHER_REMOVE_APP_FROM_SORT_LIST });
         }
     });
 }
@@ -137,13 +139,13 @@ function removeAppFromSortList(manifest) {
 LauncherDispatcher.register(function(action) {
     switch (action.actionType) {
         case LauncherConstants.LAUNCHER_SORT_APP_LIST:
-            FileAgent.exist(APPSORT_FILE, function(path, exist, isDir, error) {
-                if (error) throw new Error('File system operation error');
-
-                if (exist)
-                    mergeSortList(action.list);
-                else
-                    writeSortList(action.list, action.actionType);
+            FSAPI.exist(APPSORT_FILE, {
+                onSuccess: function(exist) {
+                    if (exist)
+                        mergeSortList(action.list);
+                    else
+                        writeSortList(action.list, action.actionType);
+                }
             });
             break;
         case LauncherConstants.LAUNCHER_REMOVE_APP_FROM_SORT_LIST:

@@ -1,22 +1,40 @@
 {
     "name": "AppShop",
     "version": "0.1.0",
-    "wsapi_version": "0.1",
+    "api_version": 1,
     "directory": "shop",
     "entry": "index.html",
-    "extensions": [],
-    "localizations": [
+    "permission": {
+        "apps": {
+            "POST": "allow",
+            "GET": "allow",
+            "PUT": "allow",
+            "DELETE": "allow"
+        },
+        "storage": {
+            "POST": "denied",
+            "GET": "allow",
+            "PUT": "denied",
+            "DELETE": "denied"
+        },
+        "fs": {
+            "POST": "allow",
+            "GET": "allow",
+            "PUT": "allow",
+            "DELETE": "allow"
+        }
+    },
+    "locales": [
         "en_US",
         "zh_TW"
     ],
+    "default_locale": "en_US",
     "browser_support": {
         "chrome": "*",
         "firefox": "*",
         "internet_explorer": "*",
         "safari": "*"
     },
-    "description": "Install apps for wife",
-    "show_in_launcher": true,
-    "allow_external_userdata": false,
-    "identifier": "BAPPNPPZlk1Y"
+    "description": "Online app store as well as an offline app package installer.",
+    "identifier": "IANPPZlk1Y"
 }

@@ -1,94 +1,102 @@
-.launcher-app-grid {
-    height: 100%;
-    position: relative;
-    -webkit-transition: height .2s ease-in-out;
-    transition: height .2s ease-in-out;
-    overflow: hidden;
-    margin: auto auto;
-    padding: 36px;
+#app-view
+{
+    padding: 0 !important;
+    text-align: left !important;
 }
 
-.launcher-app-grid ul {
-    background: transparent;
+.launcher-app-grid
+{
+    position: relative;
+    overflow: hidden;
+    height: 100%;
+    margin: auto auto;
+    padding-top: 64px;
+}
+
+.launcher-app-grid ul
+{
+    overflow: hidden;
     height: 100%;
     margin: 0 auto;
     padding: 40px;
-    overflow: hidden;
     list-style: none;
-    /*-webkit-border-radius: 12px;
-    -moz-border-radius: 12px;
-    border-radius: 12px;*/
+    background: transparent;
 }
 
-.launcher-app-grid ul li {
+.launcher-app-grid ul li
+{
     float: left;
-    height: auto;
     width: 100px;
+    height: 120px;
     text-align: center;
 }
 
-/*
-.launcher-app-grid ul li:hover {
-    border: 0px solid #555;
-}
-
-.launcher-app-grid ul li:hover .overlay {
-    opacity: 1;
-}
-*/
-
-.launcher-app-grid ul li .overlay {
+.launcher-app-grid ul li .overlay
+{
     opacity: 1;
 }
 
-.launcher-app-grid ul li a {
+.launcher-app-grid ul li a
+{
     text-decoration: none;
     color: black;
 }
 
-div[id^="launcher-icon-div-"] {
-    height: 64px;
+div[id^='launcher-icon-div-']
+{
     width: 64px;
-    padding: 0px 0px;
+    height: 64px;
     margin: 0 auto;
+    padding: 0 0;
+
     -webkit-border-radius: 12px;
-    -moz-border-radius: 12px;
-    border-radius: 12px;
+       -moz-border-radius: 12px;
+            border-radius: 12px;
 }
 
-img[id^="launcher-icon-img-"] {
+img[id^='launcher-icon-img-']
+{
     width: 64px;
     height: 64px;
+
     -webkit-border-radius: 12px;
-    -moz-border-radius: 12px;
-    border-radius: 12px;
+       -moz-border-radius: 12px;
+            border-radius: 12px;
 }
 
-span[id^="launcher-icon-text-"] {
-    color: white;
+span[id^='launcher-icon-text-']
+{
     font-size: 12px;
-    display:inline-block; /* Make width valid */
+    line-height: 130%;
+    display: inline-block; /* Make width valid */
     width: 64px;
+    padding-top: 8px;
+    color: white;
 }
 
-div[id^="launcher-overlay-icon-div-"] {
-    background: rgba(0, 0, 0, .6);
-    text-align: center;
+div[id^='launcher-overlay-icon-div-']
+{
+    line-height: 64px;
     width: 64px;
     height: 64px;
-    line-height:64px;
+    text-align: center;
+
     -webkit-border-radius: 12px;
-    -moz-border-radius: 12px;
-    border-radius: 12px;
+       -moz-border-radius: 12px;
+            border-radius: 12px;
+
+    background: rgba(0, 0, 0, .6);
 }
 
-img[id^="launcher-overlay-icon-img-"] {
+img[id^='launcher-overlay-icon-img-']
+{
     width: 50%;
     height: 50%;
     vertical-align: middle;
 }
 
-.launcher-overlay-icon-delete {
+.launcher-overlay-icon-delete
+{
     position: absolute;
-    top: 0px;
+    top: 0;
 }

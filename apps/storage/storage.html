@@ -5,13 +5,13 @@
     <title></title>
 
     <!-- Import JQuery library -->
-    <script src="%PROTO%://%SYSIP%:%SYSPORT%/lib/jquery/jquery-1.11.2.min.js"></script>
+    <script src="/lib/jquery/jquery-1.11.2.min.js"></script>
 
     <!-- Import Foundation Frameworks -->
-    <script src="%PROTO%://%SYSIP%:%SYSPORT%/lib/framework/base/base.min.js"></script>
+    <script src="/lib/framework/base/base.min.js"></script>
 
     <!-- Import UI Frameworks -->
-    <script src="%PROTO%://%SYSIP%:%SYSPORT%/lib/framework/ui/bundle.js"></script>
+    <script src="/lib/framework/ui/bundle.js"></script>
 
     <!-- Import JQuery Flot library -->
     <script src="js/jquery.flot.js"></script>
@@ -52,7 +52,7 @@
             storageViewController.event.on("diligent.wsapi.loaded", function(event) {
                 var self = storageViewController;
 
-                self.storageClient.getLocalDisks();
+                self.storageClient.getDisks();
                 self.storageClient.event.on("storage.localdisk#list#success", function(event, disks) {
                     if (disks.system) {
                         $("#content").append(

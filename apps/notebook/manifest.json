@@ -1,14 +1,34 @@
 {
     "name": "Notebook",
     "version": "0.2.0",
-    "wsapi_version": "0.1",
+    "api_version": 1,
     "directory": "notebook",
     "entry": "index.html",
-    "extensions": [],
-    "localizations": [
+    "permission": {
+        "apps": {
+            "POST": "denied",
+            "GET": "denied",
+            "PUT": "denied",
+            "DELETE": "denied"
+        },
+        "storage": {
+            "POST": "denied",
+            "GET": "allow",
+            "PUT": "denied",
+            "DELETE": "denied"
+        },
+        "fs": {
+            "POST": "allow",
+            "GET": "allow",
+            "PUT": "allow",
+            "DELETE": "allow"
+        }
+    },
+    "locales": [
         "en_US",
         "zh_TW"
     ],
+    "default_locale": "en_US",
     "browser_support": {
         "chrome": "*",
         "firefox": "*",
@@ -16,7 +36,5 @@
         "safari": "*"
     },
     "description": "Write and manage notes",
-    "show_in_launcher": true,
-    "allow_external_userdata": true,
-    "identifier": "BAPPnbwWbNnD"
+    "identifier": "IAnbwWbNnD"
 }

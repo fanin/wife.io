@@ -1,5 +1,6 @@
 #app-view {
     text-align: center;
+    padding: 64px 0;
 }
 
 h1 {
@@ -12,8 +13,36 @@ h2 {
     color: white;
 }
 
+p {
+    word-wrap: break-word
+}
+
 .greetings {
-    display: none;
-    margin: 0px auto;
+    margin: 50px auto;
     max-width: 800px;
+}
+
+.manual-form {
+    margin: 20px auto;
+}
+
+.ui.container {
+    margin: 20px auto;
+}
+
+.ui[class*="very relaxed"].grid {
+    height: 100%;
+    position: relative;
+}
+
+.ui.table {
+    table-layout: fixed;
+}
+
+.ui.table tr td {
+    word-wrap: break-word
+}
+
+.ui.labeled.input {
+    margin: 10px auto;
 }

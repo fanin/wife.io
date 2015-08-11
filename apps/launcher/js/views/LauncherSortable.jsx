@@ -37,9 +37,9 @@ var LauncherSortable = React.createClass({
                 var node = $(this.getDOMNode()).children().last()[0];
 
                 node.manifest    = children[childIndex].props.manifest;
-                node.onmousedown = (appType === 'b') ? this._handleMouseDown_b : this._handleMouseDown_u;
-                node.onmouseup   = (appType === 'b') ? this._handleMouseUp_b   : this._handleMouseUp_u;
-                node.onmousemove = (appType === 'b') ? this._handleMouseMove_b : this._handleMouseMove_u;
+                node.onmousedown = (appType === 'ia') ? this._handleMouseDown_ia : this._handleMouseDown_ua;
+                node.onmouseup   = (appType === 'ia') ? this._handleMouseUp_ia   : this._handleMouseUp_ua;
+                node.onmousemove = (appType === 'ia') ? this._handleMouseMove_ia : this._handleMouseMove_ua;
                 node.onclick     = this._handleDefaultClick;
 
                 nodes.push(node);
@@ -71,7 +71,6 @@ var LauncherSortable = React.createClass({
     },
 
     getChildren: function() {
-        // TODO: use mapChildren()
         return this.props.children || [];
     },
 
@@ -84,14 +83,14 @@ var LauncherSortable = React.createClass({
         this.props.onSort(newOrder);
     },
 
-    _handleMouseDown_b: function(e) {
+    _handleMouseDown_ia: function(e) {
         __builtinAppClickTimer = setTimeout(function() {
             __builtinAppClickTimer = undefined;
         }, 500);
         this._startManageModeTimer();
     },
 
-    _handleMouseUp_b: function(e) {
+    _handleMouseUp_ia: function(e) {
         if (__builtinAppClickTimer) {
             e.stopPropagation();
             if (this.props.manageable) {
@@ -101,31 +100,31 @@ var LauncherSortable = React.createClass({
         this._stopManageModeTimer();
     },
 
-    _handleMouseMove_b: function(e) {
+    _handleMouseMove_ia: function(e) {
         clearTimeout(__builtinAppClickTimer);
         __builtinAppClickTimer = undefined;
         this._stopManageModeTimer();
     },
 
-    _handleMouseDown_u: function(e) {
+    _handleMouseDown_ua: function(e) {
         __userAppClickTimer = setTimeout(function() {
             __userAppClickTimer = undefined;
         }, 500);
         this._startManageModeTimer();
     },
 
-    _handleMouseUp_u: function(e) {
+    _handleMouseUp_ua: function(e) {
         if (__userAppClickTimer) {
             e.stopPropagation();
             if (this.props.manageable) {
-                var dir = e.target.id.split('-').pop();
-                this.props.onUninstall(dir);
+                var appid = e.target.id.split('-').pop();
+                this.props.onUninstall(appid);
             }
         }
         this._stopManageModeTimer();
     },
 
-    _handleMouseMove_u: function(e) {
+    _handleMouseMove_ua: function(e) {
         clearTimeout(__userAppClickTimer);
             __userAppClickTimer = undefined;
         this._stopManageModeTimer();

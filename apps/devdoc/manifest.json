@@ -1,8 +1,8 @@
 {
-    "name": "Template",
-    "version": "0.2.0",
+    "name": "Developer Manual",
+    "version": "0.1.0",
     "api_version": 1,
-    "directory": "template",
+    "directory": "devdoc",
     "entry": "index.html",
     "permission": {
         "apps": {
@@ -13,15 +13,15 @@
         },
         "storage": {
             "POST": "denied",
-            "GET": "allow",
+            "GET": "denied",
             "PUT": "denied",
             "DELETE": "denied"
         },
         "fs": {
-            "POST": "allow",
+            "POST": "denied",
             "GET": "allow",
-            "PUT": "allow",
-            "DELETE": "allow"
+            "PUT": "denied",
+            "DELETE": "denied"
         }
     },
     "locales": [
@@ -35,6 +35,6 @@
         "internet_explorer": "*",
         "safari": "*"
     },
-    "description": "App template codes",
-    "identifier": "IA00000000"
+    "description": "App Developer manual including REST API documentation.",
+    "identifier": "IAeJoKesBQ"
 }

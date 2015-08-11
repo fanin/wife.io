@@ -2,6 +2,8 @@ var keyMirror = require('keymirror');
 
 module.exports = keyMirror({
     /* Database - Notebook */
+    NOTEBOOK_DATABASE_OPEN: null,
+    NOTEBOOK_DATABASE_CLOSE: null,
     NOTEBOOK_DATABASE_LOADTREE: null,
     NOTEBOOK_DATABASE_LOADTREE_SUCCESS: null,
     NOTEBOOK_DATABASE_LOADTREE_ERROR: null,

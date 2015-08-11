@@ -1,12 +1,12 @@
+var emitter                 = require("events").EventEmitter;
+var assign                  = require("object-assign");
 var NotebookDispatcher      = require("../dispatcher/NotebookDispatcher");
 var NotebookConstants       = require("../constants/NotebookConstants");
 var NotebookActionConstants = require("../constants/NotebookActionConstants");
-var EventEmitter            = require("events").EventEmitter;
-var assign                  = require("object-assign");
-var basename                = require("utils/client-utils").basename;
 
 var CHANGE_EVENT = 'NOTEBOOK_DATABASE_STORE_CHANGE';
 
+var storage = null;
 var treeData = null;
 var isSearchingNotebook = false;
 var superNotebookNode = null;
@@ -15,12 +15,13 @@ var selectedNotebookNode = null;
 var selectedSearchNotebookNode = null;
 var noteDescriptorList = [];
 var dirtyNoteDescriptorList = [];
+var savingNoteDescriptorList = [];
 var selectedNoteDescriptor = null;
 var sortMethod = null;
 var searchString = "";
 var error = null;
 
-var DatabaseStore = assign({}, EventEmitter.prototype, {
+var DatabaseStore = assign({}, emitter.prototype, {
     emitChange: function(changes) {
         this.emit(CHANGE_EVENT, changes);
     },
@@ -31,6 +32,10 @@ var DatabaseStore = assign({}, EventEmitter.prototype, {
 
     removeChangeListener: function(callback) {
         this.removeListener(CHANGE_EVENT, callback);
+    },
+
+    getStorage: function() {
+        return storage;
     },
 
     getTreeData: function() {
@@ -59,26 +64,40 @@ var DatabaseStore = assign({}, EventEmitter.prototype, {
         return dirtyNoteDescriptorList;
     },
 
+    getNoteDescriptorIndex: function(descriptor) {
+        return descriptor
+                ? noteDescriptorList
+                    .map(function(_descriptor) { return _descriptor.id })
+                    .indexOf(descriptor.id)
+                : -1;
+    },
+
+    getDirtyNoteDescriptorIndex: function(descriptor) {
+        return descriptor
+                ? dirtyNoteDescriptorList
+                    .map(function(_descriptor) { return _descriptor.id })
+                    .indexOf(descriptor.id)
+                : -1;
+    },
+
+    getSavingNoteDescriptorIndex: function(descriptor) {
+        return descriptor
+                ? savingNoteDescriptorList
+                    .map(function(_descriptor) { return _descriptor.id })
+                    .indexOf(descriptor.id)
+                : -1;
+    },
+
     getSelectedNoteDescriptor: function() {
         return selectedNoteDescriptor;
     },
 
-    getNoteDescriptorIndex: function(noteDescriptor) {
-        if (!noteDescriptor)
-            return -1;
-        else
-            return noteDescriptorList
-                .map(function(_noteDescriptor) { return _noteDescriptor.noteId })
-                .indexOf(noteDescriptor.noteId);
+    isNoteDescriptorSelected: function(descriptor) {
+        return selectedNoteDescriptor && selectedNoteDescriptor.id === descriptor.id;
     },
 
-    getDirtyNoteDescriptorIndex: function(noteDescriptor) {
-        if (!noteDescriptor)
-            return -1;
-        else
-            return dirtyNoteDescriptorList
-                .map(function(_noteDescriptor) { return _noteDescriptor.noteId })
-                .indexOf(noteDescriptor.noteId);
+    getNoteDescriptorStatus: function(descriptor) {
+        return descriptor.status;
     },
 
     getNoteListSortMethod: function() {
@@ -96,6 +115,14 @@ var DatabaseStore = assign({}, EventEmitter.prototype, {
 
 DatabaseStore.dispatchToken = NotebookDispatcher.register(function(action) {
     switch (action.actionType) {
+        case NotebookActionConstants.NOTEBOOK_DATABASE_OPEN:
+            storage = action.storage;
+            DatabaseStore.emitChange({ actionType: action.actionType });
+            break;
+        case NotebookActionConstants.NOTEBOOK_DATABASE_CLOSE:
+            storage = null;
+            DatabaseStore.emitChange({ actionType: action.actionType });
+            break;
         case NotebookActionConstants.NOTEBOOK_DATABASE_LOADTREE_SUCCESS:
         case NotebookActionConstants.NOTEBOOK_DATABASE_SAVETREE_SUCCESS:
             treeData = action.treeData;
@@ -106,8 +133,8 @@ DatabaseStore.dispatchToken = NotebookDispatcher.register(function(action) {
             DatabaseStore.emitChange({
                 actionType:    action.actionType,
                 stack: {
-                    stackId:   action.stackId,
-                    stackName: action.stackName
+                    id:   action.id,
+                    name: action.name
                 }
             });
             break;
@@ -163,25 +190,26 @@ DatabaseStore.dispatchToken = NotebookDispatcher.register(function(action) {
             break;
 
         case NotebookActionConstants.NOTEBOOK_DATABASE_LOADNOTES_SUCCESS:
-            noteDescriptorList = action.noteDescriptors.sort(sortMethod);
+            noteDescriptorList = action.noteDescriptors.sort(sortMethod).map(function(descriptor) {
+                var idx = DatabaseStore.getSavingNoteDescriptorIndex(descriptor);
+                if (idx >= 0)
+                    return savingNoteDescriptorList[idx];
+                else
+                    return descriptor;
+            });
+
+            if (noteDescriptorList.length === 0)
+                selectedNoteDescriptor = null;
+
             DatabaseStore.emitChange({ actionType: action.actionType });
             break;
 
         case NotebookActionConstants.NOTEBOOK_DATABASE_SELECT_NOTE:
             if (
-                action.index >= 0 &&
-                action.index < noteDescriptorList.length &&
-                selectedNoteDescriptor !== noteDescriptorList[action.index]
+                action.index >= 0
+                && action.index < noteDescriptorList.length
+                && selectedNoteDescriptor !== noteDescriptorList[action.index]
             ) {
-                if (selectedNoteDescriptor &&
-                    (
-                        selectedNoteDescriptor.dirtyNoteTitle ||
-                        selectedNoteDescriptor.dirtyNoteContent
-                    )
-                ) {
-                    if (DatabaseStore.getDirtyNoteDescriptorIndex(selectedNoteDescriptor) < 0)
-                        dirtyNoteDescriptorList.push(selectedNoteDescriptor);
-                }
                 selectedNoteDescriptor = noteDescriptorList[action.index];
                 DatabaseStore.emitChange({ actionType: action.actionType });
             }
@@ -216,29 +244,63 @@ DatabaseStore.dispatchToken = NotebookDispatcher.register(function(action) {
             break;
 
         case NotebookActionConstants.NOTEBOOK_DATABASE_TRASH_NOTE_SUCCESS:
-            var _i = DatabaseStore.getNoteDescriptorIndex(action.noteDescriptor);
-            noteDescriptorList.splice(_i, 1);
+            var idx = DatabaseStore.getNoteDescriptorIndex(action.noteDescriptor);
+            noteDescriptorList.splice(idx, 1);
             DatabaseStore.emitChange({
                 actionType:     action.actionType,
                 noteDescriptor: action.noteDescriptor,
-                index:          _i
+                index:          idx
+            });
+            break;
+
+        case NotebookActionConstants.NOTEBOOK_DATABASE_SAVE_NOTE:
+            action.noteDescriptor.status = 'Saving';
+            action.noteDescriptor.saveManually = action.manually;
+
+            if (DatabaseStore.getSavingNoteDescriptorIndex(action.noteDescriptor) < 0)
+                savingNoteDescriptorList.push(action.noteDescriptor);
+
+            DatabaseStore.emitChange({
+                actionType:     action.actionType,
+                noteDescriptor: action.noteDescriptor
             });
             break;
 
         case NotebookActionConstants.NOTEBOOK_DATABASE_SAVE_NOTE_SUCCESS:
-            var _i = DatabaseStore.getDirtyNoteDescriptorIndex(action.noteDescriptor);
-            if (_i >= 0)
-                dirtyNoteDescriptorList.splice(_i, 1);
+        case NotebookActionConstants.NOTEBOOK_DATABASE_SAVE_NOTE_ERROR:
+            dirtyNoteDescriptorList.splice(DatabaseStore.getDirtyNoteDescriptorIndex(action.noteDescriptor), 1);
+            savingNoteDescriptorList.splice(DatabaseStore.getSavingNoteDescriptorIndex(action.noteDescriptor), 1);
+
+            action.noteDescriptor.status = '';
+            var manually = action.noteDescriptor.saveManually;
+            action.noteDescriptor.saveManually = undefined;
+
             DatabaseStore.emitChange({
                 actionType:     action.actionType,
                 noteDescriptor: action.noteDescriptor,
-                dirtyIndex:     _i
+                manually:       manually
             });
             break;
 
         case NotebookActionConstants.NOTEBOOK_DATABASE_READ_NOTE:
+            if (action.noteDescriptor.status !== 'Saving')
+                action.noteDescriptor.status = 'Loading';
+            DatabaseStore.emitChange({
+                actionType:     action.actionType,
+                noteDescriptor: action.noteDescriptor
+            });
+            break;
+
         case NotebookActionConstants.NOTEBOOK_DATABASE_READ_NOTE_SUCCESS:
-        case NotebookActionConstants.NOTEBOOK_DATABASE_SAVE_NOTE:
+        case NotebookActionConstants.NOTEBOOK_DATABASE_READ_NOTE_ERROR:
+            if (action.noteDescriptor.status !== 'Saving')
+                action.noteDescriptor.status = '';
+            DatabaseStore.emitChange({
+                actionType:     action.actionType,
+                noteDescriptor: action.noteDescriptor
+            });
+            break;
+
         case NotebookActionConstants.NOTEBOOK_DATABASE_CLEAR_USELESS_NOTE_ASSETS:
         case NotebookActionConstants.NOTEBOOK_DATABASE_CLEAR_USELESS_NOTE_ASSETS_SUCCESS:
         case NotebookActionConstants.NOTEBOOK_DATABASE_TAKE_NOTE_SNAPSHOT:
@@ -289,8 +351,6 @@ DatabaseStore.dispatchToken = NotebookDispatcher.register(function(action) {
         case NotebookActionConstants.NOTEBOOK_DATABASE_ADD_NOTE_ERROR:
         case NotebookActionConstants.NOTEBOOK_DATABASE_TRASH_NOTE_ERROR:
         case NotebookActionConstants.NOTEBOOK_DATABASE_COPY_NOTE_ERROR:
-        case NotebookActionConstants.NOTEBOOK_DATABASE_READ_NOTE_ERROR:
-        case NotebookActionConstants.NOTEBOOK_DATABASE_SAVE_NOTE_ERROR:
         case NotebookActionConstants.NOTEBOOK_DATABASE_CLEAR_USELESS_NOTE_ASSETS_ERROR:
         case NotebookActionConstants.NOTEBOOK_DATABASE_TAKE_NOTE_SNAPSHOT_ERROR:
             error = action.error;

@@ -6,15 +6,15 @@ var LauncherAppIcon = React.createClass({
     },
 
     componentDidMount: function() {
-        document.getElementById('launcher-icon-div-' + this.props.manifest.directory).draggable = false;
-        document.getElementById('launcher-icon-img-' + this.props.manifest.directory).draggable = false;
-        document.getElementById('launcher-icon-text-' + this.props.manifest.directory).draggable = false;
+        document.getElementById('launcher-icon-div-' + this.props.manifest.identifier).draggable = false;
+        document.getElementById('launcher-icon-img-' + this.props.manifest.identifier).draggable = false;
+        document.getElementById('launcher-icon-text-' + this.props.manifest.identifier).draggable = false;
     },
 
     render: function() {
         var iconAHref = '/apps/' + this.props.appType + '/' + this.props.manifest.directory + '/' + this.props.manifest.entry;
 
-        var iconDivStyle = (this.props.appType === 'u') ? {
+        var iconDivStyle = (this.props.appType === 'ua') ? {
             backgroundImage:
                 'url(/apps/u/' + this.props.manifest.directory + '/img/icon.png) no-repeat; background-size: contain;'
         } : {};
@@ -27,33 +27,42 @@ var LauncherAppIcon = React.createClass({
         var iconImgSrc = '/apps/' + this.props.appType + '/' + this.props.manifest.directory + '/img/icon.png';
 
         return (
-            <li id={'launcher-icon-li-' + this.props.manifest.directory} key={this.props.manifest.directory}>
-                <a id    = {'launcher-icon-a-' + this.props.manifest.directory}
-                   href  = {this.props.manageable ? '#' : iconAHref}
-                   title = {(this.props.manageable && this.props.appType === 'u') ?
-                            'Uninstall ' + this.props.manifest.name :
-                            this.props.manifest.description}>
+            <li key = {this.props.manifest.identifier}
+                 id = {'launcher-icon-li-' + this.props.manifest.identifier}>
 
-                    <div id        = {'launcher-icon-div-' + this.props.manifest.directory}
-                         style     = {iconDivStyle}
-                         className = {this.props.manageable ? 'shake-app' : ''}>
+                <div className = {this.props.manageable ? 'shake-app' : ''}>
 
-                        <img id    = {'launcher-icon-img-' + this.props.manifest.directory}
-                             style = {iconImgStyle}
-                             src   = {iconImgSrc} />
+                    <a title = {(this.props.manageable && this.props.appType === 'ua')
+                                ? 'Uninstall ' + this.props.manifest.name
+                                : this.props.manifest.description}
+                          id = {'launcher-icon-a-' + this.props.manifest.identifier}
+                        href = {this.props.manageable ? '#' : iconAHref}>
 
-                        <div id        = {'launcher-overlay-icon-div-' + this.props.manifest.directory}
-                             className = 'launcher-overlay-icon-delete'
-                             style     = {{display: (this.props.appType === 'u' && this.props.manageable) ? 'block' : 'none'}}>
+                        <div style = {iconDivStyle}
+                                id = {'launcher-icon-div-' + this.props.manifest.identifier}>
 
-                            <img id  = {'launcher-overlay-icon-img-' + this.props.manifest.directory}
-                                 src = 'img/delete-icon.png'/>
+                            <img style = {iconImgStyle}
+                                    id = {'launcher-icon-img-' + this.props.manifest.identifier}
+                                   src = {iconImgSrc} />
+
+                            <div className = 'launcher-overlay-icon-delete'
+                                        id = {'launcher-overlay-icon-div-' + this.props.manifest.identifier}
+                                     style = {{display: (this.props.appType === 'ua' && this.props.manageable) ? 'block' : 'none'}}>
+
+                                <img src = 'img/delete-icon.png'
+                                      id = {'launcher-overlay-icon-img-' + this.props.manifest.identifier} />
+                            </div>
+
                         </div>
-                    </div>
-                    <span id = {'launcher-icon-text-' + this.props.manifest.directory}>
-                        {this.props.manifest.name}
-                    </span>
-                </a>
+
+                        <span id = {'launcher-icon-text-' + this.props.manifest.identifier}>
+                            {this.props.manifest.name}
+                        </span>
+
+                    </a>
+
+                </div>
+
             </li>
         );
     }

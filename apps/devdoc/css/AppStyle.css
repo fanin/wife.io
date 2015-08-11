@@ -1,0 +1,46 @@
+#app-view
+{
+    text-align: center;
+    padding: 64px 0;
+}
+
+h1.ui.header
+{
+    margin-top: 32px !important;
+}
+
+.ui.grey.header
+{
+    margin-top: 0;
+    margin-bottom: 50px;
+}
+
+.ui.segment
+{
+    left: 300px;
+    width: calc(100% - 400px);
+    min-width: 420px;
+}
+
+.ui.left.rail
+{
+    margin-right: 0;
+    padding-right: 0;
+    padding-left: 32px;
+    text-align: left;
+}
+
+.ui.orange.table
+{
+    border-bottom: .2em solid #f2711c;
+}
+
+.api-menu
+{
+    padding-top: 32px;
+}
+
+.api-description
+{
+    text-align: left;
+}

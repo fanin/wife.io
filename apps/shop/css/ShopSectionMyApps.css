@@ -1,3 +1,7 @@
+.hidden {
+    display: none !important;
+}
+
 .section-myapp-container {
     width: 100%;
     overflow: hidden;
@@ -6,37 +10,10 @@
 .section-myapp-scroller {
     width: 100%;
     margin: 0px auto;
-    /*top: -50px;*/
     overflow-x: auto;
     overflow-y: hidden;
     position: relative;
 }
-
-.section-myapp-scroll-back {
-    float: left;
-    position: relative;
-    top: 190px;
-    z-index: 1;
-    cursor: pointer;
-    /* Hide scroll button, no need for now */
-    display: none;
-}
-
-.section-myapp-scroll-forward {
-    float: right;
-    position: relative;
-    top: 190px;
-    z-index: 1;
-    cursor: pointer;
-    /* Hide scroll button, no need for now */
-    display: none;
-}
-
-/* Hide scrollbar
-.section-myapp-scroller::-webkit-scrollbar {
-    display: none;
-}
-*/
 
 .section-myapp-cards {
     margin: 0 !important;
@@ -48,12 +25,35 @@
 }
 
 .ui.card, .ui.cards>.card {
-    width: 200px !important;
+    width: 120px !important;
+    height: 200px !important;
+}
+
+.ui.card>.content>.header:not(.ui),
+.ui.cards>.card>.content>.header:not(.ui) {
+    font-size: 1em !important;
+}
+
+.userapp.header {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
 /* Control dimmer by ourself */
 .ui.active.dimmer {
     background-color: rgba(0, 0, 0, .6) !important;
+}
+
+.ui.dimmer>.content>.center {
+    position: relative;
+}
+
+.ui.tiny.progress {
+    position: absolute;
+    width: 100%;
+    bottom: 0px;
+    margin: 0 !important;
 }
 
 h2.ui.inverted.header {
@@ -63,7 +63,7 @@ h2.ui.inverted.header {
 
 .card-enter {
     opacity: 0.01 !important;
-    transition: opacity .5s ease-in !important;
+    transition: opacity .3s ease-in !important;
 }
 
 .card-enter.card-enter-active {
@@ -72,7 +72,7 @@ h2.ui.inverted.header {
 
 .card-leave {
     opacity: 1 !important;
-    transition: opacity .5s ease-in !important;
+    transition: opacity .3s ease-in !important;
 }
 
 .card-leave.card-leave-active {

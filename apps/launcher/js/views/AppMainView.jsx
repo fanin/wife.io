@@ -1,94 +1,17 @@
 var AlertViewController    = require('framework/cutie/AlertView/js/AlertViewController.jsx');
+var AppAPI                 = require('diligent/App/AppAPI');
 var LauncherAppIcon        = require('./LauncherAppIcon.jsx');
 var LauncherSortable       = require('./LauncherSortable.jsx');
 var LauncherConstants      = require('../constants/LauncherConstants');
 var LauncherActionCreators = require('../actions/LauncherActionCreators');
 var LauncherStore          = require('../stores/LauncherStore');
 
-var DiligentAgentMixin = {
-    diligentClientWillLaunch: function() {
-
-    },
-
-    diligentClientDidLaunch: function() {
-        AppManagerAgent.list();
-    },
-
-    diligentClientWillTerminate: function() {
-
-    },
-
-    diligentClientDidTerminate: function() {
-
-    },
-
-    diligentConnectionDidFail: function() {
-
-    }
-};
-
-var AppManagerAgentMixin = {
-    appListDidReceive: function(apps) {
-        LauncherActionCreators.sortAppList(apps);
-    },
-
-    appWillInstall: function(instInfo) {
-
-    },
-
-    appIsUploading: function(instInfo) {
-
-    },
-
-    appIsInstalling: function(instInfo) {
-
-    },
-
-    appDidInstall: function(instInfo) {
-
-    },
-
-    appInstallDidFail: function(instInfo) {
-
-    },
-
-    appWillCancelInstall: function(instInfo) {
-
-    },
-
-    appDidCancelInstall: function(instInfo) {
-
-    },
-
-    appCancelInstallDidFail: function(instInfo) {
-
-    },
-
-    appWillUninstall: function(uninstInfo) {
-
-    },
-
-    appDidUninstall: function(uninstInfo) {
-        LauncherActionCreators.removeAppFromSortList(uninstInfo.manifest);
-    },
-
-    appUninstallDidFail: function(uninstInfo) {
-
-    }
-};
-
 var AppMainView = React.createClass({
-
-    mixins: [
-        DiligentAgentMixin,
-        AppManagerAgentMixin
-    ],
 
     getInitialState: function() {
         return {
             appList: [],
             manageable: false,
-            /* AlertView parameters */
             alertTitle: '',
             alertMessage: ''
         };
@@ -97,17 +20,18 @@ var AppMainView = React.createClass({
     componentWillMount: function() {
         LauncherStore.addChangeListener(this._onLauncherChanges);
         LauncherStore.addErrorListener(this._onLauncherError);
-        DiligentAgent.attach(this);
-        AppManagerAgent.attach(this);
-    },
 
-    componentDidMount: function() {
-
+        AppAPI.list({
+            onSuccess: function(list) {
+                LauncherActionCreators.sortAppList(list);
+            },
+            onError: function(error) {
+                console.log('Unable to get app list, error: ' + error.message);
+            }
+        });
     },
 
     componentWillUnmount: function() {
-        AppManagerAgent.detach(this);
-        DiligentAgent.detach(this);
         LauncherStore.removeErrorListener(this._onLauncherError);
         LauncherStore.removeChangeListener(this._onLauncherChanges);
     },
@@ -120,23 +44,12 @@ var AppMainView = React.createClass({
 
     render: function() {
         var appIcons = this.state.appList.map(function(manifest) {
-            var type = AppManagerAgent.getAppType(manifest);
-
-            if (type === 'builtin') {
-                return (
-                    <LauncherAppIcon key = {manifest.directory}
-                                 appType = 'b'
-                                manifest = {manifest}
-                              manageable = {this.state.manageable} />
-                );
-            }
-            else if (type === 'user')
-                return (
-                    <LauncherAppIcon key = {manifest.directory}
-                                 appType = 'u'
-                                manifest = {manifest}
-                              manageable = {this.state.manageable} />
-                );
+            return (
+                <LauncherAppIcon key = {manifest.identifier}
+                             appType = {AppAPI.getAppType(manifest)}
+                            manifest = {manifest}
+                          manageable = {this.state.manageable} />
+            );
         }, this);
 
         return (
@@ -184,22 +97,35 @@ var AppMainView = React.createClass({
         this.setState({ appList: newList });
     },
 
-    _handleUninstall: function(dir) {
-        this._manifest = AppManagerAgent.getAppManifest(dir);
-        this.setState({
-            alertTitle: 'Uninstall APP',
-            alertMessage: 'Are you sure to uninstall ' + this._manifest.name + ' ?'
+    _handleUninstall: function(appid) {
+        AppAPI.getAppByID(appid, {
+            onSuccess: function(manifest) {
+                this._manifest = manifest;
+                this.setState({
+                    alertTitle: 'Uninstall APP',
+                    alertMessage: 'Are you sure to uninstall ' + this._manifest.name + ' ?'
+                });
+                this.refs.alertViewController.show();
+            }.bind(this),
+            onError: function(error) {
+                console.log('Unable to get app, error: ' + error.message);
+            }
         });
-        this.refs.alertViewController.show();
     },
 
-    _handleUninstallAffirmative: function(e) {
-        e.stopPropagation();
-        AppManagerAgent.uninstall(this._manifest);
+    _handleUninstallAffirmative: function() {
+        AppAPI.uninstall(this._manifest, 0, {
+            onSuccess: function() {
+                LauncherActionCreators.removeAppFromSortList(this._manifest);
+            }.bind(this),
+            onError: function(error) {
+                console.log('Unable to uninstall app, error: ' + error.message);
+            }
+        });
     },
 
-    _handleUninstallNegative: function(e) {
-        e.stopPropagation();
+    _handleUninstallNegative: function() {
+
     },
 
     _onLauncherChanges: function(changes) {

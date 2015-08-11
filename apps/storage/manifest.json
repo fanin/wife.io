@@ -1,22 +1,40 @@
 {
     "name": "Storage",
     "version": "0.1.0",
-    "wsapi_version": "0.1",
+    "api_version": 1,
     "directory": "storage",
     "entry": "storage.html",
-    "extensions": [],
-    "localizations": [
+    "permission": {
+        "apps": {
+            "POST": "denied",
+            "GET": "denied",
+            "PUT": "denied",
+            "DELETE": "denied"
+        },
+        "storage": {
+            "POST": "allow",
+            "GET": "allow",
+            "PUT": "allow",
+            "DELETE": "allow"
+        },
+        "fs": {
+            "POST": "allow",
+            "GET": "allow",
+            "PUT": "allow",
+            "DELETE": "allow"
+        }
+    },
+    "locales": [
         "en_US",
         "zh_TW"
     ],
+    "default_locale": "en_US",
     "browser_support": {
         "chrome": "*",
         "firefox": "*",
         "internet_explorer": "*",
         "safari": "*"
     },
-    "description": "Storage information",
-    "show_in_launcher": true,
-    "allow_external_userdata": false,
-    "identifier": "BAPPiBelWizY"
+    "description": "Storage Manager",
+    "identifier": "IAiBelWizY"
 }

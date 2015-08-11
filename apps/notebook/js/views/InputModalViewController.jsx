@@ -22,8 +22,9 @@ var InputModalViewController = React.createClass({
                 closable: false,
                 detachable: false,
                 onApprove: function() {
+                    $("input[name='" + this.props.identifier + "']").submit();
                     return false;
-                },
+                }.bind(this),
                 onDeny: function() {
                     this.reset();
                     this.props.onActionNegative();
@@ -45,11 +46,12 @@ var InputModalViewController = React.createClass({
 
     componentDidMount: function() {
         $(".input-form-" + this.props.identifier).form({
-            name: {
-                identifier: this.props.identifier,
-                rules: this.props.rules
-            }
-        }, {
+            fields: {
+                name: {
+                    identifier: this.props.identifier,
+                    rules: this.props.rules
+                }
+            },
             onSuccess: function() {
                 this.props.onActionAffirmative(
                     $(".input-form-" + this.props.identifier).form("get value", this.props.identifier).trim()
@@ -62,14 +64,12 @@ var InputModalViewController = React.createClass({
     },
 
     componentWillUnmount: function () {
-        if (this.modalInstance) {
-            this.modalInstance.modal("destroy");
-        }
+        this.modalInstance && this.modalInstance.modal("destroy");
     },
 
     shouldComponentUpdate: function(nextProps, nextState) {
         /*
-         * BUG (Semantic-UI):
+         * ISSUE (React.js):
          * If set default value in render() like below, the input box will be non-editable.
          * --
          *    <input name=this.props.identifier type="text" value={this.props.defaultValue} />
@@ -80,32 +80,38 @@ var InputModalViewController = React.createClass({
         return true;
     },
 
+    componentDidUpdate: function(prevProps, prevState) {
+        setTimeout(function() {
+            React.findDOMNode(this.refs.inputField).focus();
+        }.bind(this), 1000);
+    },
+
     render: function() {
         return (
             <div className="ui small modal">
                 <div className="header">
                     {this.props.title}
                 </div>
-                <form className={"ui form input-form-" + this.props.identifier}>
-                    <div className="content input-modal-view-content">
-                        <div className="description">
+                <div className="content input-modal-view-content">
+                    <div className="description">
+                        <form className={"ui form input-form-" + this.props.identifier}>
                             <div className="field">
-                                <input name={this.props.identifier} type="text" />
+                                <input ref="inputField" name={this.props.identifier} type="text" />
                                 <div className="ui error message"></div>
                             </div>
-                        </div>
+                        </form>
                     </div>
-                    <div className="actions">
-                        <div className="ui right labeled icon green button deny">
-                            <i className="remove icon"></i>
-                            Cancel
-                        </div>
-                        <div className="ui right labeled icon red submit button approve">
-                            <i className="checkmark icon"></i>
-                            OK
-                        </div>
+                </div>
+                <div className="actions">
+                    <div className="ui right labeled icon green button deny">
+                        <i className="remove icon"></i>
+                        Cancel
                     </div>
-                </form>
+                    <div className="ui right labeled icon red button approve">
+                        <i className="checkmark icon"></i>
+                        OK
+                    </div>
+                </div>
             </div>
         );
     }

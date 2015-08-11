@@ -6,17 +6,15 @@ var AppMainView = React.createClass({
     render: function() {
         return (
             <div className="nb-main-view">
-                <div className="ui three column horizontally padded grid nb-main-grid">
-                    <div className="equal height row nb-main-eq-h-row">
-                        <div className="one wide red column nb-main-columns">
-                            <BookshelfContainer />
-                        </div>
-                        <div className="two wide blue column nb-main-columns">
-                            <NoteListContainer />
-                        </div>
-                        <div className="seven wide green column nb-main-columns">
-                            <NoteEditorContainer />
-                        </div>
+                <div className="ui equal height grid nb-main-grid">
+                    <div className="sixteen wide mobile six wide tablet three wide computer red column nb-main-eq-h-row">
+                        <BookshelfContainer />
+                    </div>
+                    <div className="sixteen wide mobile six wide tablet four wide computer blue column nb-main-eq-h-row">
+                        <NoteListContainer />
+                    </div>
+                    <div className="sixteen wide mobile ten wide tablet nine wide computer green column nb-main-eq-h-row">
+                        <NoteEditorContainer takeSnapshot={true} />
                     </div>
                 </div>
             </div>

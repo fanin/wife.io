@@ -1,3 +1,5 @@
+var assign                   = require("object-assign");
+var StorageAPI               = require('diligent/Storage/StorageAPI');
 var AlertViewController      = require("framework/cutie/AlertView/js/AlertViewController.jsx");
 var DropdownViewController   = require("framework/cutie/DropdownView/js/DropdownViewController.jsx");
 var JqTreeViewController     = require("./JqTreeViewController.jsx");
@@ -6,7 +8,6 @@ var NotebookConstants        = require("../constants/NotebookConstants");
 var NotebookActionConstants  = require("../constants/NotebookActionConstants");
 var DatabaseStore            = require("../stores/DatabaseStore");
 var DatabaseActionCreators   = require("../actions/DatabaseActionCreators");
-var assign                   = require("object-assign");
 
 var notebookInputRules = [
     {
@@ -21,76 +22,13 @@ var notebookInputRules = [
     */
 ];
 
-var DiligentAgentMixin = {
-    diligentClientWillLaunch: function() {
-
-    },
-
-    diligentClientDidLaunch: function() {
-        StorageAgent.list();
-    },
-
-    diligentClientWillTerminate: function() {
-
-    },
-
-    diligentClientDidTerminate: function() {
-
-    },
-
-    diligentConnectionDidFail: function() {
-
-    }
-};
-
-var StorageAgentMixin = {
-    storageListDidReceive: function(disks) {
-        this.setState({ disks: disks });
-        DatabaseActionCreators.openDatabase(StorageAgent.getDiskInUse());
-        DatabaseActionCreators.loadTree();
-    },
-
-    storageDidMount: function(disk) {
-        this.setState({ disks: StorageAgent.getDisks() });
-    },
-
-    storageDidUnmount: function(disk) {
-        this.setState({ disks: StorageAgent.getDisks() });
-    },
-
-    storageWillSetInUse: function(disk) {
-
-    },
-
-    storageDidSetInUse: function(disk) {
-
-    },
-
-    storageSetInUseFail: function(args) {
-        this._showErrorAlert("Storage Error", "Select disk '" + args.disk.name + "' error:\n" + args.error);
-    },
-
-    storageInUseDidChange: function(disk) {
-        this.setState({ disks: StorageAgent.getDisks() });
-        DatabaseActionCreators.closeDatabase();
-        DatabaseActionCreators.openDatabase(disk);
-        DatabaseActionCreators.loadTree();
-    },
-
-    storageHasError: function(error) {
-        this._showErrorAlert("Storage Error", "Error: " + args.error);
-        DatabaseActionCreators.closeDatabase();
-    }
-};
-
 var BookshelfContainer = React.createClass({
     _timerSaveTreeDelay: null,
 
-    mixins: [ DiligentAgentMixin, StorageAgentMixin ],
-
-    getInitialState: function() {
+    getInitialState() {
         return {
             disks: [],
+            diskInUse: null,
             treeData: [],
             exclusiveTreeNodes: [ NotebookConstants.DATABASE_NOTEBOOK_ALL_ID ],
             notebookSearchString: "",
@@ -106,7 +44,7 @@ var BookshelfContainer = React.createClass({
         };
     },
 
-    componentWillMount: function() {
+    componentWillMount() {
         DatabaseStore.addChangeListener(this._onDatabaseChange);
 
         $.fn.form.settings.rules.hasSpecialChar = function(text) {
@@ -114,30 +52,54 @@ var BookshelfContainer = React.createClass({
             return !regExp.test(text);
         };
 
-        DiligentAgent.attach(this);
-        StorageAgent.attach(this);
+        StorageAPI.onDiskEvent(function(event) {
+            if (event.eventType === "INSERT") {
+                StorageAPI.list({
+                    onSuccess: function(disks) {
+                        this.setState({ disks: disks });
+                    }.bind(this)
+                });
+            }
+            else if (event.eventType === "REMOVE") {
+                StorageAPI.list({
+                    onSuccess: function(disks) {
+                        this.setState({ disks: disks });
+                        if (event.disk.uuid === this.state.diskInUse.uuid) {
+                            DatabaseActionCreators.openDatabase(disks[0]);
+                        }
+                    }.bind(this)
+                });
+            }
+        }.bind(this));
     },
 
-    componentWillUnmount: function() {
-        StorageAgent.detach(this);
-        DiligentAgent.detach(this);
+    componentDidMount() {
+        StorageAPI.list({
+            onSuccess: function(disks) {
+                this.setState({ disks: disks });
+                DatabaseActionCreators.openDatabase(disks[0]);
+            }.bind(this),
+
+            onError: function(error) {
+                this._showErrorAlert("Storage Error", "Error: " + args.error);
+                DatabaseActionCreators.closeDatabase();
+            }.bind(this)
+        });
+    },
+
+    componentWillUnmount() {
         DatabaseStore.removeChangeListener(this._onDatabaseChange);
     },
 
-    render: function() {
+    render() {
         var diskMenuDropdownItems = this.state.disks.map(function(disk) {
-            var itemIconClass = StorageAgent.isDiskInUse(disk) ? "check" : "";
+            var itemIconClass = (this.state.diskInUse && this.state.diskInUse.uuid === disk.uuid) ? "check" : "";
             return {
                 text: (disk.name || disk.drive) + " (" + disk.type + ")",
                 value: disk.uuid,
                 icon: itemIconClass
             };
-        });
-
-        var diskMenuSelectHandler = function(value, text) {
-            var _disk = StorageAgent.getDiskByUUID(value);
-            StorageAgent.setDiskInUse(_disk);
-        };
+        }.bind(this));
 
         var moreOpDropdownItems = [
             {
@@ -170,7 +132,7 @@ var BookshelfContainer = React.createClass({
                                  itemDataSource = {diskMenuDropdownItems}
                                       iconClass = "disk outline"
                                    useSelectBar = {true}
-                                       onChange = {diskMenuSelectHandler} />
+                                       onChange = {this._onDiskMenuSelect} />
 
                     <div className = {this.state.disableMenuItemNew ? "ui pointing link item disabled"
                                                                     : "ui pointing link item"}
@@ -242,10 +204,28 @@ var BookshelfContainer = React.createClass({
         );
     },
 
-    _onDatabaseChange: function(change) {
+    _onDiskMenuSelect(value, text) {
+        var _disk = StorageAPI.getDisk(value, {
+            onSuccess: function(disk) {
+                DatabaseActionCreators.closeDatabase();
+                DatabaseActionCreators.openDatabase(disk);
+            }.bind(this),
+
+            onError: function(error) {
+                this._showErrorAlert("Storage Error", "Select disk '" + text + "' error:\n" + error.message);
+            }.bind(this)
+        });
+    },
+
+    _onDatabaseChange(change) {
         var _searchNode;
         var _searchString;
         switch (change.actionType) {
+            case NotebookActionConstants.NOTEBOOK_DATABASE_OPEN:
+                this.setState({ diskInUse: DatabaseStore.getStorage() });
+                /* Load tree in NoteEditorContainer */
+                break;
+
             case NotebookActionConstants.NOTEBOOK_DATABASE_LOADTREE_SUCCESS:
                 this.setState({
                     clearingSearch: false,
@@ -253,20 +233,18 @@ var BookshelfContainer = React.createClass({
                     treeData: DatabaseStore.getTreeData()
                 });
 
-                setTimeout(function() {
-                    this.refs.treeViewController.nodeSelect(
-                        this.refs.treeViewController.getNodeById(
-                            NotebookConstants.DATABASE_NOTEBOOK_ALL_ID
-                        )
-                    );
-                }.bind(this), 10);
+                this.refs.treeViewController.nodeSelect(
+                    this.refs.treeViewController.getNodeById(
+                        NotebookConstants.DATABASE_NOTEBOOK_ALL_ID
+                    )
+                );
                 break;
 
             case NotebookActionConstants.NOTEBOOK_DATABASE_SAVETREE_SUCCESS:
                 break;
 
             case NotebookActionConstants.NOTEBOOK_DATABASE_CREATE_STACK:
-                this.treeViewCreateFolderHelper(change.stack.stackId, change.stack.stackName);
+                this.treeViewCreateFolderHelper(change.stack.id, change.stack.name);
                 this.treeViewCreateFolderHelper = undefined;
                 this._saveTree();
                 break;
@@ -320,11 +298,11 @@ var BookshelfContainer = React.createClass({
         }
     },
 
-    _onTreeCreateNode: function(node) {
+    _onTreeCreateNode(node) {
         //
     },
 
-    _saveTree: function(node, immediately) {
+    _saveTree(node, immediately) {
         if (this.state.notebookSearchString)
             return;
 
@@ -337,27 +315,27 @@ var BookshelfContainer = React.createClass({
         }.bind(this), immediately ? 0 : 1000);
     },
 
-    _onCreateStack: function(name) {
+    _onCreateStack(name) {
         DatabaseActionCreators.createStack(name);
     },
 
-    _onCreateNotebook: function(name) {
+    _onCreateNotebook(name) {
         DatabaseActionCreators.createNotebook(name);
     },
 
-    _onRenameStack: function(name) {
+    _onRenameStack(name) {
         var node = this.refs.treeViewController.getSelectedNode();
         this.refs.treeViewController.nodeRename(node, name);
         this._saveTree();
     },
 
-    _onRenameNotebook: function(name) {
+    _onRenameNotebook(name) {
         var node = this.refs.treeViewController.getSelectedNode();
         this.refs.treeViewController.nodeRename(node, name);
         this._saveTree();
     },
 
-    _onSearchNotebook: function(name) {
+    _onSearchNotebook(name) {
         function clone(obj) {
             var copy;
 
@@ -429,7 +407,7 @@ var BookshelfContainer = React.createClass({
         });
     },
 
-    _showCreateStackInputDialog: function(createFolderHelper) {
+    _showCreateStackInputDialog(createFolderHelper) {
         this.treeViewCreateFolderHelper = createFolderHelper;
         this.setState({
             inputDialogTitle: "Create a stack",
@@ -440,7 +418,7 @@ var BookshelfContainer = React.createClass({
         this.refs.editInputViewController.show();
     },
 
-    _showCreateNotebookInputDialog: function() {
+    _showCreateNotebookInputDialog() {
         if (this.state.disableMenuItemNew) return;
 
         this.setState({
@@ -452,7 +430,7 @@ var BookshelfContainer = React.createClass({
         this.refs.editInputViewController.show();
     },
 
-    _showRenameInputDialog: function() {
+    _showRenameInputDialog() {
         var node = this.refs.treeViewController.getSelectedNode();
 
         if (node.isFolder()) {
@@ -475,7 +453,7 @@ var BookshelfContainer = React.createClass({
         }
     },
 
-    _showTrashConfirmDialog: function() {
+    _showTrashConfirmDialog() {
         var node = this.refs.treeViewController.getSelectedNode();
 
         if (node.isFolder()) {
@@ -495,11 +473,11 @@ var BookshelfContainer = React.createClass({
         this.refs.confirmAlerter.show();
     },
 
-    _showSearchInputDialog: function() {
+    _showSearchInputDialog() {
         this.refs.searchInputViewController.show();
     },
 
-    _clearSearch: function() {
+    _clearSearch() {
         this.setState({
             clearingSearch: true,
             notebookSearchString: "",
@@ -507,7 +485,7 @@ var BookshelfContainer = React.createClass({
         });
     },
 
-    _showErrorAlert: function(errorTitle, errorMessage) {
+    _showErrorAlert(errorTitle, errorMessage) {
         this.setState({
             errorTitle: errorTitle,
             errorMessage: errorMessage
@@ -516,7 +494,7 @@ var BookshelfContainer = React.createClass({
         this.refs.errorAlerter.show();
     },
 
-    _trashSelected: function() {
+    _trashSelected() {
         var node = this.refs.treeViewController.getSelectedNode();
 
         if (node.isFolder()) {
@@ -530,7 +508,7 @@ var BookshelfContainer = React.createClass({
         }
     },
 
-    _onTreeSelect: function(node) {
+    _onTreeSelect(node) {
         if (!node) return;
 
         if (node.id === NotebookConstants.DATABASE_NOTEBOOK_ALL_ID) {
@@ -579,7 +557,7 @@ var BookshelfContainer = React.createClass({
         }, 1);
     },
 
-    _onTreeRefresh: function() {
+    _onTreeRefresh() {
         if (this.state.loadingSearch) {
             var searchTree = this.refs.treeViewController.getTree();
             if (searchTree.children.length > 0) {

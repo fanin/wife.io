@@ -1,8 +1,10 @@
 /* Fix sort icon being cut */
-.dropdown > .icon {
+.dropdown > .icon
+{
 	height: 1em !important;
 }
 
-.nb-notelist-guide {
+.nb-notelist-guide
+{
     padding: 5%;
 }

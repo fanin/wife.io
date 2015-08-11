@@ -1,179 +1,99 @@
-var ShopActionCreators = require('../actions/ShopActionCreators');
-var ShopStore          = require('../stores/ShopStore');
-var ShopConstants      = require('../constants/ShopConstants');
+var async              = require("async");
+var ShopActionCreators = require("../actions/ShopActionCreators");
+var ShopStore          = require("../stores/ShopStore");
 
 var ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
 
 var APP_COLORS = [
-    'blue', 'green', 'orange', 'pink', 'purple', 'red', 'teal', 'yellow'
+    "blue", "green", "orange", "pink", "purple", "red", "teal", "yellow"
 ];
 
-var AppManagerAgentMixin = {
-    appListDidReceive: function(apps) {
-
-    },
-
-    appWillInstall: function(instInfo) {
-
-    },
-
-    appIsUploading: function(instInfo) {
-        this.setState({
-            dimmerTitle: "Uploading...",
-            dimmerMessage: "Please wait...",
-            installProgress: instInfo.progress
-        });
-    },
-
-    appIsInstalling: function(instInfo) {
-        this.setState({
-            hideDimmerButton: true,
-            dimmerTitle: "Installing...",
-            dimmerMessage: "Please wait..."
-        });
-    },
-
-    appDidInstall: function(instInfo) {
-        setTimeout(function() {
-            this.setState({ hideDimmer: true });
-        }.bind(this), 600);
-    },
-
-    appInstallDidFail: function(instInfo) {
-        switch (instInfo.error) {
-            case "ERROR_SECURITY_ACCESS_DENIED":
-                this.setState({
-                    dimmerTitle: "Error",
-                    dimmerMessage: "You are not allowed to install offline APPs."
-                });
-                break;
-            case "ERROR_APP_BAD_FILE_FORMAT":
-            case "ERROR_APP_BAD_STRUCT":
-                this.setState({
-                    dimmerTitle: "Error",
-                    dimmerMessage: "Not a supported APP format."
-                });
-                break;
-            default:
-                this.setState({
-                    dimmerTitle: "Error",
-                    dimmerMessage: instInfo.error
-                });
-                break;
-        }
-    },
-
-    appWillCancelInstall: function(instInfo) {
-        this.setState({
-            dimmerTitle: "Cancelling...",
-            dimmerMessage: "Wait for cancelling installation."
-        });
-    },
-
-    appDidCancelInstall: function(instInfo) {
-        this.setState({
-            dimmerTitle: "Cancelled",
-            dimmerMessage: "You cancelled installation."
-        });
-    },
-
-    appCancelInstallDidFail: function(instInfo) {
-
-    },
-
-    appWillUninstall: function(uninstInfo) {
-
-    },
-
-    appDidUninstall: function(uninstInfo) {
-
-    },
-
-    appUninstallDidFail: function(uninstInfo) {
-
-    }
-};
-
-var OfflineAppCard = React.createClass({
-
-    mixins: [ AppManagerAgentMixin ],
+/* TODO */
+var UserAppInfoModal = React.createClass({
 
     propTypes: {
-        id:              React.PropTypes.string.isRequired,
-        name:            React.PropTypes.string.isRequired,
-        imageURL:        React.PropTypes.string,
-        group:           React.PropTypes.string,
-        description:     React.PropTypes.string,
-        onCancelInstall: React.PropTypes.func.isRequired,
-        onRemoveCard:    React.PropTypes.func.isRequired
+        appname: React.PropTypes.string.isRequired
+    },
+
+    getDefaultProps: function() {
+        return {};
+    },
+
+    render: function() {
+        return (
+            <div>
+                <AlertViewController ref = "appInfoModal"
+                                    size = "large"
+                                   title = {this.props.appname}
+                                 message = ""
+                                closable = {true}
+                     customViewComponent = {<div/>/* TODO */} />
+            </div>
+        );
+    }
+});
+
+
+var UserAppCard = React.createClass({
+
+    propTypes: {
+        file:        React.PropTypes.object.isRequired,
+        imageSrc:    React.PropTypes.string,
+        group:       React.PropTypes.string,
+        description: React.PropTypes.string
+    },
+
+    getDefaultProps: function() {
+        return {
+            imageSrc: "/apps/ia/shop/img/install-wait.png",
+            group: "Default"
+        };
     },
 
     getInitialState: function() {
         return {
             hideDimmer: false,
-            hideDimmerButton: false,
             dimmerTitle: "Waiting...",
-            dimmerMessage: "",
-            installProgress: 0,
+            dimmerMessage: ""
         };
     },
 
-    componentWillMount: function () {
-        AppManagerAgent.attach(this);
-    },
-
     componentDidMount: function() {
-        ShopStore.addChangeListener(this._onInstallChanges);
+        ShopStore.addChangeListener(this._onShopChange);
+        ShopActionCreators.install(this.props.file);
     },
 
-    componentWillUnmount: function () {
-        AppManagerAgent.detach(this);
-    },
-
-    shouldComponentUpdate: function (nextProps, nextState) {
-        return true;
-    },
-
-    componentDidUpdate: function(prevProps, prevState) {
-
-    },
-
-    _onInstallChanges: function(change) {
-
-    },
-
-    _onButtonClick: function() {
-        if (this.state.dimmerTitle === "Error" || this.state.dimmerTitle === "Cancelled")
-            this.props.onRemoveCard(this.props.id);
-        else {
-            if (this.props.onCancelInstall(this.props.id)) {
-                this.setState({
-                    dimmerTitle: "Cancelled",
-                    dimmerMessage: "You cancelled installation."
-                });
-            }
-        }
+    componentWillUnmount: function() {
+        ShopStore.removeChangeListener(this._onShopChange);
     },
 
     render: function() {
+        var installer   = ShopStore.getInstaller(this.props.file.xhr);
+        var progress    = installer ? installer.progress : 0;
         var randomColor = APP_COLORS[Math.floor(Math.random() * APP_COLORS.length)];
-        var imageURL    = this.props.imageURL ? this.props.imageURL : "/apps/b/shop/img/install-wait.png";
-        var description = this.props.description ? this.props.description : "";
+        var imageSrc    = this.props.imageSrc;
+        var description = this.props.description;
         var dimmerClass = this.state.hideDimmer ? "ui dimmer" : "ui active dimmer";
-        var buttonTitle;
-        var progressbarClass;
+        var filename    = this.props.file.name;
+        var group       = this.props.group;
+        var prgbarClass = (installer && installer.status === "uploading") ? "ui tiny green progress" : "hidden";
+        var dimmerBtnClass;
+        var dimmerBtnIconClass;
 
-        if (this.state.dimmerTitle === "Error") {
-            buttonTitle = "Remove";
-            progressbarClass = "ui progress error";
+        if (installer && installer.status === "error") {
+            dimmerBtnClass = "ui circular red icon button";
+            dimmerBtnIconClass = "icon trash";
         }
-        else if (this.state.dimmerTitle === "Cancelled") {
-            buttonTitle = "Remove";
-            progressbarClass = "ui progress warning";
+        else if (installer && installer.status === "aborted") {
+            dimmerBtnClass = "ui circular red icon button";
+            dimmerBtnIconClass = "icon trash";
+        }
+        else if (installer && installer.status === "uploading") {
+            dimmerBtnClass = "ui circular red icon button";
+            dimmerBtnIconClass = "icon remove";
         }
         else {
-            buttonTitle = "Cancel";
-            progressbarClass = "ui green progress";
+            dimmerBtnClass = "hidden";
         }
 
         return (
@@ -184,25 +104,23 @@ var OfflineAppCard = React.createClass({
                             <div className="ui inverted header">
                                 {this.state.dimmerTitle}
                             </div>
-                            <p>&nbsp;{this.state.dimmerMessage}&nbsp;</p>
-                            <div className={progressbarClass}>
-                                <div className="bar" style={{width: (this.state.installProgress + "%")}}></div>
+                            { /*<p>&nbsp;{this.state.dimmerMessage}&nbsp;</p>*/ }
+                            <div className={dimmerBtnClass} onClick={this._onButtonClick}>
+                                <i className={dimmerBtnIconClass} />
                             </div>
-                            <div className="ui red button"
-                                     style={{display: (this.state.hideDimmerButton ? "none" : "inline-block")}}
-                                   onClick={this._onButtonClick}>
-                                {buttonTitle}
+                            <div className={prgbarClass}>
+                                <div className="bar" style={{width: (progress + "%")}}></div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <a className="image">
-                    <img className="ui image" src={imageURL} />
+                    <img className="ui image" src={imageSrc} />
                 </a>
                 <div className="content">
-                    <a className="header">{this.props.name}</a>
+                    <a className="userapp header">{filename}</a>
                     <div className="meta">
-                        <a>{this.props.group}</a>
+                        <a>{group}</a>
                     </div>
                     <div className="description">
                         {description}
@@ -210,144 +128,98 @@ var OfflineAppCard = React.createClass({
                 </div>
             </div>
         );
+    },
+
+    _onButtonClick: function() {
+        var _installer = ShopStore.getInstaller(this.props.file.xhr);
+
+        if (_installer.status === "error" || _installer.status === "aborted")
+            ShopActionCreators.removeInstall(this.props.file.xhr);
+        else
+            ShopActionCreators.abortInstall(this.props.file.xhr);
+    },
+
+    _onShopChange: function() {
+        var _installer = ShopStore.getInstaller(this.props.file.xhr);
+
+        if (!_installer)
+            return;
+        else if (_installer.status === "uploading")
+            this.setState({
+                dimmerTitle: "Mmm...",
+                dimmerMessage: "Uploading app package..."
+            });
+        else if (_installer.status === "installing")
+            this.setState({
+                dimmerTitle: "Mmm...",
+                dimmerMessage: "Installing app package..."
+            });
+        else if (_installer.status === "installed")
+            this.setState({
+                dimmerTitle: "Success!",
+                dimmerMessage: "App installed successfully."
+            });
+        else if (_installer.status === "upgraded")
+            this.setState({
+                dimmerTitle: "Success!",
+                dimmerMessage: "App upgraded successfully."
+            });
+        else if (_installer.status === "aborted")
+            this.setState({
+                dimmerTitle: "Oops!",
+                dimmerMessage: "Installation aborted."
+            });
+        else if (_installer.status === "error")
+            this.setState({
+                dimmerTitle: "Oops!",
+                dimmerMessage: "Unable to install app (Error: " + _installer.error.message + ")."
+            });
+
+        if (_installer.status === "installed" || _installer.status === "upgraded") {
+            setTimeout(function() {
+                this.setState({ hideDimmer: true });
+            }.bind(this), 1000);
+        }
     }
 });
 
 var ShopSectionMyApp = React.createClass({
-    getDefaultProps: function() {
-        return {};
-    },
-
-    propTypes: {
-
-    },
 
     getInitialState: function() {
         return {
-            list: []
+            appFiles: []
         };
     },
 
-    componentWillMount: function() {
-
-    },
-
     componentDidMount: function() {
-        //$(".section-myapp-scroller").niceScroll({
-        //    touchbehavior: true,
-        //    cursorwidth: '0px'
-        //});
-
-        /*
-        if ($('.section-myapp-cards').width() <= $(window).width()) {
-            $('.section-myapp-scroll-forward').hide();
-            $('.section-myapp-scroll-back').hide();
-        }
-
-        $(window).resize(function() {
-            if ($('.section-myapp-cards').width() > $(window).width()) {
-                $('.section-myapp-scroll-forward').show();
-                $('.section-myapp-scroll-back').show();
-            }
-            else {
-                $('.section-myapp-scroll-forward').hide();
-                $('.section-myapp-scroll-back').hide();
-            }
-        });
-
-        function scrollBack() {
-            //$('.section-myapp-scroll-forward').show();
-            $('.section-myapp-scroll-back').unbind('click');
-            $('.section-myapp-scroller').animate({
-                scrollLeft: '-=350'
-            }, 500, function() {
-                if ($('.section-myapp-scroller').scrollLeft() <= 0) {
-                    //$('.section-myapp-scroll-back').hide();
-                    $('.section-myapp-scroller').scrollLeft(0);
-                }
-                $('.section-myapp-scroll-back').bind('click', scrollBack);
-            });
-        }
-
-        function scrollForward() {
-            //$('.section-myapp-scroll-back').show();
-            $('.section-myapp-scroll-forward').unbind('click');
-            $('.section-myapp-scroller').animate({
-                scrollLeft: '+=350'
-            }, 500, function() {
-                if ($('.section-myapp-scroller').scrollLeft() >= $('.section-myapp-cards').width() - $('.section-myapp-scroller').width()) {
-                    //$('.section-myapp-scroll-forward').hide();
-                    $('.section-myapp-scroller').scrollLeft($('.section-myapp-cards').width() - $('.section-myapp-scroller').width());
-                }
-                $('.section-myapp-scroll-forward').bind('click', scrollForward);
-            });
-        }
-
-        //$('.section-myapp-scroll-back').hide();
-        $('.section-myapp-scroll-back').click(scrollBack);
-        $('.section-myapp-scroll-forward').click(scrollForward);
-        */
-    },
-
-    componentWillUnmount: function() {
-
-    },
-
-    shouldComponentUpdate: function (nextProps, nextState) {
-        return true;
-    },
-
-    componentWillUpdate: function(nextProps, nextState) {
-
+        ShopStore.addCleanListener(this._onShopClean);
     },
 
     componentDidUpdate: function(prevProps, prevState) {
-        /* Programmatically adjust .card container's width */
-        $('.section-myapp-cards').width($('.card').length * ($('.card').width() + 16));
+        /* Programmatically adjust .card container"s width */
+        $(".section-myapp-cards").width($(".card").length * ($(".card").width() + 16));
     },
 
-    installOfflineApp: function() {
-        var files = $('#file')[0].files;
-        var list = this.state.list;
-
-        $('#file').replaceWith($('#file').clone());
-
-        for (var i = 0; i < files.length; i++) {
-            list.unshift(files[i]);
-            files[i].instid = AppManagerAgent.install(files[i]);
-        }
-
-        if (files.length > 0)
-            this.setState({ list: list });
+    componentWillUnmount: function() {
+        ShopStore.removeCleanListener(this._onShopClean);
     },
 
-    cancelOfflineApp: function(instid) {
-        return AppManagerAgent.cancelInstall(instid);
-    },
+    installUserApp: function() {
+        var files = $("#file")[0].files;
+        var pkgs = this.state.appFiles;
 
-    removeFailedApp: function(instid) {
-        var list = this.state.list;
+        for (var i = 0; i < files.length; i++)
+            pkgs.push(files[i]);
 
-        for (var i = 0; i < list.length; i++) {
-            if (list[i].instid === instid) {
-                list.splice(i, 1);
-                this.setState({ list: list });
-                return;
-            }
-        }
+        this.setState({ appFiles: pkgs });
+
+        $("#file").replaceWith($("#file").clone());
     },
 
     render: function() {
-        var myAppCards = this.state.list.map(function(file, i) {
-            return (
-                <OfflineAppCard key={file.instid}
-                                 id={file.instid}
-                               name={file.name}
-                              group="Chardi"
-                    onCancelInstall={this.cancelOfflineApp}
-                       onRemoveCard={this.removeFailedApp} />
-            );
-        }, this);
+        var appCards = this.state.appFiles.map(function(file) {
+            return <UserAppCard key={file.name} file={file} />;
+        });
 
         return (
             <div className="ui segment">
@@ -358,15 +230,7 @@ var ShopSectionMyApp = React.createClass({
                     <input type="file"
                              id="file"
                           style={{display: "none"}}
-                       onChange={this.installOfflineApp} multiple />
-
-                    <div className="section-myapp-scroll-back">
-                        <i className="left huge chevron icon"></i>
-                    </div>
-
-                    <div className="section-myapp-scroll-forward">
-                        <i className="right huge chevron icon"></i>
-                    </div>
+                       onChange={this.installUserApp} multiple />
 
                     <div className="section-myapp-scroller">
                         <ReactCSSTransitionGroup component="div"
@@ -374,26 +238,31 @@ var ShopSectionMyApp = React.createClass({
                                                  className="ui link cards section-myapp-cards">
                             <label htmlFor="file" className="ui pink card">
                                 <a className="image">
-                                    <img className="ui image" src="/apps/b/shop/img/install-offline.png" />
+                                    <img className="ui image" src="/apps/ia/shop/img/install-offline.png" />
                                 </a>
                                 <div className="content">
-                                    <a className="header">Install Offline App</a>
+                                    <a className="header">Install App Package</a>
                                     <div className="meta">
                                         <a>&nbsp;</a>
-                                    </div>
-                                    <div className="description">
-                                        Install application from local storage.
                                     </div>
                                 </div>
                             </label>
 
-                            {myAppCards}
+                            {appCards}
 
                         </ReactCSSTransitionGroup>
                     </div>
                 </div>
             </div>
         );
+    },
+
+    _onShopClean: function() {
+        var files = this.state.appFiles.filter(function(file) {
+            return (ShopStore.getInstaller(file.xhr) != null);
+        });
+
+        this.setState({ appFiles: files });
     }
 });
 

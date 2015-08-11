@@ -15,11 +15,11 @@ var SortMethods = {
     },
     /* Sort by creation date (newest first) */
     sortByCreationDateNewestFirst: function(a, b) {
-        return (b.noteId - a.noteId);
+        return (b.id - a.id);
     },
     /* Sort by creation date (oldest first) */
     sortByCreationDateOldestFirst: function(a, b) {
-        return (a.noteId - b.noteId);
+        return (a.id - b.id);
     },
     /* Sort by title (ascending) */
     sortByTitleAscending: function(a, b) {
@@ -37,36 +37,36 @@ var SortMethods = {
 
 var NoteListContainer = React.createClass({
 
-    getInitialState: function() {
+    getInitialState() {
         return {
             disableNewNoteButton: false,
             disableCopyButton: false,
             disableTrashButton: false,
-            showGuide: false,
+            showEmptyMessage: false,
             sortMethod: SortMethods.sortByLastModifiedDate
         };
     },
 
-    componentWillMount: function() {
+    componentWillMount() {
         DatabaseStore.addChangeListener(this._onDatabaseChange);
     },
 
-    componentDidMount: function() {
+    componentDidMount() {
         $(".nb-toolbar-sort-dropdown").dropdown({
             action: 'hide',
             transition: 'drop'
         });
     },
 
-    componentWillUnmount: function() {
+    componentWillUnmount() {
         DatabaseStore.removeChangeListener(this._onDatabaseChange);
     },
 
-    shouldComponentUpdate: function (nextProps, nextState) {
+    shouldComponentUpdate(nextProps, nextState) {
         return true;
     },
 
-    render: function() {
+    render() {
         var sortLastModDateClass = (
                 this.state.sortMethod === SortMethods.sortByLastModifiedDate
             ) ? "check icon" : "icon";
@@ -100,10 +100,24 @@ var NoteListContainer = React.createClass({
             }
         ];
 
+        var emptyMessageHeader = DatabaseStore.getSearchString()
+                                ? "Your search `" + DatabaseStore.getSearchString() + "` did not match any notes."
+                                : "This notebook is empty.";
+        var emptyMessageSuggestions = DatabaseStore.getSearchString()
+                                ? [
+                                    <li key="suggest1">{ "Make sure that all words are spelled correctly." }</li>,
+                                    <li key="suggest2">{ "Try different keywords." }</li>,
+                                    <li key="suggest3">{ "Try more general keywords." }</li>
+                                  ]
+                                : [
+                                    <li key="suggest1">{ "Press 'New' to create a note." }</li>,
+                                    <li key="suggest2">{ "You are not allowed to create a note if you are selecting a notebook stack." }</li>
+                                  ];
+
         return (
             <div className="nb-column-container">
                 <div className="ui menu nb-column-toolbar">
-                    <div className="ui pointing dropdown item nb-toolbar-sort-dropdown">
+                    <div className="ui compact dropdown item nb-toolbar-sort-dropdown">
                         <i className="sort content ascending black icon"></i>
                         <div className="menu">
                             <div className="item" onClick={this._sortByModifiedDate}>
@@ -139,13 +153,14 @@ var NoteListContainer = React.createClass({
                                               useSelectBar = {false} />
                 </div>
 
-                <div className="nb-notelist-guide" style={{display: this.state.showGuide ? "block" : "none"}}>
+                <div className="nb-notelist-guide" style={{display: this.state.showEmptyMessage ? "block" : "none"}}>
                     <div className="ui info message">
-                        <div className="header">
-                            This notebook is empty.
+                        <div className="header" style={{wordWrap: "break-word"}}>
+                            {emptyMessageHeader}
                         </div>
                         <ul className="list">
-                            <li>Press 'New' to create a note.</li>
+                            <p/><p><strong>Suggestions:</strong></p>
+                            {emptyMessageSuggestions}
                         </ul>
                     </div>
                 </div>
@@ -169,7 +184,7 @@ var NoteListContainer = React.createClass({
         );
     },
 
-    _onDatabaseChange: function(change) {
+    _onDatabaseChange(change) {
         switch (change.actionType) {
             case NotebookActionConstants.NOTEBOOK_DATABASE_SELECT_NOTEBOOK:
                 var notebook = change.notebookNode;
@@ -195,13 +210,13 @@ var NoteListContainer = React.createClass({
                     this.setState({
                         disableCopyButton: true,
                         disableTrashButton: true,
-                        showGuide: true
+                        showEmptyMessage: true
                     });
                 else
                     this.setState({
                         disableCopyButton: false,
                         disableTrashButton: false,
-                        showGuide: false
+                        showEmptyMessage: false
                     });
                 break;
 
@@ -211,7 +226,7 @@ var NoteListContainer = React.createClass({
                 this.setState({
                     disableCopyButton: false,
                     disableTrashButton: false,
-                    showGuide: false
+                    showEmptyMessage: false
                 });
                 break;
 
@@ -221,7 +236,7 @@ var NoteListContainer = React.createClass({
                     this.setState({
                         disableCopyButton: true,
                         disableTrashButton: true,
-                        showGuide: true
+                        showEmptyMessage: true
                     });
                 break;
 
@@ -233,16 +248,16 @@ var NoteListContainer = React.createClass({
                 break;
 
             case NotebookActionConstants.NOTEBOOK_DATABASE_SAVE_NOTE:
-                this.refs.noteListController.setEnable(false);
+                //this.refs.noteListController.setEnable(false);
                 break;
 
             case NotebookActionConstants.NOTEBOOK_DATABASE_SAVE_NOTE_SUCCESS:
                 this.refs.noteListController.refresh();
-                this.refs.noteListController.setEnable(true);
+                //this.refs.noteListController.setEnable(true);
                 break;
 
             case NotebookActionConstants.NOTEBOOK_DATABASE_SAVE_NOTE_ERROR:
-                this.refs.noteListController.setEnable(true);
+                //this.refs.noteListController.setEnable(true);
             case NotebookActionConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR:
             case NotebookActionConstants.NOTEBOOK_DATABASE_SAVETREE_ERROR:
             case NotebookActionConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK_ERROR:
@@ -259,37 +274,38 @@ var NoteListContainer = React.createClass({
         }
     },
 
-    _sortByModifiedDate: function() {
+    _sortByModifiedDate() {
         DatabaseActionCreators.setNoteSortMethod(SortMethods.sortByLastModifiedDate);
     },
 
-    _sortByCreationDateNewestFirst: function() {
+    _sortByCreationDateNewestFirst() {
         DatabaseActionCreators.setNoteSortMethod(SortMethods.sortByCreationDateNewestFirst);
     },
 
-    _sortByCreationDateOldestFirst: function() {
+    _sortByCreationDateOldestFirst() {
         DatabaseActionCreators.setNoteSortMethod(SortMethods.sortByCreationDateOldestFirst);
     },
 
-    _sortByTitleAscending: function() {
+    _sortByTitleAscending() {
         DatabaseActionCreators.setNoteSortMethod(SortMethods.sortByTitleAscending);
     },
 
-    _sortByTitleDescending: function() {
+    _sortByTitleDescending() {
         DatabaseActionCreators.setNoteSortMethod(SortMethods.sortByTitleDescending);
     },
 
-    _onListDataLoaded: function() {
-        this.refs.noteListController.selectRowAtIndex(0);
+    _onListDataLoaded() {
+        if (this.refs.noteListController.count() > 0)
+            this.refs.noteListController.selectRowAtIndex(0);
     },
 
-    _onSelectNote: function(index) {
+    _onSelectNote(index) {
         setTimeout(function() {
             DatabaseActionCreators.selectNote(index);
-        }, 10);
+        }, 0);
     },
 
-    _onRenderListViewItem: function(data) {
+    _onRenderListViewItem(data) {
         var _mtime = new Date(data.noteStat.mtime);
         var _lmd = _mtime.toLocaleDateString() + " " + _mtime.toLocaleTimeString();
 
@@ -300,22 +316,22 @@ var NoteListContainer = React.createClass({
         };
     },
 
-    _writeNote: function() {
+    _writeNote() {
         if (!this.state.disableNewNoteButton)
             DatabaseActionCreators.addNote(DatabaseStore.getSelectedNotebookNode(), "", "");
     },
 
-    _copyNote: function() {
+    _copyNote() {
         if (!this.state.disableCopyButton)
             DatabaseActionCreators.copyNote(DatabaseStore.getSelectedNoteDescriptor());
     },
 
-    _trashNote: function() {
+    _trashNote() {
         if (!this.state.disableTrashButton)
             DatabaseActionCreators.trashNote(DatabaseStore.getSelectedNoteDescriptor());
     },
 
-    _showErrorAlert: function(errorTitle, errorMessage) {
+    _showErrorAlert(errorTitle, errorMessage) {
         this.setState({
             errorTitle: errorTitle,
             errorMessage: errorMessage

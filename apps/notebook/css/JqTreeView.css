@@ -1,47 +1,61 @@
-.jq-treeview-container {
-    height: calc(100% - 36px);
-    overflow-y: auto;
+.jq-treeview-container
+{
+    font-family: 'Lucida Grande', Helvetica, Arial, sans-serif;
     font-size: 1.2em;
-    font-family: Arial, Georgia, Times, 'Times New Roman', serif;
+
+    overflow-y: auto;
+
+    height: calc(100% - 36px);
+
     -webkit-user-select: none; /* Chrome/Safari */
-    -moz-user-select: none; /* Firefox */
-    -ms-user-select: none; /* IE10+ */
-    -ie-user-select: none;
-    -o-user-select: none;
-    -khtml-user-select: none;
-    user-select: none;
+       -moz-user-select: none; /* Firefox */
+        -ms-user-select: none; /* IE10+ */
+            user-select: none;
+        -ie-user-select: none;
+         -o-user-select: none;
+     -khtml-user-select: none;
 }
 
-@-moz-document url-prefix() {
-    .jq-treeview-container {
+@-moz-document url-prefix()
+{
+    .jq-treeview-container
+    {
         height: 100% !important;
     }
 }
 
-.jq-treeview {
+.jq-treeview
+{
     overflow: hidden;
 }
 
-.jqtree-element, .jqtree-title {
+.jqtree-element,
+.jqtree-title
+{
+    overflow: hidden;
+
     white-space: nowrap;
     text-overflow: ellipsis;
-    overflow: hidden;
 }
 
-.jqtree-element {
+.jqtree-element
+{
     padding: 0 10px;
 }
 
-.jqtree-title-folder {
-    font-family: Arial, Georgia, Times, 'Times New Roman', serif;
+.jqtree-title-folder
+{
+    font-family: 'Lucida Grande', Helvetica, Arial, sans-serif;
     font-weight: bolder;
 }
 
-.jqtree-toggler {
+.jqtree-toggler
+{
     margin: 0 !important;
     margin-right: .1em !important;
 }
 
-ul.jqtree-tree span.jqtree-border {
+ul.jqtree-tree span.jqtree-border
+{
     left: 0 !important;
 }

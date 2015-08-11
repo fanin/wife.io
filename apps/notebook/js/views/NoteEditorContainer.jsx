@@ -8,17 +8,16 @@ var NotebookActionConstants = require("../constants/NotebookActionConstants");
 var DatabaseStore           = require("../stores/DatabaseStore");
 var GritterView             = require("framework/cutie/GritterView/js/GritterViewController");
 var AlertViewController     = require("framework/cutie/AlertView/js/AlertViewController.jsx");
-var StringCode              = require('utils/string-code');
 
 var ProgressBarView = React.createClass({
-    getInitialState: function () {
+    getInitialState() {
         return {
             progress: 0,
             label: ""
         };
     },
 
-    render: function() {
+    render() {
         return (
             <div className="ui green progress">
                 <div className="bar" style={{width: (this.state.progress + "%")}}></div>
@@ -29,21 +28,22 @@ var ProgressBarView = React.createClass({
 });
 
 var FileUploadView = React.createClass({
-    getInitialState: function () {
+    getDefaultProps() {
         return {
-            uploadFiles: []
+            uploadFiles: [],
+            onAddFile: function() {},
+            onRemoveFile: function(file) {}
         };
     },
 
-    render: function() {
-        var fileTableRows = this.state.uploadFiles.map(function(file) {
-            var self = this;
+    render() {
+        var fileTableRows = this.props.uploadFiles.map(function(file) {
             return (
-                <tr>
+                <tr key={file.name}>
                     <td>{file.name}</td>
                     <td className="center aligned collapsing">{file.type}</td>
                     <td className="center aligned collapsing">
-                        <div onClick={function() {self._onRemoveFile(file)}}>
+                        <div onClick={ function() { this.props.onRemoveFile(file) }.bind(this) }>
                             <i className="remove circle link big red icon" />
                         </div>
                     </td>
@@ -66,12 +66,8 @@ var FileUploadView = React.createClass({
                 <tfoot>
                     <tr>
                         <th colSpan="3">
-                            <input type = "file"
-                                     id = "upload-files"
-                                  style = {{display: "none"}}
-                               onChange = {this._onFileInputChange} multiple />
                             <div className = "ui right floated small primary labeled button"
-                                   onClick = {this._onClickAddFile}>
+                                   onClick = {this.props.onAddFile}>
                                 Add File
                             </div>
                         </th>
@@ -79,32 +75,12 @@ var FileUploadView = React.createClass({
                 </tfoot>
             </table>
         );
-    },
-
-    _onClickAddFile: function() {
-        $("#upload-files").click();
-    },
-
-    _onFileInputChange: function() {
-        var files = $("#upload-files")[0].files;
-        var list = this.state.uploadFiles;
-
-        for (var i = 0; i < files.length; i++) {
-            list.push(files[i]);
-        }
-
-        this.setState({ uploadFiles: list });
-    },
-
-    _onRemoveFile: function(file) {
-        var files = this.state.uploadFiles;
-        files.splice(files.indexOf(file), 1);
-        this.setState({ uploadFiles: files });
     }
 });
 
 var NotebookEditor = React.createClass({
-    componentDidMount: function () {
+
+    componentDidMount() {
         CKEDITOR.config.readOnly = true;
         CKEDITOR.config.resize_enabled = false;
         CKEDITOR.config.extraPlugins = "menu,panel,justify,image,tableresize,"
@@ -131,8 +107,7 @@ var NotebookEditor = React.createClass({
                   'NumberedList', 'BulletedList', '-',
                   'Table', 'HorizontalRule', 'SpecialChar', 'CodeSnippet', 'MathJax', '-',
                   'Youtube', 'wenzgmap', 'Image', '-',
-                  'Upload','Save' ],
-                '/',
+                  'Upload','Save' ], '/',
                 [ 'Font', 'FontSize', 'Bold', 'Italic', 'Underline', 'Strike',
                   'Subscript', 'Superscript', 'TextColor', 'BGColor', '-',
                   'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock', '-',
@@ -143,11 +118,11 @@ var NotebookEditor = React.createClass({
         });
     },
 
-    shouldComponentUpdate: function (nextProps, nextState) {
+    shouldComponentUpdate(nextProps, nextState) {
         return false;
     },
 
-    render: function() {
+    render() {
         return (
             <div className="nb-column-content nb-editor-container">
                 <textarea id="nb-editor" name="nb-editor" />
@@ -160,33 +135,33 @@ var NoteEditorContainer = React.createClass({
     editorInstance: null,
     titleInputInstance: null,
     searchInputInstance: null,
-    _timerSetEditorDataDelay: null,
-    _timerFlushEditor: null,
+    _setDataDelayTimer: null,
+    _flushTimer: null,
     _flushAfterDelay: 5000,
-    _triggerSaveManually: false,
     _dragStartInsideEditor: false,
     _unsupportFiles: [],
 
-    getDefaultProps: function () {
+    getDefaultProps() {
         return {
             takeSnapshot: false,
             snapshotImageWidth: 800
         };
     },
 
-    getInitialState: function () {
+    getInitialState() {
         return {
             searchString: "",
             errorTitle: "",
-            errorMessage: ""
+            errorMessage: "",
+            uploadFiles: []
         };
     },
 
-    componentWillMount: function () {
+    componentWillMount() {
         DatabaseStore.addChangeListener(this._onDatabaseChange);
     },
 
-    componentDidMount: function() {
+    componentDidMount() {
         this.titleContainerInstance    = $(".nb-column-toolbar-title-container");
         this.titleInputInstance        = $(".nb-column-toolbar-title-input");
         this.searchContainerInstance   = $(".nb-column-toolbar-search-container");
@@ -194,25 +169,25 @@ var NoteEditorContainer = React.createClass({
         this.editorDimmerInstance      = $(".nb-editor-dimmer").dimmer({ closable: false });
         this.editorDimmerTextInstance  = $(".nb-editor-dimmer > div");
         this.snapshotContainerInstance = $(".nb-snapshot-container");
-        this.snapshotBodyInstance      = $(".nb-snapshot-container > div");
+        this.snapshotBodyInstance      = $(".nb-snapshot-container > div > div");
         this.snapshotContainerInstance.width(this.props.snapshotImageWidth);
 
         /* Prevent drag and drop on non-editor components */
-        $(document).on('dragenter', function (e) {
+        $(document).on('dragenter', function(e) {
             e.stopPropagation();
             e.stopImmediatePropagation();
             e.preventDefault();
             return false;
         });
 
-        $(document).on('dragover', function (e) {
-          e.stopPropagation();
-          e.stopImmediatePropagation();
-          e.preventDefault();
-          return false;
+        $(document).on('dragover', function(e) {
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            e.preventDefault();
+            return false;
         });
 
-        $(document).on('drop', function (e) {
+        $(document).on('drop', function(e) {
             e.stopPropagation();
             e.stopImmediatePropagation();
             e.preventDefault();
@@ -230,15 +205,13 @@ var NoteEditorContainer = React.createClass({
             var editor = event.editor;
 
             this.editorInstance = editor;
-            this._setReadOnly(true);
-            this._setEditorDimmer(true, "Loading");
 
             this.titleInputInstance.on('change keyup paste', function() {
                 this._cacheDirtyNote();
             }.bind(this));
 
             this.titleInputInstance.focusout(function() {
-                this._cacheDirtyNote(0);
+                this._saveNote();
             }.bind(this));
 
             editor.on("contentDom", function() {
@@ -276,7 +249,6 @@ var NoteEditorContainer = React.createClass({
                 }.bind(this));
 
                 //editor.focus();
-                this._setEditorDimmer(false);
             }.bind(this));
 
             editor.on("paste", function(event) {
@@ -297,8 +269,7 @@ var NoteEditorContainer = React.createClass({
 
             editor.on("nbsave", function() {
                 if (!this._isReadOnly()) {
-                    this._triggerSaveManually = true;
-                    this._saveNote();
+                    this._saveNote(null, true);
                 }
             }.bind(this));
 
@@ -314,29 +285,38 @@ var NoteEditorContainer = React.createClass({
         }.bind(this));
     },
 
-    componentWillUnmount: function() {
+    componentWillUnmount() {
         DatabaseStore.removeChangeListener(this._onDatabaseChange);
     },
 
-    shouldComponentUpdate: function(nextProps, nextState) {
+    shouldComponentUpdate(nextProps, nextState) {
         return true;
     },
 
-    componentDidUpdate: function (prevProps, prevState) {
+    componentDidUpdate(prevProps, prevState) {
         if (prevState.searchString && !this.state.searchString) {
             /* Restore search input box */
             this._onSearchInputBlur();
         }
+        else if (prevState.errorTitle !== this.state.errorTitle
+                 || prevState.errorMessage !== this.state.errorMessage) {
+            this.refs.errorAlerter.show();
+        }
     },
 
-    render: function() {
-        var fileUploadView = <FileUploadView ref = "fileUploadView" />;
+    render() {
+        var fileUploadView = <FileUploadView ref = "fileUploadView"
+                                     uploadFiles = {this.state.uploadFiles}
+                                       onAddFile = {this._onDialogAddFile}
+                                    onRemoveFile = {this._onDialogRemoveFile} />;
         var progressBarView = <ProgressBarView ref = "progressBarView" />;
 
         return (
             <div className = "nb-column-container">
                 <div className = "nb-snapshot-container">
-                    <div />
+                    <div>
+                        <div />
+                    </div>
                 </div>
 
                 <div className = "ui inverted dimmer nb-editor-dimmer">
@@ -349,11 +329,11 @@ var NoteEditorContainer = React.createClass({
                             <i className = "file text outline icon"></i>
                             <input className = "nb-column-toolbar-title-input"
                                         type = "text"
-                                 placeholder = "Untitled..." />
+                                 placeholder = "Untitled..." disabled />
                         </div>
                     </div>
                     <div className = "right item nb-column-toolbar-search-container">
-                        <div className = {"ui icon input" + (this.state.searchString ? " search" : "")}>
+                        <div className = {"ui transparent icon input" + (this.state.searchString ? " search" : "")}>
                             <input className = "nb-column-toolbar-search-input"
                                         type = "text"
                                  placeholder = "Search note..."
@@ -370,6 +350,11 @@ var NoteEditorContainer = React.createClass({
                 <NotebookEditor />
 
                 <div className="nb-editor-upload-dialog-container">
+                    <input type = "file"
+                             id = "upload-files"
+                          style = {{display: "none"}}
+                       onChange = {this._onDialogFileInputChange} multiple />
+
                     <AlertViewController ref = "fileUploadDialog"
                                         size = "large"
                                        title = "Select Files to Upload"
@@ -387,7 +372,7 @@ var NoteEditorContainer = React.createClass({
                                                     actionType: "approve"
                                                 }]}
                                       onShow = {this._onDialogShow}
-                                      onHide = {this._onDialogHide}
+                                    onHidden = {this._onDialogHidden}
                                    onApprove = {this._onDialogUpload} />
                 </div>
 
@@ -401,6 +386,7 @@ var NoteEditorContainer = React.createClass({
                                                 color: "red",
                                                 actionType: "deny"
                                             }]}
+                                onHidden = {this._onProgressDialogHidden}
                                   onDeny = {this._onProgressDialogCancelUpload} />
 
                 <AlertViewController ref = "errorAlerter"
@@ -416,7 +402,7 @@ var NoteEditorContainer = React.createClass({
         );
     },
 
-    _onSearchInputFocus: function() {
+    _onSearchInputFocus() {
         var searchWidth = this.titleContainerInstance.parent().width() / 2;
         if (searchWidth < 150) searchWidth = 150;
         var titleWidth = this.titleContainerInstance.parent().width() - searchWidth;
@@ -430,7 +416,7 @@ var NoteEditorContainer = React.createClass({
         );
     },
 
-    _onSearchInputBlur: function() {
+    _onSearchInputBlur() {
         if (!this.state.searchString) {
             var titleWidth = this.titleContainerInstance.parent().width() - 150;
             this.titleContainerInstance.animate(
@@ -444,7 +430,7 @@ var NoteEditorContainer = React.createClass({
         }
     },
 
-    _onSearch: function() {
+    _onSearch() {
         var notebookNode;
 
         if (this.state.searchString)
@@ -466,21 +452,27 @@ var NoteEditorContainer = React.createClass({
         }
     },
 
-    _setEditorDimmer: function(show, text) {
-        if (show) {
+    _setEditorDimmer(show, text) {
+        var animating = this.editorDimmerInstance.hasClass("active");
+
+        if (show && !animating) {
             this.editorDimmerTextInstance.text(text);
-            this.editorDimmerInstance.dimmer("show");
+            this.editorDimmerInstance.removeClass("hidden")
+                                     .addClass("visible active");
         }
-        else
-            this.editorDimmerInstance.dimmer("hide");
+        else if (!show && animating) {
+            this.editorDimmerInstance.removeClass("visible")
+                                     .removeClass("active")
+                                     .addClass("hidden");
+        }
     },
 
-    _setEditorContent: function(title, content, cb) {
-        if (this._timerSetEditorDataDelay)
-            clearTimeout(this._timerSetEditorDataDelay);
+    _setEditorContent(title, content, cb) {
+        if (this._setDataDelayTimer)
+            clearTimeout(this._setDataDelayTimer);
 
-        this._timerSetEditorDataDelay = setTimeout(function() {
-            this._timerSetEditorDataDelay = undefined;
+        this._setDataDelayTimer = setTimeout(function() {
+            this._setDataDelayTimer = undefined;
             /* Avoid memory leak */
             this.editorInstance.document.clearCustomData();
             this.editorInstance.document.removeAllListeners();
@@ -497,71 +489,67 @@ var NoteEditorContainer = React.createClass({
         }.bind(this), 10);
     },
 
-    _setReadOnly: function(readOnly) {
+    _setReadOnly(readOnly) {
         this.titleInputInstance.prop("disabled", readOnly);
         this.editorInstance.setReadOnly(readOnly);
     },
 
-    _isReadOnly: function() {
+    _isReadOnly() {
         return this.titleInputInstance.is(':disabled');
     },
 
-    _readNote: function() {
+    _readNote() {
         setTimeout(function() {
             DatabaseActionCreators.readNote(DatabaseStore.getSelectedNoteDescriptor());
-        }, 1);
+        }, 0);
     },
 
-    _saveNote: function(noteDescriptor) {
-        if (this._timerFlushEditor) {
-            clearTimeout(this._timerFlushEditor);
-            this._timerFlushEditor = null;
+    _saveNote(noteDescriptor, manually) {
+        if (this._flushTimer) {
+            clearTimeout(this._flushTimer);
+            this._flushTimer = null;
         }
 
         noteDescriptor = noteDescriptor || DatabaseStore.getSelectedNoteDescriptor();
         setTimeout(function() {
-            if (!DatabaseActionCreators.saveNote(noteDescriptor))
-                this._handleSaveSuccess(noteDescriptor);
-        }.bind(this), 1);
+            DatabaseActionCreators.saveNote(noteDescriptor, manually);
+        }.bind(this), 0);
     },
 
-    _flushDirtyNotes: function() {
-        if (this._timerFlushEditor) {
-            clearTimeout(this._timerFlushEditor);
-            this._timerFlushEditor = null;
+    _flushDirtyNotes() {
+        if (this._flushTimer) {
+            clearTimeout(this._flushTimer);
+            this._flushTimer = null;
         }
 
-        var dirtyNoteDescriptor = DatabaseStore.getDirtyNoteDescriptorList().shift();
-        if (dirtyNoteDescriptor)
-            this._saveNote(dirtyNoteDescriptor);
-        else if (this._triggerSaveManually) {
-            DatabaseActionCreators.renewNoteModifyDate(DatabaseStore.getSelectedNoteDescriptor());
-            this._triggerSaveManually = false;
+        var dirtyNoteDescriptors = DatabaseStore.getDirtyNoteDescriptorList();
+
+        for (var i = 0; i < dirtyNoteDescriptors.length; i++) {
+            dirtyNoteDescriptor = dirtyNoteDescriptors[i];
+            if (DatabaseStore.getNoteDescriptorStatus(dirtyNoteDescriptor) !== 'Saving')
+                this._saveNote(dirtyNoteDescriptor);
         }
     },
 
-    _cacheDirtyNote: function(flushDelay) {
+    _cacheDirtyNote() {
         if (this._isReadOnly())
             return;
-
-        if (this._timerFlushEditor)
-            clearTimeout(this._timerFlushEditor);
-
-        if (flushDelay === undefined)
-            flushDelay = this._flushAfterDelay;
-
-        this._timerFlushEditor = setTimeout(function() {
-            this._flushDirtyNotes();
-        }.bind(this), flushDelay);
 
         DatabaseActionCreators.cacheDirtyNote(
             DatabaseStore.getSelectedNoteDescriptor(),
             this.titleInputInstance.val(),
             this.editorInstance.getData()
         );
+
+        if (this._flushTimer)
+            clearTimeout(this._flushTimer);
+
+        this._flushTimer = setTimeout(function() {
+            this._flushDirtyNotes();
+        }.bind(this), this._flushAfterDelay);
     },
 
-    _takeSnapshot: function(noteDescriptor) {
+    _takeSnapshot(noteDescriptor) {
         var _ckeFrame = $(".cke_wysiwyg_frame").contents().find("body");
         this.snapshotBodyInstance.empty();
         this.snapshotBodyInstance.append(noteDescriptor.noteContent);
@@ -575,69 +563,102 @@ var NoteEditorContainer = React.createClass({
         }.bind(this), 1);
     },
 
-    _handleSaveSuccess: function(noteDescriptor) {
-        if (
-            noteDescriptor.noteId === DatabaseStore.getSelectedNoteDescriptor().noteId
-            && this._triggerSaveManually
-        ) {
+    _handleSaveSuccess(noteDescriptor, manually) {
+        if (DatabaseStore.isNoteDescriptorSelected(noteDescriptor)) {
             this._setEditorDimmer(false);
-            GritterView.add(
-                "Note Saved",
-                noteDescriptor.noteTitle,
-                "/apps/b/notebook/img/icon.png",
-                2000
-            );
         }
-        else if (noteDescriptor.noteId !== DatabaseStore.getSelectedNoteDescriptor().noteId)
-            this._removeUselessAssets(noteDescriptor);
+        else {
+            DatabaseActionCreators.renewNoteModifyDate(noteDescriptor);
+            DatabaseActionCreators.clearUselessAssets(noteDescriptor, 0);
+        }
 
-        this._flushDirtyNotes();
+        if (manually)
+            GritterView.add("Note Saved", noteDescriptor.noteTitle, "/apps/ia/notebook/img/icon.png", 2000);
+
+        setTimeout(function() { this._flushDirtyNotes() }.bind(this), 0);
     },
 
-    _removeUselessAssets: function(noteDescriptor) {
-        DatabaseActionCreators.clearUselessAssets(noteDescriptor, 0);
+    _onDialogFileInputChange() {
+        var files = $("#upload-files")[0].files;
+        var list = this.state.uploadFiles;
+
+        for (var i = 0; i < files.length; i++) {
+            list.push(files[i]);
+        }
+
+        this.setState({ uploadFiles: list });
     },
 
-    _onDialogUpload: function() {
-        var files = this.refs.fileUploadView.state.uploadFiles;
+    _onDialogAddFile() {
+        $("#upload-files").click();
+    },
+
+    _onDialogRemoveFile(file) {
+        var files = this.state.uploadFiles;
+        files.splice(files.indexOf(file), 1);
+        this.setState({ uploadFiles: files });
+    },
+
+    _onDialogUpload() {
+        var files = this.state.uploadFiles;
         if (files.length > 0)
             DatabaseActionCreators.attachFilesToNote(DatabaseStore.getSelectedNoteDescriptor(), files);
     },
 
-    _onDialogShow: function() {
+    _onDialogShow() {
         $(".nb-editor-upload-dialog-container").css("zIndex", "1001");
     },
 
-    _onDialogHide: function() {
+    _onDialogHidden() {
         $(".nb-editor-upload-dialog-container").css("zIndex", "-1");
-        this.refs.fileUploadView.setState({ uploadFiles: [] });
+        this.setState({ uploadFiles: [] });
     },
 
-    _onProgressDialogCancelUpload: function() {
+    _onProgressDialogCancelUpload() {
         DatabaseActionCreators.cancelAttachFile(DatabaseStore.getSelectedNoteDescriptor());
     },
 
-    _resetUploadProgressBar: function() {
-        setTimeout(function() {
-            this.refs.progressBarView.setState({ progress: 0, label: "" });
-        }.bind(this), 1000);
+    _onProgressDialogHidden() {
+        if (this._unsupportFiles.length > 0) {
+            this._showErrorAlert(
+                "Attach File Error",
+                "File format is not supported:\n\n" + this._unsupportFiles.join(", ")
+            );
+            this._unsupportFiles = [];
+        }
+
+        this._resetUploadProgressBar();
     },
 
-    _showErrorAlert: function(errorTitle, errorMessage) {
+    _resetUploadProgressBar() {
+        this.refs.progressBarView.setState({ progress: 0, label: "" });
+    },
+
+    _showErrorAlert(errorTitle, errorMessage) {
         this.setState({
             errorTitle: errorTitle,
             errorMessage: errorMessage
         });
-        this.refs.errorAlerter.show();
     },
 
-    _onDatabaseChange: function(change) {
+    _onDatabaseChange(change) {
         switch (change.actionType) {
+            case NotebookActionConstants.NOTEBOOK_DATABASE_OPEN:
+                var timer = setInterval(function() {
+                    if (this.editorInstance) {
+                        clearInterval(timer);
+                        DatabaseActionCreators.loadTree();
+                    }
+                }.bind(this), 100);
+                break;
             case NotebookActionConstants.NOTEBOOK_DATABASE_LOADNOTES_SUCCESS:
+            case NotebookActionConstants.NOTEBOOK_DATABASE_TRASH_NOTE_SUCCESS:
                 var notes = DatabaseStore.getNoteDescriptorList();
                 if (notes.length === 0) {
+                    this._flushDirtyNotes();
+                    this._setReadOnly(true);
+                    this._setEditorDimmer(false);
                     this._setEditorContent("", "", function() {
-                        this._setReadOnly(true);
                     }.bind(this));
                 }
                 break;
@@ -653,37 +674,49 @@ var NoteEditorContainer = React.createClass({
                 break;
 
             case NotebookActionConstants.NOTEBOOK_DATABASE_READ_NOTE:
-                this._setEditorDimmer(true, "Loading");
-                this._setReadOnly(true);
-                break;
-
-            case NotebookActionConstants.NOTEBOOK_DATABASE_READ_NOTE_SUCCESS:
-                this._setEditorContent(
-                    change.noteDescriptor.noteTitle,
-                    change.noteDescriptor.noteContent,
-                    function() {
-                        this._setReadOnly(false);
-                    }.bind(this)
-                );
+                if (DatabaseStore.isNoteDescriptorSelected(change.noteDescriptor)) {
+                    var status = DatabaseStore.getNoteDescriptorStatus(change.noteDescriptor);
+                    this._setEditorDimmer(true, status);
+                    this._setReadOnly(true);
+                    if (status === 'Saving')
+                        this._setEditorContent(
+                            change.noteDescriptor.dirtyNoteTitle || change.noteDescriptor.noteTitle,
+                            change.noteDescriptor.dirtyNoteContent || change.noteDescriptor.noteContent
+                        );
+                }
                 break;
 
             case NotebookActionConstants.NOTEBOOK_DATABASE_SAVE_NOTE:
-                if (
-                    change.noteDescriptor.noteId === DatabaseStore.getSelectedNoteDescriptor().noteId
-                    && this._triggerSaveManually
-                ) {
-                    this._setEditorDimmer(true, "Saving");
-                    this._setReadOnly(true);
+                if (DatabaseStore.isNoteDescriptorSelected(change.noteDescriptor)) {
+                    if (change.noteDescriptor.saveManually) {
+                        this._setEditorDimmer(true, DatabaseStore.getNoteDescriptorStatus(change.noteDescriptor));
+                        this._setReadOnly(true);
+                    }
+                }
+                break;
+
+            case NotebookActionConstants.NOTEBOOK_DATABASE_READ_NOTE_SUCCESS:
+                if (DatabaseStore.isNoteDescriptorSelected(change.noteDescriptor)) {
+                    this._setEditorContent(
+                        change.noteDescriptor.dirtyNoteTitle || change.noteDescriptor.noteTitle,
+                        change.noteDescriptor.dirtyNoteContent || change.noteDescriptor.noteContent,
+                        function() {
+                            if (!DatabaseStore.getNoteDescriptorStatus(change.noteDescriptor)) {
+                                this._setEditorDimmer(false);
+                                this._setReadOnly(false);
+                            }
+                        }.bind(this)
+                    );
                 }
                 break;
 
             case NotebookActionConstants.NOTEBOOK_DATABASE_SAVE_NOTE_SUCCESS:
-                if (change.noteDescriptor.noteId === DatabaseStore.getSelectedNoteDescriptor().noteId)
+                if (DatabaseStore.isNoteDescriptorSelected(change.noteDescriptor))
                     this._setReadOnly(false);
                 if (this.props.takeSnapshot)
                     this._takeSnapshot(change.noteDescriptor);
                 else
-                    this._handleSaveSuccess(change.noteDescriptor);
+                    this._handleSaveSuccess(change.noteDescriptor, change.manually);
                 break;
 
             case NotebookActionConstants.NOTEBOOK_DATABASE_TAKE_NOTE_SNAPSHOT_SUCCESS:
@@ -706,7 +739,7 @@ var NoteEditorContainer = React.createClass({
 
                     if (_file.type.toLowerCase().indexOf("image") === 0) {
                         var _editor = this.editorInstance;
-                        var _diskUUID = StorageAgent.getDiskInUse().uuid;
+                        var _diskUUID = DatabaseStore.getStorage().uuid;
                         var _urlCreator = window.URL || window.webkitURL;
                         var _imageUrl = _urlCreator.createObjectURL(_file);
                         var _img = document.createElement("img");
@@ -722,10 +755,9 @@ var NoteEditorContainer = React.createClass({
 
                             _editor.insertHtml(
                                 /**
-                                 * To access file in userdata, the url must contain a query string 'uuid=xxx'
-                                 * to specify the storage where the file is laid on.
+                                 * Compose the FSAPI url to access file in userdata.
                                  */
-                                "<img src='userdata/" + _path + (_diskUUID ? "?uuid=" + _diskUUID : "") +
+                                "<img src='/api/v1/fs/file/" + encodeURIComponent(_path) + (_diskUUID ? "?disk_uuid=" + _diskUUID : "") +
                                 "' style='width:" + _targetWidth + "px; height:" + _targetHeight + "px'/>"
                             );
                         }
@@ -740,14 +772,6 @@ var NoteEditorContainer = React.createClass({
 
             case NotebookActionConstants.NOTEBOOK_DATABASE_ATTACH_FILE_TO_NOTE_SUCCESS:
                 this.refs.uploadProgressDialog.hide();
-                this._resetUploadProgressBar();
-                if (this._unsupportFiles.length > 0) {
-                    this._showErrorAlert(
-                        "Attach File Error",
-                        "File format is not supported:\n\n" + this._unsupportFiles.join(", ")
-                    );
-                    this._unsupportFiles = [];
-                }
                 break;
 
             case NotebookActionConstants.NOTEBOOK_DATABASE_ATTACH_FILE_TO_NOTE_ERROR:
@@ -755,14 +779,14 @@ var NoteEditorContainer = React.createClass({
                 break;
 
             case NotebookActionConstants.NOTEBOOK_DATABASE_CANCEL_ATTACH_FILE_TO_NOTE:
-                this._resetUploadProgressBar();
+                this.refs.uploadProgressDialog.hide();
                 break;
 
             case NotebookActionConstants.NOTEBOOK_DATABASE_SAVE_NOTE_ERROR:
                 this._flushDirtyNotes();
             case NotebookActionConstants.NOTEBOOK_DATABASE_READ_NOTE_ERROR:
                 this._setEditorDimmer(false);
-                if (DatabaseStore.getError().indexOf("Invalid Format") > 0)
+                if (DatabaseStore.getError() && DatabaseStore.getError().indexOf("Invalid Format") > 0)
                     this._showErrorAlert(
                         "Notebook Database Error",
                         "Error Code: " + change.actionType + "\n\n" + DatabaseStore.getError()

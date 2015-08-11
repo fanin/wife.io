@@ -4,27 +4,25 @@
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-
     <title></title>
-
-    <script src="%PROTO%://%SYSIP%:%SYSPORT%/lib/react/react-0.13.1.min.js"></script>
-    <script src="%PROTO%://%SYSIP%:%SYSPORT%/lib/jquery/jquery-1.11.2.min.js"></script>
-    <script src="%PROTO%://%SYSIP%:%SYSPORT%/lib/semantic/semantic.min.js"></script>
-    <script src="%PROTO%://%SYSIP%:%SYSPORT%/lib/framework/diligent/agents.js"></script>
+    <script src="/lib/react/react-0.13.1.js"></script>
+    <script src="/lib/jquery/jquery-1.11.2.min.js"></script>
+    <script src="/lib/jquery/plugins/jquery.cookie-1.4.1.min.js"></script>
+    <script src="/lib/jquery/plugins/jquery.fileDownload.js"></script>
+    <script src="/lib/semantic/semantic.min.js"></script>
     <script src="lib/jqTree/tree.jquery.min.js"></script>
     <script src="lib/ckeditor/ckeditor.js"></script>
     <script src="lib/html2canvas/html2canvas.min.js"></script>
-    <link rel="stylesheet" href="%PROTO%://%SYSIP%:%SYSPORT%/lib/semantic/semantic.min.css">
-    <link rel="stylesheet" href="%PROTO%://%SYSIP%:%SYSPORT%/lib/framework/cutie/cutie.css">
-    <link rel="stylesheet" href="%PROTO%://%SYSIP%:%SYSPORT%/lib/framework/diligent/agents.css">
+    <link rel="stylesheet" href="/lib/semantic/semantic.min.css">
+    <link rel="stylesheet" href="/lib/framework/cutie/cutie.css">
     <link rel="stylesheet" href="lib/jqTree/jqtree.min.css">
     <link rel="stylesheet" href="css/app.css">
 </head>
-<body>
-    <div id="diligent-dock" class="ui left vertical inverted labeled icon sidebar menu"></div>
-    <div id="diligent-console" class="ui bottom inverted sidebar"></div>
+<body id="top">
+    <div id="diligent-sidebar" class="ui left vertical inverted labeled icon sidebar menu"></div>
+    <div id="diligent-debug-view" class="ui bottom inverted sidebar"></div>
     <div class="pusher">
-        <div id="diligent-navigation-bar" class="ui fixed inverted main menu"></div>
+        <div id="diligent-menubar" class="ui fixed inverted main menu"></div>
         <div id="app-view"></div>
     </div>
     <script src="js/app.js"></script>
