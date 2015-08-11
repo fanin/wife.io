@@ -10,8 +10,9 @@ var AlertViewController = React.createClass({
             customViewComponent: null,
             actionButtons: [],
             actionButtonsAlign: "right",
+            closable: false,
             onShow: function() {},
-            onHide: function() {},
+            onHidden: function() {},
             onApprove: function() {},
             onDeny: function() {}
         };
@@ -20,14 +21,13 @@ var AlertViewController = React.createClass({
     show: function() {
         if (!this.modalInstance)
             this.modalInstance = $(this.getDOMNode()).modal({
-                closable: false,
+                closable: this.props.closable,
                 detachable: false,
                 onShow: this.props.onShow,
-                onHidden: this.props.onHide,
+                onHidden: this.props.onHidden,
                 onApprove: this.props.onApprove,
                 onDeny: this.props.onDeny
             });
-
         this.modalInstance.modal('show');
     },
 
@@ -35,14 +35,18 @@ var AlertViewController = React.createClass({
         this.modalInstance.modal('hide');
     },
 
-    componentDidMount: function () {
+    componentDidMount: function() {
         $(this.getDOMNode()).find(".actions").css("text-align", this.props.actionButtonsAlign);
     },
 
-    componentWillUnmount: function () {
-        if (this.modalInstance) {
-            this.modalInstance.modal('destroy');
+    componentDidUpdate: function(prevProps, prevState) {
+        if (this.modalInstance && this.modalInstance.modal('is active')) {
+            this.modalInstance.modal('refresh');
         }
+    },
+
+    componentWillUnmount: function() {
+        this.modalInstance && this.modalInstance.modal('destroy');
     },
 
     render: function() {
@@ -51,9 +55,9 @@ var AlertViewController = React.createClass({
         var actionButtons = this.props.actionButtons.map(function(button) {
             var buttonClass = "ui " + (button.iconType ? "center labeled " : "center ")
                                     + "icon " + button.color + " button " + button.actionType;
-            var buttonIcon = button.iconType ? <i className={button.iconType + " icon"}></i> : null;
+            var buttonIcon = button.iconType ? <i className={button.iconType + " icon"} /> : null;
             return (
-                <div className={buttonClass}>
+                <div className={buttonClass} key={button.title} onClick={function(e) { e.stopPropagation() }}>
                     {buttonIcon}
                     {button.title}
                 </div>

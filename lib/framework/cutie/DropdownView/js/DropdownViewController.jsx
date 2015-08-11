@@ -52,6 +52,7 @@ var DropdownViewController = React.createClass({
         var items = this.props.itemDataSource.map(function(data) {
             return (
                 <div className = {data.disabled ? "item disabled" : "item"}
+                           key = {data.value}
                     data-value = {data.value}
                        onClick = {(this.state.disabled || data.disabled) ? null : data.onSelect}>
                     <i className={data.icon + " icon"} />
@@ -63,7 +64,7 @@ var DropdownViewController = React.createClass({
         var buttonIcon = this.props.iconClass ? <i className={this.props.iconClass + " icon"} /> : null;
 
         return (
-            <div className="ui pointing dropdown link item">
+            <div className="ui compact dropdown link item">
                 {buttonIcon}
                 <div className="menu">
                     {items}

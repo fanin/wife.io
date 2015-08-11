@@ -19,7 +19,7 @@ var ListViewController = React.createClass({
     getInitialState: function() {
         return {
             dataSource: [],
-            selectedRowIndex: 0,
+            selectedRowIndex: -1,
             disabled: false
         };
     },
@@ -29,6 +29,7 @@ var ListViewController = React.createClass({
             var isActive = (index == this.state.selectedRowIndex);
             data = this.props.onRenderListViewItem(data);
             return <ListViewItem index={index}
+                                   key={index}
                                 active={isActive}
                               disabled={this.state.disabled}
                              titleText={data.titleText}
@@ -53,6 +54,10 @@ var ListViewController = React.createClass({
     setDataSource: function(dataList) {
         this.setState({ dataSource: dataList });
         this.props.onDataLoad && this.props.onDataLoad();
+    },
+
+    count: function() {
+        return this.state.dataSource.length;
     },
 
     selectRowAtIndex: function(index) {
