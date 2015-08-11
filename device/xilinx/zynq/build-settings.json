@@ -1,4 +1,4 @@
 {
-    "builtin_apps": [ "launcher", "shop", "storage", "devdoc" ],
+    "builtin_apps": [ "launcher", "shop", "storage", "devdoc", "notebook" ],
     "build_dir": "mywife"
 }

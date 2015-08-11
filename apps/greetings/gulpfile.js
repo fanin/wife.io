@@ -3,8 +3,10 @@ var gulp       = require('gulp'),
     path       = require('path'),
     browserify = require('browserify'),
     reactify   = require('reactify'),
+    babel      = require('gulp-babel'),
     uglify     = require('gulp-uglify'),
     minifycss  = require('gulp-minify-css'),
+    gutil      = require('gulp-util'),
     cssjoin    = require('gulp-cssjoin'),
     concat     = require('gulp-concat'),
     transform  = require('vinyl-transform'),
@@ -32,7 +34,7 @@ gulp.task(APP_TARGET, function() {
         .pipe(source('app.js'));
 
     if (!APP_DEBUG)
-        b = b.pipe(buffer()).pipe(uglify());
+        b = b.pipe(buffer()).pipe(babel({compact: false})).pipe(uglify()).on('error', gutil.log);
 
     b.pipe(gulp.dest(APP_BUILD_PATH + APP_NAME + '/js/'));
 
@@ -72,6 +74,10 @@ gulp.task('archive', function() {
 
 gulp.task('clean', function(cb) {
     del(APP_BUILD_PATH, cb);
+});
+
+gulp.task('distclean', function(cb) {
+	del([ APP_BUILD_PATH, __dirname + '/node_modules' ], cb);
 });
 
 gulp.task('default', [ APP_TARGET ]);

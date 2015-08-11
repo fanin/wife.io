@@ -9,6 +9,13 @@ var Sidebar = React.createClass({
                 icon: 'home',
                 href: '/'
             },
+            infoItem: {
+                text: 'About',
+                icon: 'info circle',
+                onClick: function(e) {
+
+                }
+            },
             debugItem: {
                 text: 'Debug',
                 icon: 'bug',
@@ -39,8 +46,8 @@ var Sidebar = React.createClass({
 
     render: function() {
         var _items = this.props.debug
-            ? [ this.props.homeItem, this.props.debugItem, this.props.settingsItem ]
-            : [ this.props.homeItem, this.props.settingsItem ];
+            ? [ this.props.homeItem, this.props.infoItem, this.props.debugItem, this.props.settingsItem ]
+            : [ this.props.homeItem, this.props.infoItem, this.props.settingsItem ];
         _items.concat(this.state.items);
 
         var _sidebarItems = _items.map(function(item, i) {
