@@ -18,7 +18,7 @@ else {
 
 function addBuildTargets() {
     global.DEVICE          = fs.readFileSync('.build-device', 'ascii').split(os.EOL)[0];
-    global.DEBUG           = false;
+    global.DEBUG           = true;
     global.LIB_PATHS       = [ __dirname + '/lib' ];
     global.SERVER_SETTINGS = fse.readJsonSync('device/' + DEVICE + '/server-settings.json');
     global.BUILD_SETTINGS  = fse.readJsonSync('device/' + DEVICE + '/build-settings.json');
@@ -53,17 +53,15 @@ function addBuildTargets() {
         'server',
         'lib',
         'apps',
-        'api',
         'device',
-        'resources'
+        'public'
     ];
 
     require('./server/gulpfile.js');
     require('./lib/gulpfile.js');
-    require('./api/gulpfile.js');
     require('./apps/gulpfile.js');
     require('./device/gulpfile.js');
-    require('./resources/gulpfile.js');
+    require('./public/gulpfile.js');
 
     gulp.task('default', targets, function() {
         console.log('Build succeeded');
