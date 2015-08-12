@@ -10,6 +10,7 @@ var GritterView = require('lib/cutie/GritterView');
 class Application {
 
     constructor() {
+
         this.configs = {
             debug: false
         };
