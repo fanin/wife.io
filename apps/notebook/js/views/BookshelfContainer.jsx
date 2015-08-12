@@ -1,7 +1,7 @@
 var assign                   = require("object-assign");
-var StorageAPI               = require('diligent/Storage/StorageAPI');
-var AlertViewController      = require("framework/cutie/AlertView/js/AlertViewController.jsx");
-var DropdownViewController   = require("framework/cutie/DropdownView/js/DropdownViewController.jsx");
+var StorageAPI               = require('lib/api/StorageAPI');
+var DialogController         = require("lib/cutie/Dialog");
+var DropdownMenu             = require("lib/cutie/DropdownMenu");
 var JqTreeViewController     = require("./JqTreeViewController.jsx");
 var InputModalViewController = require("./InputModalViewController.jsx");
 var NotebookConstants        = require("../constants/NotebookConstants");
@@ -128,11 +128,11 @@ var BookshelfContainer = React.createClass({
         return (
             <div className="nb-column-container">
                 <div className="ui menu nb-column-toolbar">
-                    <DropdownViewController ref = "diskSelectDropdownViewController"
-                                 itemDataSource = {diskMenuDropdownItems}
-                                      iconClass = "disk outline"
-                                   useSelectBar = {true}
-                                       onChange = {this._onDiskMenuSelect} />
+                    <DropdownMenu itemDataSource = {diskMenuDropdownItems}
+                                             ref = "diskSelectDropdown"
+                                       iconClass = "disk outline"
+                                    useSelectBar = {true}
+                                        onChange = {this._onDiskMenuSelect} />
 
                     <div className = {this.state.disableMenuItemNew ? "ui pointing link item disabled"
                                                                     : "ui pointing link item"}
@@ -141,10 +141,10 @@ var BookshelfContainer = React.createClass({
                         New
                     </div>
 
-                    <DropdownViewController ref = "moreOpDropdownViewController"
-                                 itemDataSource = {moreOpDropdownItems}
-                                      iconClass = "ellipsis vertical"
-                                   useSelectBar = {false} />
+                    <DropdownMenu itemDataSource = {moreOpDropdownItems}
+                                             ref = "moreOpDropdown"
+                                       iconClass = "ellipsis vertical"
+                                    useSelectBar = {false} />
                 </div>
 
                 <div className="nb-column-content">
@@ -174,32 +174,32 @@ var BookshelfContainer = React.createClass({
                                         rules = {notebookInputRules}
                           onActionAffirmative = {this._onSearchNotebook} />
 
-                <AlertViewController ref = "confirmAlerter"
-                                   title = {this.state.confirmTitle}
-                                 message = {this.state.confirmMessage}
-                           actionButtons = {[{
-                                                title: "No",
-                                                iconType: "remove",
-                                                color: "red",
-                                                actionType: "deny"
-                                            },
-                                            {
-                                                title: "Yes",
-                                                iconType: "checkmark",
-                                                color: "green",
-                                                actionType: "approve"
-                                            }]}
-                               onApprove = {this._trashSelected} />
+                <DialogController ref = "confirmDialog"
+                                title = {this.state.confirmTitle}
+                              message = {this.state.confirmMessage}
+                        actionButtons = {[{
+                                            title: "No",
+                                            iconType: "remove",
+                                            color: "red",
+                                            actionType: "deny"
+                                        },
+                                        {
+                                            title: "Yes",
+                                            iconType: "checkmark",
+                                            color: "green",
+                                            actionType: "approve"
+                                        }]}
+                           onApprove = {this._trashSelected} />
 
-                <AlertViewController ref = "errorAlerter"
-                                   title = {this.state.errorTitle}
-                                 message = {this.state.errorMessage}
-                           actionButtons = {[{
-                                                title: "Got It",
-                                                color: "red",
-                                                actionType: "approve",
-                                            }]}
-                      actionButtonsAlign = "center" />
+                <DialogController ref = "alertDialog"
+                                title = {this.state.errorTitle}
+                              message = {this.state.errorMessage}
+                        actionButtons = {[{
+                                            title: "Got It",
+                                            color: "red",
+                                            actionType: "approve",
+                                        }]}
+                   actionButtonsAlign = "center" />
             </div>
         );
     },
@@ -470,7 +470,7 @@ var BookshelfContainer = React.createClass({
             });
         }
 
-        this.refs.confirmAlerter.show();
+        this.refs.confirmDialog.show();
     },
 
     _showSearchInputDialog() {
@@ -491,7 +491,7 @@ var BookshelfContainer = React.createClass({
             errorMessage: errorMessage
         });
 
-        this.refs.errorAlerter.show();
+        this.refs.alertDialog.show();
     },
 
     _trashSelected() {

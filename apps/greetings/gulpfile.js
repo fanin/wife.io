@@ -18,9 +18,9 @@ var gulp       = require('gulp'),
 
 var APP_NAME       = path.basename(__dirname),
     APP_TARGET     = 'apps/' + APP_NAME,
-    APP_ENTRY      = __dirname + '/js/app.jsx',
+    APP_ENTRY      = __dirname + '/js/app.js',
     APP_BUILD_PATH = global.BUILD_PATH ? global.BUILD_PATH + '/apps/' : 'build/',
-    SDK_PATH       = global.LIB_PATHS || [ '../../lib' ],
+    SDK_PATH       = global.SDK_PATH || [ '../../sdk' ],
     APP_DEBUG      = global.DEBUG;
 
 gulp.task(APP_TARGET, function() {

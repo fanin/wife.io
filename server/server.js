@@ -11,7 +11,7 @@ var express      = require('express'),
 var index = require('controllers/index'),
     api   = require('controllers/api'),
     apps  = require('controllers/apps'),
-    lib   = require('controllers/lib'),
+    sdk   = require('controllers/sdk'),
     pub   = require('controllers/public');
 
 var app = express();
@@ -42,7 +42,7 @@ app.use(cookieParser());
 app.use('/', index);
 app.use('/api', api);
 app.use('/apps', apps);
-app.use('/lib', lib);
+app.use('/sdk', sdk);
 app.use('/public', pub);
 
 app.get('*', function(req, res, next) {

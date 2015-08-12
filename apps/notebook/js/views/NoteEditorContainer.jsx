@@ -1,13 +1,9 @@
-//
-// TODO:
-// 1. File upload dialog and manager
-//
 var DatabaseActionCreators  = require("../actions/DatabaseActionCreators");
 var NotebookConstants       = require("../constants/NotebookConstants");
 var NotebookActionConstants = require("../constants/NotebookActionConstants");
 var DatabaseStore           = require("../stores/DatabaseStore");
-var GritterView             = require("framework/cutie/GritterView/js/GritterViewController");
-var AlertViewController     = require("framework/cutie/AlertView/js/AlertViewController.jsx");
+var GritterView             = require("lib/cutie/GritterView");
+var DialogController        = require("lib/cutie/Dialog");
 
 var ProgressBarView = React.createClass({
     getInitialState() {
@@ -300,7 +296,7 @@ var NoteEditorContainer = React.createClass({
         }
         else if (prevState.errorTitle !== this.state.errorTitle
                  || prevState.errorMessage !== this.state.errorMessage) {
-            this.refs.errorAlerter.show();
+            this.refs.alertDialog.show();
         }
     },
 
@@ -355,49 +351,49 @@ var NoteEditorContainer = React.createClass({
                           style = {{display: "none"}}
                        onChange = {this._onDialogFileInputChange} multiple />
 
-                    <AlertViewController ref = "fileUploadDialog"
-                                        size = "large"
-                                       title = "Select Files to Upload"
-                                     message = ""
-                         customViewComponent = {fileUploadView}
-                               actionButtons = {[{
-                                                    title: "Cancel",
-                                                    iconType: "remove",
-                                                    color: "red",
-                                                    actionType: "deny"
-                                                }, {
-                                                    title: "Upload",
-                                                    iconType: "upload",
-                                                    color: "green",
-                                                    actionType: "approve"
-                                                }]}
-                                      onShow = {this._onDialogShow}
-                                    onHidden = {this._onDialogHidden}
-                                   onApprove = {this._onDialogUpload} />
-                </div>
-
-                <AlertViewController ref = "uploadProgressDialog"
-                                   title = "File Upload Progress"
-                                 message = ""
-                     customViewComponent = {progressBarView}
-                           actionButtons = {[{
+                    <DialogController ref = "fileUploadDialog"
+                                     size = "large"
+                                    title = "Select Files to Upload"
+                                  message = ""
+                               customView = {fileUploadView}
+                            actionButtons = {[{
                                                 title: "Cancel",
                                                 iconType: "remove",
                                                 color: "red",
                                                 actionType: "deny"
+                                            }, {
+                                                title: "Upload",
+                                                iconType: "upload",
+                                                color: "green",
+                                                actionType: "approve"
                                             }]}
-                                onHidden = {this._onProgressDialogHidden}
-                                  onDeny = {this._onProgressDialogCancelUpload} />
+                                   onShow = {this._onDialogShow}
+                                 onHidden = {this._onDialogHidden}
+                                onApprove = {this._onDialogUpload} />
+                </div>
 
-                <AlertViewController ref = "errorAlerter"
-                                   title = {this.state.errorTitle}
-                                 message = {this.state.errorMessage}
-                           actionButtons = {[{
-                                                title: "Got It",
-                                                color: "red",
-                                                actionType: "approve",
-                                            }]}
-                      actionButtonsAlign = "center" />
+                <DialogController ref = "uploadProgressDialog"
+                                title = "File Upload Progress"
+                              message = ""
+                           customView = {progressBarView}
+                        actionButtons = {[{
+                                            title: "Cancel",
+                                            iconType: "remove",
+                                            color: "red",
+                                            actionType: "deny"
+                                        }]}
+                             onHidden = {this._onProgressDialogHidden}
+                               onDeny = {this._onProgressDialogCancelUpload} />
+
+                <DialogController ref = "alertDialog"
+                                title = {this.state.errorTitle}
+                              message = {this.state.errorMessage}
+                        actionButtons = {[{
+                                            title: "Got It",
+                                            color: "red",
+                                            actionType: "approve",
+                                        }]}
+                   actionButtonsAlign = "center" />
             </div>
         );
     },

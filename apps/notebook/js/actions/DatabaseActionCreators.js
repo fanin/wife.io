@@ -1,15 +1,18 @@
 var NotebookDispatcher      = require("../dispatcher/NotebookDispatcher");
 var NotebookConstants       = require("../constants/NotebookConstants");
 var NotebookActionConstants = require("../constants/NotebookActionConstants");
-var FSAPI                   = require('diligent/FileSystem/FSAPI');
-var timestamp               = require("utils/common/string-ext").timestamp;
-var dirname                 = require("utils/client").dirname;
-var base64ToBlob            = require("utils/buffer").base64ToBlob;
+var FSAPI                   = require('lib/api/FSAPI');
+var timestamp               = require("lib/utils/common/string-misc").timestamp;
+var base64ToBlob            = require("lib/utils/buffer").base64ToBlob;
 var assign                  = require("object-assign");
 var async                   = require('async');
 
 var databaseStorage;
 var saveWaitTimer;
+
+var dirname = function(path) {
+    return path.replace(/\\/g, '/').replace(/\/[^\/]*\/?$/, '');
+}
 
 var DatabaseActionCreators = {
 
@@ -765,8 +768,8 @@ var DatabaseActionCreators = {
                                         onSuccess: function(data) {
                                             var _noteTitle = data;
 
-                                            var re = new RegExp(notePath, "g");
-                                            noteData = noteData.replace(re, _copyNotePath);
+                                            var re = new RegExp(encodeURIComponent(notePath), "g");
+                                            noteData = noteData.replace(re, encodeURIComponent(_copyNotePath));
 
                                             FSAPI.writeFile(self.__buildApiPath(_copyNotePath + "/" + NotebookConstants.DATABASE_NOTE_FILE), noteData, {
                                                 onSuccess: function() {

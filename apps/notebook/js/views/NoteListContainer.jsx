@@ -2,9 +2,9 @@ var DatabaseActionCreators  = require("../actions/DatabaseActionCreators");
 var NotebookConstants       = require("../constants/NotebookConstants");
 var NotebookActionConstants = require("../constants/NotebookActionConstants");
 var DatabaseStore           = require("../stores/DatabaseStore");
-var ListViewController      = require("framework/cutie/ListView/js/ListViewController.jsx");
-var AlertViewController     = require("framework/cutie/AlertView/js/AlertViewController.jsx");
-var DropdownViewController  = require("framework/cutie/DropdownView/js/DropdownViewController.jsx");
+var ListViewController      = require("lib/cutie/ListView");
+var DialogController        = require("lib/cutie/Dialog");
+var DropdownMenu            = require("lib/cutie/DropdownMenu");
 
 var SortMethods = {
     /* Sort by last modified date */
@@ -148,9 +148,9 @@ var NoteListContainer = React.createClass({
                         <i className="edit icon"></i>
                         New
                     </div>
-                    <DropdownViewController itemDataSource = {moreOpDropdownItems}
-                                                 iconClass = "ellipsis vertical"
-                                              useSelectBar = {false} />
+                    <DropdownMenu itemDataSource = {moreOpDropdownItems}
+                                       iconClass = "ellipsis vertical"
+                                    useSelectBar = {false} />
                 </div>
 
                 <div className="nb-notelist-guide" style={{display: this.state.showEmptyMessage ? "block" : "none"}}>
@@ -171,15 +171,15 @@ var NoteListContainer = React.createClass({
                             onSelectRow={this._onSelectNote}
                    onRenderListViewItem={this._onRenderListViewItem} />
 
-                <AlertViewController ref = "errorAlerter"
-                                   title = {this.state.errorTitle}
-                                 message = {this.state.errorMessage}
-                           actionButtons = {[{
-                                                title: "Got It",
-                                                color: "red",
-                                                actionType: "approve",
-                                            }]}
-                      actionButtonsAlign = "center" />
+                <DialogController ref = "alertDialog"
+                                title = {this.state.errorTitle}
+                              message = {this.state.errorMessage}
+                        actionButtons = {[{
+                                            title: "Got It",
+                                            color: "red",
+                                            actionType: "approve",
+                                        }]}
+                   actionButtonsAlign = "center" />
             </div>
         );
     },
@@ -336,7 +336,7 @@ var NoteListContainer = React.createClass({
             errorTitle: errorTitle,
             errorMessage: errorMessage
         });
-        this.refs.errorAlerter.show();
+        this.refs.alertDialog.show();
     }
 });
 

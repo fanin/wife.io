@@ -1,0 +1,37 @@
+var ListViewItem = React.createClass({
+
+    propTypes: {
+        onSelect: React.PropTypes.func.isRequired
+    },
+
+    getDefaultProps() {
+        return {
+            index: -1,
+            active: false,
+            disabled: false,
+            titleText: '',
+            subtitleText: '',
+            detailText: ''
+        };
+    },
+
+    render() {
+        var itemClass = this.props.active ? "active item" : "item";
+        return (
+            <div className={itemClass} onClick={!this.props.disabled ? this._onItemClick : null}>
+                <div className="content cutie-listview-content">
+                    <div className="cutie-listview-title">{this.props.titleText}</div>
+                    <div className="cutie-listview-subtitle">{this.props.subtitleText}</div>
+                    {this.props.detailText}
+                </div>
+            </div>
+        );
+    },
+
+    _onItemClick() {
+        this.props.onSelect(this.props.index);
+    }
+
+});
+
+module.exports = ListViewItem;

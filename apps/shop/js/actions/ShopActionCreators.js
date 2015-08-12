@@ -1,4 +1,4 @@
-var AppAPI         = require('diligent/App/AppAPI');
+var AppAPI         = require('lib/api/AppAPI');
 var ShopDispatcher = require('../dispatcher/ShopDispatcher');
 var ShopConstants  = require('../constants/ShopConstants');
 

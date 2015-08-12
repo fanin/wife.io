@@ -10,7 +10,7 @@ Read manifest:
 var fs           = require('fs-extra'),
     path         = require('path'),
     AdmZip       = require('adm-zip'),
-    randomstring = require('string-ext').randomString,
+    randomstring = require('string-misc').randomString,
     config       = require('config');
 
 fs.jsonfile.spaces = 4;

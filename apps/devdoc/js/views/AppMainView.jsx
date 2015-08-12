@@ -1,4 +1,4 @@
-var FSAPI  = require('diligent/FileSystem/FSAPI');
+var FSAPI  = require('lib/api/FSAPI');
 var async  = require('async');
 var marked = require('marked');
 
@@ -224,7 +224,7 @@ var AppMainView = React.createClass({
                                  && this.state.apiMethod === method.apimethod.name)
                                     ? "active item" : "item";
                 return (
-                    <a className={itemClass} href={"#" + method.apimethod.name} onClick={function() {
+                    <a className={itemClass} key={method.apimethod.name} href={"#" + method.apimethod.name} onClick={function() {
                         this.handleApiClick(api.apiclass, method.apimethod.name);
                     }.bind(this)}>
                         {method.apimethod.name}

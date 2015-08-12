@@ -1,5 +1,5 @@
-var AlertViewController    = require('framework/cutie/AlertView/js/AlertViewController.jsx');
-var AppAPI                 = require('diligent/App/AppAPI');
+var DialogController       = require('lib/cutie/Dialog');
+var AppAPI                 = require('lib/api/AppAPI');
 var LauncherAppIcon        = require('./LauncherAppIcon.jsx');
 var LauncherSortable       = require('./LauncherSortable.jsx');
 var LauncherConstants      = require('../constants/LauncherConstants');
@@ -61,23 +61,23 @@ var AppMainView = React.createClass({
                                manageable = {this.state.manageable}>
                     {appIcons}
                 </LauncherSortable>
-                <AlertViewController ref = 'alertViewController'
-                                   title = {this.state.alertTitle}
-                                 message = {this.state.alertMessage}
-                           actionButtons = {[{
-                                                title: "No",
-                                                iconType: "remove",
-                                                color: "red",
-                                                actionType: "deny"
-                                            },
-                                            {
-                                                title: "Yes",
-                                                iconType: "checkmark",
-                                                color: "green",
-                                                actionType: "approve"
-                                            }]}
-                                  onDeny = {this._handleUninstallNegative}
-                               onApprove = {this._handleUninstallAffirmative} />
+                <DialogController ref = 'alertDialog'
+                                title = {this.state.alertTitle}
+                              message = {this.state.alertMessage}
+                        actionButtons = {[{
+                                            title: "No",
+                                            iconType: "remove",
+                                            color: "red",
+                                            actionType: "deny"
+                                        },
+                                        {
+                                            title: "Yes",
+                                            iconType: "checkmark",
+                                            color: "green",
+                                            actionType: "approve"
+                                        }]}
+                              onDeny = {this._handleUninstallNegative}
+                           onApprove = {this._handleUninstallAffirmative} />
             </div>
         );
     },
@@ -105,7 +105,7 @@ var AppMainView = React.createClass({
                     alertTitle: 'Uninstall APP',
                     alertMessage: 'Are you sure to uninstall ' + this._manifest.name + ' ?'
                 });
-                this.refs.alertViewController.show();
+                this.refs.alertDialog.show();
             }.bind(this),
             onError: function(error) {
                 console.log('Unable to get app, error: ' + error.message);

@@ -19,7 +19,7 @@ else {
 function addBuildTargets() {
     global.DEVICE          = fs.readFileSync('.build-device', 'ascii').split(os.EOL)[0];
     global.DEBUG           = true;
-    global.LIB_PATHS       = [ __dirname + '/lib' ];
+    global.SDK_PATH        = [ __dirname + '/sdk' ];
     global.SERVER_SETTINGS = fse.readJsonSync('device/' + DEVICE + '/server-settings.json');
     global.BUILD_SETTINGS  = fse.readJsonSync('device/' + DEVICE + '/build-settings.json');
     global.BUILD_PATH      = __dirname + '/' + BUILD_SETTINGS.build_dir;
@@ -51,14 +51,14 @@ function addBuildTargets() {
 
     targets = [
         'server',
-        'lib',
+        'sdk',
         'apps',
         'device',
         'public'
     ];
 
     require('./server/gulpfile.js');
-    require('./lib/gulpfile.js');
+    require('./sdk/gulpfile.js');
     require('./apps/gulpfile.js');
     require('./device/gulpfile.js');
     require('./public/gulpfile.js');

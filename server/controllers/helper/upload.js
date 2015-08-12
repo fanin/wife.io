@@ -2,7 +2,7 @@ var fse    = require('fs-extra'),
     path   = require('path'),
     multer = require('multer'),
     config = require('config'),
-    strext = require('string-ext');
+    strmsc = require('string-misc');
 
 module.exports = function(sizeLimit, mimeType, onUploadStart, onUploadComplete, onUploadError) {
     return [ multer({
@@ -11,7 +11,7 @@ module.exports = function(sizeLimit, mimeType, onUploadStart, onUploadComplete, 
             fileSize: sizeLimit
         },
         rename: function(fieldname, filename) {
-            return strext.uniqueString();
+            return strmsc.uniqueString();
         },
         changeDest: function(dest, req, res) {
             var appTempPath = path.join(dest, req.cookies.appid);

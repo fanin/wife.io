@@ -18,7 +18,7 @@ function ServerConfig() {
     }
 
     /* Configure NODE_PATH at runtime */
-    process.env.NODE_PATH = __dirname + ':' + path.join(__dirname, '../lib/utils/common');
+    process.env.NODE_PATH = __dirname + ':' + path.join(__dirname, '../sdk/lib/utils/common');
     for (var i in this.settings.node_path)
         process.env.NODE_PATH += ':' + this.settings.node_path[i];
     require('module')._initPaths();

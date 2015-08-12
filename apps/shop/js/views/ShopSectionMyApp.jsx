@@ -1,4 +1,5 @@
 var async              = require("async");
+var DialogController   = require("lib/cutie/Dialog");
 var ShopActionCreators = require("../actions/ShopActionCreators");
 var ShopStore          = require("../stores/ShopStore");
 
@@ -22,12 +23,12 @@ var UserAppInfoModal = React.createClass({
     render: function() {
         return (
             <div>
-                <AlertViewController ref = "appInfoModal"
-                                    size = "large"
-                                   title = {this.props.appname}
-                                 message = ""
-                                closable = {true}
-                     customViewComponent = {<div/>/* TODO */} />
+                <DialogController ref = "appInfoDialog"
+                                 size = "large"
+                                title = {this.props.appname}
+                              message = ""
+                             closable = {true}
+                           customView = {<div/>/* TODO */} />
             </div>
         );
     }
@@ -90,11 +91,14 @@ var UserAppCard = React.createClass({
         }
         else if (installer && installer.status === "uploading") {
             dimmerBtnClass = "ui circular red icon button";
-            dimmerBtnIconClass = "icon remove";
+            dimmerBtnIconClass = "fa fa-hand-stop-o";
         }
-        else {
+        else if (installer && (installer.status === "installed" || installer.status === "upgraded")) {
+            dimmerBtnClass = "ui circular green icon button";
+            dimmerBtnIconClass = "icon checkmark";
+        }
+        else
             dimmerBtnClass = "hidden";
-        }
 
         return (
             <div className={"ui " + randomColor + " card"}>
@@ -135,7 +139,7 @@ var UserAppCard = React.createClass({
 
         if (_installer.status === "error" || _installer.status === "aborted")
             ShopActionCreators.removeInstall(this.props.file.xhr);
-        else
+        else if (_installer.status === "uploading")
             ShopActionCreators.abortInstall(this.props.file.xhr);
     },
 
@@ -146,12 +150,12 @@ var UserAppCard = React.createClass({
             return;
         else if (_installer.status === "uploading")
             this.setState({
-                dimmerTitle: "Mmm...",
+                dimmerTitle: "Wait...",
                 dimmerMessage: "Uploading app package..."
             });
         else if (_installer.status === "installing")
             this.setState({
-                dimmerTitle: "Mmm...",
+                dimmerTitle: "Wait...",
                 dimmerMessage: "Installing app package..."
             });
         else if (_installer.status === "installed")
@@ -166,19 +170,19 @@ var UserAppCard = React.createClass({
             });
         else if (_installer.status === "aborted")
             this.setState({
-                dimmerTitle: "Oops!",
+                dimmerTitle: "Failed!",
                 dimmerMessage: "Installation aborted."
             });
         else if (_installer.status === "error")
             this.setState({
-                dimmerTitle: "Oops!",
+                dimmerTitle: "Failed!",
                 dimmerMessage: "Unable to install app (Error: " + _installer.error.message + ")."
             });
 
         if (_installer.status === "installed" || _installer.status === "upgraded") {
             setTimeout(function() {
                 this.setState({ hideDimmer: true });
-            }.bind(this), 1000);
+            }.bind(this), 2000);
         }
     }
 });

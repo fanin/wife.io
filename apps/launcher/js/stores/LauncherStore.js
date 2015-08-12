@@ -1,6 +1,6 @@
 var emitter            = require('events').EventEmitter;
 var assign             = require('object-assign');
-var FSAPI              = require('diligent/FileSystem/FSAPI');
+var FSAPI              = require('lib/api/FSAPI');
 var LauncherDispatcher = require('../dispatcher/LauncherDispatcher');
 var LauncherConstants  = require('../constants/LauncherConstants');
 
