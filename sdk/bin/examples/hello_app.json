@@ -1,10 +1,10 @@
 {
-    "name": "Template",
-    "version": "0.2.0",
+    "name": "Hello World",
+    "version": "0.1.0",
     "api_version": 1,
-    "directory": "template",
-    "entry": "index.html",
-    "permission": {
+    "description": "The first app for beginners.",
+    "repository": "",
+    "permissions": {
         "apps": {
             "POST": "denied",
             "GET": "denied",
@@ -13,7 +13,7 @@
         },
         "storage": {
             "POST": "denied",
-            "GET": "allow",
+            "GET": "denied",
             "PUT": "denied",
             "DELETE": "denied"
         },
@@ -24,17 +24,8 @@
             "DELETE": "allow"
         }
     },
-    "locales": [
-        "en_US",
-        "zh_TW"
-    ],
+    "locales": [ "en_US" ],
     "default_locale": "en_US",
-    "browser_support": {
-        "chrome": "*",
-        "firefox": "*",
-        "internet_explorer": "*",
-        "safari": "*"
-    },
-    "description": "App template codes",
-    "identifier": "IA00000000"
+    "author": "Mu Chen",
+    "license": "MIT"
 }

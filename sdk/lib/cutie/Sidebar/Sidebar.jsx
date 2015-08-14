@@ -20,9 +20,9 @@ var Sidebar = React.createClass({
                 text: 'Debug',
                 icon: 'bug',
                 onClick: function(e) {
-                    $('#diligent-sidebar')
+                    $('#app-sidebar')
                         .sidebar('hide');
-                    $('#diligent-debug-view')
+                    $('#app-debug-view')
                         .sidebar('setting', 'transition', 'overlay')
                         .sidebar('setting', 'dimPage', false)
                         .sidebar('setting', 'closable', false)
@@ -52,7 +52,7 @@ var Sidebar = React.createClass({
 
         var _sidebarItems = _items.map(function(item, i) {
             return (
-                <a className="diligent sidebar item" key={'SideBarButton' + i} href={item.href} onClick={item.onClick}>
+                <a className="app sidebar item" key={'SideBarButton' + i} href={item.href} onClick={item.onClick}>
                     <i className={item.icon + ' icon'}></i>
                     {item.text}
                 </a>

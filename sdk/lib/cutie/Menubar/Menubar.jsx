@@ -3,7 +3,7 @@
 var Menubar = React.createClass({
 
     toggleDock(event) {
-        $('#diligent-sidebar')
+        $('#app-sidebar')
             .sidebar('setting', 'transition', 'push')
             .sidebar('setting', 'dimPage', false)
             .sidebar('toggle');

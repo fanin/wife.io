@@ -7,11 +7,10 @@ Read manifest:
 
 "use strict";
 
-var fs           = require('fs-extra'),
-    path         = require('path'),
-    AdmZip       = require('adm-zip'),
-    randomstring = require('string-misc').randomString,
-    config       = require('config');
+var fs     = require('fs-extra'),
+    path   = require('path'),
+    AdmZip = require('adm-zip'),
+    config = require('config');
 
 fs.jsonfile.spaces = 4;
 

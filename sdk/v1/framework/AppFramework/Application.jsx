@@ -43,22 +43,22 @@ class Application {
 
         React.render(
             <Menubar />,
-            document.getElementById('diligent-menubar')
+            document.getElementById('app-menubar')
         );
 
         React.render(
             <Sidebar debug={this.configs.debug} />,
-            document.getElementById('diligent-sidebar')
+            document.getElementById('app-sidebar')
         );
 
         React.render(
             <DebugView />,
-            document.getElementById('diligent-debug-view')
+            document.getElementById('app-debug-view')
         );
 
         React.render(
             <AppMainView />,
-            document.getElementById('app-view')
+            document.getElementById('app-main-view')
         );
     }
 }

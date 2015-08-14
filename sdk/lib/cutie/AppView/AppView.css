@@ -10,7 +10,7 @@ body, body.pushable
     background: transparent !important;
 }
 
-#app-view
+#app-main-view
 {
     height: 100%;
     padding: 40px 0 0 0;

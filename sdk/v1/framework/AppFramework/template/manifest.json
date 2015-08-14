@@ -1,0 +1,28 @@
+{
+    "identifier": "<%= identifier %>",
+    "name": "<%= name %>",
+    "description": "<%= description %>",
+    "version": "<%= version %>",
+    "api_version": <%= api_version %>,
+    "directory": "<%= package_name %>",
+    "entry": "index.html",
+    "permission": {<% _.each(permissions, function(perm, api) { %>
+        "<%= api %>": {
+            "POST": "<%= perm.POST %>",
+            "GET": "<%= perm.GET %>",
+            "PUT": "<%= perm.PUT %>",
+            "DELETE": "<%= perm.DELETE %>"
+        },<% }); %>
+        "": {}
+    },
+    "locales": [<% _.each(locales, function(lang) { %>
+        "<%= lang %>",<% }); %>
+        ""
+    ],
+    "default_locale": "<%= default_locale %>",
+    "browser_support": {
+        "chrome": "*",
+        "firefox": "*",
+        "safari": "*"
+    }
+}

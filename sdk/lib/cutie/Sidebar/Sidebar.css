@@ -1,13 +1,13 @@
-#diligent-sidebar {
+#app-sidebar {
     z-index: 9999;
 }
 
-.diligent.sidebar.item {
+.app.sidebar.item {
     color: white !important;
     font-size: 1em !important;
     padding: 1em !important;
 }
 
-.diligent.sidebar.item:before {
+.app.sidebar.item:before {
     display: block !important;
 }

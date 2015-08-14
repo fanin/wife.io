@@ -120,6 +120,8 @@ var AppMainView = React.createClass({
             }.bind(this),
             onError: function(error) {
                 console.log('Unable to uninstall app, error: ' + error.message);
+                if (error.message === 'App Path Not Found')
+                    LauncherActionCreators.removeAppFromSortList(this._manifest);
             }
         });
     },

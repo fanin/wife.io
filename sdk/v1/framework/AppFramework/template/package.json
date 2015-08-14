@@ -1,13 +1,16 @@
 {
-    "name": "template",
-    "description": "Template app skeleton",
-    "repository": "https://github.com/knych/wife.io",
+    "name": "<%= package_name %>",
+    "description": "<%= description %>",
     "main": "js/app.js",
+    "author": "<%= author %>",
+    "repository": "<%= repository %>",
+    "license": "<%= license %>",
     "dependencies": {
         "flux": "^2.0.3",
         "object-assign": "^3.0.0",
         "keymirror": "^0.1.1",
-        "async": "^1.4.2"
+        "async": "^1.4.2",
+        "sendevent": "^1.0.4"
     },
     "devDependencies": {
         "browserify": "^11.0.1",

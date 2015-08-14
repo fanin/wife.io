@@ -19,7 +19,7 @@ else {
 function addBuildTargets() {
     global.DEVICE          = fs.readFileSync('.build-device', 'ascii').split(os.EOL)[0];
     global.DEBUG           = true;
-    global.SDK_PATH        = [ __dirname + '/sdk' ];
+    global.SDK_PATH        = __dirname + '/sdk';
     global.SERVER_SETTINGS = fse.readJsonSync('device/' + DEVICE + '/server-settings.json');
     global.BUILD_SETTINGS  = fse.readJsonSync('device/' + DEVICE + '/build-settings.json');
     global.BUILD_PATH      = __dirname + '/' + BUILD_SETTINGS.build_dir;
