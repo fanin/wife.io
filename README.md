@@ -1,23 +1,25 @@
 # *wife.io* #
 
-**DEAL WITH LITTLE THINGS IN LIFE**
+`WifeOS` is an ongoing project of building a web OS for smart home, smart factory, personal NAS...etc. `wife.io` is the frontend implementation of `Wife OS` based on Node.js. It contains a server to handle REST API requests from client apps and a bunch of internal apps including a default mobile-os-like `launcher` app as the portal of the system.
 
-`wife.io` is an extensible web operating system designed for devices which are providing specific services to a small group of users, such as SmartHome Controller, NAS, Media  Center in Car, Factory Management...etc.
+![Launcher](website/launcher.png)
 
 ## Quick Start ##
 
-1. `$ npm install`
-2. [Choose a device](#user-content-device-support)
-2. [Configure server settings](#user-content-wife-server-configuration)
-3. `$ gulp`
-4. `$ node mywife/index.js`
-5. Go http://localhost:8001 and enjoy your wife
+1. `$ git clone https://github.com/knych/wife.io.git`
+2. `$ cd wife.io`
+3. `$ npm install`
+4. [Choose a device](#user-content-device-support)
+5. [Configure server settings](#user-content-wife-server-configuration)
+6. `$ gulp`
+7. `$ node mywife/index.js`
+8. Go http://localhost:8001 and enjoy your wife
 
 ## Device Support ##
 
 You can find the device support list:
 ```
-$ gulp distclean (for not the first time building the system)
+$ gulp distclean
 $ gulp
 ```
 You should see a device support list like below:
@@ -44,62 +46,17 @@ Modify the [settings](#user-content-server-settings) for your device if needed.
 
 ### Server Settings ###
 ```
-protocol       : http | https
-sys_data_path  : Data disk mountpoint for storing user apps and user data
+web_protocol   : http | https
+port           : port
+user_data_path : Data disk mountpoint for storing user apps and user data
 temp_data_path : Temp path for server runtime temporary files
+portal         : The portal application
 ```
 
 
 ## Wife System Developer Guide ##
 
-### Architecture ###
-
-#### Diligent Server (Backend) ####
-
-![Backend](website/diligent_be.png)
-
-#### Diligent Framework (Frontend) ####
-
-![Frontend](website/diligent_fe.png)
-
-#### Application Framework (Frontend) ####
-
-![App Framework](website/app_framework.png)
-
-
-### Diligent Framework ###
-
-`Diligent Framework` is the core of `wife.io`. It helps you maintain the [Diligent Connection](#user-content-diligent-connection) between device-side (server) and browser-side (client). It also provides [Agents](#user-content-agents), [Clients](#user-content-client-library) and UI widgets to make your app getting access to server functionalities easier.
-
-#### Client Library ####
-
-Client library is consists of client objects which are responsible for maintaining socket.io connection and accessing server functionalities and services through the `Diligent APIs`.
-Client APIs can be called by DiligentClient object returned from `DiligentAgent.getClient()`, but this is not recommended way to interact with server in an app. If you are a wife app developer, you should get familiar with [Agents](#user-content-agents).
-
-#### Agents ####
-
-Agents are global objects used by wife apps and delegated by client objects to handle API calls and events in a good way.
-
-Agents wrap client APIs and dispatch client events to the agent mixins of React components of apps. This makes app developers easier to manage the state of components and makes app codes more elegant. Check out [Wife App Developer Guide - Working With Agents API](#user-content-working-with-agents-api) to find more.
-
-
-#### Cutie UI ####
-
-TBD
-
-#### UI Widgets ####
-
-TBD
-
-### Diligent Connection ###
-
-Establishing `Diligent Connection` between client and server is the key step in app launching process before fetching server data. [Wife App Life Cycle](#user-content-wife-app-life-cycle) describes how an app is launching.
-
-This section is to take a look into Diligent Connection flow.
-
-TBD
-
-### Build Your Wife Using IDE (Sublime Text 2) ###
+### Build Your Wife Using IDE (Sublime Text) ###
 
 Refer to [Wife IDE Installation Guide](https://www.evernote.com/l/AMv_ZRQaZ0lEEKXZF28E_ojXFXSz_YWQz-s).
 
@@ -112,15 +69,12 @@ Refer to [Quick Start](#user-content-quick-start).
 Once device selection is done, press 'Alt + B' in Sublime Text will list all build targets.
 
 ```
-server        : diligent server runs on node.js
-device        : device specific system configuration and binaries
-lib/external  : 3rd-party libraries
-lib/framework : diligent & cutie ui framework
-apps          : builtin apps
-api           : socket.io api spec
-resource      : copy resource files
-clean         : remove build
-distclean     : remove build and device selection
+server    : express server that provides system services via web api
+device    : device specific system configuration and binaries
+sdk       : software development kit for app developer
+apps      : builtin apps
+clean     : remove build
+distclean : remove build and device selection
 ```
 
 ## Wife App Developer Guide ##
@@ -128,106 +82,80 @@ distclean     : remove build and device selection
 ### Install Wife SDK ###
 
 ```
-$ TBD
+$ npm install -g wife-sdk
 ```
 
 ### Create A New App ###
 
+Wife SDK provides a app creator tool for you to create an app skeleton.
+Here is an example of creating a `Hello World` app:
+
 ```
-$ TBD
+$ wife-app-creator -f /usr/local/lib/node_modules/wife-sdk/bin/examples/hello_app.json .
+
+Create application `Hello World`:
+  Install SDK: Version 1
+  Generate hello-world/css/AppMainStyle.css
+  Generate hello-world/gulpfile.js
+  Generate hello-world/img/icon.png
+  Generate hello-world/index.html
+  Generate hello-world/js/app.js
+  Generate hello-world/js/views/AppMainView.jsx
+  Generate hello-world/manifest.json
+  Generate hello-world/package.json
+Your application is created at `hello-world`.
 ```
 
-### Build Your App ###
+As you can see from the output, the app is created in the `hello-world` folder.
+
+Simply run `$ wife-app-creator` with no arguments to see detail usage:
 ```
-$ cd yourapp
+Usage:
+wife-app-creator -n {APP_NAME} -v {APP_VERSION} -a {API_VERSION} -t {APP_TYPE} -d {APP_DESC} OUTPUT_PATH
+wife-app-creator -f {APP_CONF_FILE} OUTPUT_PATH
+where:
+   APP_NAME:      App name (Ex: 'Hello World')
+   APP_VERSION:   App version in string (Ex: '1.0.0')
+   API_VERSION:   API version number (Ex: 1)
+   APP_TYPE:      App type ('Internal', 'User' or 'Certified')
+   APP_DESC:      App description
+   APP_CONF_FILE: App configuration file in JSON format (See 'sdk/bin/examples/hello_app.json' for example)
+   OUTPUT_PATH:   App files output path
+```
+
+### Build Hello World App ###
+```
+$ cd hello-world
 $ npm install
-```
-You may need to modify LIB_PATH in `gulpfile.js` to correct your wife.io library path
-```
-var LIB_PATH = '/your/path/to/wife.io/lib'
 ```
 #### Build ####
 ```
-$ gulp build
+$ gulp
 ```
-The production (uglified) source codes of your app is under `build/{app_name}` folder.
+The production of your app is under `build/{app_name}` folder.
 
 #### Archive ####
 ```
 $ gulp archive
 ```
-The production app archive for installer is `build/{app_name}.zip`.
+The production app archive `{app_name}.zip` is created in `build/` folder.
 
 #### Clean ####
 ```
 $ gulp clean
 ```
+This will remove `build` folder.
+```
+$ gulp distclean
+```
+This will remove both `build` and `node_modules` folders.
 
-### Wife App Life Cycle ###
+### Build Using IDE (Sublime Text) ###
 
-![App Life Cycle](website/app_life_cycle.png)
-
-### Working With Agents API ###
-
-#### Diligent Agent ####
-
-Methods
+The IDE build system can build standalone app with the same set of hotkeys:
 ```
-getClient : get diligent client object
-render    : render app main view with navigator, dock and console
-```
-Callbacks
-```
-diligentClientWillLaunch()
-diligentClientDidLaunch()
-diligentClientWillTerminate()
-diligentClientDidTerminate()
-diligentConnectionDidEstablish()
-diligentConnectionDidClose()
-diligentConnectionDidFail()
-diligentApiDidLoad()
-diligentApiLoadDidFail()
-```
-
-#### Extension Agent ####
-
-Methods
-```
-load             : load extension
-unload           : unload extension
-getExtensionInfo : get extension info
-```
-Callbacks
-```
-extensionWillLoad(extensionName)
-extensionWillUnload(extensionName)
-extensionDidLoad(extensionName)
-extensionDidUnload(extensionName)
-extensionLoadDidFail(extensionName)
-extensionUnloadDidFail(extensionName)
-```
-
-#### Storage Agent ####
-
-Methods
-```
-list              : fire query storage list request
-setDiskInUse      : set disk as current working disk
-getDiskInUse      : get current working disk
-isDiskInUse       : check if disk is working disk
-getDiskByUUID     : get disk by uuid
-getDiskAddLast    : get most recent added removable disk
-getDiskRemoveLast : get most recent removed removable disk
-getDiskError      : get most recent disk error
-```
-Callbacks
-```
-storageListDidReceive(disks)
-storageDidMount(disk)
-storageDidUnmount(disk)
-storageWillSetInUse(disk)
-storageDidSetInUse(disk)
-storageSetInUseDidFail(args)
-storageInUseDidChange(disk)
-storageHasError(error)
+Cmd/Ctrl+B : Build application
+Alt+A : Build application archive
+Alt+C : Clean build
+Alt+D : Dist clean
 ```

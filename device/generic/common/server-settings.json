@@ -7,5 +7,5 @@
     "temp_data_path" : "/tmp",
     "copyright"      : "Copyright 2014-2015 Chen, Shou-Yuan",
     "node_path"      : [],
-    "launcher"       : "launcher"
+    "portal"         : "launcher"
 }

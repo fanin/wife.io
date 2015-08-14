@@ -11,8 +11,8 @@ var argv = require('minimist')(process.argv.slice(2));
 
 function usage() {
     console.log("Usage:");
-    console.log("wife-app-creator.js -n {APP_NAME} -v {APP_VERSION} -a {API_VERSION} -t {APP_TYPE} -d {APP_DESC} OUTPUT_PATH");
-    console.log("wife-app-creator.js -f {APP_CONF_FILE} OUTPUT_PATH");
+    console.log("wife-app-creator -n {APP_NAME} -v {APP_VERSION} -a {API_VERSION} -t {APP_TYPE} -d {APP_DESC} OUTPUT_PATH");
+    console.log("wife-app-creator -f {APP_CONF_FILE} OUTPUT_PATH");
     console.log("where:");
     console.log("   APP_NAME:      App name (Ex: 'Hello World')");
     console.log("   APP_VERSION:   App version in string (Ex: '1.0.0')");
@@ -25,7 +25,7 @@ function usage() {
 
 var appConfig = {
     name: 'Hello World',
-    version: '0.0.1',
+    version: '0.1.0',
     api_version: 1,
     identifier: '',
     description: '',
