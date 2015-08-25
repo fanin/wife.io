@@ -3,22 +3,23 @@ var gulp = require('gulp'),
 
 require('./lib/gulpfile');
 
-var targets = [ 'sdk/lib', 'sdk/tools', 'sdk/versionsversions' ];
+var targets = [ 'sdk/lib', 'sdk/tools', 'sdk/versions' ];
 
 gulp.task('sdk/tools', function() {
-    return gulp.src(__dirname + '/tools/**/*')
-               .pipe(gulp.dest(global.BUILD_PATH + '/sdk/tools'));
+  return gulp.src(__dirname + '/tools/**/*')
+             .pipe(gulp.dest(global.BUILD_PATH + '/sdk/tools'));
 });
 
-gulp.task('sdk/versionsversions', function() {
-    var sdkvers = fs.readdirSync('sdk').filter(function(file) {
-        return (new RegExp('^v\\d+$')).test(file) && fs.lstatSync('sdk/' + file).isDirectory();
-    });
+gulp.task('sdk/versions', function() {
+  var sdkvers = fs.readdirSync('sdk').filter(function(file) {
+    return (new RegExp('^v\\d+$')).test(file)
+              && fs.lstatSync('sdk/' + file).isDirectory();
+  });
 
-    for (var i in sdkvers) {
-        gulp.src(__dirname + '/' + sdkvers[i] + '/**/*')
-               .pipe(gulp.dest(global.BUILD_PATH + '/sdk/' + sdkvers[i]));
-    }
+  for (var i in sdkvers) {
+    gulp.src(__dirname + '/' + sdkvers[i] + '/**/*')
+        .pipe(gulp.dest(global.BUILD_PATH + '/sdk/' + sdkvers[i]));
+  }
 });
 
 gulp.task('sdk', targets);

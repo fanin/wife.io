@@ -1,6 +1,6 @@
 {
   "name": "wife-sdk",
-  "version": "0.5.5",
+  "version": "0.5.6",
   "description": "Wife SDK",
   "bin": {
     "wife-app-creator": "bin/wife-app-creator.js"

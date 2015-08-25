@@ -1,1 +1,2 @@
-module.exports = require('./DebugView.jsx');
+import DebugView from './DebugView.jsx';
+export default DebugView;

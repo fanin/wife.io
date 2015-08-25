@@ -1,46 +1,49 @@
 #app-main-view
 {
-    text-align: center;
-    padding: 64px 0;
+  padding: 64px 0;
+
+  text-align: center;
 }
 
 h1.ui.header
 {
-    margin-top: 32px !important;
+  margin-top: 32px !important;
 }
 
 .ui.grey.header
 {
-    margin-top: 0;
-    margin-bottom: 50px;
+  margin-top: 0;
+  margin-bottom: 50px;
 }
 
 .ui.segment
 {
-    left: 300px;
-    width: calc(100% - 400px);
-    min-width: 420px;
+  left: 300px;
+
+  width: calc(100% - 400px);
+  min-width: 420px;
 }
 
 .ui.left.rail
 {
-    margin-right: 0;
-    padding-right: 0;
-    padding-left: 32px;
-    text-align: left;
+  margin-right: 0;
+  padding-right: 0;
+  padding-left: 32px;
+
+  text-align: left;
 }
 
 .ui.orange.table
 {
-    border-bottom: .2em solid #f2711c;
+  border-bottom: .2em solid #f2711c;
 }
 
 .api-menu
 {
-    padding-top: 32px;
+  padding-top: 32px;
 }
 
 .api-description
 {
-    text-align: left;
+  text-align: left;
 }

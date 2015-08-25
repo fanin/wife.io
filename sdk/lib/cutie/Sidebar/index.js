@@ -1,1 +1,2 @@
-module.exports = require('./Sidebar.jsx');
+import Sidebar from './Sidebar.jsx';
+export default Sidebar;

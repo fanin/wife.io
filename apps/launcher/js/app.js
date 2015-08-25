@@ -1,11 +1,14 @@
-var Application = require('framework/AppFramework');
-var AppMainView = require('./views/AppMainView.jsx');
+import { include } from 'lib/utils/apiutil';
+import Application from 'framework/AppFramework';
+import AppMainView from './views/AppMainView.jsx';
 
-// Create a new application
-var app = new Application();
+include('/sdk/lib/jquery/ui/1.11.1/jquery-ui.min.js').then(function() {
+  // Create a new application
+  var app = new Application();
 
-// Configure the application
-app.configure({ debug: true });
+  // Configure the application
+  app.configure({ debug: true });
 
-// Render application views
-app.render(AppMainView);
+  // Render application views
+  app.render(AppMainView);
+});

@@ -1,215 +1,214 @@
 var JqTreeViewController = React.createClass({
 
-    propTypes: {
-        data:           React.PropTypes.array.isRequired,
-        exclusives:     React.PropTypes.array.isRequired,
-        onCreateNode:   React.PropTypes.func,
-        onOpen:         React.PropTypes.func,
-        onClose:        React.PropTypes.func,
-        onSelect:       React.PropTypes.func,
-        onMove:         React.PropTypes.func,
-        onRefresh:      React.PropTypes.func,
-        onCreateFolder: React.PropTypes.func
-    },
+  propTypes: {
+    data:           React.PropTypes.array.isRequired,
+    exclusives:     React.PropTypes.array.isRequired,
+    onCreateNode:   React.PropTypes.func,
+    onOpen:         React.PropTypes.func,
+    onClose:        React.PropTypes.func,
+    onSelect:       React.PropTypes.func,
+    onMove:         React.PropTypes.func,
+    onRefresh:      React.PropTypes.func,
+    onCreateFolder: React.PropTypes.func
+  },
 
-    getDefaultProps: function() {
-        return {
-            exclusives:     [],
-            onCreateNode:   function(node) {},
-            onOpen:         function(node) {},
-            onClose:        function(node) {},
-            onSelect:       function(node) {},
-            onMove:         function(movedNode, targetNode, position) {},
-            onRefresh:      function() {},
-            onCreateFolder: function(createFolderHelper) {
-                createFolderHelper(undefined, 'NewFolder' + Math.floor(Math.random() * 100).toString());
-            }
-        };
-    },
-
-    getInitialState: function() {
-        return {
-
-        };
-    },
-
-    componentDidMount: function() {
-        this.treeInstance = $(this.getDOMNode());
-
-        this.treeInstance.bind("tree.open", function(event) {
-            this.props.onOpen(event.node);
-        }.bind(this));
-
-        this.treeInstance.bind("tree.close", function(event) {
-            this.props.onClose(event.node);
-        }.bind(this));
-
-        this.treeInstance.bind("tree.refresh", function() {
-            this.props.onRefresh();
-        }.bind(this));
-
-        this.treeInstance.bind("tree.select", function(event) {
-            if (event.node) {
-                this.props.onSelect(event.node);
-            }
-        }.bind(this));
-
-        this.treeInstance.bind("tree.move", function(event) {
-            event.preventDefault();
-
-            var movedNode = event.move_info.moved_node;
-            var targetNode = event.move_info.target_node;
-            var position = event.move_info.position;
-
-            if (targetNode.getLevel() > 1) {
-                /* Move node to existing stack, do not create second level folder */
-                if (position === "inside")
-                    position = "after";
-                this.nodeMove(movedNode, targetNode, position);
-                this.props.onMove(movedNode, targetNode, position);
-            }
-            else if (targetNode.isFolder() || position !== "inside") {
-                /* Move node to root level */
-                this.nodeMove(movedNode, targetNode, position);
-                this.props.onMove(movedNode, targetNode, position);
-            }
-            else {
-                /* Create a new folder and move movedNote & targetNode to the folder */
-                var name = this.props.onCreateFolder(function(id, name) {
-                    this.nodeCreate(id, name);
-                    var _folderNode = this.getNodeById(id);
-                    this.nodeMove(targetNode, _folderNode, "inside");
-                    this.nodeMove(movedNode, _folderNode, "inside");
-                    this.nodeOpen(_folderNode);
-                    this.props.onMove(movedNode, targetNode, position);
-                }.bind(this));
-            }
-        }.bind(this));
-
-        this.treeInstance.tree({
-            closedIcon:  $("<i class='inverted caret right icon'></i>"),
-            openedIcon:  $("<i class='inverted caret down icon'></i>"),
-            toggleable:  false,
-            dragAndDrop: true,
-            autoOpen:    false,
-            data:        this.props.data,
-
-            onCreateLi: function(node, $li) {
-                if (node.isFolder())
-                    $li.find(".jqtree-title").before("<i class='list icon'></i>&nbsp;");
-                else
-                    $li.find(".jqtree-title").before("<i class='inverted book icon'></i>&nbsp;");
-
-                this.props.onCreateNode && this.props.onCreateNode(node);
-            }.bind(this),
-
-            onCanMove: function(node) {
-                return !this._isExclusiveNode(node);
-            }.bind(this),
-
-            onCanMoveTo: function(movedNode, targetNode, position) {
-                if (this._isExclusiveNode(targetNode) &&
-                        (position === "inside" || position === "before"))
-                    return false;
-
-                if (movedNode.isFolder() &&
-                        (position === "inside" || (position !== "inside" && targetNode.getLevel() > 1)))
-                    return false;
-
-                if (movedNode.isParentOf(targetNode))
-                    return false;
-
-                return true;
-            }.bind(this)
-        });
-    },
-
-    shouldComponentUpdate: function(nextProps, nextState) {
-        /* Reload tree data only when data changes */
-        if (this.props.data !== nextProps.data) {
-            this.treeInstance.tree("loadData", nextProps.data);
-        }
-        return false;
-    },
-
-    render: function() {
-        return (
-            <div className="jq-treeview-container">
-                <div className="jq-treeview" />
-            </div>
+  getDefaultProps: function() {
+    return {
+      exclusives:     [],
+      onCreateNode:   function(node) {},
+      onOpen:         function(node) {},
+      onClose:        function(node) {},
+      onSelect:       function(node) {},
+      onMove:         function(movedNode, targetNode, position) {},
+      onRefresh:      function() {},
+      onCreateFolder: function(createFolderHelper) {
+        createFolderHelper(
+          undefined,
+          'NewFolder' + Math.floor(Math.random() * 100).toString()
         );
-    },
+      }
+    };
+  },
 
-    _isExclusiveNode: function(node) {
-        for (var i in this.props.exclusives) {
-            if (this.props.exclusives[i] === node.id
-                || this.props.exclusives[i] === node.name
-                || this.props.exclusives[i] === "*")
-                return true;
-        }
-        return false;
-    },
+  componentDidMount: function() {
+    this.treeInstance = $(React.findDOMNode(this));
 
-    getNodeById: function(id) {
-        return this.treeInstance.tree("getNodeById", id);
-    },
+    this.treeInstance.bind("tree.open", function(event) {
+      this.props.onOpen(event.node);
+    }.bind(this));
 
-    getTree: function() {
-        return this.treeInstance.tree("getTree");
-    },
+    this.treeInstance.bind("tree.close", function(event) {
+      this.props.onClose(event.node);
+    }.bind(this));
 
-    getTreeData: function() {
-        return this.treeInstance.tree("toJson");
-    },
+    this.treeInstance.bind("tree.refresh", function() {
+      this.props.onRefresh();
+    }.bind(this));
 
-    getSelectedNode: function() {
-        return this.treeInstance.tree("getSelectedNode");
-    },
+    this.treeInstance.bind("tree.select", function(event) {
+      if (event.node) {
+        this.props.onSelect(event.node);
+      }
+    }.bind(this));
 
-    nodeOpen: function(node) {
-        this.treeInstance.tree("openNode", node, true);
-    },
+    this.treeInstance.bind("tree.move", function(event) {
+      event.preventDefault();
 
-    nodeSelect: function(node) {
-        this.treeInstance.tree("selectNode", node);
-    },
+      var movedNode = event.move_info.moved_node;
+      var targetNode = event.move_info.target_node;
+      var position = event.move_info.position;
 
-    nodeCreate: function(id, name, pos, node) {
-        var _newNode = { id: id, label: name};
-        if (pos === "before" && node)
-            this.treeInstance.tree("addNodeBefore", _newNode, node);
-        else if (pos === "after" && node)
-            this.treeInstance.tree("addNodeAfter", _newNode, node);
+      if (targetNode.getLevel() > 1) {
+        /* Move node to existing stack, do not create second level folder */
+        if (position === "inside")
+          position = "after";
+        this.nodeMove(movedNode, targetNode, position);
+        this.props.onMove(movedNode, targetNode, position);
+      }
+      else if (targetNode.isFolder() || position !== "inside") {
+        /* Move node to root level */
+        this.nodeMove(movedNode, targetNode, position);
+        this.props.onMove(movedNode, targetNode, position);
+      }
+      else {
+        /* Create a new folder and move movedNote & targetNode to the folder */
+        var name = this.props.onCreateFolder(function(id, name) {
+          this.nodeCreate(id, name);
+          var _folderNode = this.getNodeById(id);
+          this.nodeMove(targetNode, _folderNode, "inside");
+          this.nodeMove(movedNode, _folderNode, "inside");
+          this.nodeOpen(_folderNode);
+          this.props.onMove(movedNode, targetNode, position);
+        }.bind(this));
+      }
+    }.bind(this));
+
+    this.treeInstance.tree({
+      closedIcon:  $("<i class='inverted caret right icon'></i>"),
+      openedIcon:  $("<i class='inverted caret down icon'></i>"),
+      toggleable:  false,
+      dragAndDrop: true,
+      autoOpen:    false,
+      data:        this.props.data,
+
+      onCreateLi: function(node, $li) {
+        if (node.isFolder())
+          $li.find(".jqtree-title").before("<i class='list icon'/>&nbsp;");
         else
-            this.treeInstance.tree("appendNode", _newNode);
-    },
+          $li.find(".jqtree-title").before("<i class='inverted book icon'/>&nbsp;");
 
-    nodeRemove: function(node) {
-        var parent = node.parent;
-        this.treeInstance.tree("removeNode", node);
-        if (parent && parent.children.length === 0)
-            this.treeInstance.tree("removeNode", parent);
-    },
+        this.props.onCreateNode && this.props.onCreateNode(node);
+      }.bind(this),
 
-    nodeRename: function(node, name) {
-        this.treeInstance.tree("updateNode", node, name);
-        /*
-         * BUG (jqTree):
-         * After 'updateNode', a ghost li will be inserted into wrong position and cannot be removed after moving node.
-         * This is probably caused by maintaining tree data failed after updating node.
-         * So we reload tree data refreshly here to avoid the problem.
-         */
-        this.treeInstance.tree("loadData", JSON.parse(this.treeInstance.tree("toJson")));
-        /* Select renamed node again due to tree has been reloaded */
-        this.treeInstance.tree("selectNode", this.getNodeById(node.id));
-    },
+      onCanMove: function(node) {
+        return !this._isExclusiveNode(node);
+      }.bind(this),
 
-    nodeMove: function(srcNode, dstNode, pos) {
-        var srcParent = srcNode.parent;
-        this.treeInstance.tree("moveNode", srcNode, dstNode, pos);
-        if (srcParent && srcParent.children.length === 0)
-            this.treeInstance.tree("removeNode", srcParent);
+      onCanMoveTo: function(movedNode, targetNode, position) {
+        if (this._isExclusiveNode(targetNode) &&
+            (position === "inside" || position === "before"))
+          return false;
+
+        if (movedNode.isFolder()
+            && (position === "inside"
+                || (position !== "inside" && targetNode.getLevel() > 1)))
+          return false;
+
+        if (movedNode.isParentOf(targetNode))
+          return false;
+
+        return true;
+      }.bind(this)
+    });
+  },
+
+  shouldComponentUpdate: function(nextProps, nextState) {
+    /* Reload tree data only when data changes */
+    if (this.props.data !== nextProps.data) {
+      this.treeInstance.tree("loadData", nextProps.data);
     }
+    return false;
+  },
+
+  render: function() {
+    return (
+      <div className="jq-treeview-container">
+        <div className="jq-treeview" />
+      </div>
+    );
+  },
+
+  _isExclusiveNode: function(node) {
+    for (var i in this.props.exclusives) {
+      if (this.props.exclusives[i] === node.id
+        || this.props.exclusives[i] === node.name
+        || this.props.exclusives[i] === "*")
+        return true;
+    }
+    return false;
+  },
+
+  getNodeById: function(id) {
+    return this.treeInstance.tree("getNodeById", id);
+  },
+
+  getTree: function() {
+    return this.treeInstance.tree("getTree");
+  },
+
+  getTreeData: function() {
+    return this.treeInstance.tree("toJson");
+  },
+
+  getSelectedNode: function() {
+    return this.treeInstance.tree("getSelectedNode");
+  },
+
+  nodeOpen: function(node) {
+    this.treeInstance.tree("openNode", node, true);
+  },
+
+  nodeSelect: function(node) {
+    this.treeInstance.tree("selectNode", node);
+  },
+
+  nodeCreate: function(id, name, pos, node) {
+    var _newNode = { id: id, label: name};
+    if (pos === "before" && node)
+      this.treeInstance.tree("addNodeBefore", _newNode, node);
+    else if (pos === "after" && node)
+      this.treeInstance.tree("addNodeAfter", _newNode, node);
+    else
+      this.treeInstance.tree("appendNode", _newNode);
+  },
+
+  nodeRemove: function(node) {
+    var parent = node.parent;
+    this.treeInstance.tree("removeNode", node);
+    if (parent && parent.children.length === 0)
+      this.treeInstance.tree("removeNode", parent);
+  },
+
+  nodeRename: function(node, name) {
+    this.treeInstance.tree("updateNode", node, name);
+    /*
+     * BUG (jqTree):
+     * After 'updateNode', a ghost li will be inserted into wrong position
+     * and cannot be removed after moving node.
+     * This is probably caused by maintaining tree data failed after updating node.
+     * So we reload tree data refreshly here to avoid the problem.
+     */
+    this.treeInstance.tree("loadData", JSON.parse(this.treeInstance.tree("toJson")));
+    /* Select renamed node again due to tree has been reloaded */
+    this.treeInstance.tree("selectNode", this.getNodeById(node.id));
+  },
+
+  nodeMove: function(srcNode, dstNode, pos) {
+    var srcParent = srcNode.parent;
+    this.treeInstance.tree("moveNode", srcNode, dstNode, pos);
+    if (srcParent && srcParent.children.length === 0)
+      this.treeInstance.tree("removeNode", srcParent);
+  }
 
 });
 

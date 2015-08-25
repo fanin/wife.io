@@ -1,55 +1,62 @@
-body, body.pushable
+body,
+body.pushable
 {
-    height: 100%;
-    background-color: black !important;
+  height: 100%;
+
+  background-color: black !important;
 }
 
-.pushable, .pusher
+.pushable,
+.pusher
 {
-    height: 100%;
-    background: transparent !important;
+  height: 100%;
+
+  background: transparent !important;
 }
 
 #app-main-view
 {
-    height: 100%;
-    padding: 40px 0 0 0;
-    background-color: transparent !important;
+  height: 100%;
+  padding: 40px 0 0 0;
+
+  background-color: transparent !important;
 }
 
 .background-image
 {
-    position: fixed;
-    right: 0;
-    left: 0;
-    display: block;
-    width: 100%;
-    height: 100%;
-    background: url('/public/img/background.jpg');
+  position: fixed;
+  right: 0;
+  left: 0;
 
-    -webkit-background-size: cover;
-       -moz-background-size: cover;
-         -o-background-size: cover;
-            background-size: cover;
+  display: block;
 
-    -webkit-filter: blur(14px);
-       -moz-filter: blur(14px);
-        -ms-filter: blur(14px);
-         -o-filter: blur(14px);
-            filter: blur(14px);
-            filter: url('data:image/svg+xml;utf9,<svg%20version=%271.1%27%20xmlns=%27http://www.w3.org/2000/svg%27><filter%20id=%27blur%27><feGaussianBlur%20stdDeviation=%2714%27/></filter></svg>#blur');
+  width: 100%;
+  height: 100%;
+
+  background: url('/img/background.jpg');
+  -webkit-background-size: cover;
+     -moz-background-size: cover;
+       -o-background-size: cover;
+          background-size: cover;
+
+          filter: url('data:image/svg+xml;utf9,<svg%20version=%271.1%27%20xmlns=%27http://www.w3.org/2000/svg%27><filter%20id=%27blur%27><feGaussianBlur%20stdDeviation=%2714%27/></filter></svg>#blur');
+  -webkit-filter: blur(14px) brightness(.8);
+     -moz-filter: blur(14px) brightness(.8);
+      -ms-filter: blur(14px) brightness(.8);
+       -o-filter: blur(14px) brightness(.8);
+          filter: blur(14px) brightness(.8);
 }
 
 .hidden
 {
-    display: none !important;
+  display: none !important;
 }
 
 /* jQuery UI: Remove the blue glow on focus */
 *:focus
 {
-    outline: none;
-    -webkit-box-shadow: none;
-       -moz-box-shadow: none;
-            box-shadow: none;
+  outline: none;
+  -webkit-box-shadow: none;
+     -moz-box-shadow: none;
+          box-shadow: none;
 }

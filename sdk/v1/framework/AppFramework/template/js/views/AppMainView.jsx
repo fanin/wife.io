@@ -1,48 +1,48 @@
 var AppMainView = React.createClass({
 
-    propTypes: {
+  propTypes: {
 
-    },
+  },
 
-    getDefaultProps() {
-        return {};
-    },
+  getDefaultProps() {
+    return {};
+  },
 
-    getInitialState() {
-        return {};
-    },
+  getInitialState() {
+    return {};
+  },
 
-    componentWillMount() {
+  componentWillMount() {
 
-    },
+  },
 
-    componentDidMount() {
+  componentDidMount() {
 
-    },
+  },
 
-    componentWillUnmount() {
+  componentWillUnmount() {
 
-    },
+  },
 
-    shouldComponentUpdate(nextProps, nextState) {
-        return true;
-    },
+  shouldComponentUpdate(nextProps, nextState) {
+    return true;
+  },
 
-    componentWillUpdate(nextProps, nextState) {
+  componentWillUpdate(nextProps, nextState) {
 
-    },
+  },
 
-    componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate(prevProps, prevState) {
 
-    },
+  },
 
-    render() {
-        return (
-            <div>
+  render() {
+    return (
+      <div>
 
-            </div>
-        );
-    }
+      </div>
+    );
+  }
 
 });
 

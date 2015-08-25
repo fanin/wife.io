@@ -1,5 +1,5 @@
 #app-debug-view {
-    z-index: 9998;
-    max-height: 40%;
-    overflow-y: auto !important;
+  z-index: 9998;
+  max-height: 40%;
+  overflow-y: auto !important;
 }

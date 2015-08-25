@@ -1,40 +1,40 @@
 {
-    "name": "Launcher",
-    "version": "0.1.0",
-    "api_version": 1,
-    "directory": "launcher",
-    "entry": "index.html",
-    "permission": {
-        "apps": {
-            "POST": "allow",
-            "GET": "allow",
-            "PUT": "allow",
-            "DELETE": "allow"
-        },
-        "storage": {
-            "POST": "denied",
-            "GET": "allow",
-            "PUT": "denied",
-            "DELETE": "allow"
-        },
-        "fs": {
-            "POST": "allow",
-            "GET": "allow",
-            "PUT": "allow",
-            "DELETE": "allow"
-        }
+  "name": "Launcher",
+  "version": "0.1.0",
+  "api_version": 1,
+  "directory": "launcher",
+  "entry": "index.html",
+  "permission": {
+    "apps": {
+      "POST": "allow",
+      "GET": "allow",
+      "PUT": "allow",
+      "DELETE": "allow"
     },
-    "locales": [
-        "en_US",
-        "zh_TW"
-    ],
-    "default_locale": "en_US",
-    "browser_support": {
-        "chrome": "*",
-        "firefox": "*",
-        "internet_explorer": "*",
-        "safari": "*"
+    "storage": {
+      "POST": "denied",
+      "GET": "allow",
+      "PUT": "denied",
+      "DELETE": "allow"
     },
-    "description": "APP launcher",
-    "identifier": "IAXAOpFRGD"
+    "fs": {
+      "POST": "allow",
+      "GET": "allow",
+      "PUT": "allow",
+      "DELETE": "allow"
+    }
+  },
+  "locales": [
+    "en_US",
+    "zh_TW"
+  ],
+  "default_locale": "en_US",
+  "browser_support": {
+    "chrome": "*",
+    "firefox": "*",
+    "internet_explorer": "*",
+    "safari": "*"
+  },
+  "description": "APP launcher",
+  "identifier": "IAXAOpFRGD"
 }

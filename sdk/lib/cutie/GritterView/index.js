@@ -1,1 +1,2 @@
-module.exports = require('./GritterViewController.js');
+import GritterViewController from './GritterViewController';
+export default GritterViewController;

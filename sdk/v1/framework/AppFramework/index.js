@@ -1,1 +1,2 @@
-module.exports = require('./Application.jsx');
+import Application from './Application.jsx';
+export default Application;

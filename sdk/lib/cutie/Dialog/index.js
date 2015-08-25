@@ -1,1 +1,2 @@
-module.exports = require('./DialogController.jsx');
+import DialogController from './DialogController.jsx';
+export default DialogController;

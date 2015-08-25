@@ -1,1 +1,2 @@
-module.exports = require('./ListViewController.jsx');
+import ListViewController from './ListViewController.jsx';
+export default ListViewController;

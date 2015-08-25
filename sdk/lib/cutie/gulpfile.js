@@ -3,13 +3,13 @@ var gulp      = require('gulp'),
     concat    = require('gulp-concat');
 
 gulp.task('sdk/lib/cutie', function() {
-    var cutie_css = gulp.src(__dirname + '/**/*.css')
-        .pipe(concat('cutie.css'));
+  var cutie_css = gulp.src(__dirname + '/**/*.css')
+                      .pipe(concat('cutie.css'));
 
-    if (!global.DEBUG)
-        cutie_css = cutie_css.pipe(minifycss());
+  if (!global.DEBUG)
+    cutie_css = cutie_css.pipe(minifycss());
 
-    cutie_css = cutie_css.pipe(gulp.dest(global.BUILD_PATH + '/sdk/lib/cutie/'));
+  cutie_css = cutie_css.pipe(gulp.dest(global.BUILD_PATH + '/sdk/lib/cutie/'));
 
-    return cutie_css;
+  return cutie_css;
 });

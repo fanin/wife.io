@@ -1,7 +1,9 @@
 {
-    "scripts": {
-        "start": "LD_PRELOAD=device/xilinx/zynq/zynq-memchr-fix/memchr.so node --expose-gc server/index.js &",
-        "start-forever": "LD_PRELOAD=device/xilinx/zynq/zynq-memchr-fix/memchr.so forever start -c \"node --expose-gc\" server/index.js",
-        "stop": "killall wife.io"
-    }
+  "scripts": {
+    "prestart": "mongod --dbpath server/data/mongodb --fork --logpath /dev/null",
+    "start": "LD_PRELOAD=device/xilinx/zynq/zynq-memchr-fix/memchr.so node --expose-gc server/index.js &",
+    "start-forever": "LD_PRELOAD=device/xilinx/zynq/zynq-memchr-fix/memchr.so forever start -c \"node --expose-gc\" server/index.js",
+    "stop": "killall wife.io; exit 0",
+    "poststop": "mongo admin --eval 'db.shutdownServer()' 2>&1 > /dev/null; rm -f server/data/mongodb/mongod.lock; exit 0"
+  }
 }

@@ -1,40 +1,40 @@
 {
-    "name": "Notebook",
-    "version": "0.2.0",
-    "api_version": 1,
-    "directory": "notebook",
-    "entry": "index.html",
-    "permission": {
-        "apps": {
-            "POST": "denied",
-            "GET": "denied",
-            "PUT": "denied",
-            "DELETE": "denied"
-        },
-        "storage": {
-            "POST": "denied",
-            "GET": "allow",
-            "PUT": "denied",
-            "DELETE": "denied"
-        },
-        "fs": {
-            "POST": "allow",
-            "GET": "allow",
-            "PUT": "allow",
-            "DELETE": "allow"
-        }
+  "name": "Notebook",
+  "version": "0.2.0",
+  "api_version": 1,
+  "directory": "notebook",
+  "entry": "index.html",
+  "permission": {
+    "apps": {
+      "POST": "denied",
+      "GET": "denied",
+      "PUT": "denied",
+      "DELETE": "denied"
     },
-    "locales": [
-        "en_US",
-        "zh_TW"
-    ],
-    "default_locale": "en_US",
-    "browser_support": {
-        "chrome": "*",
-        "firefox": "*",
-        "internet_explorer": "*",
-        "safari": "*"
+    "storage": {
+      "POST": "denied",
+      "GET": "allow",
+      "PUT": "denied",
+      "DELETE": "denied"
     },
-    "description": "Write and manage notes",
-    "identifier": "IAnbwWbNnD"
+    "fs": {
+      "POST": "allow",
+      "GET": "allow",
+      "PUT": "allow",
+      "DELETE": "allow"
+    }
+  },
+  "locales": [
+    "en_US",
+    "zh_TW"
+  ],
+  "default_locale": "en_US",
+  "browser_support": {
+    "chrome": "*",
+    "firefox": "*",
+    "internet_explorer": "*",
+    "safari": "*"
+  },
+  "description": "Write and manage notes",
+  "identifier": "IAnbwWbNnD"
 }

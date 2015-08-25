@@ -1,40 +1,40 @@
 {
-    "name": "Storage",
-    "version": "0.1.0",
-    "api_version": 1,
-    "directory": "storage",
-    "entry": "storage.html",
-    "permission": {
-        "apps": {
-            "POST": "denied",
-            "GET": "denied",
-            "PUT": "denied",
-            "DELETE": "denied"
-        },
-        "storage": {
-            "POST": "allow",
-            "GET": "allow",
-            "PUT": "allow",
-            "DELETE": "allow"
-        },
-        "fs": {
-            "POST": "allow",
-            "GET": "allow",
-            "PUT": "allow",
-            "DELETE": "allow"
-        }
+  "name": "Storage",
+  "version": "0.1.0",
+  "api_version": 1,
+  "directory": "storage",
+  "entry": "storage.html",
+  "permission": {
+    "apps": {
+      "POST": "denied",
+      "GET": "denied",
+      "PUT": "denied",
+      "DELETE": "denied"
     },
-    "locales": [
-        "en_US",
-        "zh_TW"
-    ],
-    "default_locale": "en_US",
-    "browser_support": {
-        "chrome": "*",
-        "firefox": "*",
-        "internet_explorer": "*",
-        "safari": "*"
+    "storage": {
+      "POST": "allow",
+      "GET": "allow",
+      "PUT": "allow",
+      "DELETE": "allow"
     },
-    "description": "Storage Manager",
-    "identifier": "IAiBelWizY"
+    "fs": {
+      "POST": "allow",
+      "GET": "allow",
+      "PUT": "allow",
+      "DELETE": "allow"
+    }
+  },
+  "locales": [
+    "en_US",
+    "zh_TW"
+  ],
+  "default_locale": "en_US",
+  "browser_support": {
+    "chrome": "*",
+    "firefox": "*",
+    "internet_explorer": "*",
+    "safari": "*"
+  },
+  "description": "Storage Manager",
+  "identifier": "IAiBelWizY"
 }

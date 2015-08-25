@@ -1,37 +1,35 @@
-var ListViewItem = React.createClass({
+export default class ListViewItem extends React.Component {
 
-    propTypes: {
-        onSelect: React.PropTypes.func.isRequired
-    },
+  onItemClick() {
+    this.props.onSelect(this.props.index);
+  }
 
-    getDefaultProps() {
-        return {
-            index: -1,
-            active: false,
-            disabled: false,
-            titleText: '',
-            subtitleText: '',
-            detailText: ''
-        };
-    },
+  render() {
+    let itemClass = this.props.active ? "active item" : "item";
+    return (
+      <div
+        className={itemClass}
+        onClick={!this.props.disabled ? this.onItemClick.bind(this) : null}
+      >
+        <div className="content cutie-listview-content">
+          <div className="cutie-listview-title">{this.props.titleText}</div>
+          <div className="cutie-listview-subtitle">{this.props.subtitleText}</div>
+          {this.props.detailText}
+        </div>
+      </div>
+    );
+  }
+}
 
-    render() {
-        var itemClass = this.props.active ? "active item" : "item";
-        return (
-            <div className={itemClass} onClick={!this.props.disabled ? this._onItemClick : null}>
-                <div className="content cutie-listview-content">
-                    <div className="cutie-listview-title">{this.props.titleText}</div>
-                    <div className="cutie-listview-subtitle">{this.props.subtitleText}</div>
-                    {this.props.detailText}
-                </div>
-            </div>
-        );
-    },
+ListViewItem.propTypes = {
+  onSelect: React.PropTypes.func.isRequired
+};
 
-    _onItemClick() {
-        this.props.onSelect(this.props.index);
-    }
-
-});
-
-module.exports = ListViewItem;
+ListViewItem.defaultProps = {
+  index: -1,
+  active: false,
+  disabled: false,
+  titleText: '',
+  subtitleText: '',
+  detailText: ''
+};

@@ -97,7 +97,6 @@
 .nb-snapshot-container > div
 {
     background-color: #fff;
-    padding: 20px;
 }
 
 .nb-snapshot-container > div > div
@@ -107,6 +106,7 @@
     font-size: 13px;
     line-height: 1.6;
     margin: 0px;
+    padding: 20px;
     word-wrap: break-word;
     color: #333;
     background-color: #fff;

@@ -1,5 +1,5 @@
-var Application = require('framework/AppFramework');
-var AppMainView = require('./views/AppMainView.jsx');
+import Application from 'framework/AppFramework';
+import AppMainView from './views/AppMainView.jsx';
 
 // Create a new application
 var app = new Application();

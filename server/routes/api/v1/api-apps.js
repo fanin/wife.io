@@ -9,74 +9,78 @@
 var express    = require('express'),
     path       = require('path'),
     fs         = require('fs-extra'),
-    uploader   = require('controllers/helper/upload'),
-    permission = require('system/security/permission'),
-    appmgr     = require('system/app/app-manager');
+    uploader   = require('routes/helper/upload'),
+    permission = require('lib/security/permission'),
+    appmgr     = require('lib/app/app-manager');
 
 var router = express.Router();
 var installers = [];
 
 function getAppList(req, res, next) {
-    var apps = appmgr.list();
+  var apps = appmgr.list();
 
-    if (apps)
-        res.json(apps);
-    else
-        res.sendStatus(500);
+  if (apps)
+    res.json(apps);
+  else
+    res.sendStatus(500);
 }
 
 function getAppByID(req, res, next) {
-    var app = appmgr.getManifest(req.params.appid);
+  var app = appmgr.getManifest(req.params.appid);
 
-    if (app)
-        res.json(app);
-    else
-        res.status(404).send('App Not Found');
+  if (app)
+    res.json(app);
+  else
+    res.status(404).send('App Not Found');
 }
 
 function getUploader() {
-    return uploader(Infinity, 'application/zip',
-        function onUploadStart(file, req, res) {
-            var instid = file.name.split('.').shift();
-            installers[instid] = file;
-            installers[instid] = { status: 201, message: 'Upload start' };
-            res.status(200).send(instid);
-        },
-        function onUploadComplete(file, req, res) {
-            var instid = file.name.split('.').shift();
-            if (file.truncated)
-                installers[instid] = { status: 507, message: 'Insufficient storage' };
-            else {
-                installers[instid] = { status: 202, message: 'File received' };
-                installers[instid] = appmgr.install(file.path);
-            }
+  return uploader(Infinity, 'application/zip',
+    function onUploadStart(file, req, res) {
+      var instid = file.name.split('.').shift();
+      installers[instid] = file;
+      installers[instid] = { status: 201, message: 'Upload start' };
+      res.status(200).send(instid);
+    },
+    function onUploadComplete(file, req, res) {
+      var instid = file.name.split('.').shift();
+      if (file.truncated)
+        installers[instid] = { status: 507, message: 'Insufficient storage' };
+      else {
+        installers[instid] = { status: 202, message: 'File received' };
+        installers[instid] = appmgr.install(file.path);
+      }
 
-            fs.unlink(file.path);
-        },
-        function onUploadError(error, file) {
-            var instid = file.name.split('.').shift();
-            installers[instid] = { status: error.code, message: error.message };
-        }
-    );
+      fs.unlink(file.path);
+    },
+    function onUploadError(error, file) {
+      var instid = file.name.split('.').shift();
+      installers[instid] = { status: error.code, message: error.message };
+    }
+  );
 }
 
 function getInstallStatus(req, res, next) {
-    if (!installers[req.params.instid])
-        res.status(404).send('Installation ID Not Found');
-    else
-        res.status(installers[req.params.instid].status).send(installers[req.params.instid].message);
+  if (!installers[req.params.instid])
+    res.status(404).send('Installation ID Not Found');
+  else
+    res.status(installers[req.params.instid].status).send(installers[req.params.instid].message);
 }
 
 function removeApp(req, res, next) {
-    var app = appmgr.getManifest(req.params.appid);
-    var keepUserData = req.query.keepUserData == 1;
+  var app = appmgr.getManifest(req.params.appid);
+  var keepUserData = req.query.keepUserData == 1;
 
-    if (app) {
-        var result = appmgr.uninstall(app, keepUserData);
-        res.status(result.status).send(result.message);
-    }
-    else
-        res.status(404).send('App Not Found');
+  if (app) {
+    var result = appmgr.uninstall(app, keepUserData);
+    res.status(result.status).send(result.message);
+  }
+  else
+    res.status(404).send('App Not Found');
+}
+
+function startSandboxedService(req, res, next) {
+  // TBD
 }
 
 /**
@@ -198,5 +202,10 @@ router.get('/install/:instid', permission.grant, getInstallStatus);
  * @apiReturn 500 (App Path Not Found)               App path does not exist.
  */
 router.delete('/:appid', permission.grant, removeApp);
+
+/**
+ * Start sandboxed app service.
+ */
+router.post('/:appid', permission.grant, startSandboxedService);
 
 module.exports = router;

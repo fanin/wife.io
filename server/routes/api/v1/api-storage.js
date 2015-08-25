@@ -7,34 +7,34 @@
  */
 
 var express    = require('express'),
-    sendevent  = require('sendevent'),
-    permission = require('system/security/permission'),
-    stormgr    = require('system/storage/storage-manager'),
-    ssemgr     = require('system/sse/sse-manager');
+		sendevent  = require('sendevent'),
+		permission = require('lib/security/permission'),
+		stormgr    = require('lib/storage/storage-manager'),
+		ssemgr     = require('lib/sse/sse-manager');
 
 var router = express.Router();
 var events = sendevent('/sse');
 
 function getDisks(req, res, next) {
-    stormgr.getDisks(function(disks, error) {
-        if (error)
-            res.status(500).send(error);
-        else
-            res.json(disks);
-    });
+	stormgr.getDisks(function(disks, error) {
+		if (error)
+			res.status(500).send(error);
+		else
+			res.json(disks);
+	});
 }
 
 function getDisk(req, res, next) {
-    var disk = stormgr.getDiskByUUID(req.params.uuid);
+	var disk = stormgr.getDiskByUUID(req.params.uuid);
 
-    if (disk)
-        res.json(disk);
-    else
-        res.sendStatus(404);
+	if (disk)
+		res.json(disk);
+	else
+		res.sendStatus(404);
 }
 
 function unmountDisk(req, res, next) {
-    response.NOT_IMPLEMENT(res);
+	response.NOT_IMPLEMENT(res);
 }
 
 ssemgr.register('storage', events);

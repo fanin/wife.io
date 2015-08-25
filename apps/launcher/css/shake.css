@@ -1,144 +1,160 @@
 div.shake-app,
 div.shake-app img
 {
-    -webkit-transform: translate3d(0,0,0);
-       -moz-transform: translate3d(0,0,0);
-         -o-transform: translate3d(0,0,0);
-            transform: translate3d(0,0,0);
+  -webkit-transform: translate3d(0,0,0);
+     -moz-transform: translate3d(0,0,0);
+       -o-transform: translate3d(0,0,0);
+          transform: translate3d(0,0,0);
 
-    -ie-transform: translate3d(0,0,0);
-    -khtml-transform: translate3d(0,0,0);
+  -ie-transform: translate3d(0,0,0);
+  -khtml-transform: translate3d(0,0,0);
 }
 
 div.shake-app img
 {
-    /*
+  /*
     width: 64px;
     height: 64px;
 */
-    cursor: default;
-    -webkit-user-select: none; /* Chrome/Safari */
-       -moz-user-select: none; /* Firefox */
-        -ms-user-select: none; /* IE10+ */
-            user-select: none;
+  cursor: default;
+  -webkit-user-select: none; /* Chrome/Safari */
+     -moz-user-select: none; /* Firefox */
+      -ms-user-select: none; /* IE10+ */
+          user-select: none;
 
-    -ie-user-select: none;
-         -o-user-select: none;
-    -khtml-user-select: none;
+  -ie-user-select: none;
+       -o-user-select: none;
+  -khtml-user-select: none;
 }
 
 div.shake-app:nth-child(even)
 {
-    -webkit-animation: shake-app-even 250ms infinite linear;
-       -moz-animation: shake-app-even 250ms infinite linear;
-        -ms-animation: shake-app-even 250ms infinite linear;
-            animation: shake-app-even 250ms infinite linear;
+  -webkit-animation: shake-app-even 250ms infinite linear;
+     -moz-animation: shake-app-even 250ms infinite linear;
+      -ms-animation: shake-app-even 250ms infinite linear;
+          animation: shake-app-even 250ms infinite linear;
 }
 
 div.shake-app:nth-child(odd)
 {
-    -webkit-animation: shake-app-odd 250ms infinite linear;
-       -moz-animation: shake-app-odd 250ms infinite linear;
-        -ms-animation: shake-app-odd 250ms infinite linear;
-            animation: shake-app-odd 250ms infinite linear;
+  -webkit-animation: shake-app-odd 250ms infinite linear;
+     -moz-animation: shake-app-odd 250ms infinite linear;
+      -ms-animation: shake-app-odd 250ms infinite linear;
+          animation: shake-app-odd 250ms infinite linear;
 }
 
 @-webkit-keyframes shake-app-even
 {
-    from
-    {
-        margin-bottom: 15px;
-        -webkit-transform: rotate(0deg);
-    }
-    25%
-    {
-        margin-bottom: 14px;
-        -webkit-transform: rotate(2deg);
-    }
-    75%
-    {
-        margin-bottom: 16px;
-        -webkit-transform: rotate(-2deg);
-    }
-    to
-    {
-        margin-bottom: 15px;
-        -webkit-transform: rotate(0deg);
-    }
+  from
+  {
+    margin-bottom: 15px;
+
+    -webkit-transform: rotate(0deg);
+  }
+  25%
+  {
+    margin-bottom: 14px;
+
+    -webkit-transform: rotate(2deg);
+  }
+  75%
+  {
+    margin-bottom: 16px;
+
+    -webkit-transform: rotate(-2deg);
+  }
+  to
+  {
+    margin-bottom: 15px;
+
+    -webkit-transform: rotate(0deg);
+  }
 }
 
 @-webkit-keyframes shake-app-odd
 {
-    from
-    {
-        margin-bottom: 15px;
-        -webkit-transform: rotate(0deg);
-    }
-    25%
-    {
-        margin-bottom: 16px;
-        -webkit-transform: rotate(-2deg);
-    }
-    75%
-    {
-        margin-bottom: 14px;
-        -webkit-transform: rotate(2deg);
-    }
-    to
-    {
-        margin-bottom: 15px;
-        -webkit-transform: rotate(0deg);
-    }
+  from
+  {
+    margin-bottom: 15px;
+
+    -webkit-transform: rotate(0deg);
+  }
+  25%
+  {
+    margin-bottom: 16px;
+
+    -webkit-transform: rotate(-2deg);
+  }
+  75%
+  {
+    margin-bottom: 14px;
+
+    -webkit-transform: rotate(2deg);
+  }
+  to
+  {
+    margin-bottom: 15px;
+
+    -webkit-transform: rotate(0deg);
+  }
 }
 
 
 
 @-moz-keyframes shake-app-even
 {
-    from
-    {
-        margin-bottom: 15px;
-        -moz-transform: rotate(0deg);
-    }
-    25%
-    {
-        margin-bottom: 14px;
-        -moz-transform: rotate(2deg);
-    }
-    75%
-    {
-        margin-bottom: 16px;
-        -moz-transform: rotate(-2deg);
-    }
-    to
-    {
-        margin-bottom: 15px;
-        -moz-transform: rotate(0deg);
-    }
+  from
+  {
+    margin-bottom: 15px;
+
+    -moz-transform: rotate(0deg);
+  }
+  25%
+  {
+    margin-bottom: 14px;
+
+    -moz-transform: rotate(2deg);
+  }
+  75%
+  {
+    margin-bottom: 16px;
+
+    -moz-transform: rotate(-2deg);
+  }
+  to
+  {
+    margin-bottom: 15px;
+
+    -moz-transform: rotate(0deg);
+  }
 }
 
 @-moz-keyframes shake-app-odd
 {
-    from
-    {
-        margin-bottom: 15px;
-        -moz-transform: rotate(0deg);
-    }
-    25%
-    {
-        margin-bottom: 16px;
-        -moz-transform: rotate(-2deg);
-    }
-    75%
-    {
-        margin-bottom: 14px;
-        -moz-transform: rotate(2deg);
-    }
-    to
-    {
-        margin-bottom: 15px;
-        -moz-transform: rotate(0deg);
-    }
+  from
+  {
+    margin-bottom: 15px;
+
+    -moz-transform: rotate(0deg);
+  }
+  25%
+  {
+    margin-bottom: 16px;
+
+    -moz-transform: rotate(-2deg);
+  }
+  75%
+  {
+    margin-bottom: 14px;
+
+    -moz-transform: rotate(2deg);
+  }
+  to
+  {
+    margin-bottom: 15px;
+
+    -moz-transform: rotate(0deg);
+  }
 }
 
 
@@ -146,50 +162,58 @@ div.shake-app:nth-child(odd)
 
 @-ms-keyframes shake-app-even
 {
-    from
-    {
-        margin-bottom: 15px;
-        -ms-transform: rotate(0deg);
-    }
-    25%
-    {
-        margin-bottom: 14px;
-        -ms-transform: rotate(2deg);
-    }
-    75%
-    {
-        margin-bottom: 16px;
-        -ms-transform: rotate(-2deg);
-    }
-    to
-    {
-        margin-bottom: 15px;
-        -ms-transform: rotate(0deg);
-    }
+  from
+  {
+    margin-bottom: 15px;
+
+    -ms-transform: rotate(0deg);
+  }
+  25%
+  {
+    margin-bottom: 14px;
+
+    -ms-transform: rotate(2deg);
+  }
+  75%
+  {
+    margin-bottom: 16px;
+
+    -ms-transform: rotate(-2deg);
+  }
+  to
+  {
+    margin-bottom: 15px;
+
+    -ms-transform: rotate(0deg);
+  }
 }
 
 @-ms-keyframes shake-app-odd
 {
-    from
-    {
-        margin-bottom: 15px;
-        -ms-transform: rotate(0deg);
-    }
-    25%
-    {
-        margin-bottom: 16px;
-        -ms-transform: rotate(-2deg);
-    }
-    75%
-    {
-        margin-bottom: 14px;
-        -ms-transform: rotate(2deg);
-    }
-    to
-    {
-        margin-bottom: 15px;
-        -ms-transform: rotate(0deg);
-    }
+  from
+  {
+    margin-bottom: 15px;
+
+    -ms-transform: rotate(0deg);
+  }
+  25%
+  {
+    margin-bottom: 16px;
+
+    -ms-transform: rotate(-2deg);
+  }
+  75%
+  {
+    margin-bottom: 14px;
+
+    -ms-transform: rotate(2deg);
+  }
+  to
+  {
+    margin-bottom: 15px;
+
+    -ms-transform: rotate(0deg);
+  }
 }
 
 
@@ -197,48 +221,56 @@ div.shake-app:nth-child(odd)
 
 @keyframes shake-app-even
 {
-    from
-    {
-        margin-bottom: 15px;
-        transform: rotate(0deg);
-    }
-    25%
-    {
-        margin-bottom: 14px;
-        transform: rotate(2deg);
-    }
-    75%
-    {
-        margin-bottom: 16px;
-        transform: rotate(-2deg);
-    }
-    to
-    {
-        margin-bottom: 15px;
-        transform: rotate(0deg);
-    }
+  from
+  {
+    margin-bottom: 15px;
+
+    transform: rotate(0deg);
+  }
+  25%
+  {
+    margin-bottom: 14px;
+
+    transform: rotate(2deg);
+  }
+  75%
+  {
+    margin-bottom: 16px;
+
+    transform: rotate(-2deg);
+  }
+  to
+  {
+    margin-bottom: 15px;
+
+    transform: rotate(0deg);
+  }
 }
 
 @keyframes shake-app-odd
 {
-    from
-    {
-        margin-bottom: 15px;
-        transform: rotate(0deg);
-    }
-    25%
-    {
-        margin-bottom: 16px;
-        transform: rotate(-2deg);
-    }
-    75%
-    {
-        margin-bottom: 14px;
-        transform: rotate(2deg);
-    }
-    to
-    {
-        margin-bottom: 15px;
-        transform: rotate(0deg);
-    }
+  from
+  {
+    margin-bottom: 15px;
+
+    transform: rotate(0deg);
+  }
+  25%
+  {
+    margin-bottom: 16px;
+
+    transform: rotate(-2deg);
+  }
+  75%
+  {
+    margin-bottom: 14px;
+
+    transform: rotate(2deg);
+  }
+  to
+  {
+    margin-bottom: 15px;
+
+    transform: rotate(0deg);
+  }
 }

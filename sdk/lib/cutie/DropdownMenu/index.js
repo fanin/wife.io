@@ -1,1 +1,2 @@
-module.exports = require('./DropdownMenu.jsx');
+import DropdownMenu from './DropdownMenu.jsx';
+export default DropdownMenu;

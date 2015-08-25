@@ -1,13 +1,18 @@
-#app-sidebar {
-    z-index: 9999;
+#app-sidebar
+{
+  z-index: 9999;
 }
 
-.app.sidebar.item {
-    color: white !important;
-    font-size: 1em !important;
-    padding: 1em !important;
+.app.sidebar.item
+{
+  font-size: 1em !important;
+
+  padding: 1em !important;
+
+  color: white !important;
 }
 
-.app.sidebar.item:before {
-    display: block !important;
+.app.sidebar.item:before
+{
+  display: block !important;
 }

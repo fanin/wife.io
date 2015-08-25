@@ -87,7 +87,7 @@ $ npm install -g wife-sdk
 
 ### Create A New App ###
 
-Wife SDK provides a app creator tool for you to create an app skeleton.
+Wife SDK gives you a app creator tool to create the app skeleton.
 Here is an example of creating a `Hello World` app:
 
 ```
@@ -159,3 +159,7 @@ Alt+A : Build application archive
 Alt+C : Clean build
 Alt+D : Dist clean
 ```
+
+### Wife Server API ###
+
+Wife Server API is a set of REST API provides system functionalities for client apps. To get familiar with the APIs is essential for an app developer to access to the server. There is a `Developer Manual` app for you for the API reference. Every time you build the `wife.io`, the latest API documents is generated and installed automatically in the `Developer Manual` app.

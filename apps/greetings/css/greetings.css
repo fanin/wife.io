@@ -1,48 +1,63 @@
-#app-main-view {
-    text-align: center;
-    padding: 64px 0;
+#app-main-view
+{
+  padding: 64px 0;
+
+  text-align: center;
 }
 
-h1 {
-    font: normal 28px "omnes-pro", Helvetica, Arial, sans-serif;
-    color: white;
+h1
+{
+  font: normal 28px 'omnes-pro', Helvetica, Arial, sans-serif;
+
+  color: white;
 }
 
-h2 {
-    font: normal 22px "omnes-pro", Helvetica, Arial, sans-serif;
-    color: white;
+h2
+{
+  font: normal 22px 'omnes-pro', Helvetica, Arial, sans-serif;
+
+  color: white;
 }
 
-p {
-    word-wrap: break-word
+p
+{
+  word-wrap: break-word;
 }
 
-.greetings {
-    margin: 50px auto;
-    max-width: 800px;
+.greetings
+{
+  max-width: 800px;
+  margin: 50px auto;
 }
 
-.manual-form {
-    margin: 20px auto;
+.manual-form
+{
+  margin: 20px auto;
 }
 
-.ui.container {
-    margin: 20px auto;
+.ui.container
+{
+  margin: 20px auto;
 }
 
-.ui[class*="very relaxed"].grid {
-    height: 100%;
-    position: relative;
+.ui[class*='very relaxed'].grid
+{
+  position: relative;
+
+  height: 100%;
 }
 
-.ui.table {
-    table-layout: fixed;
+.ui.table
+{
+  table-layout: fixed;
 }
 
-.ui.table tr td {
-    word-wrap: break-word
+.ui.table tr td
+{
+  word-wrap: break-word;
 }
 
-.ui.labeled.input {
-    margin: 10px auto;
+.ui.labeled.input
+{
+  margin: 10px auto;
 }

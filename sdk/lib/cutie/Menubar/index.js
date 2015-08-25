@@ -1,1 +1,2 @@
-module.exports = require('./Menubar.jsx');
+import Menubar from './Menubar.jsx';
+export default Menubar;

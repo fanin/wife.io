@@ -1,78 +1,76 @@
 'use strict';
 
-var Dropdown = React.createClass({
+export default class DropdownMenu extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { disabled: false };
+  }
 
-    propTypes: {
-        itemDataSource: React.PropTypes.array.isRequired
-    },
+  componentDidMount() {
+    var _onChange = function(value, text, $selectedItem) {
+      this.props.onChange(value, text);
+    }.bind(this);
 
-    getDefaultProps() {
-        return {
-            iconClass: "",
-            useSelectBar: true,
-            onChange() {}
-        };
-    },
+    var _settings = this.props.useSelectBar ? {
+      transition: "drop",
+      onChange: _onChange
+    } : {
+      transition: "drop",
+      action: "hide",
+      onChange: _onChange
+    };
 
-    getInitialState() {
-        return {
-            disabled: false
-        };
-    },
+    $(React.findDOMNode(this)).dropdown(_settings);
+  }
 
-    componentDidMount() {
-        var _onChange = function(value, text, $selectedItem) {
-            this.props.onChange(value, text);
-        }.bind(this);
+  componentWillUpdate(nextProps, nextState) {
+    if (nextState.disabled)
+      $(React.findDOMNode(this)).addClass("disabled");
+    else
+      $(React.findDOMNode(this)).removeClass("disabled");
+  }
 
-        var _settings = this.props.useSelectBar ? {
-            transition: "drop",
-            onChange: _onChange
-        } : {
-            transition: "drop",
-            action: "hide",
-            onChange: _onChange
-        };
+  shouldComponentUpdate(nextProps, nextState) {
+    return true;
+  }
 
-        $(this.getDOMNode()).dropdown(_settings);
-    },
+  render() {
+    var items = this.props.itemDataSource.map(function(data) {
+      return (
+        <div
+          className = {data.disabled ? "item disabled" : "item"}
+          key = {data.value}
+          data-value = {data.value}
+          onClick = {(this.state.disabled || data.disabled)
+                      ? null
+                      : data.onSelect}>
+          <i className={data.icon + " icon"} />
+          {data.text}
+        </div>
+      );
+    }.bind(this));
 
-    componentWillUpdate(nextProps, nextState) {
-        if (nextState.disabled)
-            $(this.getDOMNode()).addClass("disabled");
-        else
-            $(this.getDOMNode()).removeClass("disabled");
-    },
+    var buttonIcon = this.props.iconClass
+                      ? <i className={this.props.iconClass + " icon"} />
+                      : null;
 
-    shouldComponentUpdate(nextProps, nextState) {
-        return true;
-    },
+    return (
+      <div className="ui compact dropdown link item">
+        {buttonIcon}
+        <div className="menu">
+          {items}
+        </div>
+      </div>
+    );
+  }
+}
 
-    render() {
-        var items = this.props.itemDataSource.map(function(data) {
-            return (
-                <div className = {data.disabled ? "item disabled" : "item"}
-                           key = {data.value}
-                    data-value = {data.value}
-                       onClick = {(this.state.disabled || data.disabled) ? null : data.onSelect}>
-                    <i className={data.icon + " icon"} />
-                    {data.text}
-                </div>
-            );
-        }.bind(this));
+DropdownMenu.propTypes = {
+  itemDataSource: React.PropTypes.array.isRequired
+};
 
-        var buttonIcon = this.props.iconClass ? <i className={this.props.iconClass + " icon"} /> : null;
-
-        return (
-            <div className="ui compact dropdown link item">
-                {buttonIcon}
-                <div className="menu">
-                    {items}
-                </div>
-            </div>
-        );
-    }
-
-});
-
-module.exports = Dropdown;
+DropdownMenu.defaultProps = {
+  iconClass: "",
+  useSelectBar: true,
+  onChange() {}
+};
