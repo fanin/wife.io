@@ -1,6 +1,6 @@
-var keyMirror = require('keymirror');
+import keyMirror from 'keymirror';
 
-module.exports = keyMirror({
+export default keyMirror({
   LAUNCHER_SORT_APP_LIST: null,
   LAUNCHER_WRITE_SORT_APP_LIST: null,
   LAUNCHER_REMOVE_APP_FROM_SORT_LIST: null,

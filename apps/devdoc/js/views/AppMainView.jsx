@@ -1,48 +1,45 @@
-var FSAPI  = require('lib/api/FSAPI');
-var async  = require('async');
-var marked = require('marked');
+import FSAPI from 'lib/api/FSAPI';
+import marked from 'marked';
 
-var Markdown = React.createClass({
-  getDefaultProps: function () {
-    return {
-      string: ''
-    };
-  },
+class Markdown extends React.Component {
 
-  render: function() {
+  static defaultProps = {
+    string: ''
+  };
+
+  render() {
     return (
-      <span style={{ display: "inline-block" }} dangerouslySetInnerHTML={{
-        __html: marked(this.props.string, {sanitize: true})
+      <span style={{ display: 'inline-block' }} dangerouslySetInnerHTML={{
+        __html: marked(this.props.string, { sanitize: true })
       }} />
     );
   }
-});
+}
 
-var ApiDocView = React.createClass({
+class ApiDocView extends React.Component {
 
-  getDefaultProps: function () {
-    return {
-      api: null,
-      currentMethod: ''
-    };
-  },
+  static defaultProps = {
+    api: null,
+    currentMethod: ''
+  };
 
-  getInitialState: function () {
-    return {
+  constructor(props) {
+    super(props);
+    this.state = {
       apiMethodTopOffsets: []
     };
-  },
+  }
 
-  render: function() {
+  render() {
     var apiClass       = this.props.api ? this.props.api.apiclass : '';
     var apiDescription = this.props.api ? this.props.api.description : '';
-    var apiVersion     = this.props.api ? "Version " + this.props.api.apiversion : '';
-    var apiMethodTable = this.props.api ? this.props.api.apimethods.map(function(method) {
+    var apiVersion     = this.props.api ? 'Version ' + this.props.api.apiversion : '';
+    var apiMethodTable = this.props.api ? this.props.api.apimethods.map((method) => {
       var tableClass = this.props.currentMethod === method.apimethod.name
                ? "ui celled structured orange table"
                : "ui celled structured table";
 
-      var paramRows = method.apiparam ? method.apiparam.map(function(param) {
+      var paramRows = method.apiparam ? method.apiparam.map((param) => {
         return (
           <tr>
             <td colSpan={4} className="center aligned">
@@ -59,7 +56,7 @@ var ApiDocView = React.createClass({
       }) : [];
 
       var postDataRows = method.apipostdata
-        ? method.apipostdata.map(function(postdata) {
+        ? method.apipostdata.map((postdata) => {
             return (
               <tr>
                 <td colSpan={4} className="center aligned">
@@ -72,7 +69,7 @@ var ApiDocView = React.createClass({
           })
         : [];
 
-      var optionRows = method.apioption ? method.apioption.map(function(option) {
+      var optionRows = method.apioption ? method.apioption.map((option) => {
         return (
           <tr>
             <td colSpan={4} className="center aligned"><code>{option.name}</code></td>
@@ -82,21 +79,21 @@ var ApiDocView = React.createClass({
         );
       }) : [];
 
-      var responseRows = method.apireturn ? method.apireturn.map(function(response) {
+      var responseRows = method.apireturn ? method.apireturn.map((response) => {
         return (
           <tr>
             <td colSpan={2} className="center aligned">{response.status}</td>
             <td colSpan={4} className={"center aligned" + (response.statustext
                                                            ? "" : " disabled")}>
-              {response.statustext ? response.statustext : "Default"}
+              {response.statustext ? response.statustext : 'Default'}
             </td>
             <td colSpan={3} className={"center aligned" + (response.name
                                                            ? "" : " disabled")}>
-              <code>{response.name ? response.name : "N/A"}</code>
+              <code>{response.name ? response.name : 'N/A'}</code>
             </td>
             <td colSpan={2} className={"center aligned" + (response.type
                                                            ? "" : " disabled")}>
-              {response.type ? response.type : "N/A"}
+              {response.type ? response.type : 'N/A'}
             </td>
             <td colSpan={9}><Markdown string={response.description} /></td>
           </tr>
@@ -120,12 +117,12 @@ var ApiDocView = React.createClass({
               <tr>
                 <td className="active center aligned">Method</td>
                 <td colSpan={20}>
-                  <strong>{method.apimethod.method + " "}</strong>
+                  <strong>{method.apimethod.method + ' '}</strong>
                   {this.props.api.apibasepath}
                   <Markdown string={method.apimethod.path} />
                 </td>
               </tr>
-              <tr style={{display: method.apiparam ?  "table-row" : "none"}}>
+              <tr style={{display: method.apiparam ?  'table-row' : 'none'}}>
                 <td
                   className="active center aligned"
                   rowSpan={method.apiparam ? method.apiparam.length + 1 : 1}
@@ -137,7 +134,7 @@ var ApiDocView = React.createClass({
                 <td className="active" colSpan={12}>Description</td>
               </tr>
               {paramRows}
-              <tr style={{display: method.apipostdata ?  "table-row" : "none"}}>
+              <tr style={{display: method.apipostdata ?  'table-row' : 'none'}}>
                 <td
                   className="active center aligned"
                   rowSpan={method.apipostdata ? method.apipostdata.length + 1 : 1}
@@ -149,7 +146,7 @@ var ApiDocView = React.createClass({
                 <td className="active" colSpan={12}>Description</td>
               </tr>
               {postDataRows}
-              <tr style={{display: method.apioption ?  "table-row" : "none"}}>
+              <tr style={{display: method.apioption ?  'table-row' : 'none'}}>
                 <td
                   className="active center aligned"
                   rowSpan={method.apioption ? method.apioption.length + 1 : 1}
@@ -161,7 +158,7 @@ var ApiDocView = React.createClass({
                 <td className="active" colSpan={12}>Description</td>
               </tr>
               {optionRows}
-              <tr style={{display: method.apireturn ?  "table-row" : "none"}}>
+              <tr style={{display: method.apireturn ?  'table-row' : 'none'}}>
                 <td
                   className="active center aligned"
                   rowSpan={method.apireturn ? method.apireturn.length + 1 : 1}
@@ -179,7 +176,7 @@ var ApiDocView = React.createClass({
           </table>
         </div>
       );
-    }.bind(this)) : [];
+    }) : [];
 
     return (
       <div>
@@ -190,70 +187,68 @@ var ApiDocView = React.createClass({
       </div>
     );
   }
-});
+}
 
-var AppMainView = React.createClass({
+export default class AppMainView extends React.Component {
 
-  currentApi: null,
-  anchorOffsets: [],
-
-  getInitialState: function() {
-    return {
+  constructor(props) {
+    super(props);
+    this.state = {
       apiData: [],
       apiClass: '',
       apiMethod: ''
     };
-  },
+    this.currentApi = null;
+    this.anchorOffsets = [];
+  }
 
-  componentDidMount: function() {
-    window.addEventListener("scroll", this.handleScroll);
+  componentDidMount() {
+    this.stickyInstance = $('.ui.sticky');
+    window.addEventListener('scroll', this.handleScroll.bind(this));
 
-    FSAPI.readFile("restapi.json::1", { encoding: "ascii" }, {
-      onSuccess: function(data) {
-        if (data) {
-          var apidata = JSON.parse(data);
-          var defclass = apidata.length > 0 ? apidata[0].apiclass : "";
-          var defmethod =
-                (apidata[0].apimethods && apidata[0].apimethods.length > 0)
-                  ? apidata[0].apimethods[0].apimethod.name : "";
+    FSAPI.readFile('restapi.json::1', { encoding: 'ascii' })
+    .then((promise) => {
+      if (promise.data) {
+        var apidata = JSON.parse(promise.data);
+        var defclass = apidata.length > 0 ? apidata[0].apiclass : '';
+        var defmethod =
+        (apidata[0].apimethods && apidata[0].apimethods.length > 0)
+        ? apidata[0].apimethods[0].apimethod.name : '';
 
-          this.setState({
-            apiData: apidata,
-            apiClass: defclass,
-            apiMethod: defmethod
-          });
+        this.setState({
+          apiData: apidata,
+          apiClass: defclass,
+          apiMethod: defmethod
+        });
 
-          $(".ui.sticky").sticky({
-            context: "#context",
-            offset: 32,
-            bottomOffset: 32
-          });
-        }
-      }.bind(this),
-
-      onError: function(error) {
-        this.setState({ apiData: [], apiClass: "", apiMethod: "" });
-      }.bind(this)
+        this.stickyInstance.sticky({
+          context: '#context',
+          offset: 32,
+          bottomOffset: 32,
+          observeChanges: true
+        });
+      }
+    })
+    .catch((error) => {
+      this.setState({ apiData: [], apiClass: '', apiMethod: '' });
     });
-  },
+  }
 
-  shouldComponentUpdate: function (nextProps, nextState) {
+  shouldComponentUpdate(nextProps, nextState) {
     if (nextState.apiClass !== this.state.apiClass ||
         nextState.apiMethod !== this.state.apiMethod)
       return true;
     else
       return false;
-  },
+  }
 
-  componentDidUpdate: function (prevProps, prevState) {
+  componentDidUpdate(prevProps, prevState) {
     var offsets = [];
-
-    $(".ui.sticky").sticky("refresh");
 
     if (this.currentApi && this.currentApi.apiclass === this.state.apiClass) {
       this.currentApi.apimethods.map(function(method) {
-        var top = $("#" + method.apimethod.name).offset().top;
-        var height = $("#table-" + method.apimethod.name).height();
+        var top = $('#' + method.apimethod.name).offset().top;
+        var height = $('#table-' + method.apimethod.name).height();
         offsets.push({
           method: method.apimethod.name,
           offset: top,
@@ -263,71 +258,16 @@ var AppMainView = React.createClass({
     }
 
     this.anchorOffsets = offsets;
-  },
+  }
 
-  render: function() {
-    var apiMenuItems = this.state.apiData.map(function(api) {
-      if (this.state.apiClass === api.apiclass)
-        this.currentApi = api;
-
-      var apiMethodItems = api.apimethods.map(function(method) {
-        var itemClass = (this.state.apiClass === api.apiclass
-                 && this.state.apiMethod === method.apimethod.name)
-                  ? "active item" : "item";
-        return (
-          <a className={itemClass}
-                   key={method.apimethod.name}
-                  href={"#" + method.apimethod.name}
-               onClick={function() {
-                  this.handleApiClick(api.apiclass, method.apimethod.name);
-               }.bind(this)}>
-            {method.apimethod.name}
-          </a>
-        );
-      }.bind(this));
-
-      return (
-        <div className="api-menu" key={api.apiclass}>
-          <a className="ui inverted header" href={"#top"} onClick={function() {
-            this.handleApiClick(
-              api.apiclass,
-              api.apimethods.length > 0
-                ? api.apimethods[0].apimethod.name
-                : ""
-            );
-          }.bind(this)}>{api.apiclass}</a>
-
-          <div className="ui inverted secondary vertical pointing menu"
-               style={{ display: this.state.apiClass === api.apiclass
-                                  ? "block" : "none" }}>
-            {apiMethodItems}
-          </div>
-        </div>
-      );
-    }.bind(this));
-
-    return (
-      <div className="ui segment">
-        <div className="ui left rail">
-          <div className="ui sticky">
-            {apiMenuItems}
-          </div>
-        </div>
-        <div id="context">
-          <ApiDocView api={this.currentApi} currentMethod={this.state.apiMethod} />
-        </div>
-      </div>
-    );
-  },
-
-  handleApiClick: function(apiclass, apimethod) {
+  handleApiClick(apiclass, apimethod) {
     this.setState({
       apiClass: apiclass,
       apiMethod: apimethod
     });
-  },
+  }
 
-  handleScroll: function(event) {
+  handleScroll(event) {
     var scrollTop = $(window).scrollTop();
     var scrollBottom = scrollTop + $(window).height();
     var lastAnchor = this.anchorOffsets[this.anchorOffsets.length - 1];
@@ -343,6 +283,63 @@ var AppMainView = React.createClass({
       }
     }
   }
-});
 
-module.exports = AppMainView;
+  render() {
+    var apiMenuItems = this.state.apiData.map((api) => {
+      if (this.state.apiClass === api.apiclass)
+        this.currentApi = api;
+
+      var apiMethodItems = api.apimethods.map((method) => {
+        var itemClass = (
+          this.state.apiClass === api.apiclass &&
+          this.state.apiMethod === method.apimethod.name
+        ) ? 'active item' : 'item';
+        return (
+          <a
+            className={itemClass}
+            key={method.apimethod.name}
+            href={'#' + method.apimethod.name}
+            onClick={() => {
+              this.handleApiClick(api.apiclass, method.apimethod.name);
+            }}
+          >
+            {method.apimethod.name}
+          </a>
+        );
+      });
+
+      return (
+        <div className="api-menu" key={api.apiclass}>
+          <a className="ui inverted header" href={'#top'} onClick={() => {
+            this.handleApiClick(
+              api.apiclass,
+              api.apimethods.length > 0 ? api.apimethods[0].apimethod.name : ''
+            );
+          }}>{api.apiclass}</a>
+
+          <div
+            className="ui inverted secondary vertical pointing menu"
+            style={{
+              display: this.state.apiClass === api.apiclass ? 'block' : 'none'
+            }}
+          >
+            {apiMethodItems}
+          </div>
+        </div>
+      );
+    });
+
+    return (
+      <div className="ui segment">
+        <div className="ui left rail">
+          <div className="ui sticky">
+            {apiMenuItems}
+          </div>
+        </div>
+        <div id="context">
+          <ApiDocView api={this.currentApi} currentMethod={this.state.apiMethod} />
+        </div>
+      </div>
+    );
+  }
+}

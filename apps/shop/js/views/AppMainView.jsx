@@ -1,7 +1,6 @@
-var ShopSectionMyApp   = require('./ShopSectionMyApp.jsx');
+var ShopSectionMyApp = require('./ShopSectionMyApp.jsx');
 
 var AppMainView = React.createClass({
-
   render: function() {
     return (
       <div className="shop-section">

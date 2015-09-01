@@ -1,5 +1,18 @@
 export default class ListViewItem extends React.Component {
 
+  static propTypes = {
+    onSelect: React.PropTypes.func.isRequired
+  };
+
+  static defaultProps = {
+    index: -1,
+    active: false,
+    disabled: false,
+    titleText: '',
+    subtitleText: '',
+    detailText: ''
+  };
+
   onItemClick() {
     this.props.onSelect(this.props.index);
   }
@@ -20,16 +33,3 @@ export default class ListViewItem extends React.Component {
     );
   }
 }
-
-ListViewItem.propTypes = {
-  onSelect: React.PropTypes.func.isRequired
-};
-
-ListViewItem.defaultProps = {
-  index: -1,
-  active: false,
-  disabled: false,
-  titleText: '',
-  subtitleText: '',
-  detailText: ''
-};

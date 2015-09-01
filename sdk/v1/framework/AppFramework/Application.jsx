@@ -6,7 +6,7 @@ import Menubar from 'lib/cutie/Menubar';
 import Sidebar from 'lib/cutie/Sidebar';
 import DebugView from 'lib/cutie/DebugView';
 import GritterView from 'lib/cutie/GritterView';
-import LoginView from 'lib/cutie/LoginView';
+import LoginView from './LoginView';
 
 export default class Application {
 
@@ -16,7 +16,7 @@ export default class Application {
       debug: false
     };
 
-    StorageAPI.onDiskEvent(function(event) {
+    StorageAPI.onDiskEvent((event) => {
       if (event.eventType === "INSERT") {
         GritterView.add(
           "New Disk",

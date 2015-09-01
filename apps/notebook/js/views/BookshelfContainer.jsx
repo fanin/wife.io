@@ -1,18 +1,19 @@
-var assign                   = require("object-assign");
-var StorageAPI               = require('lib/api/StorageAPI');
-var DialogController         = require("lib/cutie/Dialog");
-var DropdownMenu             = require("lib/cutie/DropdownMenu");
-var JqTreeViewController     = require("./JqTreeViewController.jsx");
-var InputModalViewController = require("./InputModalViewController.jsx");
-var NotebookConstants        = require("../constants/NotebookConstants");
-var NotebookActionConstants  = require("../constants/NotebookActionConstants");
-var DatabaseStore            = require("../stores/DatabaseStore");
-var DatabaseActionCreators   = require("../actions/DatabaseActionCreators");
+import assign from 'object-assign';
+import StorageAPI from 'lib/api/StorageAPI';
+import Dialog from 'lib/cutie/Dialog';
+import Form from 'lib/cutie/Form';
+import Input from 'lib/cutie/Input';
+import DropdownMenu from 'lib/cutie/DropdownMenu';
+import JqTreeViewController from './JqTreeViewController.jsx';
+import NotebookConstants from '../constants/NotebookConstants';
+import NotebookActionConstants from '../constants/NotebookActionConstants';
+import DatabaseStore from '../stores/DatabaseStore';
+import DatabaseActionCreators from '../actions/DatabaseActionCreators';
 
 var notebookInputRules = [
   {
-    type   : "empty",
-    prompt : "Notebook name is empty"
+    type: "empty",
+    prompt: "Notebook name is empty"
   },
   /*
   {
@@ -22,11 +23,11 @@ var notebookInputRules = [
   */
 ];
 
-var BookshelfContainer = React.createClass({
-  _timerSaveTreeDelay: null,
+export default class BookshelfContainer extends React.Component {
 
-  getInitialState() {
-    return {
+  constructor(props) {
+    super(props);
+    this.state = {
       disks: [],
       diskInUse: null,
       treeData: [],
@@ -36,63 +37,62 @@ var BookshelfContainer = React.createClass({
       clearingSearch: false,
       inputDialogTitle: "",
       inputDialogDefaultValue: "",
-      inputDialogOnAffirmative: null,
+      onInputDialogAffirmative: null,
       disableMenuItemNew: false,
       disableMenuItemRename: true,
       disableMenuItemTrash: true,
       disableMenuItemSearch: false
     };
-  },
+    this._timerSaveTreeDelay = null;
+  }
 
   componentWillMount() {
-    DatabaseStore.addChangeListener(this.onDatabaseChange);
+    DatabaseStore.addChangeListener(this.onDatabaseChange.bind(this));
 
     $.fn.form.settings.rules.hasSpecialChar = function(text) {
       var regExp = /[`~,.<>\-;':"/[\]|{}()=+!@#$%^&*]/;
       return !regExp.test(text);
     };
 
-    StorageAPI.onDiskEvent(function(event) {
+    StorageAPI.onDiskEvent((event) => {
       if (event.eventType === "INSERT") {
         StorageAPI.list({
-          onSuccess: function(disks) {
-            this.setState({ disks: disks });
-          }.bind(this)
+          onSuccess: (disks) => { this.setState({ disks: disks }) }
         });
       }
       else if (event.eventType === "REMOVE") {
         StorageAPI.list({
-          onSuccess: function(disks) {
+          onSuccess: (disks) => {
             this.setState({ disks: disks });
             if (event.disk.uuid === this.state.diskInUse.uuid) {
               DatabaseActionCreators.openDatabase(disks[0]);
             }
-          }.bind(this)
+          }
         });
       }
-    }.bind(this));
-  },
+    });
+  }
 
   componentDidMount() {
     StorageAPI.list({
-      onSuccess: function(disks) {
+      onSuccess: (disks) => {
         this.setState({ disks: disks });
         DatabaseActionCreators.openDatabase(disks[0]);
-      }.bind(this),
+      },
 
-      onError: function(error) {
+      onError: (error) => {
         this.showErrorAlert("Storage Error", "Error: " + args.error);
         DatabaseActionCreators.closeDatabase();
-      }.bind(this)
+      }
     });
-  },
+  }
 
   componentWillUnmount() {
     DatabaseStore.removeChangeListener(this.onDatabaseChange);
-  },
+  }
 
   render() {
-    var diskMenuDropdownItems = this.state.disks.map(function(disk) {
+    var diskMenuDropdownItems = this.state.disks.map((disk) => {
       var itemIconClass =
         (this.state.diskInUse && this.state.diskInUse.uuid === disk.uuid)
           ? "check" : "";
@@ -102,8 +102,7 @@ var BookshelfContainer = React.createClass({
         value: disk.uuid,
         icon: itemIconClass
       };
-
-    }.bind(this));
+    });
 
     var moreOpDropdownItems = [
       {
@@ -111,14 +110,14 @@ var BookshelfContainer = React.createClass({
         value: "rename",
         icon:  "write",
         disabled: this.state.disableMenuItemRename,
-        onSelect: this.showRenameInputDialog
+        onSelect: this.showRenameInputDialog.bind(this)
       },
       {
         text:  "Trash",
         value: "trash",
         icon:  "trash outline",
         disabled: this.state.disableMenuItemTrash,
-        onSelect: this.showTrashConfirmDialog
+        onSelect: this.showTrashConfirmDialog.bind(this)
       },
       {
         text:  this.state.notebookSearchString ? "Clear search" : "Search",
@@ -126,105 +125,220 @@ var BookshelfContainer = React.createClass({
         icon:  "search",
         disabled: this.state.disableMenuItemSearch,
         onSelect: this.state.notebookSearchString
-                    ? this.clearSearch
-                    : this.showSearchInputDialog
+                    ? this.clearSearch.bind(this)
+                    : this.showSearchInputDialog.bind(this)
       }
     ];
+
+    var inputForm = (
+      <Form
+        ref="inputForm"
+        fields={{
+          name: {
+            identifier: 'name',
+            rules: notebookInputRules
+          }
+        }}
+        dataType="Array"
+        onValidate={(hasError, formData) => {
+          if (!hasError) {
+            this.state.onInputDialogAffirmative(formData);
+            this.refs.editInputViewController.hide();
+            this.refs.inputForm.clear();
+          }
+        }}
+      >
+        <div className="field">
+          <Input
+            type="text"
+            name="name"
+            defaultValue={this.state.inputDialogDefaultValue}
+          />
+        </div>
+        <div className="ui error message" />
+      </Form>
+    );
+
+    var searchForm = (
+      <Form
+        ref="searchForm"
+        fields={{
+          name: {
+            identifier: 'name',
+            rules: notebookInputRules
+          }
+        }}
+        dataType="Array"
+        onValidate={(hasError, formData) => {
+          if (!hasError) {
+            this.onSearchNotebook(formData);
+            this.refs.searchInputViewController.hide();
+          }
+        }}
+      >
+        <div className="field">
+          <Input type="text" name="name" />
+        </div>
+        <div className="ui error message" />
+      </Form>
+    );
 
     return (
       <div className="nb-column-container">
         <div className="ui menu nb-column-toolbar">
-          <DropdownMenu itemDataSource = {diskMenuDropdownItems}
-                       ref = "diskSelectDropdown"
-                     iconClass = "disk outline"
-                  useSelectBar = {true}
-                    onChange = {this.onDiskMenuSelect} />
+          <DropdownMenu
+            itemDataSource={diskMenuDropdownItems}
+            ref="diskSelectDropdown"
+            iconClass="disk outline"
+            useSelectBar={true}
+            onChange={this.onDiskMenuSelect.bind(this)}
+          />
 
-          <div className = {this.state.disableMenuItemNew
-                              ? "ui pointing link item disabled"
-                              : "ui pointing link item"}
-               onClick = {this.showCreateNotebookInputDialog}>
-            <i className = "plus icon"></i>
+          <div
+            className={this.state.disableMenuItemNew
+                        ? "ui pointing link item disabled"
+                        : "ui pointing link item"}
+            onClick={this.showCreateNotebookInputDialog.bind(this)}
+          >
+            <i className="plus icon"></i>
             New
           </div>
 
-          <DropdownMenu itemDataSource = {moreOpDropdownItems}
-                       ref = "moreOpDropdown"
-                     iconClass = "ellipsis vertical"
-                  useSelectBar = {false} />
+          <DropdownMenu
+            itemDataSource={moreOpDropdownItems}
+            ref="moreOpDropdown"
+            iconClass="ellipsis vertical"
+            useSelectBar={false}
+          />
         </div>
 
         <div className="nb-column-content">
-          <JqTreeViewController ref = "treeViewController"
-                     data = {this.state.treeData}
-                   exclusives = {this.state.exclusiveTreeNodes}
-                 onCreateNode = {this.onTreeCreateNode}
-                 onCreateFolder = {this.showCreateStackInputDialog}
-                     onOpen = {this.saveTree}
-                    onClose = {this.saveTree}
-                     onMove = {this.saveTree}
-                   onSelect = {this.onTreeSelect}
-                  onRefresh = {this.onTreeRefresh} />
+          <JqTreeViewController
+            ref="treeViewController"
+            data={this.state.treeData}
+            exclusives={this.state.exclusiveTreeNodes}
+            onCreateNode={this.onTreeCreateNode.bind(this)}
+            onCreateFolder={this.showCreateStackInputDialog.bind(this)}
+            onOpen={this.saveTree.bind(this)}
+            onClose={this.saveTree.bind(this)}
+            onMove={this.saveTree.bind(this)}
+            onSelect={this.onTreeSelect.bind(this)}
+            onRefresh={this.onTreeRefresh.bind(this)}
+          />
         </div>
 
-        <InputModalViewController ref = "editInputViewController"
-                   identifier = "edit-input-view"
-                    title = {this.state.inputDialogTitle}
-                 defaultValue = {this.state.inputDialogDefaultValue}
-                    rules = {notebookInputRules}
-              onActionAffirmative = {this.state.inputDialogOnAffirmative} />
+        <Dialog
+          ref="editInputViewController"
+          title={ this.state.inputDialogTitle }
+          customView={ inputForm }
+          actionButtons={
+            [{
+              title: "Cancel",
+              iconType: "remove",
+              color: "red",
+              actionType: "deny"
+            },
+            {
+              title: "OK",
+              iconType: "checkmark",
+              color: "green",
+              actionType: "approve"
+            }]
+          }
+          onApprove={() => {
+            this.refs.inputForm.submit();
+            return false;
+          }}
+          onDeny={() => {
+            this.refs.inputForm.clear();
+          }}
+          onShow={() => {
+            this.refs.inputForm.focus();
+          }}
+        />
 
-        <InputModalViewController ref = "searchInputViewController"
-                   identifier = "search-input-view"
-                    title = "Search notebook"
-                 defaultValue = ""
-                    rules = {notebookInputRules}
-              onActionAffirmative = {this.onSearchNotebook} />
+        <Dialog
+          ref="searchInputViewController"
+          title="Search notebook"
+          customView={ searchForm }
+          actionButtons={
+            [{
+              title: "Cancel",
+              iconType: "remove",
+              color: "red",
+              actionType: "deny"
+            },
+            {
+              title: "OK",
+              iconType: "checkmark",
+              color: "green",
+              actionType: "approve"
+            }]
+          }
+          onApprove={() => {
+            this.refs.searchForm.submit();
+            return false;
+          }}
+          onDeny={() => {
+            this.refs.searchForm.clear();
+          }}
+          onShow={() => {
+            this.refs.searchForm.focus();
+          }}
+        />
 
-        <DialogController ref = "confirmDialog"
-                title = {this.state.confirmTitle}
-                message = {this.state.confirmMessage}
-            actionButtons = {[{
-                      title: "No",
-                      iconType: "remove",
-                      color: "red",
-                      actionType: "deny"
-                    },
-                    {
-                      title: "Yes",
-                      iconType: "checkmark",
-                      color: "green",
-                      actionType: "approve"
-                    }]}
-               onApprove = {this.trashSelected} />
+        <Dialog
+          ref="confirmDialog"
+          title={this.state.confirmTitle}
+          message={this.state.confirmMessage}
+          actionButtons={
+            [{
+              title: "No",
+              iconType: "remove",
+              color: "red",
+              actionType: "deny"
+            },
+            {
+              title: "Yes",
+              iconType: "checkmark",
+              color: "green",
+              actionType: "approve"
+            }]
+          }
+          onApprove={this.trashSelected.bind(this)}
+        />
 
-        <DialogController ref = "alertDialog"
-                title = {this.state.errorTitle}
-                message = {this.state.errorMessage}
-            actionButtons = {[{
-                      title: "Got It",
-                      color: "red",
-                      actionType: "approve",
-                    }]}
-           actionButtonsAlign = "center" />
+        <Dialog
+          ref="alertDialog"
+          title={this.state.errorTitle}
+          message={this.state.errorMessage}
+          actionButtons={
+            [{
+              title: "Got It",
+              color: "red",
+              actionType: "approve",
+            }]
+          }
+          actionButtonsAlign="center"
+        />
       </div>
     );
-  },
+  }
 
   onDiskMenuSelect(value, text) {
     var _disk = StorageAPI.getDisk(value, {
-      onSuccess: function(disk) {
+      onSuccess: (disk) => {
         DatabaseActionCreators.closeDatabase();
         DatabaseActionCreators.openDatabase(disk);
-      }.bind(this),
+      },
 
-      onError: function(error) {
+      onError: (error) => {
         this.showErrorAlert(
           "Storage Error", "Select disk '" + text + "' error:\n" + error.message
         );
-      }.bind(this)
+      }
     });
-  },
+  }
 
   onDatabaseChange(change) {
     var _searchNode;
@@ -285,12 +399,14 @@ var BookshelfContainer = React.createClass({
             DatabaseStore.getSuperNotebookNode()
           );
           _searchNode = this.refs.treeViewController.getNodeById(
-                    NotebookConstants.DATABASE_NOTEBOOK_SEARCH_ID);
+            NotebookConstants.DATABASE_NOTEBOOK_SEARCH_ID
+          );
           this.refs.treeViewController.nodeSelect(_searchNode);
         }
         else {
           _searchNode = this.refs.treeViewController.getNodeById(
-                    NotebookConstants.DATABASE_NOTEBOOK_SEARCH_ID);
+            NotebookConstants.DATABASE_NOTEBOOK_SEARCH_ID
+          );
           if (_searchNode) {
             this.refs.treeViewController.nodeRemove(_searchNode);
             this.refs.treeViewController.nodeSelect(
@@ -310,11 +426,11 @@ var BookshelfContainer = React.createClass({
         );
         break;
     }
-  },
+  }
 
   onTreeCreateNode(node) {
     //
-  },
+  }
 
   saveTree(node, immediately) {
     if (this.state.notebookSearchString)
@@ -323,35 +439,37 @@ var BookshelfContainer = React.createClass({
     if (this._timerSaveTreeDelay)
       clearTimeout(this._timerSaveTreeDelay);
 
-    this._timerSaveTreeDelay = setTimeout(function() {
+    this._timerSaveTreeDelay = setTimeout(() => {
       DatabaseActionCreators.saveTree(
         this.refs.treeViewController.getTreeData(), 0
       );
       this._timerSaveTreeDelay = null;
-    }.bind(this), immediately ? 0 : 1000);
-  },
+    }, immediately ? 0 : 1000);
+  }
 
-  onCreateStack(name) {
-    DatabaseActionCreators.createStack(name);
-  },
+  onCreateStack(formData) {
+    DatabaseActionCreators.createStack(formData[0].value);
+  }
 
-  onCreateNotebook(name) {
-    DatabaseActionCreators.createNotebook(name);
-  },
+  onCreateNotebook(formData) {
+    DatabaseActionCreators.createNotebook(formData[0].value);
+  }
 
-  onRenameStack(name) {
+  onRenameStack(formData) {
     var node = this.refs.treeViewController.getSelectedNode();
-    this.refs.treeViewController.nodeRename(node, name);
+    this.refs.treeViewController.nodeRename(node, formData[0].value);
     this.saveTree();
-  },
+  }
 
-  onRenameNotebook(name) {
+  onRenameNotebook(formData) {
     var node = this.refs.treeViewController.getSelectedNode();
-    this.refs.treeViewController.nodeRename(node, name);
+    this.refs.treeViewController.nodeRename(node, formData[0].value);
     this.saveTree();
-  },
+  }
 
-  onSearchNotebook(name) {
+  onSearchNotebook(formData) {
+    var name = formData[0].value;
+
     function clone(obj) {
       var copy;
 
@@ -422,18 +540,18 @@ var BookshelfContainer = React.createClass({
       notebookSearchString: name,
       treeData: _searchTreeData
     });
-  },
+  }
 
   showCreateStackInputDialog(createFolderHelper) {
     this.treeViewCreateFolderHelper = createFolderHelper;
     this.setState({
       inputDialogTitle: "Create a stack",
       inputDialogDefaultValue: "",
-      inputDialogOnAffirmative: this.onCreateStack
+      onInputDialogAffirmative: this.onCreateStack.bind(this)
     });
 
     this.refs.editInputViewController.show();
-  },
+  }
 
   showCreateNotebookInputDialog() {
     if (this.state.disableMenuItemNew) return;
@@ -441,11 +559,11 @@ var BookshelfContainer = React.createClass({
     this.setState({
       inputDialogTitle: "Create a notebook",
       inputDialogDefaultValue: "",
-      inputDialogOnAffirmative: this.onCreateNotebook
+      onInputDialogAffirmative: this.onCreateNotebook.bind(this)
     });
 
     this.refs.editInputViewController.show();
-  },
+  }
 
   showRenameInputDialog() {
     var node = this.refs.treeViewController.getSelectedNode();
@@ -454,7 +572,7 @@ var BookshelfContainer = React.createClass({
       this.setState({
         inputDialogTitle: "Rename a stack",
         inputDialogDefaultValue: node.name,
-        inputDialogOnAffirmative: this.onRenameStack
+        onInputDialogAffirmative: this.onRenameStack.bind(this)
       });
 
       this.refs.editInputViewController.show();
@@ -463,12 +581,12 @@ var BookshelfContainer = React.createClass({
       this.setState({
         inputDialogTitle: "Rename a notebook",
         inputDialogDefaultValue: node.name,
-        inputDialogOnAffirmative: this.onRenameNotebook
+        onInputDialogAffirmative: this.onRenameNotebook.bind(this)
       });
 
       this.refs.editInputViewController.show();
     }
-  },
+  }
 
   showTrashConfirmDialog() {
     var node = this.refs.treeViewController.getSelectedNode();
@@ -488,11 +606,11 @@ var BookshelfContainer = React.createClass({
     }
 
     this.refs.confirmDialog.show();
-  },
+  }
 
   showSearchInputDialog() {
     this.refs.searchInputViewController.show();
-  },
+  }
 
   clearSearch() {
     this.setState({
@@ -500,7 +618,7 @@ var BookshelfContainer = React.createClass({
       notebookSearchString: "",
       treeData: DatabaseStore.getTreeData()
     });
-  },
+  }
 
   showErrorAlert(errorTitle, errorMessage) {
     this.setState({
@@ -509,7 +627,7 @@ var BookshelfContainer = React.createClass({
     });
 
     this.refs.alertDialog.show();
-  },
+  }
 
   trashSelected() {
     var node = this.refs.treeViewController.getSelectedNode();
@@ -523,7 +641,7 @@ var BookshelfContainer = React.createClass({
     else {
       DatabaseActionCreators.trashNotebook(node);
     }
-  },
+  }
 
   onTreeSelect(node) {
     if (!node) return;
@@ -572,7 +690,7 @@ var BookshelfContainer = React.createClass({
     setTimeout(function() {
       DatabaseActionCreators.selectNotebook(node);
     }, 1);
-  },
+  }
 
   onTreeRefresh() {
     if (this.state.loadingSearch) {
@@ -594,6 +712,4 @@ var BookshelfContainer = React.createClass({
     }
   }
 
-});
-
-module.exports = BookshelfContainer;
+}

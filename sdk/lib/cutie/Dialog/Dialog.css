@@ -1,3 +1,7 @@
+.modal > .header {
+  background: #f9fafb !important;
+}
+
 .modal > .content > .message > .header {
   white-space: pre-wrap;
 }

@@ -87,7 +87,7 @@
 {
     position: absolute;
     z-index: -9999;
-    top: -40px; /* minus #app-main-view:padding-top to align to basement */
+    top: 0;
     left: 0;
     height: 50px;
     background-color: #fff;

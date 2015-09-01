@@ -2,6 +2,21 @@
 
 export default class DialogController extends React.Component {
 
+  static defaultProps = {
+    size: "small",
+    title: "",
+    image: "",
+    message: "",
+    customView: null,
+    actionButtons: [],
+    actionButtonsAlign: "right",
+    closable: false,
+    onShow: () => {},
+    onHidden: () => {},
+    onApprove: () => {},
+    onDeny: () => {}
+  };
+
   show() {
     if (!this.modalInstance)
       this.modalInstance = $(React.findDOMNode(this)).modal({
@@ -51,7 +66,11 @@ export default class DialogController extends React.Component {
         <div
           className={buttonClass}
           key={button.title}
-          onClick={function(e) { e.stopPropagation() }}>
+          onClick={(e) => {
+            e.stopPropagation();
+            button.onClick && button.onClick()
+          }}
+        >
           {buttonIcon}
           {button.title}
         </div>
@@ -79,18 +98,3 @@ export default class DialogController extends React.Component {
     );
   }
 }
-
-DialogController.defaultProps = {
-  size: "small",
-  title: "",
-  image: "",
-  message: "",
-  customView: null,
-  actionButtons: [],
-  actionButtonsAlign: "right",
-  closable: false,
-  onShow: function() {},
-  onHidden: function() {},
-  onApprove: function() {},
-  onDeny: function() {}
-};

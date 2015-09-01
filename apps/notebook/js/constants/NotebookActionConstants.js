@@ -1,6 +1,6 @@
-var keyMirror = require('keymirror');
+import keyMirror from 'keymirror';
 
-module.exports = keyMirror({
+export default keyMirror({
   /* Database - Notebook */
   NOTEBOOK_DATABASE_OPEN: null,
   NOTEBOOK_DATABASE_CLOSE: null,

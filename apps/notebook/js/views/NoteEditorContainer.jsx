@@ -1,17 +1,19 @@
-var DatabaseActionCreators  = require("../actions/DatabaseActionCreators");
-var NotebookConstants       = require("../constants/NotebookConstants");
-var NotebookActionConstants = require("../constants/NotebookActionConstants");
-var DatabaseStore           = require("../stores/DatabaseStore");
-var GritterView             = require("lib/cutie/GritterView");
-var DialogController        = require("lib/cutie/Dialog");
+import DatabaseActionCreators from '../actions/DatabaseActionCreators';
+import NotebookConstants from '../constants/NotebookConstants';
+import NotebookActionConstants from '../constants/NotebookActionConstants';
+import DatabaseStore from '../stores/DatabaseStore';
+import GritterView from 'lib/cutie/GritterView';
+import Dialog from 'lib/cutie/Dialog';
 
-var ProgressBarView = React.createClass({
-  getInitialState() {
-    return {
+class ProgressBarView extends React.Component {
+
+  constructor(props) {
+    super(props);
+    this.state = {
       progress: 0,
       label: ""
-    };
-  },
+    }
+  }
 
   render() {
     return (
@@ -21,31 +23,30 @@ var ProgressBarView = React.createClass({
       </div>
     );
   }
-});
+}
 
-var FileUploadView = React.createClass({
-  getDefaultProps() {
-    return {
-      uploadFiles: [],
-      onAddFile: function() {},
-      onRemoveFile: function(file) {}
-    };
-  },
+class FileUploadView extends React.Component {
+
+  static defaultProps = {
+    uploadFiles: [],
+    onAddFile: function() {},
+    onRemoveFile: function(file) {}
+  };
 
   render() {
-    var fileTableRows = this.props.uploadFiles.map(function(file) {
+    var fileTableRows = this.props.uploadFiles.map((file) => {
       return (
         <tr key={file.name}>
           <td>{file.name}</td>
           <td className="center aligned collapsing">{file.type}</td>
           <td className="center aligned collapsing">
-            <div onClick={ function() { this.props.onRemoveFile(file) }.bind(this) }>
+            <div onClick={() => { this.props.onRemoveFile(file) }}>
               <i className="remove circle link big red icon" />
             </div>
           </td>
         </tr>
       );
-    }.bind(this));
+    });
 
     return (
       <table className="ui celled striped table">
@@ -74,9 +75,9 @@ var FileUploadView = React.createClass({
       </table>
     );
   }
-});
+}
 
-var NotebookEditor = React.createClass({
+class NotebookEditor extends React.Component {
 
   componentDidMount() {
     // Override getUrl() due to ckeditor.js is included by apiutil.include() api
@@ -90,18 +91,20 @@ var NotebookEditor = React.createClass({
       else if (
         resource.indexOf(CKEDITOR.basePath) == 0 &&
         resource.indexOf('lib/ckeditor/') == -1
-      )
+      ) {
         resource = CKEDITOR.basePath
                     + resource.replace(CKEDITOR.basePath, 'lib/ckeditor/');
+      }
 
       // Add the timestamp, except for directories.
       if (
         CKEDITOR.timestamp &&
         resource.charAt(resource.length - 1 ) != '/' &&
         !( /[&?]t=/ ).test(resource)
-      )
+      ) {
         resource +=
           (resource.indexOf( '?' ) >= 0 ? '&' : '?') + 't=' + CKEDITOR.timestamp;
+      }
 
       return resource;
     };
@@ -141,11 +144,11 @@ var NotebookEditor = React.createClass({
           'RemoveFormat' ]
       ]
     });
-  },
+  }
 
   shouldComponentUpdate(nextProps, nextState) {
     return false;
-  },
+  }
 
   render() {
     return (
@@ -154,37 +157,36 @@ var NotebookEditor = React.createClass({
       </div>
     );
   }
-});
+}
 
-var NoteEditorContainer = React.createClass({
-  editorInstance: null,
-  titleInputInstance: null,
-  searchInputInstance: null,
-  _setDataDelayTimer: null,
-  _flushTimer: null,
-  _flushAfterDelay: 5000,
-  _dragStartInsideEditor: false,
-  _unsupportFiles: [],
+export default class NoteEditorContainer extends React.Component {
 
-  getDefaultProps() {
-    return {
-      takeSnapshot: false,
-      snapshotImageWidth: 800
-    };
-  },
+  static defaultProps = {
+    takeSnapshot: false,
+    snapshotImageWidth: 800
+  };
 
-  getInitialState() {
-    return {
+  constructor(props) {
+    super(props);
+    this.state = {
       searchString: "",
       errorTitle: "",
       errorMessage: "",
       uploadFiles: []
     };
-  },
+    this.editorInstance = null;
+    this.titleInputInstance = null;
+    this.searchInputInstance = null;
+    this._setDataDelayTimer = null;
+    this._flushTimer = null;
+    this._flushAfterDelay = 5000;
+    this._dragStartInsideEditor = false;
+    this._unsupportFiles = [];
+  }
 
   componentWillMount() {
-    DatabaseStore.addChangeListener(this.onDatabaseChange);
-  },
+    DatabaseStore.addChangeListener(this.onDatabaseChange.bind(this));
+  }
 
   componentDidMount() {
     this.titleContainerInstance = $(".nb-column-toolbar-title-container");
@@ -199,49 +201,49 @@ var NoteEditorContainer = React.createClass({
     this.snapshotContainerInstance.width(this.props.snapshotImageWidth);
 
     /* Prevent drag and drop on non-editor components */
-    $(document).on('dragenter', function(e) {
+    $(document).on('dragenter', (e) => {
       e.stopPropagation();
       e.stopImmediatePropagation();
       e.preventDefault();
       return false;
     });
 
-    $(document).on('dragover', function(e) {
+    $(document).on('dragover', (e) => {
       e.stopPropagation();
       e.stopImmediatePropagation();
       e.preventDefault();
       return false;
     });
 
-    $(document).on('drop', function(e) {
+    $(document).on('drop', (e) => {
       e.stopPropagation();
       e.stopImmediatePropagation();
       e.preventDefault();
       return false;
     });
 
-    this.searchInputInstance.keypress(function(event) {
-      var keycode = (event.keyCode ? event.keyCode : event.which);
+    this.searchInputInstance.keypress((e) => {
+      var keycode = (e.keyCode ? e.keyCode : e.which);
       if (keycode === 13)
         this.onSearch();
       return true;
-    }.bind(this));
+    });
 
-    CKEDITOR.on("instanceReady", function(event) {
-      var editor = event.editor;
+    CKEDITOR.on("instanceReady", (e) => {
+      var editor = e.editor;
 
       this.editorInstance = editor;
 
-      this.titleInputInstance.on('change keyup paste', function() {
+      this.titleInputInstance.on('change keyup paste', () => {
         this.cacheDirtyNote();
-      }.bind(this));
+      });
 
-      this.titleInputInstance.focusout(function() {
+      this.titleInputInstance.focusout(() => {
         this.saveNote();
-      }.bind(this));
+      });
 
-      editor.on("contentDom", function() {
-        editor.document.on("drop", function(e) {
+      editor.on("contentDom", () => {
+        editor.document.on("drop", (e) => {
           if (this._dragStartInsideEditor) {
             this._dragStartInsideEditor = false;
             /**
@@ -263,25 +265,25 @@ var NoteEditorContainer = React.createClass({
           DatabaseActionCreators.attachFilesToNote(
             DatabaseStore.getSelectedNoteDescriptor(), files
           );
-        }.bind(this));
+        });
 
-        editor.document.on("dragover", function(e) {
+        editor.document.on("dragover", (e) => {
           editor.focus();
         });
         // For IE
         //editor.document.getBody().on("drop", dropFiles);
         //editor.document.getBody().on("dragover", dragoverEffect);
 
-        editor.document.on("dragstart", function() {
+        editor.document.on("dragstart", () => {
           this._dragStartInsideEditor = true;
-        }.bind(this));
+        });
 
         //editor.focus();
-      }.bind(this));
+      });
 
-      editor.on("paste", function(event) {
-        event.stop();
-        var data = event.data.dataValue;
+      editor.on("paste", (e) => {
+        e.stop();
+        var data = e.data.dataValue;
         /*
          * Remove single &nbsp; between tags on paste to prevent problems from
          * ckeditor parsing the html content
@@ -289,40 +291,40 @@ var NoteEditorContainer = React.createClass({
         editor.insertHtml(data.replace(/\>&nbsp;\</gi,'\>\<'));
       });
 
-      editor.on("change", function() {
+      editor.on("change", () => {
         if (!this.isReadOnly())
           this.cacheDirtyNote();
-      }.bind(this));
+      });
 
-      editor.on("blur", function() {
+      editor.on("blur", () => {
         this.cacheDirtyNote();
-      }.bind(this));
+      });
 
-      editor.on("nbsave", function() {
+      editor.on("nbsave", () => {
         if (!this.isReadOnly()) {
           this.saveNote(null, true);
         }
-      }.bind(this));
+      });
 
-      editor.on("nbupload", function() {
+      editor.on("nbupload", () => {
         if (!this.isReadOnly())
           this.refs.fileUploadDialog.show();
-      }.bind(this));
+      });
 
-      editor.on("maximize", function(state) {
+      editor.on("maximize", (state) => {
         if (state.data === CKEDITOR.TRISTATE_ON)
           ;
       });
-    }.bind(this));
-  },
+    });
+  }
 
   componentWillUnmount() {
     DatabaseStore.removeChangeListener(this.onDatabaseChange);
-  },
+  }
 
   shouldComponentUpdate(nextProps, nextState) {
     return true;
-  },
+  }
 
   componentDidUpdate(prevProps, prevState) {
     if (prevState.searchString && !this.state.searchString) {
@@ -333,126 +335,7 @@ var NoteEditorContainer = React.createClass({
              prevState.errorMessage !== this.state.errorMessage) {
       this.refs.alertDialog.show();
     }
-  },
-
-  render() {
-    var fileUploadView =
-      <FileUploadView
-        ref="fileUploadView"
-        uploadFiles={this.state.uploadFiles}
-        onAddFile={this.onDialogAddFile}
-        onRemoveFile={this.onDialogRemoveFile}
-      />;
-
-    var progressBarView = <ProgressBarView ref="progressBarView" />;
-
-    return (
-      <div className="nb-column-container">
-        <div className="nb-snapshot-container">
-          <div>
-            <div />
-          </div>
-        </div>
-
-        <div className="ui inverted dimmer nb-editor-dimmer">
-          <div className="ui text loader"></div>
-        </div>
-
-        <div className="ui menu nb-column-toolbar">
-          <div className="item nb-column-toolbar-title-container">
-            <div className="ui transparent left icon input">
-              <i className="file text outline icon"></i>
-              <input
-                className="nb-column-toolbar-title-input"
-                type="text"
-                placeholder="Untitled..."
-                disabled
-              />
-            </div>
-          </div>
-          <div className="right item nb-column-toolbar-search-container">
-            <div className={"ui transparent icon input"
-                              + (this.state.searchString ? " search" : "")}>
-              <input
-                className="nb-column-toolbar-search-input"
-                type="text"
-                placeholder="Search note..."
-                onFocus={this.onSearchInputFocus}
-                onBlur={this.onSearchInputBlur}
-                disabled={this.state.searchString ? " disabled" : ""}
-              />
-              <i
-                className={(this.state.searchString ? "remove" : "search")
-                            + " link icon nb-column-toolbar-search-button"}
-                 onClick={this.onSearch}
-              />
-            </div>
-          </div>
-        </div>
-
-        <NotebookEditor />
-
-        <div className="nb-editor-upload-dialog-container">
-          <input
-            type="file"
-            id="upload-files"
-            style={{display: "none"}}
-            onChange={this.onDialogFileInputChange}
-            multiple
-          />
-
-          <DialogController
-            ref="fileUploadDialog"
-            size="large"
-            title="Select Files to Upload"
-            message=""
-            customView={fileUploadView}
-            actionButtons={[{
-                title: "Cancel",
-                iconType: "remove",
-                color: "red",
-                actionType: "deny"
-              }, {
-                title: "Upload",
-                iconType: "upload",
-                color: "green",
-                actionType: "approve"
-              }]}
-            onShow={this.onDialogShow}
-            onHidden={this.onDialogHidden}
-            onApprove={this.onDialogUpload}
-          />
-        </div>
-
-        <DialogController
-          ref="uploadProgressDialog"
-          title="File Upload Progress"
-          message=""
-          customView={progressBarView}
-          actionButtons={[{
-            title: "Cancel",
-            iconType: "remove",
-            color: "red",
-            actionType: "deny"
-          }]}
-          onHidden={this.onProgressDialogHidden}
-          onDeny={this.onProgressDialogCancelUpload}
-        />
-
-        <DialogController
-          ref="alertDialog"
-          title={this.state.errorTitle}
-          message={this.state.errorMessage}
-          actionButtons={[{
-            title: "Got It",
-            color: "red",
-            actionType: "approve",
-          }]}
-          actionButtonsAlign="center"
-        />
-      </div>
-    );
-  },
+  }
 
   onSearchInputFocus() {
     //var searchWidth = this.titleContainerInstance.parent().width() / 2;
@@ -466,7 +349,7 @@ var NoteEditorContainer = React.createClass({
       { width: "70%" },
       { duration: 300, queue: false }
     );
-  },
+  }
 
   onSearchInputBlur() {
     if (!this.state.searchString) {
@@ -480,7 +363,7 @@ var NoteEditorContainer = React.createClass({
         { duration: 300, queue: false }
       );
     }
-  },
+  }
 
   onSearch() {
     var notebookNode;
@@ -502,28 +385,30 @@ var NoteEditorContainer = React.createClass({
       this.setState({ searchString: "" });
       DatabaseActionCreators.loadNotes(notebookNode);
     }
-  },
+  }
 
   setEditorDimmer(show, text) {
     var animating = this.editorDimmerInstance.hasClass("active");
 
     if (show && !animating) {
       this.editorDimmerTextInstance.text(text);
-      this.editorDimmerInstance.removeClass("hidden")
-                   .addClass("visible active");
+      this.editorDimmerInstance
+          .removeClass("hidden")
+          .addClass("visible active");
     }
     else if (!show && animating) {
-      this.editorDimmerInstance.removeClass("visible")
-                   .removeClass("active")
-                   .addClass("hidden");
+      this.editorDimmerInstance
+          .removeClass("visible")
+          .removeClass("active")
+          .addClass("hidden");
     }
-  },
+  }
 
   setEditorContent(title, content, cb) {
     if (this._setDataDelayTimer)
       clearTimeout(this._setDataDelayTimer);
 
-    this._setDataDelayTimer = setTimeout(function() {
+    this._setDataDelayTimer = setTimeout(() => {
       this._setDataDelayTimer = undefined;
       /* Avoid memory leak */
       this.editorInstance.document.clearCustomData();
@@ -538,23 +423,23 @@ var NoteEditorContainer = React.createClass({
       this.editorInstance.undoManager.reset();
       /* callback */
       cb && cb();
-    }.bind(this), 10);
-  },
+    }, 10);
+  }
 
   setReadOnly(readOnly) {
     this.titleInputInstance.prop("disabled", readOnly);
     this.editorInstance.setReadOnly(readOnly);
-  },
+  }
 
   isReadOnly() {
     return this.titleInputInstance.is(':disabled');
-  },
+  }
 
   readNote() {
-    setTimeout(function() {
+    setTimeout(() => {
       DatabaseActionCreators.readNote(DatabaseStore.getSelectedNoteDescriptor());
     }, 0);
-  },
+  }
 
   saveNote(noteDescriptor, manually) {
     if (this._flushTimer) {
@@ -563,10 +448,10 @@ var NoteEditorContainer = React.createClass({
     }
 
     noteDescriptor = noteDescriptor || DatabaseStore.getSelectedNoteDescriptor();
-    setTimeout(function() {
+    setTimeout(() => {
       DatabaseActionCreators.saveNote(noteDescriptor, manually);
-    }.bind(this), 0);
-  },
+    }, 0);
+  }
 
   flushDirtyNotes() {
     if (this._flushTimer) {
@@ -581,7 +466,7 @@ var NoteEditorContainer = React.createClass({
           !== 'Saving')
         this.saveNote(dirtyNoteDescriptors[i]);
     }
-  },
+  }
 
   cacheDirtyNote() {
     if (this.isReadOnly())
@@ -596,24 +481,26 @@ var NoteEditorContainer = React.createClass({
     if (this._flushTimer)
       clearTimeout(this._flushTimer);
 
-    this._flushTimer = setTimeout(function() {
+    this._flushTimer = setTimeout(() => {
       this.flushDirtyNotes();
-    }.bind(this), this._flushAfterDelay);
-  },
+    }, this._flushAfterDelay);
+  }
 
   takeSnapshot(noteDescriptor) {
     //var _ckeFrame = $(".cke_wysiwyg_frame").contents().find("body");
     this.snapshotBodyInstance.empty();
     this.snapshotBodyInstance.append(noteDescriptor.noteContent);
-    setTimeout(function() {
+    setTimeout(() => {
       DatabaseActionCreators.takeNoteSnapshot(
         noteDescriptor,
         this.snapshotContainerInstance,
-        null, /* BUG: specify width will make snapshot image cropped */
-        this.snapshotBodyContainerInstance.height()
+        /* BUG: specify width will make snapshot image cropped */
+        null,
+        /* height need to plus #app-main-view:padding-top */
+        this.snapshotBodyContainerInstance.height() + 40
       );
-    }.bind(this), 1);
-  },
+    }, 1);
+  }
 
   handleSaveSuccess(noteDescriptor, manually) {
     if (DatabaseStore.isNoteDescriptorSelected(noteDescriptor)) {
@@ -632,8 +519,8 @@ var NoteEditorContainer = React.createClass({
         2000
       );
 
-    setTimeout(function() { this.flushDirtyNotes() }.bind(this), 0);
-  },
+    setTimeout(() => { this.flushDirtyNotes() }, 0);
+  }
 
   onDialogFileInputChange() {
     var files = $("#upload-files")[0].files;
@@ -644,17 +531,17 @@ var NoteEditorContainer = React.createClass({
     }
 
     this.setState({ uploadFiles: list });
-  },
+  }
 
   onDialogAddFile() {
     $("#upload-files").click();
-  },
+  }
 
   onDialogRemoveFile(file) {
     var files = this.state.uploadFiles;
     files.splice(files.indexOf(file), 1);
     this.setState({ uploadFiles: files });
-  },
+  }
 
   onDialogUpload() {
     var files = this.state.uploadFiles;
@@ -663,22 +550,22 @@ var NoteEditorContainer = React.createClass({
         DatabaseStore.getSelectedNoteDescriptor(), files
       );
     }
-  },
+  }
 
   onDialogShow() {
     $(".nb-editor-upload-dialog-container").css("zIndex", "1001");
-  },
+  }
 
   onDialogHidden() {
     $(".nb-editor-upload-dialog-container").css("zIndex", "-1");
     this.setState({ uploadFiles: [] });
-  },
+  }
 
   onProgressDialogCancelUpload() {
     DatabaseActionCreators.cancelAttachFile(
       DatabaseStore.getSelectedNoteDescriptor()
     );
-  },
+  }
 
   onProgressDialogHidden() {
     if (this._unsupportFiles.length > 0) {
@@ -690,28 +577,28 @@ var NoteEditorContainer = React.createClass({
     }
 
     this.resetUploadProgressBar();
-  },
+  }
 
   resetUploadProgressBar() {
     this.refs.progressBarView.setState({ progress: 0, label: "" });
-  },
+  }
 
   showErrorAlert(errorTitle, errorMessage) {
     this.setState({
       errorTitle: errorTitle,
       errorMessage: errorMessage
     });
-  },
+  }
 
   onDatabaseChange(change) {
     switch (change.actionType) {
       case NotebookActionConstants.NOTEBOOK_DATABASE_OPEN:
-        var timer = setInterval(function() {
+        var timer = setInterval(() => {
           if (this.editorInstance) {
             clearInterval(timer);
             DatabaseActionCreators.loadTree();
           }
-        }.bind(this), 100);
+        }, 100);
         break;
       case NotebookActionConstants.NOTEBOOK_DATABASE_LOADNOTES_SUCCESS:
       case NotebookActionConstants.NOTEBOOK_DATABASE_TRASH_NOTE_SUCCESS:
@@ -720,8 +607,7 @@ var NoteEditorContainer = React.createClass({
           this.flushDirtyNotes();
           this.setReadOnly(true);
           this.setEditorDimmer(false);
-          this.setEditorContent("", "", function() {
-          }.bind(this));
+          this.setEditorContent("", "", () => {});
         }
         break;
 
@@ -769,12 +655,12 @@ var NoteEditorContainer = React.createClass({
             change.noteDescriptor.noteTitle,
             change.noteDescriptor.dirtyNoteContent ||
             change.noteDescriptor.noteContent,
-            function() {
+            () => {
               if (!DatabaseStore.getNoteDescriptorStatus(change.noteDescriptor)) {
                 this.setEditorDimmer(false);
                 this.setReadOnly(false);
               }
-            }.bind(this)
+            }
           );
         }
         break;
@@ -872,6 +758,122 @@ var NoteEditorContainer = React.createClass({
     }
   }
 
-});
+  render() {
+    var fileUploadView =
+      <FileUploadView
+        ref="fileUploadView"
+        uploadFiles={this.state.uploadFiles}
+        onAddFile={this.onDialogAddFile.bind(this)}
+        onRemoveFile={this.onDialogRemoveFile.bind(this)}
+      />;
 
-module.exports = NoteEditorContainer;
+    var progressBarView = <ProgressBarView ref="progressBarView" />;
+
+    return (
+      <div className="nb-column-container">
+        <div className="nb-snapshot-container">
+          <div>
+            <div />
+          </div>
+        </div>
+
+        <div className="ui inverted dimmer nb-editor-dimmer">
+          <div className="ui text loader"></div>
+        </div>
+
+        <div className="ui menu nb-column-toolbar">
+          <div className="item nb-column-toolbar-title-container">
+            <div className="ui transparent left icon input">
+              <i className="file text outline icon"></i>
+              <input
+                className="nb-column-toolbar-title-input"
+                type="text"
+                placeholder="Untitled..."
+                disabled
+              />
+            </div>
+          </div>
+          <div className="right item nb-column-toolbar-search-container">
+            <div className={"ui transparent icon input"
+                              + (this.state.searchString ? " search" : "")}>
+              <input
+                className="nb-column-toolbar-search-input"
+                type="text"
+                placeholder="Search note..."
+                onFocus={this.onSearchInputFocus.bind(this)}
+                onBlur={this.onSearchInputBlur.bind(this)}
+                disabled={this.state.searchString ? " disabled" : ""}
+              />
+              <i
+                className={(this.state.searchString ? "remove" : "search")
+                            + " link icon nb-column-toolbar-search-button"}
+                 onClick={this.onSearch.bind(this)}
+              />
+            </div>
+          </div>
+        </div>
+
+        <NotebookEditor />
+
+        <div className="nb-editor-upload-dialog-container">
+          <input
+            type="file"
+            id="upload-files"
+            style={{display: "none"}}
+            onChange={this.onDialogFileInputChange.bind(this)}
+            multiple
+          />
+
+          <Dialog
+            ref="fileUploadDialog"
+            size="large"
+            title="Select Files to Upload"
+            message=""
+            customView={fileUploadView}
+            actionButtons={[{
+                title: "Cancel",
+                iconType: "remove",
+                color: "red",
+                actionType: "deny"
+              }, {
+                title: "Upload",
+                iconType: "upload",
+                color: "green",
+                actionType: "approve"
+              }]}
+            onShow={this.onDialogShow.bind(this)}
+            onHidden={this.onDialogHidden.bind(this)}
+            onApprove={this.onDialogUpload.bind(this)}
+          />
+        </div>
+
+        <Dialog
+          ref="uploadProgressDialog"
+          title="File Upload Progress"
+          message=""
+          customView={progressBarView}
+          actionButtons={[{
+            title: "Cancel",
+            iconType: "remove",
+            color: "red",
+            actionType: "deny"
+          }]}
+          onHidden={this.onProgressDialogHidden.bind(this)}
+          onDeny={this.onProgressDialogCancelUpload.bind(this)}
+        />
+
+        <Dialog
+          ref="alertDialog"
+          title={this.state.errorTitle}
+          message={this.state.errorMessage}
+          actionButtons={[{
+            title: "Got It",
+            color: "red",
+            actionType: "approve",
+          }]}
+          actionButtonsAlign="center"
+        />
+      </div>
+    );
+  }
+}

@@ -1,6 +1,17 @@
 'use strict';
 
 export default class DropdownMenu extends React.Component {
+
+  static propTypes = {
+    itemDataSource: React.PropTypes.array.isRequired
+  };
+
+  static defaultProps = {
+    iconClass: '',
+    useSelectBar: true,
+    onChange: () => {}
+  };
+
   constructor(props) {
     super(props);
     this.state = { disabled: false };
@@ -64,13 +75,3 @@ export default class DropdownMenu extends React.Component {
     );
   }
 }
-
-DropdownMenu.propTypes = {
-  itemDataSource: React.PropTypes.array.isRequired
-};
-
-DropdownMenu.defaultProps = {
-  iconClass: "",
-  useSelectBar: true,
-  onChange() {}
-};

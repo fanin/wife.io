@@ -43,6 +43,11 @@ h1.ui.header
   padding-top: 32px;
 }
 
+.api-menu > .secondary.menu
+{
+  border-width: 0 !important;
+}
+
 .api-description
 {
   text-align: left;

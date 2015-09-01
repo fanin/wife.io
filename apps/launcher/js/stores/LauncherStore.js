@@ -1,65 +1,73 @@
-var emitter            = require('events').EventEmitter;
-var assign             = require('object-assign');
-var FSAPI              = require('lib/api/FSAPI');
-var LauncherDispatcher = require('../dispatcher/LauncherDispatcher');
-var LauncherConstants  = require('../constants/LauncherConstants');
+import EventEmitter from 'events';
+import FSAPI from 'lib/api/FSAPI';
+import LauncherDispatcher from '../dispatcher/LauncherDispatcher';
+import LauncherConstants from '../constants/LauncherConstants';
 
-var CHANGE_EVENT = 'LAUNCHER_CHANGE';
-var ERROR_EVENT  = 'LAUNCHER_ERROR';
-var APPSORT_FILE = 'appsort.json';
+const CHANGE_EVENT = 'LAUNCHER_CHANGE';
+const ERROR_EVENT  = 'LAUNCHER_ERROR';
+const APPSORT_FILE = 'appsort.json';
 
 var appSortList = null;
 
-var LauncherStore = assign({}, emitter.prototype, {
+class LauncherStore extends EventEmitter {
+
+  constructor() {
+    super();
+  }
+
   /**
    * @param {object} changes object
    */
-  emitChange: function(changes) {
+  emitChange(changes) {
     this.emit(CHANGE_EVENT, changes);
-  },
+  }
 
   /**
    * @param {object} error object
    */
-  emitError: function(error) {
+  emitError(error) {
     this.emit(ERROR_EVENT, error);
-  },
+  }
 
   /**
    * @param {function} callback
    */
-  addChangeListener: function(callback) {
+  addChangeListener(callback) {
     this.on(CHANGE_EVENT, callback);
-  },
+  }
 
   /**
    * @param {function} callback
    */
-  addErrorListener: function(callback) {
+  addErrorListener(callback) {
     this.on(ERROR_EVENT, callback);
-  },
+  }
 
   /**
    * @param {function} callback
    */
-  removeChangeListener: function(callback) {
+  removeChangeListener(callback) {
     this.removeListener(CHANGE_EVENT, callback);
-  },
+  }
 
   /**
    * @param {function} callback
    */
-  removeErrorListener: function(callback) {
+  removeErrorListener(callback) {
     this.removeListener(ERROR_EVENT, callback);
-  },
+  }
 
-  getAppSortList: function() {
+  getAppSortList() {
     return appSortList;
   }
-});
+}
+
+let launcherStore = new LauncherStore();
+export default launcherStore;
 
 function mergeSortList(list) {
-  FSAPI.readFile(APPSORT_FILE, { encoding: 'utf8' }, {
+  FSAPI.readFile(APPSORT_FILE, {
+    encoding: 'utf8',
     onSuccess: function(data) {
       var i;
       var _sorted = JSON.parse(data);
@@ -83,13 +91,13 @@ function mergeSortList(list) {
           _sorted.push(list[i]);
 
       appSortList = _sorted;
-      LauncherStore.emitChange({
+      launcherStore.emitChange({
         type: LauncherConstants.LAUNCHER_SORT_APP_LIST
       });
 
     },
     onError: function(error) {
-      LauncherStore.emitError({
+      launcherStore.emitError({
         type: LauncherConstants.LAUNCHER_SORT_APP_LIST,
         msg: 'Unable to read APP list (' + error + ')'
       });
@@ -103,10 +111,10 @@ function writeSortList(list, actionType) {
   FSAPI.writeFile(APPSORT_FILE, _appsort, {
     onSuccess: function() {
       appSortList = list;
-      LauncherStore.emitChange({ type: actionType });
+      launcherStore.emitChange({ type: actionType });
     },
     onError: function(error) {
-      LauncherStore.emitError({
+      launcherStore.emitError({
         type: actionType,
         msg: 'Unable to write APP list'
       });
@@ -127,12 +135,12 @@ function removeAppFromSortList(manifest) {
   var _appsort = JSON.stringify(appSortList, null, 4);
   FSAPI.writeFile(APPSORT_FILE, _appsort, {
     onSuccess: function() {
-      LauncherStore.emitChange({
+      launcherStore.emitChange({
         type: LauncherConstants.LAUNCHER_REMOVE_APP_FROM_SORT_LIST
       });
     },
     onError: function(error) {
-      LauncherStore.emitError({
+      launcherStore.emitError({
         type: LauncherConstants.LAUNCHER_REMOVE_APP_FROM_SORT_LIST,
         msg: 'Unable to write APP list'
       });
@@ -140,7 +148,7 @@ function removeAppFromSortList(manifest) {
   });
 }
 
-LauncherDispatcher.register(function(action) {
+LauncherDispatcher.register((action) => {
   switch (action.actionType) {
     case LauncherConstants.LAUNCHER_SORT_APP_LIST:
       FSAPI.exist(APPSORT_FILE, {
@@ -159,13 +167,13 @@ LauncherDispatcher.register(function(action) {
       writeSortList(action.list, action.actionType);
       break;
     case LauncherConstants.LAUNCHER_ENTER_MANAGE_MODE:
-      LauncherStore.emitChange({ type: action.actionType });
+      launcherStore.emitChange({ type: action.actionType });
       break;
     case LauncherConstants.LAUNCHER_LEAVE_MANAGE_MODE:
-      LauncherStore.emitChange({ type: action.actionType });
+      launcherStore.emitChange({ type: action.actionType });
       break;
     case LauncherConstants.LAUNCHER_MOVE_APP_ICON:
-      LauncherStore.emitChange({
+      launcherStore.emitChange({
         type: action.actionType,
         manifest: action.manifest,
         start: action.start,
@@ -173,5 +181,3 @@ LauncherDispatcher.register(function(action) {
       });
   }
 });
-
-module.exports = LauncherStore;

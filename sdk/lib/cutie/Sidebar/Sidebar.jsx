@@ -2,6 +2,38 @@
 
 export default class Sidebar extends React.Component {
 
+  static defaultProps = {
+    debug: false,
+    homeItem: {
+      text: 'Home',
+      icon: 'home',
+      href: '/'
+    },
+    infoItem: {
+      text: 'About',
+      icon: 'info circle',
+      onClick: (e) => {}
+    },
+    debugItem: {
+      text: 'Debug',
+      icon: 'bug',
+      onClick: (e) => {
+        $('#app-sidebar')
+          .sidebar('hide');
+        $('#app-debug-view')
+          .sidebar('setting', 'transition', 'overlay')
+          .sidebar('setting', 'dimPage', false)
+          .sidebar('setting', 'closable', false)
+          .sidebar('toggle');
+      }
+    },
+    settingsItem: {
+      text: 'Settings',
+      icon: 'settings',
+      onClick: (e) => {}
+    }
+  };
+
   constructor(props) {
     super(props);
     this.state = {
@@ -46,35 +78,3 @@ export default class Sidebar extends React.Component {
     );
   }
 }
-
-Sidebar.defaultProps = {
-  debug: false,
-  homeItem: {
-    text: 'Home',
-    icon: 'home',
-    href: '/'
-  },
-  infoItem: {
-    text: 'About',
-    icon: 'info circle',
-    onClick: function(e) {}
-  },
-  debugItem: {
-    text: 'Debug',
-    icon: 'bug',
-    onClick: function(e) {
-      $('#app-sidebar')
-        .sidebar('hide');
-      $('#app-debug-view')
-        .sidebar('setting', 'transition', 'overlay')
-        .sidebar('setting', 'dimPage', false)
-        .sidebar('setting', 'closable', false)
-        .sidebar('toggle');
-    }
-  },
-  settingsItem: {
-    text: 'Settings',
-    icon: 'settings',
-    onClick: function(e) {}
-  }
-};

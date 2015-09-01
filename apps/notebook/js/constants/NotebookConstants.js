@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   DATABASE_ROOT_FOLDER: "bookshelf",
   DATABASE_TREE_FILE: "bookshelf-tree.json",
   DATABASE_NOTE_FILE: "index.html",
@@ -6,4 +6,4 @@ module.exports = {
   DATABASE_NOTEBOOK_ALL_LABEL: "All Notes",
   DATABASE_NOTEBOOK_ALL_ID: 1,
   DATABASE_NOTEBOOK_SEARCH_ID: 2
-};
+}

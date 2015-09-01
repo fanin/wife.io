@@ -1,5 +1,11 @@
 export default class LauncherAppIcon extends React.Component {
 
+  static propTypes = {
+    appType: React.PropTypes.string.isRequired,
+    manifest: React.PropTypes.object.isRequired,
+    manageable: React.PropTypes.bool
+  };
+
   componentDidMount() {
     document.getElementById(
       'launcher-icon-div-' + this.props.manifest.identifier
@@ -85,9 +91,3 @@ export default class LauncherAppIcon extends React.Component {
     );
   }
 }
-
-LauncherAppIcon.propTypes = {
-  appType: React.PropTypes.string.isRequired,
-  manifest: React.PropTypes.object.isRequired,
-  manageable: React.PropTypes.bool
-};

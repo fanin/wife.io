@@ -109,7 +109,7 @@ module.exports = {
     $('<input type="file" id="__upload_' + ts + '" />').hide().appendTo('body');
 
     var formData = new FormData();
-      formData.append('__upload_' + ts, data);
+    formData.append('__upload_' + ts, data);
 
     $.ajax({
       type: 'POST',

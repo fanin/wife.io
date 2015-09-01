@@ -1,10 +1,10 @@
-var DatabaseActionCreators  = require("../actions/DatabaseActionCreators");
-var NotebookConstants       = require("../constants/NotebookConstants");
-var NotebookActionConstants = require("../constants/NotebookActionConstants");
-var DatabaseStore           = require("../stores/DatabaseStore");
-var ListViewController      = require("lib/cutie/ListView");
-var DialogController        = require("lib/cutie/Dialog");
-var DropdownMenu            = require("lib/cutie/DropdownMenu");
+import DatabaseActionCreators from '../actions/DatabaseActionCreators';
+import NotebookConstants from '../constants/NotebookConstants';
+import NotebookActionConstants from '../constants/NotebookActionConstants';
+import DatabaseStore from '../stores/DatabaseStore';
+import ListViewController from 'lib/cutie/ListView';
+import Dialog from 'lib/cutie/Dialog';
+import DropdownMenu from 'lib/cutie/DropdownMenu';
 
 var SortMethods = {
   /* Sort by last modified date */
@@ -35,166 +35,37 @@ var SortMethods = {
   }
 };
 
-var NoteListContainer = React.createClass({
+export default class NoteListContainer extends React.Component {
 
-  getInitialState() {
-    return {
+  constructor(props) {
+    super(props);
+    this.state = {
       disableNewNoteButton: false,
       disableCopyButton: false,
       disableTrashButton: false,
       showEmptyMessage: false,
       sortMethod: SortMethods.sortByLastModifiedDate
     };
-  },
+  }
 
   componentWillMount() {
-    DatabaseStore.addChangeListener(this.onDatabaseChange);
-  },
+    DatabaseStore.addChangeListener(this.onDatabaseChange.bind(this));
+  }
 
   componentDidMount() {
     $(".nb-toolbar-sort-dropdown").dropdown({
       action: 'hide',
       transition: 'drop'
     });
-  },
+  }
 
   componentWillUnmount() {
     DatabaseStore.removeChangeListener(this.onDatabaseChange);
-  },
+  }
 
   shouldComponentUpdate(nextProps, nextState) {
     return true;
-  },
-
-  render() {
-    var sortLastModDateClass = (
-        this.state.sortMethod === SortMethods.sortByLastModifiedDate
-      ) ? "check icon" : "icon";
-    var sortNewestCreatDateClass = (
-        this.state.sortMethod === SortMethods.sortByCreationDateNewestFirst
-      ) ? "check icon" : "icon";
-    var sortOldestCreatDateClass = (
-        this.state.sortMethod === SortMethods.sortByCreationDateOldestFirst
-      ) ? "check icon" : "icon";
-    var sortTitleAscClass = (
-        this.state.sortMethod === SortMethods.sortByTitleAscending
-      ) ? "check icon" : "icon";
-    var sortTitleDscClass = (
-        this.state.sortMethod === SortMethods.sortByTitleDescending
-      ) ? "check icon" : "icon";
-
-    var moreOpDropdownItems = [
-      {
-        text: "Copy",
-        value: "copy",
-        icon: "copy",
-        disabled: this.state.disableCopyButton,
-        onSelect: this.copyNote
-      },
-      {
-        text: "Trash",
-        value: "trash",
-        icon: "trash outline",
-        disabled: this.state.disableTrashButton,
-        onSelect: this.trashNote
-      }
-    ];
-
-    var emptyMessageHeader =
-      DatabaseStore.getSearchString()
-        ? "Your search `" + DatabaseStore.getSearchString()
-                          + "` did not match any notes."
-        : "This notebook is empty.";
-    var emptyMessageSuggestions =
-      DatabaseStore.getSearchString()
-        ? [
-            <li key="suggest1">{ "Make sure that all words are spelled correctly." }</li>,
-            <li key="suggest2">{ "Try different keywords." }</li>,
-            <li key="suggest3">{ "Try more general keywords." }</li>
-          ]
-        : [
-            <li key="suggest1">{ "Click 'New' to create a note." }</li>,
-            <li key="suggest2">{ "You will not be able to create a note if a notebook stack is selected." }</li>
-          ];
-
-    return (
-      <div className="nb-column-container">
-        <div className="ui menu nb-column-toolbar">
-          <div className="ui compact dropdown item nb-toolbar-sort-dropdown">
-            <i className="sort content ascending black icon"></i>
-            <div className="menu">
-              <div className="item" onClick={this.sortByModifiedDate}>
-                <i className={sortLastModDateClass}></i>
-                Sort by modified date
-              </div>
-              <div className="item" onClick={this.sortByCreationDateNewestFirst}>
-                <i className={sortNewestCreatDateClass}></i>
-                Sort by creation date (newest first)
-              </div>
-              <div className="item" onClick={this.sortByCreationDateOldestFirst}>
-                <i className={sortOldestCreatDateClass}></i>
-                Sort by creation date (oldest first)
-              </div>
-              <div className="item" onClick={this.sortByTitleAscending}>
-                <i className={sortTitleAscClass}></i>
-                Sort by title (ascending)
-              </div>
-              <div className="item" onClick={this.sortByTitleDescending}>
-                <i className={sortTitleDscClass}></i>
-                Sort by title (descending)
-              </div>
-            </div>
-          </div>
-          <div className={this.state.disableNewNoteButton
-                            ? "ui pointing link disabled item"
-                            : "ui pointing link item"}
-               onClick={this.writeNote}>
-            <i className="edit icon"></i>
-            New
-          </div>
-          <DropdownMenu itemDataSource = {moreOpDropdownItems}
-                     iconClass = "ellipsis vertical"
-                  useSelectBar = {false} />
-        </div>
-
-        <div
-          className="nb-notelist-guide"
-          style={{display: this.state.showEmptyMessage ? "block" : "none"}}
-        >
-          <div className="ui info message">
-            <div className="header" style={{wordWrap: "break-word"}}>
-              {emptyMessageHeader}
-            </div>
-            <ul className="list">
-              <p/><p><strong>Suggestions:</strong></p>
-              {emptyMessageSuggestions}
-            </ul>
-          </div>
-        </div>
-
-        <ListViewController
-          ref="noteListController"
-          className="nb-column-content"
-          canManageDataSource={false}
-          onDataLoad={this.onListDataLoaded}
-          onSelectRow={this.onSelectNote}
-          onRenderListViewItem={this.onRenderListViewItem}
-        />
-
-        <DialogController
-          ref="alertDialog"
-          title={this.state.errorTitle}
-          message={this.state.errorMessage}
-          actionButtons={[{
-            title: "Got It",
-            color: "red",
-            actionType: "approve",
-          }]}
-          actionButtonsAlign="center"
-        />
-      </div>
-    );
-  },
+  }
 
   onDatabaseChange(change) {
     switch (change.actionType) {
@@ -208,11 +79,11 @@ var NoteListContainer = React.createClass({
         else
           this.setState({ disableNewNoteButton: false });
 
-        setTimeout(function() {
+        setTimeout(() => {
           if (!DatabaseStore.getNoteListSortMethod())
             DatabaseActionCreators.setNoteSortMethod(this.state.sortMethod);
           DatabaseActionCreators.loadNotes(notebook);
-        }.bind(this), 10);
+        }, 10);
         break;
 
       case NotebookActionConstants.NOTEBOOK_DATABASE_LOADNOTES_SUCCESS:
@@ -256,12 +127,11 @@ var NoteListContainer = React.createClass({
 
       case NotebookActionConstants.NOTEBOOK_DATABASE_SET_NOTE_SORT_METHOD:
         this.setState({ sortMethod: DatabaseStore.getNoteListSortMethod() });
-        var _i =
-          DatabaseStore.getNoteDescriptorIndex(
-            DatabaseStore.getSelectedNoteDescriptor()
-          );
-        if (_i >= 0)
-          this.refs.noteListController.selectRowAtIndex(_i);
+        let i = DatabaseStore.getNoteDescriptorIndex(
+          DatabaseStore.getSelectedNoteDescriptor()
+        );
+        if (i >= 0)
+          this.refs.noteListController.selectRowAtIndex(i);
         break;
 
       case NotebookActionConstants.NOTEBOOK_DATABASE_SAVE_NOTE:
@@ -289,48 +159,48 @@ var NoteListContainer = React.createClass({
         );
         break;
     }
-  },
+  }
 
   sortByModifiedDate() {
     DatabaseActionCreators.setNoteSortMethod(
       SortMethods.sortByLastModifiedDate
     );
-  },
+  }
 
   sortByCreationDateNewestFirst() {
     DatabaseActionCreators.setNoteSortMethod(
       SortMethods.sortByCreationDateNewestFirst
     );
-  },
+  }
 
   sortByCreationDateOldestFirst() {
     DatabaseActionCreators.setNoteSortMethod(
       SortMethods.sortByCreationDateOldestFirst
     );
-  },
+  }
 
   sortByTitleAscending() {
     DatabaseActionCreators.setNoteSortMethod(
       SortMethods.sortByTitleAscending
     );
-  },
+  }
 
   sortByTitleDescending() {
     DatabaseActionCreators.setNoteSortMethod(
       SortMethods.sortByTitleDescending
     );
-  },
+  }
 
   onListDataLoaded() {
     if (this.refs.noteListController.count() > 0)
       this.refs.noteListController.selectRowAtIndex(0);
-  },
+  }
 
   onSelectNote(index) {
-    setTimeout(function() {
+    setTimeout(() => {
       DatabaseActionCreators.selectNote(index);
     }, 0);
-  },
+  }
 
   onRenderListViewItem(data) {
     var _mtime = new Date(data.noteStat.mtime);
@@ -341,28 +211,28 @@ var NoteListContainer = React.createClass({
       subtitleText: _lmd,
       detailText: ''
     };
-  },
+  }
 
   writeNote() {
     if (!this.state.disableNewNoteButton)
       DatabaseActionCreators.addNote(
         DatabaseStore.getSelectedNotebookNode(), "", ""
       );
-  },
+  }
 
   copyNote() {
     if (!this.state.disableCopyButton)
       DatabaseActionCreators.copyNote(
         DatabaseStore.getSelectedNoteDescriptor()
       );
-  },
+  }
 
   trashNote() {
     if (!this.state.disableTrashButton)
       DatabaseActionCreators.trashNote(
         DatabaseStore.getSelectedNoteDescriptor()
       );
-  },
+  }
 
   showErrorAlert(errorTitle, errorMessage) {
     this.setState({
@@ -371,6 +241,140 @@ var NoteListContainer = React.createClass({
     });
     this.refs.alertDialog.show();
   }
-});
 
-module.exports = NoteListContainer;
+  render() {
+    var sortLastModDateClass = (
+        this.state.sortMethod === SortMethods.sortByLastModifiedDate
+      ) ? "check icon" : "icon";
+    var sortNewestCreatDateClass = (
+        this.state.sortMethod === SortMethods.sortByCreationDateNewestFirst
+      ) ? "check icon" : "icon";
+    var sortOldestCreatDateClass = (
+        this.state.sortMethod === SortMethods.sortByCreationDateOldestFirst
+      ) ? "check icon" : "icon";
+    var sortTitleAscClass = (
+        this.state.sortMethod === SortMethods.sortByTitleAscending
+      ) ? "check icon" : "icon";
+    var sortTitleDscClass = (
+        this.state.sortMethod === SortMethods.sortByTitleDescending
+      ) ? "check icon" : "icon";
+
+    var moreOpDropdownItems = [
+      {
+        text: "Copy",
+        value: "copy",
+        icon: "copy",
+        disabled: this.state.disableCopyButton,
+        onSelect: this.copyNote.bind(this)
+      },
+      {
+        text: "Trash",
+        value: "trash",
+        icon: "trash outline",
+        disabled: this.state.disableTrashButton,
+        onSelect: this.trashNote.bind(this)
+      }
+    ];
+
+    var emptyMessageHeader =
+      DatabaseStore.getSearchString()
+        ? "Your search `" + DatabaseStore.getSearchString()
+                          + "` did not match any notes."
+        : "This notebook is empty.";
+    var emptyMessageSuggestions =
+      DatabaseStore.getSearchString()
+        ? [
+            <li key="suggest1">{ "Make sure that all words are spelled correctly." }</li>,
+            <li key="suggest2">{ "Try different keywords." }</li>,
+            <li key="suggest3">{ "Try more general keywords." }</li>
+          ]
+        : [
+            <li key="suggest1">{ "Click 'New' to create a note." }</li>,
+            <li key="suggest2">{ "You will not be able to create a note if a notebook stack is selected." }</li>
+          ];
+
+    return (
+      <div className="nb-column-container">
+        <div className="ui menu nb-column-toolbar">
+          <div className="ui compact dropdown item nb-toolbar-sort-dropdown">
+            <i className="sort content ascending black icon"></i>
+            <div className="menu">
+              <div className="item" onClick={this.sortByModifiedDate.bind(this)}>
+                <i className={sortLastModDateClass}></i>
+                Sort by modified date
+              </div>
+              <div className="item" onClick={this.sortByCreationDateNewestFirst.bind(this)}>
+                <i className={sortNewestCreatDateClass}></i>
+                Sort by creation date (newest first)
+              </div>
+              <div className="item" onClick={this.sortByCreationDateOldestFirst.bind(this)}>
+                <i className={sortOldestCreatDateClass}></i>
+                Sort by creation date (oldest first)
+              </div>
+              <div className="item" onClick={this.sortByTitleAscending.bind(this)}>
+                <i className={sortTitleAscClass}></i>
+                Sort by title (ascending)
+              </div>
+              <div className="item" onClick={this.sortByTitleDescending.bind(this)}>
+                <i className={sortTitleDscClass}></i>
+                Sort by title (descending)
+              </div>
+            </div>
+          </div>
+          <div
+            className={this.state.disableNewNoteButton
+                        ? "ui pointing link disabled item"
+                        : "ui pointing link item"}
+            onClick={this.writeNote.bind(this)}
+          >
+            <i className="edit icon"></i>
+            New
+          </div>
+          <DropdownMenu
+            itemDataSource={moreOpDropdownItems}
+            iconClass="ellipsis vertical"
+            useSelectBar={false}
+          />
+        </div>
+
+        <div
+          className="nb-notelist-guide"
+          style={{display: this.state.showEmptyMessage ? "block" : "none"}}
+        >
+          <div className="ui info message">
+            <div className="header" style={{wordWrap: "break-word"}}>
+              {emptyMessageHeader}
+            </div>
+            <ul className="list">
+              <p/><p><strong>Suggestions:</strong></p>
+              {emptyMessageSuggestions}
+            </ul>
+          </div>
+        </div>
+
+        <ListViewController
+          ref="noteListController"
+          className="nb-column-content"
+          canManageDataSource={false}
+          onDataLoad={this.onListDataLoaded.bind(this)}
+          onSelectRow={this.onSelectNote.bind(this)}
+          onRenderListViewItem={this.onRenderListViewItem.bind(this)}
+        />
+
+        <Dialog
+          ref="alertDialog"
+          title={this.state.errorTitle}
+          message={this.state.errorMessage}
+          actionButtons={[
+            {
+              title: "Got It",
+              color: "red",
+              actionType: "approve",
+            }
+          ]}
+          actionButtonsAlign="center"
+        />
+      </div>
+    );
+  }
+}

@@ -1,50 +1,7 @@
-var AppMainView = React.createClass({
-
-  propTypes: {
-
-  },
-
-  getDefaultProps() {
-    return {};
-  },
-
-  getInitialState() {
-    return {};
-  },
-
-  componentWillMount() {
-
-  },
-
-  componentDidMount() {
-
-  },
-
-  componentWillUnmount() {
-
-  },
-
-  shouldComponentUpdate(nextProps, nextState) {
-    return true;
-  },
-
-  componentWillUpdate(nextProps, nextState) {
-
-  },
-
-  componentDidUpdate(prevProps, prevState) {
-
-  },
-
+export default class AppMainView extends React.Component {
   render() {
     return (
-      <div>
-
-      </div>
+      <div></div>
     );
   }
-
-});
-
-module.exports = AppMainView;
-
+}

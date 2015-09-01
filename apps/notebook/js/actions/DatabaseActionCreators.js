@@ -1,75 +1,74 @@
-var NotebookDispatcher      = require("../dispatcher/NotebookDispatcher");
-var NotebookConstants       = require("../constants/NotebookConstants");
-var NotebookActionConstants = require("../constants/NotebookActionConstants");
-var FSAPI                   = require('lib/api/FSAPI');
-var timestamp               = require("lib/utils/common/string-misc").timestamp;
-var base64ToBlob            = require("lib/utils/buffer").base64ToBlob;
-var assign                  = require("object-assign");
-var async                   = require('async');
+import NotebookDispatcher from '../dispatcher/NotebookDispatcher';
+import NotebookConstants from '../constants/NotebookConstants';
+import NotebookActionConstants from '../constants/NotebookActionConstants';
+import FSAPI from 'lib/api/FSAPI';
+import { timestamp } from 'lib/utils/common/string-misc';
+import { base64ToBlob } from 'lib/utils/buffer';
+import assign from 'object-assign';
+import async from 'async';
 
 var databaseStorage;
 var saveWaitTimer;
 
-var dirname = function(path) {
+let dirname = function(path) {
   return path.replace(/\\/g, '/').replace(/\/[^\/]*\/?$/, '');
 }
 
-var DatabaseActionCreators = {
+/**
+ * Get bookshelf path inside app userdata folder
+ * @method getBookshelfPath
+ * @param path {String} Relative path string
+ * @return {String} Bookshelf path inside app userdata folder
+ * @private
+ */
+let getBookshelfPath = function(path = '') {
+  return NotebookConstants.DATABASE_ROOT_FOLDER + '/' + path;
+}
 
-  /**
-   * Get bookshelf path inside app userdata folder
-   * @method __getBookshelfPath
-   * @param path {String} Relative path string
-   * @return {String} Bookshelf path inside app userdata folder
-   * @private
-   */
-  __getBookshelfPath: function(path) {
-    path = path || "";
-    return NotebookConstants.DATABASE_ROOT_FOLDER + "/" + path;
-  },
+/**
+ * Get path of note on the bookshelf
+ * @method getNotePath
+ * @param noteDescriptor {Object} Note descriptor
+ * @return {String} Path of given note
+ * @private
+ */
+let getNotePath = function(noteDescriptor) {
+  return getBookshelfPath(
+    noteDescriptor.notebookNode.id + '/' + noteDescriptor.id
+  );
+}
 
-  /**
-   * Get path of note on the bookshelf
-   * @method __getNotePath
-   * @param noteDescriptor {Object} Note descriptor
-   * @return {String} Path of given note
-   * @private
-   */
-  __getNotePath: function(noteDescriptor) {
-    return this.__getBookshelfPath(
-      noteDescriptor.notebookNode.id + "/" + noteDescriptor.id
-    );
-  },
+/**
+ * Get path of note asset
+ * @method getNoteAssetPath
+ * @param noteDescriptor {Object} Note descriptor
+ * @param assetName {String} Note asset file name
+ * @return {String} Path of note asset
+ * @private
+ */
+let getNoteAssetPath = function(noteDescriptor, assetName) {
+  return getNotePath(noteDescriptor) + '/assets/' + assetName;
+}
 
-  /**
-   * Get path of note asset
-   * @method __getNoteAssetPath
-   * @param noteDescriptor {Object} Note descriptor
-   * @param assetName {String} Note asset file name
-   * @return {String} Path of note asset
-   * @private
-   */
-  __getNoteAssetPath: function(noteDescriptor, assetName) {
-    return this.__getNotePath(noteDescriptor) + "/assets/" + assetName;
-  },
+/**
+ * Build path with disk uuid for FSAPI
+ * @method buildApiPath
+ * @param path {String} Path string
+ * @return {String} FSAPI path string
+ * @private
+ */
+let buildApiPath = function(path) {
+  return databaseStorage ? path + ":" + databaseStorage.uuid : path;
+}
 
-  /**
-   * Build path with disk uuid for FSAPI
-   * @method __buildApiPath
-   * @param path {String} Path string
-   * @return {String} FSAPI path string
-   * @private
-   */
-  __buildApiPath: function(path) {
-    return databaseStorage ? path + ":" + databaseStorage.uuid : path;
-  },
+export default {
 
   /**
    * Open notebook database on given storage
    * @method openDatabase
    * @param storage {Object} Storage object where database is stored
    */
-  openDatabase: function(storage) {
+  openDatabase: (storage) => {
     databaseStorage = storage;
     NotebookDispatcher.dispatch({
       actionType: NotebookActionConstants.NOTEBOOK_DATABASE_OPEN,
@@ -81,7 +80,7 @@ var DatabaseActionCreators = {
    * Close notebook database
    * @method closeDatabase
    */
-  closeDatabase: function() {
+  closeDatabase: () => {
     databaseStorage = null;
     NotebookDispatcher.dispatch({
       actionType: NotebookActionConstants.NOTEBOOK_DATABASE_CLOSE
@@ -92,11 +91,13 @@ var DatabaseActionCreators = {
    * Load notebook tree from database
    * @method loadTree
    */
-  loadTree: function() {
+  loadTree: () => {
     if (!databaseStorage) return;
 
-    var rootPath = this.__getBookshelfPath();
-    var treeData = [{
+    var bookshelfPath = getBookshelfPath();
+    var bookshelfApiPath = buildApiPath(bookshelfPath);
+    var bookshelfTreeApiPath = buildApiPath(NotebookConstants.DATABASE_TREE_FILE);
+    var initialTreeData = [{
       label: NotebookConstants.DATABASE_NOTEBOOK_ALL_LABEL,
       id: NotebookConstants.DATABASE_NOTEBOOK_ALL_ID
     }];
@@ -106,94 +107,86 @@ var DatabaseActionCreators = {
     });
 
     /* Create /bookshelf if necessary */
-    FSAPI.exist(this.__buildApiPath(rootPath), {
-      onSuccess: function(exist) {
-        if (!exist) {
-          FSAPI.createDirectory(this.__buildApiPath(rootPath), {
-            onError: function(error) {
-              NotebookDispatcher.dispatch({
-                actionType: NotebookActionConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR,
-                error: "unable to create " + rootPath + ", error: " + error.message
-              });
-            }
-          });
-        }
-        else {
-          FSAPI.stat(this.__buildApiPath(rootPath), {
-            onSuccess: function(stat) {
-              if (!stat.isDirectory) {
-                FSAPI.removeFile(this.__buildApiPath(rootPath), {
-                  onSuccess: function() {
-                    FSAPI.createDirectory(this.__buildApiPath(rootPath), {
-                      onError: function(error) {
-                        NotebookDispatcher.dispatch({
-                          actionType: NotebookActionConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR,
-                          error: "unable to create " + rootPath + ", error: " + error.message
-                        });
-                      }
-                    });
-                  }.bind(this),
-                  onError: function(error) {
-                    NotebookDispatcher.dispatch({
-                      actionType: NotebookActionConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR,
-                      error: "unable to remove " + rootPath + ", error: " + error.message
-                    });
-                  }
-                });
-              }
-            }.bind(this)
-          });
-        }
-      }.bind(this)
-    });
+    FSAPI.exist(bookshelfApiPath)
+    .then(function(result) {
+      if (result.exist)
+        return FSAPI.stat(bookshelfApiPath);
+      else
+        return FSAPI.createDirectory(bookshelfApiPath);
+    })
+    .then(function(result) {
+      if (result.api === 'fs.stat')
+        if (!result.stat.isDirectory)
+          return FSAPI.removeFile(bookshelfApiPath);
+      return result;
+    })
+    .then(function(result) {
+      if (result.api === 'fs.removeFile')
+        return FSAPI.createDirectory(bookshelfApiPath);
+      else
+        return result;
+    })
+    .then(function(result) {
+      return FSAPI.exist(bookshelfTreeApiPath);
+    })
+    .then(function(result) {
+      if (result.exist)
+        return FSAPI.readFile(bookshelfTreeApiPath, { encoding: 'utf8' });
+      else
+        return FSAPI.writeFile(bookshelfTreeApiPath, JSON.stringify(initialTreeData));
+    })
+    .then(function(result) {
+      if (result.api === 'fs.readFile') {
+        let treeData;
 
-    /* Load notebook tree data from bookshelf-tree.json */
-    FSAPI.exist(this.__buildApiPath(NotebookConstants.DATABASE_TREE_FILE), {
-      onSuccess: function(exist) {
-        if (exist) {
-          FSAPI.readFile(this.__buildApiPath(NotebookConstants.DATABASE_TREE_FILE), { encoding: "utf8" }, {
-            onSuccess: function(data) {
-              try {
-                treeData = JSON.parse(data);
-              }
-              catch (error) {
-                NotebookDispatcher.dispatch({
-                  actionType: NotebookActionConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR,
-                  error: "parse tree data error: " + error.message + "\ndata:\n" + data
-                });
-              }
-              finally {
-                NotebookDispatcher.dispatch({
-                  actionType: NotebookActionConstants.NOTEBOOK_DATABASE_LOADTREE_SUCCESS,
-                  treeData: treeData
-                });
-              }
-            },
-            onError: function(error) {
-              NotebookDispatcher.dispatch({
-                actionType: NotebookActionConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR,
-                error: "unable to read tree data: " + error.message
-              });
-            }
+        try {
+          treeData = JSON.parse(result.data);
+        }
+        catch (error) {
+          NotebookDispatcher.dispatch({
+            actionType: NotebookActionConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR,
+            error: "parse tree data error: " + error.message + "\ndata:\n" + result.data
           });
         }
-        else {
-          FSAPI.writeFile(this.__buildApiPath(NotebookConstants.DATABASE_TREE_FILE), JSON.stringify(treeData), {
-            onSuccess: function() {
-              NotebookDispatcher.dispatch({
-                actionType: NotebookActionConstants.NOTEBOOK_DATABASE_LOADTREE_SUCCESS,
-                treeData: treeData
-              });
-            },
-            onError: function(error) {
-              NotebookDispatcher.dispatch({
-                actionType: NotebookActionConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR,
-                error: "unable to write tree data: " + error.message
-              });
-            }
+        finally {
+          NotebookDispatcher.dispatch({
+            actionType: NotebookActionConstants.NOTEBOOK_DATABASE_LOADTREE_SUCCESS,
+            treeData: treeData
           });
         }
-      }.bind(this)
+      }
+      else if (result.api === 'fs.writeFile')
+        NotebookDispatcher.dispatch({
+          actionType: NotebookActionConstants.NOTEBOOK_DATABASE_LOADTREE_SUCCESS,
+          treeData: initialTreeData
+        });
+    })
+    .catch(function(error) {
+      if (error.api === 'fs.createDirectory')
+        NotebookDispatcher.dispatch({
+          actionType: NotebookActionConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR,
+          error: "unable to create " + bookshelfPath + ", error: " + error.message
+        });
+      else if (error.api === 'fs.removeFile')
+        NotebookDispatcher.dispatch({
+          actionType: NotebookActionConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR,
+          error: "unable to remove " + bookshelfPath + ", error: " + error.message
+        });
+      else if (error.api === 'fs.readFile')
+        NotebookDispatcher.dispatch({
+          actionType: NotebookActionConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR,
+          error: "unable to read tree data: " + error.message
+        });
+      else if (error.api === 'fs.writeFile')
+        NotebookDispatcher.dispatch({
+          actionType: NotebookActionConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR,
+          error: "unable to write tree data: " + error.message
+        });
+      else
+        NotebookDispatcher.dispatch({
+          actionType: NotebookActionConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR,
+          error: "unknown api call error: " + error.message
+        });
     });
   },
 
@@ -203,13 +196,11 @@ var DatabaseActionCreators = {
    * @param treeJsonData {String} jqTree tree data JSON string
    * @param wait {Number} Wait a period of time in millisecond before saving tree data
    */
-  saveTree: function(treeJsonData, wait) {
+  saveTree: (treeJsonData, wait = 0) => {
     var self = this;
     var treeData;
 
     if (!databaseStorage) return;
-
-    wait = wait || 0;
 
     if (saveWaitTimer) {
       clearTimeout(saveWaitTimer);
@@ -232,7 +223,7 @@ var DatabaseActionCreators = {
         });
       }
       finally {
-        FSAPI.writeFile(self.__buildApiPath(NotebookConstants.DATABASE_TREE_FILE), treeJsonData, {
+        FSAPI.writeFile(buildApiPath(NotebookConstants.DATABASE_TREE_FILE), treeJsonData, {
           onSuccess: function() {
             NotebookDispatcher.dispatch({
               actionType: NotebookActionConstants.NOTEBOOK_DATABASE_SAVETREE_SUCCESS,
@@ -255,7 +246,7 @@ var DatabaseActionCreators = {
    * @method createStack
    * @param name {String} Stack name
    */
-  createStack: function(name) {
+  createStack: (name) => {
     if (!databaseStorage) return;
 
     NotebookDispatcher.dispatch({
@@ -270,17 +261,17 @@ var DatabaseActionCreators = {
    * @method createNotebook
    * @param name {String} Notebook name
    */
-  createNotebook: function(name) {
+  createNotebook: (name) => {
     if (!databaseStorage) return;
 
     var code = timestamp();
-    var notebookPath = this.__getBookshelfPath(code);
+    var notebookPath = getBookshelfPath(code);
 
     NotebookDispatcher.dispatch({
       actionType: NotebookActionConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK
     });
 
-    FSAPI.exist(this.__buildApiPath(notebookPath), {
+    FSAPI.exist(buildApiPath(notebookPath), {
       onSuccess: function(exist) {
         if (exist) {
           return NotebookDispatcher.dispatch({
@@ -289,7 +280,7 @@ var DatabaseActionCreators = {
           });
         }
 
-        FSAPI.createDirectory(this.__buildApiPath(notebookPath), {
+        FSAPI.createDirectory(buildApiPath(notebookPath), {
           onSuccess: function() {
             NotebookDispatcher.dispatch({
               actionType: NotebookActionConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK_SUCCESS,
@@ -313,17 +304,17 @@ var DatabaseActionCreators = {
    * @method trashNotebook
    * @param notebookNode {Object} jqTree node of notebook to be removed
    */
-  trashNotebook: function(notebookNode) {
+  trashNotebook: (notebookNode) => {
     if (!databaseStorage) return;
 
-    var notebookPath = this.__getBookshelfPath(notebookNode.id);
+    var notebookPath = getBookshelfPath(notebookNode.id);
 
     NotebookDispatcher.dispatch({
       actionType: NotebookActionConstants.NOTEBOOK_DATABASE_TRASH_NOTEBOOK,
       notebookNode: notebookNode
     });
 
-    FSAPI.exist(this.__buildApiPath(notebookPath), {
+    FSAPI.exist(buildApiPath(notebookPath), {
       onSuccess: function(exist) {
         if (!exist) {
           return NotebookDispatcher.dispatch({
@@ -332,7 +323,7 @@ var DatabaseActionCreators = {
           });
         }
 
-        FSAPI.removeFile(this.__buildApiPath(notebookPath), {
+        FSAPI.removeFile(buildApiPath(notebookPath), {
           onSuccess: function() {
             NotebookDispatcher.dispatch({
               actionType: NotebookActionConstants.NOTEBOOK_DATABASE_TRASH_NOTEBOOK_SUCCESS,
@@ -355,7 +346,7 @@ var DatabaseActionCreators = {
    * @method selectNotebook
    * @param notebookNode {Object} jqTree node of notebook to be selected
    */
-  selectNotebook: function(notebookNode) {
+  selectNotebook: (notebookNode) => {
     if (!databaseStorage) return;
 
     NotebookDispatcher.dispatch({
@@ -370,15 +361,16 @@ var DatabaseActionCreators = {
    * @param notebookNode {Object} jqTree node of notebook to be loaded
    * @param searchString {String} Load notes which contain search string only
    */
-  loadNotes: function(notebookNode, searchString) {
+  loadNotes: (notebookNode, searchString) => {
     if (!databaseStorage) return;
 
     var self = this;
-    var __loadNotes = function(_this, node, cb) {
+    var __loadNotes = function(node, cb) {
       var _noteDescriptors = [];
-      var _notebookPath = _this.__getBookshelfPath(node.id);
+      var _notebookPath = getBookshelfPath(node.id);
 
-      FSAPI.list(self.__buildApiPath(_notebookPath), { getStat: true }, {
+      FSAPI.list(buildApiPath(_notebookPath), {
+        getStat: true,
         onSuccess: function(ids, stats) {
           stats = stats.filter(function(stat, i) {
             if (!stat.isDirectory) {
@@ -396,21 +388,20 @@ var DatabaseActionCreators = {
           (function __iterateIds(i) {
             var noteId = ids[i];
             var _noteIndexPath = _notebookPath
-                                  + "/" + noteId
-                                  + "/" + NotebookConstants.DATABASE_NOTE_FILE;
+                                  + '/' + noteId
+                                  + '/' + NotebookConstants.DATABASE_NOTE_FILE;
 
             async.series([
               function(callback) {
                 if (!searchString)
                   return callback(null, true);
 
-                FSAPI.grep(self.__buildApiPath(_noteIndexPath), searchString, {
+                FSAPI.grep(buildApiPath(_noteIndexPath), searchString, {
                     encoding: 'utf8',
                     regexModifier: 'gi',
                     matchOnly: false,
                     testOnly: true,
-                    parseFormat: true
-                  }, {
+                    parseFormat: true,
                     onSuccess: function(data) {
                       if (data)
                         callback(null, true);
@@ -424,11 +415,10 @@ var DatabaseActionCreators = {
                 );
               },
               function(callback) {
-                FSAPI.grep(self.__buildApiPath(_noteIndexPath), "<title>(.*?)</title>",
+                FSAPI.grep(buildApiPath(_noteIndexPath), "<title>(.*?)</title>",
                   {
                     regexModifier: 'i',
-                    matchOnly: true
-                  }, {
+                    matchOnly: true,
                     onSuccess: function(data) {
                       if (!data)
                         return callback(
@@ -521,7 +511,7 @@ var DatabaseActionCreators = {
         if (child.children.length > 0)
           return true;
 
-        __loadNotes(self, child, function(noteDescriptors) {
+        __loadNotes(child, function(noteDescriptors) {
           function __mergeNotes(noteDescriptors) {
             if (_busy) {
               _timerWaitBusy = setTimeout(__mergeNotes, 50, noteDescriptors);
@@ -565,7 +555,7 @@ var DatabaseActionCreators = {
         });
 
       notebookNode.iterate(function(child, level) {
-        __loadNotes(self, child, function(noteDescriptors) {
+        __loadNotes(child, function(noteDescriptors) {
           function __mergeNotes(noteDescriptors) {
             if (_busy) {
               _timerWaitBusy = setTimeout(__mergeNotes, 50, noteDescriptors);
@@ -595,7 +585,7 @@ var DatabaseActionCreators = {
       });
     }
     else {
-      __loadNotes(self, notebookNode, function(noteDescriptors) {
+      __loadNotes(notebookNode, function(noteDescriptors) {
         NotebookDispatcher.dispatch({
           actionType: NotebookActionConstants.NOTEBOOK_DATABASE_LOADNOTES_SUCCESS,
           notebookNode: notebookNode,
@@ -610,7 +600,7 @@ var DatabaseActionCreators = {
    * @method selectNote
    * @param index {Number} Index of selected note
    */
-  selectNote: function(index) {
+  selectNote: (index) => {
     if (!databaseStorage) return;
 
     NotebookDispatcher.dispatch({
@@ -624,7 +614,7 @@ var DatabaseActionCreators = {
    * @method setNoteSortMethod
    * @param method {Function} Sort method function
    */
-  setNoteSortMethod: function(method) {
+  setNoteSortMethod: (method) => {
     if (!databaseStorage) return;
 
     NotebookDispatcher.dispatch({
@@ -640,7 +630,7 @@ var DatabaseActionCreators = {
    * @param title {String} Note title string
    * @param content {String} Note content string
    */
-  addNote: function(notebookNode, title, content) {
+  addNote: (notebookNode, title, content) => {
     if (!databaseStorage) return;
 
     var self = this;
@@ -651,12 +641,12 @@ var DatabaseActionCreators = {
     });
 
     var noteId = timestamp();
-    var notePath = this.__getBookshelfPath(notebookNode.id + "/" + noteId);
+    var notePath = getBookshelfPath(notebookNode.id + '/' + noteId);
 
-    FSAPI.exist(this.__buildApiPath(notePath), {
+    FSAPI.exist(buildApiPath(notePath), {
       onSuccess: function(exist) {
         if (!exist) {
-          FSAPI.createDirectory(self.__buildApiPath(notePath), {
+          FSAPI.createDirectory(buildApiPath(notePath), {
             onSuccess: function() {
               if (!title || title.trim() === "")
                 title = "Untitled";
@@ -664,16 +654,16 @@ var DatabaseActionCreators = {
               content = content || "<p></p>";
               var emptyNote = "<html><head><title>" + title + "</title></head>" +
                       "<body style='margin:0 auto;'>" + content + "</body></html>";
-              var indexPath = notePath + "/" + NotebookConstants.DATABASE_NOTE_FILE;
+              var indexPath = notePath + '/' + NotebookConstants.DATABASE_NOTE_FILE;
 
               // Write empty note
-              FSAPI.writeFile(self.__buildApiPath(indexPath), emptyNote, {
+              FSAPI.writeFile(buildApiPath(indexPath), emptyNote, {
                 onSuccess: function() {
                   // Get stat of the note
-                  FSAPI.stat(self.__buildApiPath(indexPath), {
+                  FSAPI.stat(buildApiPath(indexPath), {
                     onSuccess: function(stat) {
                       // Create assets folder for the note
-                      FSAPI.createDirectory(self.__buildApiPath(notePath + "/assets"), {
+                      FSAPI.createDirectory(buildApiPath(notePath + "/assets"), {
                         onSuccess: function() {
                           /**
                            * @define NoteDescriptor
@@ -743,7 +733,7 @@ var DatabaseActionCreators = {
    * @method copyNote
    * @param noteDescriptor {Object} NoteDescriptor object of note to be copied
    */
-  copyNote: function(noteDescriptor) {
+  copyNote: (noteDescriptor) => {
     if (!databaseStorage) return;
 
     var self = this;
@@ -753,35 +743,34 @@ var DatabaseActionCreators = {
       srcNoteDescriptor: noteDescriptor
     });
 
-    var notePath = this.__getNotePath(noteDescriptor);
+    var notePath = getNotePath(noteDescriptor);
 
-    FSAPI.exist(this.__buildApiPath(notePath), {
+    FSAPI.exist(buildApiPath(notePath), {
       onSuccess: function(exist) {
         if (exist) {
           var _copyNoteId = timestamp();
-          var _copyNotePath = dirname(notePath) + "/" + _copyNoteId;
+          var _copyNotePath = dirname(notePath) + '/' + _copyNoteId;
 
-          FSAPI.copy(self.__buildApiPath(notePath), self.__buildApiPath(_copyNotePath), {
+          FSAPI.copy(buildApiPath(notePath), buildApiPath(_copyNotePath), {
             onSuccess: function() {
-              var _dstNoteFile = _copyNotePath + "/" + NotebookConstants.DATABASE_NOTE_FILE;
+              var _dstNoteFile = _copyNotePath + '/' + NotebookConstants.DATABASE_NOTE_FILE;
 
-              FSAPI.readFile(self.__buildApiPath(_dstNoteFile), { encoding: "utf8" }, {
+              FSAPI.readFile(buildApiPath(_dstNoteFile), {
+                encoding: "utf8",
                 onSuccess: function(noteData) {
 
-                  FSAPI.grep(self.__buildApiPath(_dstNoteFile), "<title>(.*?)</title>",
-                    {
-                      regexModifier: 'i',
-                      matchOnly: true
-                    }, {
+                  FSAPI.grep(buildApiPath(_dstNoteFile), "<title>(.*?)</title>", {
+                    regexModifier: 'i',
+                    matchOnly: true,
                     onSuccess: function(data) {
                       var _noteTitle = data;
 
                       var re = new RegExp(encodeURIComponent(notePath), "g");
                       noteData = noteData.replace(re, encodeURIComponent(_copyNotePath));
 
-                      FSAPI.writeFile(self.__buildApiPath(_copyNotePath + "/" + NotebookConstants.DATABASE_NOTE_FILE), noteData, {
+                      FSAPI.writeFile(buildApiPath(_copyNotePath + '/' + NotebookConstants.DATABASE_NOTE_FILE), noteData, {
                         onSuccess: function() {
-                          FSAPI.stat(self.__buildApiPath(_copyNotePath), {
+                          FSAPI.stat(buildApiPath(_copyNotePath), {
                             onSuccess: function(stat) {
                               NotebookDispatcher.dispatch({
                                 actionType: NotebookActionConstants.NOTEBOOK_DATABASE_COPY_NOTE_SUCCESS,
@@ -848,20 +837,20 @@ var DatabaseActionCreators = {
    * @method trashNote
    * @param noteDescriptor {Object} NoteDescriptor object of note to be removed
    */
-  trashNote: function(noteDescriptor) {
+  trashNote: (noteDescriptor) => {
     if (!databaseStorage) return;
 
-    var notePath = this.__getNotePath(noteDescriptor);
+    var notePath = getNotePath(noteDescriptor);
 
     NotebookDispatcher.dispatch({
       actionType: NotebookActionConstants.NOTEBOOK_DATABASE_TRASH_NOTE,
       noteDescriptor: noteDescriptor
     });
 
-    FSAPI.exist(this.__buildApiPath(notePath), {
+    FSAPI.exist(buildApiPath(notePath), {
       onSuccess: function(exist) {
         if (exist) {
-          FSAPI.removeFile(this.__buildApiPath(notePath), {
+          FSAPI.removeFile(buildApiPath(notePath), {
             onSuccess: function() {
               NotebookDispatcher.dispatch({
                 actionType: NotebookActionConstants.NOTEBOOK_DATABASE_TRASH_NOTE_SUCCESS,
@@ -886,7 +875,7 @@ var DatabaseActionCreators = {
    * @method readNote
    * @param noteDescriptor {Object} NoteDescriptor object of note to be loaded
    */
-  readNote: function(noteDescriptor) {
+  readNote: (noteDescriptor) => {
     if (!databaseStorage) return;
 
     function __replaceQueryString(url, param, value) {
@@ -897,7 +886,7 @@ var DatabaseActionCreators = {
         return url;
     }
 
-    var noteFile = this.__getNotePath(noteDescriptor) + "/" + NotebookConstants.DATABASE_NOTE_FILE;
+    var noteFile = getNotePath(noteDescriptor) + '/' + NotebookConstants.DATABASE_NOTE_FILE;
 
     NotebookDispatcher.dispatch({
       actionType: NotebookActionConstants.NOTEBOOK_DATABASE_READ_NOTE,
@@ -913,7 +902,8 @@ var DatabaseActionCreators = {
       return;
     }
 
-    FSAPI.readFile(this.__buildApiPath(noteFile), { encoding: "utf8" }, {
+    FSAPI.readFile(buildApiPath(noteFile), {
+      encoding: "utf8",
       onSuccess: function(data) {
         /* Remove all single &nbsp; between tags, and extract contents inside <body></body> */
         var content = data.replace(/\>&nbsp;\</gi,'\>\<')
@@ -942,7 +932,7 @@ var DatabaseActionCreators = {
    * @param dirtyTitle {String} Dirty note title
    * @param dirtyContent {String} Dirty (Modifing) note content
    */
-  cacheDirtyNote: function(noteDescriptor, dirtyTitle, dirtyContent) {
+  cacheDirtyNote: (noteDescriptor, dirtyTitle, dirtyContent) => {
     if ((
         noteDescriptor.noteTitle != dirtyTitle ||
         noteDescriptor.noteContent != dirtyContent.replace(/\>&nbsp;\</gi,'\>\<')
@@ -967,11 +957,11 @@ var DatabaseActionCreators = {
    * @param noteDescriptor {Object} NoteDescriptor object of note to be saved
    * @return {Boolean} false if note has no change and do no action, otherwise return true.
    */
-  saveNote: function(noteDescriptor, manually) {
+  saveNote: (noteDescriptor, manually) => {
     if (!databaseStorage) return;
 
     var self = this;
-    var notePath = this.__getNotePath(noteDescriptor);
+    var notePath = getNotePath(noteDescriptor);
 
     NotebookDispatcher.dispatch({
       actionType: NotebookActionConstants.NOTEBOOK_DATABASE_SAVE_NOTE,
@@ -1017,9 +1007,9 @@ var DatabaseActionCreators = {
             !(new RegExp(/^(\/apps\/[iuc]a\/)/)).test(_src) &&
             !(new RegExp(/^(img\/)/)).test(_src)
           ) {
-            var assetFile = notePath + "/assets/" + _fileUploadName;
+            var assetFile = notePath + '/assets/' + _fileUploadName;
 
-            FSAPI.wget(self.__buildApiPath(assetFile), _src, {
+            FSAPI.wget(buildApiPath(assetFile), _src, {
               onSuccess: function() {
                 content = unescape(escape(content).replace(
                   new RegExp(escape(_src), 'g'),
@@ -1071,9 +1061,9 @@ var DatabaseActionCreators = {
       //    return (cb && cb());
       //}
 
-      var noteFile = notePath  + "/" + NotebookConstants.DATABASE_NOTE_FILE;
+      var noteFile = notePath  + '/' + NotebookConstants.DATABASE_NOTE_FILE;
 
-      FSAPI.writeFile(self.__buildApiPath(noteFile), _doc, {
+      FSAPI.writeFile(buildApiPath(noteFile), _doc, {
         onSuccess: function() {
           /* Update summary.json */
           self.saveNoteSummary(noteDescriptor, { title: title }, function(summary, error) {
@@ -1081,9 +1071,9 @@ var DatabaseActionCreators = {
               return (cb && cb("unable to update " + noteFile + ": " + error.message));
 
             /* Update last modified time */
-            FSAPI.touch(self.__buildApiPath(notePath), {
+            FSAPI.touch(buildApiPath(notePath), {
               onSuccess: function() {
-                FSAPI.stat(self.__buildApiPath(notePath), {
+                FSAPI.stat(buildApiPath(notePath), {
                   onSuccess: function(stat) {
                     noteDescriptor.noteTitle = title;
                     noteDescriptor.noteContent = content;
@@ -1137,20 +1127,21 @@ var DatabaseActionCreators = {
    * @param summary {Object} JSON summary object
    * @param callback {Function} Callback function with summary object or error message passed in
    */
-  saveNoteSummary: function(noteDescriptor, summary, callback) {
+  saveNoteSummary: (noteDescriptor, summary, callback) => {
     var self = this;
-    var notePath = this.__getNotePath(noteDescriptor);
+    var notePath = getNotePath(noteDescriptor);
     var summaryPath = notePath + "/summary.json";
 
-    FSAPI.exist(this.__buildApiPath(summaryPath), {
+    FSAPI.exist(buildApiPath(summaryPath), {
       onSuccess: function(exist) {
         if (exist) {
-          FSAPI.readFile(self.__buildApiPath(summaryPath), { encoding: "utf8" }, {
+          FSAPI.readFile(buildApiPath(summaryPath), {
+            encoding: "utf8",
             onSuccess: function(data) {
               try {
                 var _newSummary = assign(JSON.parse(data), summary);
 
-                FSAPI.writeFile(self.__buildApiPath(summaryPath), JSON.stringify(_newSummary), {
+                FSAPI.writeFile(buildApiPath(summaryPath), JSON.stringify(_newSummary), {
                   onSuccess: function() {
                     callback(_newSummary, null);
                   },
@@ -1169,7 +1160,7 @@ var DatabaseActionCreators = {
           });
         }
         else {
-          FSAPI.writeFile(self.__buildApiPath(summaryPath), JSON.stringify(summary), {
+          FSAPI.writeFile(buildApiPath(summaryPath), JSON.stringify(summary), {
             onSuccess: function() {
               callback(summary, null);
             },
@@ -1188,12 +1179,12 @@ var DatabaseActionCreators = {
    * @method renewNoteModifyDate
    * @param noteDescriptor {Object} NoteDescriptor object of note
    */
-  renewNoteModifyDate: function(noteDescriptor) {
-    var notePath = this.__getNotePath(noteDescriptor);
+  renewNoteModifyDate: (noteDescriptor) => {
+    var notePath = getNotePath(noteDescriptor);
 
-    FSAPI.touch(this.__buildApiPath(notePath), {
+    FSAPI.touch(buildApiPath(notePath), {
       onError: function(error) {
-        FSAPI.stat(this.__buildApiPath(notePath), {
+        FSAPI.stat(buildApiPath(notePath), {
           onSuccess: function(stat) {
             noteDescriptor.noteStat = stat;
           }
@@ -1208,22 +1199,23 @@ var DatabaseActionCreators = {
    * @param noteDescriptor {Object} NoteDescriptor object of note to be clearring useless assets
    * @param afterDelay {Number} Delay a period of time (in millisecond) before clearing useless assets
    */
-  clearUselessAssets: function(noteDescriptor, afterDelay) {
+  clearUselessAssets: (noteDescriptor, afterDelay) => {
     if (!databaseStorage) return;
 
     var self = this;
-    var notePath = this.__getNotePath(noteDescriptor);
+    var notePath = getNotePath(noteDescriptor);
 
     function __removeUseless(items, i, cb) {
-      var noteFile = notePath  + "/" + NotebookConstants.DATABASE_NOTE_FILE;
+      var noteFile = notePath  + '/' + NotebookConstants.DATABASE_NOTE_FILE;
 
-      FSAPI.grep(self.__buildApiPath(noteFile), items[i], { testOnly: true }, {
+      FSAPI.grep(buildApiPath(noteFile), items[i], {
+        testOnly: true,
         onSuccess: function(data) {
           if (!data) {
             console.log("Prepare to remove unused asset '" + items[i]);
-            var assetFile = notePath + "/assets/" + items[i];
+            var assetFile = notePath + '/assets/' + items[i];
 
-            FSAPI.removeFile(self.__buildApiPath(assetFile), {
+            FSAPI.removeFile(buildApiPath(assetFile), {
               onSuccess: function() {
                 console.log("Unused asset '" + items[i] + "' removed");
                 if (i === items.length - 1)
@@ -1257,7 +1249,7 @@ var DatabaseActionCreators = {
 
       var assetsDir = notePath + "/assets";
 
-      FSAPI.list(self.__buildApiPath(assetsDir), {}, {
+      FSAPI.list(buildApiPath(assetsDir), {
         onSuccess: function(items) {
           if (items.length > 0)
             __removeUseless(items, 0, function(error) {
@@ -1298,12 +1290,12 @@ var DatabaseActionCreators = {
    * @param width {Number} Snapshot image width
    * @param height {Number} Snapshot image height
    */
-  takeNoteSnapshot: function(noteDescriptor, snapshotDOMContainer, width, height) {
+  takeNoteSnapshot: (noteDescriptor, snapshotDOMContainer, width, height) => {
     if (!databaseStorage) return;
 
     var self = this;
-    var snapshotPath = this.__getBookshelfPath(
-      noteDescriptor.notebookNode.id + "/" + noteDescriptor.id + "/" + NotebookConstants.DATABASE_NOTE_SNAPSHOT_FILE
+    var snapshotPath = getBookshelfPath(
+      noteDescriptor.notebookNode.id + '/' + noteDescriptor.id + '/' + NotebookConstants.DATABASE_NOTE_SNAPSHOT_FILE
     );
 
     NotebookDispatcher.dispatch({
@@ -1318,7 +1310,7 @@ var DatabaseActionCreators = {
         var dataUrl = canvas.toDataURL("image/png");
         var data = dataUrl.replace(/^data:image\/png;base64,/, "");
 
-        FSAPI.writeFile(self.__buildApiPath(snapshotPath), base64ToBlob(data), {
+        FSAPI.writeFile(buildApiPath(snapshotPath), base64ToBlob(data), {
           onSuccess: function() {
             NotebookDispatcher.dispatch({
               actionType: NotebookActionConstants.NOTEBOOK_DATABASE_TAKE_NOTE_SNAPSHOT_SUCCESS,
@@ -1345,9 +1337,9 @@ var DatabaseActionCreators = {
    * @param noteDescriptor {Object} NoteDescriptor object of note to attach file
    * @param files {Array} File object array containing files to upload
    */
-  attachFilesToNote: function(noteDescriptor, files) {
+  attachFilesToNote: (noteDescriptor, files) => {
     var self = this;
-    var notePath = this.__getNotePath(noteDescriptor);
+    var notePath = getNotePath(noteDescriptor);
 
     NotebookDispatcher.dispatch({
       actionType: NotebookActionConstants.NOTEBOOK_DATABASE_ATTACH_FILE_TO_NOTE,
@@ -1366,9 +1358,9 @@ var DatabaseActionCreators = {
       _ext = _ext ? "." + _ext : "";
 
       noteDescriptor.fileUploadName = timestamp() + _ext;
-      noteDescriptor.fileUploadPath = notePath + "/assets/" + noteDescriptor.fileUploadName;
+      noteDescriptor.fileUploadPath = notePath + '/assets/' + noteDescriptor.fileUploadName;
 
-      FSAPI.writeFile(self.__buildApiPath(noteDescriptor.fileUploadPath), fileObject, {
+      FSAPI.writeFile(buildApiPath(noteDescriptor.fileUploadPath), fileObject, {
         onSuccess: function(xhr) {
           noteDescriptor.fileUploadName = null;
           noteDescriptor.fileUploadXHR = null;
@@ -1409,7 +1401,7 @@ var DatabaseActionCreators = {
           });
       }
       else {
-        FSAPI.touch(self.__buildApiPath(notePath + "/assets"));
+        FSAPI.touch(buildApiPath(notePath + "/assets"));
         NotebookDispatcher.dispatch({
           actionType: NotebookActionConstants.NOTEBOOK_DATABASE_ATTACH_FILE_TO_NOTE_SUCCESS,
           noteDescriptor: noteDescriptor,
@@ -1424,7 +1416,7 @@ var DatabaseActionCreators = {
    * @method cancelAttachFile
    * @param noteDescriptor {Object} NoteDescriptor object which contains uploading file information for cancelling
    */
-  cancelAttachFile: function(noteDescriptor) {
+  cancelAttachFile: (noteDescriptor) => {
     if (noteDescriptor.fileUploadXHR) {
       FSAPI.abortUploadFile(noteDescriptor.fileUploadXHR);
 
@@ -1435,5 +1427,3 @@ var DatabaseActionCreators = {
     }
   }
 }
-
-module.exports = DatabaseActionCreators;

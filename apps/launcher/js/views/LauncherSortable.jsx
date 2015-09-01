@@ -1,5 +1,15 @@
 export default class LauncherSortable extends React.Component {
 
+  static propTypes = {
+    manageable: React.PropTypes.bool
+  };
+
+  static defaultProps = {
+    manageable: false,
+    component: "ul",
+    childComponent: "li"
+  };
+
   constructor(props) {
     super(props);
     this.state = {
@@ -157,6 +167,3 @@ export default class LauncherSortable extends React.Component {
     return React.createElement(this.props.component, props);
   }
 }
-
-LauncherSortable.propTypes = { manageable: React.PropTypes.bool};
-LauncherSortable.defaultProps = { manageable: false, component: "ul", childComponent: "li" };

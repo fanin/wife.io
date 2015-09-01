@@ -2,6 +2,18 @@ import ListViewItem from './ListViewItem.jsx';
 
 export default class ListViewController extends React.Component {
 
+  static propTypes = {
+    canManageDataSource: React.PropTypes.bool,
+    onDataLoad: React.PropTypes.func,
+    onSelectRow: React.PropTypes.func,
+    onRenderListViewItem: React.PropTypes.func
+  };
+
+  static defaultProps = {
+    canManageDataSource: false,
+    onRenderListViewItem: data => data
+  };
+
   constructor(props) {
     super(props);
     this.state = {
@@ -11,20 +23,20 @@ export default class ListViewController extends React.Component {
     };
   }
 
-  setEnable = (enable) => {
+  setEnable(enable) {
     this.setState({ disabled: !enable });
   }
 
-  setDataSource = (dataList) => {
+  setDataSource(dataList) {
     this.setState({ dataSource: dataList });
     this.props.onDataLoad && this.props.onDataLoad();
   }
 
-  count = () => {
+  count() {
     return this.state.dataSource.length;
   }
 
-  selectRowAtIndex = (index) => {
+  selectRowAtIndex(index) {
     this.setState({ selectedRowIndex: index });
     if (!this.props.canManageDataSource)
       this.forceUpdate();
@@ -32,7 +44,7 @@ export default class ListViewController extends React.Component {
     this.scrollToRowAtIndex(index, true);
   }
 
-  addRowAtIndex = (data, index) => {
+  addRowAtIndex(data, index) {
     if (this.props.canManageDataSource) {
       var dataSource = this.state.dataSource;
       dataSource.splice(index, 0, data);
@@ -43,7 +55,7 @@ export default class ListViewController extends React.Component {
     this.selectRowAtIndex(index);
   }
 
-  removeRowAtIndex = (index) => {
+  removeRowAtIndex(index) {
     if (this.props.canManageDataSource) {
       var dataSource = this.state.dataSource;
       dataSource.splice(index, 1);
@@ -56,11 +68,11 @@ export default class ListViewController extends React.Component {
       this.selectRowAtIndex(index);
   }
 
-  refresh = (index) => {
+  refresh(index) {
     this.forceUpdate();
   }
 
-  scrollToRowAtIndex = (index, animated) => {
+  scrollToRowAtIndex(index, animated) {
     var _containerHeight = $(".cutie-listview-container").height();
     var _rowHeight = $( $(".ui.selection.celled.list").children().eq(index) ).outerHeight();
     var _containerScrollToPos = _containerHeight / 3 - _rowHeight / 2;
@@ -78,14 +90,16 @@ export default class ListViewController extends React.Component {
     let rows = this.state.dataSource.map(function(data, index) {
       let isActive = (index == this.state.selectedRowIndex);
       data = this.props.onRenderListViewItem(data);
-      return <ListViewItem index={index}
-                   key={index}
+      return <ListViewItem
+                index={index}
+                key={index}
                 active={isActive}
                 disabled={this.state.disabled}
-               titleText={data.titleText}
-              subtitleText={data.subtitleText}
-              detailText={data.detailText}
-                onSelect={this.selectRowAtIndex} />;
+                titleText={data.titleText}
+                subtitleText={data.subtitleText}
+                detailText={data.detailText}
+                onSelect={this.selectRowAtIndex.bind(this)}
+              />;
     }, this);
 
     return (
@@ -97,15 +111,3 @@ export default class ListViewController extends React.Component {
     );
   }
 }
-
-ListViewController.propTypes = {
-  canManageDataSource: React.PropTypes.bool,
-  onDataLoad: React.PropTypes.func,
-  onSelectRow: React.PropTypes.func,
-  onRenderListViewItem: React.PropTypes.func
-};
-
-ListViewController.defaultProps = {
-  canManageDataSource: false,
-  onRenderListViewItem: function(data) { return data }
-};

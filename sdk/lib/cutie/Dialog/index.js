@@ -1,2 +1,2 @@
-import DialogController from './DialogController.jsx';
-export default DialogController;
+import Dialog from './Dialog.jsx';
+export default Dialog;

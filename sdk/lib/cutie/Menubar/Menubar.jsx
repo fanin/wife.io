@@ -3,7 +3,7 @@
 export default class Menubar extends React.Component {
   toggleDock(event) {
     $('#app-sidebar')
-      .sidebar('setting', 'transition', 'push')
+      .sidebar('setting', 'transition', 'overlay')
       .sidebar('setting', 'dimPage', false)
       .sidebar('toggle');
   }

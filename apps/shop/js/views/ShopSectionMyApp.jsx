@@ -1,4 +1,3 @@
-var async              = require("async");
 var DialogController   = require("lib/cutie/Dialog");
 var ShopActionCreators = require("../actions/ShopActionCreators");
 var ShopStore          = require("../stores/ShopStore");

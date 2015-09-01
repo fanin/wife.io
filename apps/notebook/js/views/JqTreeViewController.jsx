@@ -1,6 +1,6 @@
-var JqTreeViewController = React.createClass({
+export default class JqTreeViewController extends React.Component {
 
-  propTypes: {
+  static propTypes = {
     data:           React.PropTypes.array.isRequired,
     exclusives:     React.PropTypes.array.isRequired,
     onCreateNode:   React.PropTypes.func,
@@ -10,48 +10,44 @@ var JqTreeViewController = React.createClass({
     onMove:         React.PropTypes.func,
     onRefresh:      React.PropTypes.func,
     onCreateFolder: React.PropTypes.func
-  },
+  };
 
-  getDefaultProps: function() {
-    return {
-      exclusives:     [],
-      onCreateNode:   function(node) {},
-      onOpen:         function(node) {},
-      onClose:        function(node) {},
-      onSelect:       function(node) {},
-      onMove:         function(movedNode, targetNode, position) {},
-      onRefresh:      function() {},
-      onCreateFolder: function(createFolderHelper) {
-        createFolderHelper(
-          undefined,
-          'NewFolder' + Math.floor(Math.random() * 100).toString()
-        );
-      }
-    };
-  },
+  static defaultProps = {
+    exclusives: [],
+    onCreateNode: (node) => {},
+    onOpen: (node) => {},
+    onClose: (node) => {},
+    onSelect: (node) => {},
+    onMove: (movedNode, targetNode, position) => {},
+    onRefresh: () => {},
+    onCreateFolder: (createFolderHelper) => {
+      createFolderHelper(
+        undefined,
+        'NewFolder' + Math.floor(Math.random() * 100).toString()
+      );
+    }
+  };
 
-  componentDidMount: function() {
+  componentDidMount() {
     this.treeInstance = $(React.findDOMNode(this));
 
-    this.treeInstance.bind("tree.open", function(event) {
+    this.treeInstance.bind("tree.open", (event) => {
       this.props.onOpen(event.node);
-    }.bind(this));
+    });
 
-    this.treeInstance.bind("tree.close", function(event) {
+    this.treeInstance.bind("tree.close", (event) => {
       this.props.onClose(event.node);
-    }.bind(this));
+    });
 
-    this.treeInstance.bind("tree.refresh", function() {
+    this.treeInstance.bind("tree.refresh", () => {
       this.props.onRefresh();
-    }.bind(this));
+    });
 
-    this.treeInstance.bind("tree.select", function(event) {
-      if (event.node) {
-        this.props.onSelect(event.node);
-      }
-    }.bind(this));
+    this.treeInstance.bind("tree.select", (event) => {
+      event.node && this.props.onSelect(event.node);
+    });
 
-    this.treeInstance.bind("tree.move", function(event) {
+    this.treeInstance.bind("tree.move", (event) => {
       event.preventDefault();
 
       var movedNode = event.move_info.moved_node;
@@ -72,16 +68,16 @@ var JqTreeViewController = React.createClass({
       }
       else {
         /* Create a new folder and move movedNote & targetNode to the folder */
-        var name = this.props.onCreateFolder(function(id, name) {
+        var name = this.props.onCreateFolder((id, name) => {
           this.nodeCreate(id, name);
           var _folderNode = this.getNodeById(id);
           this.nodeMove(targetNode, _folderNode, "inside");
           this.nodeMove(movedNode, _folderNode, "inside");
           this.nodeOpen(_folderNode);
           this.props.onMove(movedNode, targetNode, position);
-        }.bind(this));
+        });
       }
-    }.bind(this));
+    });
 
     this.treeInstance.tree({
       closedIcon:  $("<i class='inverted caret right icon'></i>"),
@@ -91,21 +87,21 @@ var JqTreeViewController = React.createClass({
       autoOpen:    false,
       data:        this.props.data,
 
-      onCreateLi: function(node, $li) {
+      onCreateLi: (node, $li) => {
         if (node.isFolder())
           $li.find(".jqtree-title").before("<i class='list icon'/>&nbsp;");
         else
           $li.find(".jqtree-title").before("<i class='inverted book icon'/>&nbsp;");
 
         this.props.onCreateNode && this.props.onCreateNode(node);
-      }.bind(this),
+      },
 
-      onCanMove: function(node) {
-        return !this._isExclusiveNode(node);
-      }.bind(this),
+      onCanMove: (node) => {
+        return !this.isExclusiveNode(node);
+      },
 
-      onCanMoveTo: function(movedNode, targetNode, position) {
-        if (this._isExclusiveNode(targetNode) &&
+      onCanMoveTo: (movedNode, targetNode, position) => {
+        if (this.isExclusiveNode(targetNode) &&
             (position === "inside" || position === "before"))
           return false;
 
@@ -118,27 +114,19 @@ var JqTreeViewController = React.createClass({
           return false;
 
         return true;
-      }.bind(this)
+      }
     });
-  },
+  }
 
-  shouldComponentUpdate: function(nextProps, nextState) {
+  shouldComponentUpdate(nextProps, nextState) {
     /* Reload tree data only when data changes */
     if (this.props.data !== nextProps.data) {
       this.treeInstance.tree("loadData", nextProps.data);
     }
     return false;
-  },
+  }
 
-  render: function() {
-    return (
-      <div className="jq-treeview-container">
-        <div className="jq-treeview" />
-      </div>
-    );
-  },
-
-  _isExclusiveNode: function(node) {
+  isExclusiveNode(node) {
     for (var i in this.props.exclusives) {
       if (this.props.exclusives[i] === node.id
         || this.props.exclusives[i] === node.name
@@ -146,33 +134,33 @@ var JqTreeViewController = React.createClass({
         return true;
     }
     return false;
-  },
+  }
 
-  getNodeById: function(id) {
+  getNodeById(id) {
     return this.treeInstance.tree("getNodeById", id);
-  },
+  }
 
-  getTree: function() {
+  getTree() {
     return this.treeInstance.tree("getTree");
-  },
+  }
 
-  getTreeData: function() {
+  getTreeData() {
     return this.treeInstance.tree("toJson");
-  },
+  }
 
-  getSelectedNode: function() {
+  getSelectedNode() {
     return this.treeInstance.tree("getSelectedNode");
-  },
+  }
 
-  nodeOpen: function(node) {
+  nodeOpen(node) {
     this.treeInstance.tree("openNode", node, true);
-  },
+  }
 
-  nodeSelect: function(node) {
+  nodeSelect(node) {
     this.treeInstance.tree("selectNode", node);
-  },
+  }
 
-  nodeCreate: function(id, name, pos, node) {
+  nodeCreate(id, name, pos, node) {
     var _newNode = { id: id, label: name};
     if (pos === "before" && node)
       this.treeInstance.tree("addNodeBefore", _newNode, node);
@@ -180,16 +168,16 @@ var JqTreeViewController = React.createClass({
       this.treeInstance.tree("addNodeAfter", _newNode, node);
     else
       this.treeInstance.tree("appendNode", _newNode);
-  },
+  }
 
-  nodeRemove: function(node) {
+  nodeRemove(node) {
     var parent = node.parent;
     this.treeInstance.tree("removeNode", node);
     if (parent && parent.children.length === 0)
       this.treeInstance.tree("removeNode", parent);
-  },
+  }
 
-  nodeRename: function(node, name) {
+  nodeRename(node, name) {
     this.treeInstance.tree("updateNode", node, name);
     /*
      * BUG (jqTree):
@@ -201,15 +189,20 @@ var JqTreeViewController = React.createClass({
     this.treeInstance.tree("loadData", JSON.parse(this.treeInstance.tree("toJson")));
     /* Select renamed node again due to tree has been reloaded */
     this.treeInstance.tree("selectNode", this.getNodeById(node.id));
-  },
+  }
 
-  nodeMove: function(srcNode, dstNode, pos) {
+  nodeMove(srcNode, dstNode, pos) {
     var srcParent = srcNode.parent;
     this.treeInstance.tree("moveNode", srcNode, dstNode, pos);
     if (srcParent && srcParent.children.length === 0)
       this.treeInstance.tree("removeNode", srcParent);
   }
 
-});
-
-module.exports = JqTreeViewController;
+  render() {
+    return (
+      <div className="jq-treeview-container">
+        <div className="jq-treeview" />
+      </div>
+    );
+  }
+}

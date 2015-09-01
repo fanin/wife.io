@@ -52,6 +52,11 @@ body.pushable
   display: none !important;
 }
 
+.ui.dimmer
+{
+  background-color: rgba(0,0,0,.6) !important;
+}
+
 /* jQuery UI: Remove the blue glow on focus */
 *:focus
 {

@@ -1,9 +1,9 @@
-var BookshelfContainer  = require('./BookshelfContainer.jsx');
-var NoteListContainer   = require('./NoteListContainer.jsx');
-var NoteEditorContainer = require('./NoteEditorContainer.jsx');
+import BookshelfContainer from './BookshelfContainer.jsx';
+import NoteListContainer from './NoteListContainer.jsx';
+import NoteEditorContainer from './NoteEditorContainer.jsx';
 
-var AppMainView = React.createClass({
-  render: function() {
+export default class AppMainView extends React.Component {
+  render() {
     return (
       <div className="nb-main-view">
         <div className="ui equal height grid nb-main-grid">
@@ -20,7 +20,4 @@ var AppMainView = React.createClass({
       </div>
     );
   }
-
-});
-
-module.exports = AppMainView;
+}
