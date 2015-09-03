@@ -50,11 +50,11 @@ app.use(express.static(path.join(path.dirname(__dirname), 'public')));
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.use('/', index);
 app.use('/user', user);
-app.use('/api', api);
+app.use('/', index);
 app.use('/apps', apps);
 app.use('/sdk', sdk);
+app.use('/api', api);
 
 app.get('*', function(req, res, next) {
   console.log('Unhandled route URL: ' + req.url);

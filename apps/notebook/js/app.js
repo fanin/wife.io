@@ -12,8 +12,8 @@ Promise.all([
   var app = new Application();
 
   // Configure the application
-  app.configure({ debug: true });
+  app.configure({ debug: true, appview: <AppMainView /> });
 
   // Render application views
-  app.render(AppMainView);
+  app.render();
 });

@@ -5,7 +5,7 @@ import AppMainView from './views/AppMainView.jsx';
 var app = new Application();
 
 // Configure the application
-app.configure({ debug: true });
+app.configure({ debug: true, appview: <AppMainView /> });
 
 // Render application views
-app.render(AppMainView);
+app.render();

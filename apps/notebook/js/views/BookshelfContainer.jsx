@@ -81,7 +81,7 @@ export default class BookshelfContainer extends React.Component {
       },
 
       onError: (error) => {
-        this.showErrorAlert("Storage Error", "Error: " + args.error);
+        this.showErrorAlert("Storage Error", error.message);
         DatabaseActionCreators.closeDatabase();
       }
     });
@@ -133,6 +133,7 @@ export default class BookshelfContainer extends React.Component {
     var inputForm = (
       <Form
         ref="inputForm"
+        preventDefaultSubmit={true}
         fields={{
           name: {
             identifier: 'name',
@@ -162,6 +163,7 @@ export default class BookshelfContainer extends React.Component {
     var searchForm = (
       <Form
         ref="searchForm"
+        preventDefaultSubmit={true}
         fields={{
           name: {
             identifier: 'name',

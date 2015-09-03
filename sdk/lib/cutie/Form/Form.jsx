@@ -2,12 +2,16 @@
 
 export default class Form extends React.Component {
 
+  static defaultProps = {
+    preventDefaultSubmit: false
+  };
+
   constructor(props) {
     super(props);
   }
 
   componentDidMount() {
-    $(React.findDOMNode(this)).form({
+    let form = $(React.findDOMNode(this)).form({
       fields: this.props.fields,
       onSuccess: () => {
         if (this.props.dataType === 'Array')
@@ -22,7 +26,10 @@ export default class Form extends React.Component {
       onFailure: () => {
         this.props.onValidate && this.props.onValidate(true);
       }
-    }).submit(false);
+    });
+
+    if (this.props.preventDefaultSubmit)
+      form.submit(false);
   }
 
   submit() {
@@ -49,7 +56,7 @@ export default class Form extends React.Component {
 
   render() {
     return (
-      <form className="ui form" action={this.props.action}>
+      <form className="ui form" method="POST" action={this.props.action}>
         {this.props.children}
       </form>
     );

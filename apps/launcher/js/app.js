@@ -7,8 +7,8 @@ include('/sdk/lib/jquery/ui/1.11.1/jquery-ui.min.js').then(function() {
   var app = new Application();
 
   // Configure the application
-  app.configure({ debug: true });
+  app.configure({ debug: true, appview: <AppMainView /> });
 
   // Render application views
-  app.render(AppMainView);
+  app.render();
 });

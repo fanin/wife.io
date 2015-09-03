@@ -76,7 +76,7 @@ export default class LauncherSortable extends React.Component {
   }
 
   componentWillUnmount() {
-    $(React.findDOMNode(this)).children().get().forEach(function(node) {
+    $(React.findDOMNode(this)).children().get().forEach((node) => {
       React.unmountComponentAtNode(node);
     });
   }
@@ -86,8 +86,8 @@ export default class LauncherSortable extends React.Component {
   }
 
   handleDrop() {
-    var newOrder = $(React.findDOMNode(this)).children().get().map(function(child, i) {
-      var rv = child.dataset.reactSortablePos;
+    var newOrder = $(React.findDOMNode(this)).children().get().map((child, i) => {
+      let rv = child.dataset.reactSortablePos;
       child.dataset.reactSortablePos = i;
       return rv;
     });
@@ -95,7 +95,7 @@ export default class LauncherSortable extends React.Component {
   }
 
   handleMouseDown_ia(e) {
-    this.builtinAppClickTimer = setTimeout(function() {
+    this.builtinAppClickTimer = setTimeout(() => {
       this.builtinAppClickTimer = undefined;
     }, 500);
     this.startManageModeTimer();
@@ -118,7 +118,7 @@ export default class LauncherSortable extends React.Component {
   }
 
   handleMouseDown_ua(e) {
-    this.userAppClickTimer = setTimeout(function() {
+    this.userAppClickTimer = setTimeout(() => {
       this.userAppClickTimer = undefined;
     }, 500);
     this.startManageModeTimer();
@@ -137,7 +137,7 @@ export default class LauncherSortable extends React.Component {
 
   handleMouseMove_ua(e) {
     clearTimeout(this.userAppClickTimer);
-      this.userAppClickTimer = undefined;
+    this.userAppClickTimer = undefined;
     this.stopManageModeTimer();
   }
 
@@ -150,9 +150,9 @@ export default class LauncherSortable extends React.Component {
 
   startManageModeTimer() {
     if (!this.props.manageable) {
-      this.longPressTimer = setTimeout(function() {
+      this.longPressTimer = setTimeout(() => {
         this.props.onLongPressIcon();
-      }.bind(this), 750);
+      }, 750);
     }
   }
 

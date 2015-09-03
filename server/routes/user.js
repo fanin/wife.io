@@ -11,32 +11,33 @@ passport.deserializeUser(User.deserializeUser());
 
 mongoose.connect('mongodb://localhost:27017/user');
 
-router.get('/register', function(req, res) {
-
-});
-
-router.post('/register', function(req, res) {
-  User.register(new User({ email : req.body.email }), req.body.password, function(err, account) {
-    if (err) {
-      return res.render('register', { account : account });
+router.post('/signup', function(req, res, next) {
+  User.register(
+    new User({
+      email:     req.body.email,
+      firstname: req.body.firstname,
+      lastname:  req.body.lastname,
+      group:     req.body.group,
+      gender:    req.body.gender
+    }),
+    req.body.password,
+    function(error, user) {
+      if (error)
+        res.status(403).send(error.message);
+      else
+        res.status(200).send('User account created');
     }
-
-    passport.authenticate('local')(req, res, function() {
-      res.redirect('/');
-    });
-  });
-});
-
-router.get('/login', function(req, res) {
-
+  );
 });
 
 router.post('/login', passport.authenticate('local'), function(req, res) {
-
+  //res.cookie('userid', req.user.id, { maxAge: 600000, httpOnly: false, secure: false });
+  //client: $.cookie("userid")
+  res.status(200).send('User logged in');
 });
 
 router.get('/logout', function(req, res) {
-
+  //res.clearCookie('userid');
 });
 
 module.exports = router;

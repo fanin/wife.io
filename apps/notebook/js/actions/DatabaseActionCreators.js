@@ -61,6 +61,58 @@ let buildApiPath = function(path) {
   return databaseStorage ? path + ":" + databaseStorage.uuid : path;
 }
 
+/**
+ * Create or merge note summary and save it to summary.json
+ * @method saveNoteSummary
+ * @param noteDescriptor {Object} NoteDescriptor object of note
+ * @param summary {Object} JSON summary object
+ * @param callback {Function} Callback function with summary object or error message passed in
+ */
+let saveNoteSummary = function(noteDescriptor, summary, callback) {
+  var notePath = getNotePath(noteDescriptor);
+  var summaryPath = notePath + "/summary.json";
+
+  FSAPI.exist(buildApiPath(summaryPath), {
+    onSuccess: function(exist) {
+      if (exist) {
+        FSAPI.readFile(buildApiPath(summaryPath), {
+          encoding: "utf8",
+          onSuccess: function(data) {
+            try {
+              let _newSummary = assign(JSON.parse(data), summary);
+
+              FSAPI.writeFile(buildApiPath(summaryPath), JSON.stringify(_newSummary), {
+                onSuccess: () => {
+                  callback(_newSummary, null);
+                },
+                onError: (error) => {
+                  callback(null, error);
+                }
+              });
+            }
+            catch (error) {
+              callback(null, error);
+            }
+          },
+          onError: (error) => {
+            callback(null, error);
+          }
+        });
+      }
+      else {
+        FSAPI.writeFile(buildApiPath(summaryPath), JSON.stringify(summary), {
+          onSuccess: () => {
+            callback(summary, null);
+          },
+          onError: (error) => {
+            callback(null, error);
+          }
+        });
+      }
+    }
+  });
+}
+
 export default {
 
   /**
@@ -108,34 +160,34 @@ export default {
 
     /* Create /bookshelf if necessary */
     FSAPI.exist(bookshelfApiPath)
-    .then(function(result) {
+    .then((result) => {
       if (result.exist)
         return FSAPI.stat(bookshelfApiPath);
       else
         return FSAPI.createDirectory(bookshelfApiPath);
     })
-    .then(function(result) {
+    .then((result) => {
       if (result.api === 'fs.stat')
         if (!result.stat.isDirectory)
           return FSAPI.removeFile(bookshelfApiPath);
       return result;
     })
-    .then(function(result) {
+    .then((result) => {
       if (result.api === 'fs.removeFile')
         return FSAPI.createDirectory(bookshelfApiPath);
       else
         return result;
     })
-    .then(function(result) {
+    .then((result) => {
       return FSAPI.exist(bookshelfTreeApiPath);
     })
-    .then(function(result) {
+    .then((result) => {
       if (result.exist)
         return FSAPI.readFile(bookshelfTreeApiPath, { encoding: 'utf8' });
       else
         return FSAPI.writeFile(bookshelfTreeApiPath, JSON.stringify(initialTreeData));
     })
-    .then(function(result) {
+    .then((result) => {
       if (result.api === 'fs.readFile') {
         let treeData;
 
@@ -161,7 +213,7 @@ export default {
           treeData: initialTreeData
         });
     })
-    .catch(function(error) {
+    .catch((error) => {
       if (error.api === 'fs.createDirectory')
         NotebookDispatcher.dispatch({
           actionType: NotebookActionConstants.NOTEBOOK_DATABASE_LOADTREE_ERROR,
@@ -197,7 +249,6 @@ export default {
    * @param wait {Number} Wait a period of time in millisecond before saving tree data
    */
   saveTree: (treeJsonData, wait = 0) => {
-    var self = this;
     var treeData;
 
     if (!databaseStorage) return;
@@ -224,13 +275,13 @@ export default {
       }
       finally {
         FSAPI.writeFile(buildApiPath(NotebookConstants.DATABASE_TREE_FILE), treeJsonData, {
-          onSuccess: function() {
+          onSuccess: () => {
             NotebookDispatcher.dispatch({
               actionType: NotebookActionConstants.NOTEBOOK_DATABASE_SAVETREE_SUCCESS,
               treeData: treeData
             });
           },
-          onError: function(error) {
+          onError: (error) => {
             NotebookDispatcher.dispatch({
               actionType: NotebookActionConstants.NOTEBOOK_DATABASE_SAVETREE_ERROR,
               error: "unable to write tree data: " + error.message
@@ -272,7 +323,7 @@ export default {
     });
 
     FSAPI.exist(buildApiPath(notebookPath), {
-      onSuccess: function(exist) {
+      onSuccess: (exist) => {
         if (exist) {
           return NotebookDispatcher.dispatch({
             actionType: NotebookActionConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK_ERROR,
@@ -281,21 +332,21 @@ export default {
         }
 
         FSAPI.createDirectory(buildApiPath(notebookPath), {
-          onSuccess: function() {
+          onSuccess: () => {
             NotebookDispatcher.dispatch({
               actionType: NotebookActionConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK_SUCCESS,
               notebookId: parseInt(code),
               notebookName: name
             });
           },
-          onError: function(error) {
+          onError: (error) => {
             NotebookDispatcher.dispatch({
               actionType: NotebookActionConstants.NOTEBOOK_DATABASE_CREATE_NOTEBOOK_ERROR,
               error: "unable to create " + notebookPath + ", error: " + error.message
             });
           }
         });
-      }.bind(this)
+      }
     });
   },
 
@@ -315,7 +366,7 @@ export default {
     });
 
     FSAPI.exist(buildApiPath(notebookPath), {
-      onSuccess: function(exist) {
+      onSuccess: (exist) => {
         if (!exist) {
           return NotebookDispatcher.dispatch({
             actionType: NotebookActionConstants.NOTEBOOK_DATABASE_TRASH_NOTEBOOK_ERROR,
@@ -324,20 +375,20 @@ export default {
         }
 
         FSAPI.removeFile(buildApiPath(notebookPath), {
-          onSuccess: function() {
+          onSuccess: () => {
             NotebookDispatcher.dispatch({
               actionType: NotebookActionConstants.NOTEBOOK_DATABASE_TRASH_NOTEBOOK_SUCCESS,
               notebookNode: notebookNode
             });
           },
-          onError: function(error) {
+          onError: (error) => {
             NotebookDispatcher.dispatch({
               actionType: NotebookActionConstants.NOTEBOOK_DATABASE_TRASH_NOTEBOOK_ERROR,
               error: "unable to remove notebook (id = " + notebookNode.id + ") : " + error.message
             });
           }
         });
-      }.bind(this)
+      }
     });
   },
 
@@ -364,7 +415,6 @@ export default {
   loadNotes: (notebookNode, searchString) => {
     if (!databaseStorage) return;
 
-    var self = this;
     var __loadNotes = function(node, cb) {
       var _noteDescriptors = [];
       var _notebookPath = getBookshelfPath(node.id);
@@ -408,7 +458,7 @@ export default {
                       else
                         callback("NO_MATCH", true);
                     },
-                    onError: function(error) {
+                    onError: (error) => {
                       callback("Operation: File.Grep\n\nMessage: " + error.message, false);
                     }
                   }
@@ -437,7 +487,7 @@ export default {
 
                       callback(null, true);
                     },
-                    onError: function(error) {
+                    onError: (error) => {
                       callback("Operation: File.Grep\n\nMessage: " + error.message, false);
                     }
                   }
@@ -463,7 +513,7 @@ export default {
             });
           })(0);
         },
-        onError: function(error) {
+        onError: (error) => {
           NotebookDispatcher.dispatch({
             actionType: NotebookActionConstants.NOTEBOOK_DATABASE_LOADNOTES_ERROR,
             notebookNode: node,
@@ -633,8 +683,6 @@ export default {
   addNote: (notebookNode, title, content) => {
     if (!databaseStorage) return;
 
-    var self = this;
-
     NotebookDispatcher.dispatch({
       actionType: NotebookActionConstants.NOTEBOOK_DATABASE_ADD_NOTE,
       notebookNode: notebookNode
@@ -644,10 +692,10 @@ export default {
     var notePath = getBookshelfPath(notebookNode.id + '/' + noteId);
 
     FSAPI.exist(buildApiPath(notePath), {
-      onSuccess: function(exist) {
+      onSuccess: (exist) => {
         if (!exist) {
           FSAPI.createDirectory(buildApiPath(notePath), {
-            onSuccess: function() {
+            onSuccess: () => {
               if (!title || title.trim() === "")
                 title = "Untitled";
 
@@ -658,13 +706,13 @@ export default {
 
               // Write empty note
               FSAPI.writeFile(buildApiPath(indexPath), emptyNote, {
-                onSuccess: function() {
+                onSuccess: () => {
                   // Get stat of the note
                   FSAPI.stat(buildApiPath(indexPath), {
-                    onSuccess: function(stat) {
+                    onSuccess: (stat) => {
                       // Create assets folder for the note
                       FSAPI.createDirectory(buildApiPath(notePath + "/assets"), {
-                        onSuccess: function() {
+                        onSuccess: () => {
                           /**
                            * @define NoteDescriptor
                            * @member notebookNode {Object} Notebook node object
@@ -684,7 +732,7 @@ export default {
                             }
                           });
                         },
-                        onError: function(error) {
+                        onError: (error) => {
                           NotebookDispatcher.dispatch({
                             actionType: NotebookActionConstants.NOTEBOOK_DATABASE_ADD_NOTE_ERROR,
                             notebookNode: notebookNode,
@@ -693,7 +741,7 @@ export default {
                         }
                       });
                     },
-                    onError: function(error) {
+                    onError: (error) => {
                       NotebookDispatcher.dispatch({
                         actionType: NotebookActionConstants.NOTEBOOK_DATABASE_ADD_NOTE_ERROR,
                         notebookNode: notebookNode,
@@ -702,7 +750,7 @@ export default {
                     }
                   });
                 },
-                onError: function(error) {
+                onError: (error) => {
                   NotebookDispatcher.dispatch({
                     actionType: NotebookActionConstants.NOTEBOOK_DATABASE_ADD_NOTE_ERROR,
                     notebookNode: notebookNode,
@@ -711,7 +759,7 @@ export default {
                 }
               });
             },
-            onError: function(error) {
+            onError: (error) => {
               NotebookDispatcher.dispatch({
                 actionType: NotebookActionConstants.NOTEBOOK_DATABASE_ADD_NOTE_ERROR,
                 notebookNode: notebookNode,
@@ -722,7 +770,7 @@ export default {
         }
         else {
           /* Recursively call addNote to get different timecode as note path name */
-          self.addNote(notebookNode, title, content);
+          this.addNote(notebookNode, title, content);
         }
       }
     });
@@ -736,8 +784,6 @@ export default {
   copyNote: (noteDescriptor) => {
     if (!databaseStorage) return;
 
-    var self = this;
-
     NotebookDispatcher.dispatch({
       actionType: NotebookActionConstants.NOTEBOOK_DATABASE_COPY_NOTE,
       srcNoteDescriptor: noteDescriptor
@@ -746,32 +792,32 @@ export default {
     var notePath = getNotePath(noteDescriptor);
 
     FSAPI.exist(buildApiPath(notePath), {
-      onSuccess: function(exist) {
+      onSuccess: (exist) => {
         if (exist) {
           var _copyNoteId = timestamp();
           var _copyNotePath = dirname(notePath) + '/' + _copyNoteId;
 
           FSAPI.copy(buildApiPath(notePath), buildApiPath(_copyNotePath), {
-            onSuccess: function() {
+            onSuccess: () => {
               var _dstNoteFile = _copyNotePath + '/' + NotebookConstants.DATABASE_NOTE_FILE;
 
               FSAPI.readFile(buildApiPath(_dstNoteFile), {
                 encoding: "utf8",
-                onSuccess: function(noteData) {
+                onSuccess: (noteData) => {
 
                   FSAPI.grep(buildApiPath(_dstNoteFile), "<title>(.*?)</title>", {
                     regexModifier: 'i',
                     matchOnly: true,
-                    onSuccess: function(data) {
+                    onSuccess: (data) => {
                       var _noteTitle = data;
 
                       var re = new RegExp(encodeURIComponent(notePath), "g");
                       noteData = noteData.replace(re, encodeURIComponent(_copyNotePath));
 
                       FSAPI.writeFile(buildApiPath(_copyNotePath + '/' + NotebookConstants.DATABASE_NOTE_FILE), noteData, {
-                        onSuccess: function() {
+                        onSuccess: () => {
                           FSAPI.stat(buildApiPath(_copyNotePath), {
-                            onSuccess: function(stat) {
+                            onSuccess: (stat) => {
                               NotebookDispatcher.dispatch({
                                 actionType: NotebookActionConstants.NOTEBOOK_DATABASE_COPY_NOTE_SUCCESS,
                                 srcNoteDescriptor: noteDescriptor,
@@ -783,7 +829,7 @@ export default {
                                 }
                               });
                             },
-                            onError: function(error) {
+                            onError: (error) => {
                               NotebookDispatcher.dispatch({
                                 actionType: NotebookActionConstants.NOTEBOOK_DATABASE_COPY_NOTE_ERROR,
                                 srcNote: noteDescriptor,
@@ -792,7 +838,7 @@ export default {
                             }
                           });
                         },
-                        onError: function(error) {
+                        onError: (error) => {
                           NotebookDispatcher.dispatch({
                             actionType: NotebookActionConstants.NOTEBOOK_DATABASE_COPY_NOTE_ERROR,
                             srcNoteDescriptor: noteDescriptor,
@@ -801,7 +847,7 @@ export default {
                         }
                       });
                     },
-                    onError: function(error) {
+                    onError: (error) => {
                       NotebookDispatcher.dispatch({
                         actionType: NotebookActionConstants.NOTEBOOK_DATABASE_COPY_NOTE_ERROR,
                         srcNoteDescriptor: noteDescriptor,
@@ -810,7 +856,7 @@ export default {
                     }
                   });
                 },
-                onError: function(error) {
+                onError: (error) => {
                     NotebookDispatcher.dispatch({
                       actionType: NotebookActionConstants.NOTEBOOK_DATABASE_COPY_NOTE_ERROR,
                       srcNoteDescriptor: noteDescriptor,
@@ -819,7 +865,7 @@ export default {
                 }
               });
             },
-            onError: function(error) {
+            onError: (error) => {
               NotebookDispatcher.dispatch({
                 actionType: NotebookActionConstants.NOTEBOOK_DATABASE_COPY_NOTE_ERROR,
                 srcNoteDescriptor: noteDescriptor,
@@ -848,16 +894,16 @@ export default {
     });
 
     FSAPI.exist(buildApiPath(notePath), {
-      onSuccess: function(exist) {
+      onSuccess: (exist) => {
         if (exist) {
           FSAPI.removeFile(buildApiPath(notePath), {
-            onSuccess: function() {
+            onSuccess: () => {
               NotebookDispatcher.dispatch({
                 actionType: NotebookActionConstants.NOTEBOOK_DATABASE_TRASH_NOTE_SUCCESS,
                 noteDescriptor: noteDescriptor
               });
             },
-            onError: function(error) {
+            onError: (error) => {
               NotebookDispatcher.dispatch({
                 actionType: NotebookActionConstants.NOTEBOOK_DATABASE_TRASH_NOTE_ERROR,
                 noteDescriptor: noteDescriptor,
@@ -866,7 +912,7 @@ export default {
             }
           });
         }
-      }.bind(this)
+      }
     });
   },
 
@@ -904,7 +950,7 @@ export default {
 
     FSAPI.readFile(buildApiPath(noteFile), {
       encoding: "utf8",
-      onSuccess: function(data) {
+      onSuccess: (data) => {
         /* Remove all single &nbsp; between tags, and extract contents inside <body></body> */
         var content = data.replace(/\>&nbsp;\</gi,'\>\<')
                   .match(/\<body[^>]*\>([^]*)\<\/body/m)[1] || "";
@@ -915,7 +961,7 @@ export default {
           noteDescriptor: noteDescriptor
         });
       },
-      onError: function(error) {
+      onError: (error) => {
         NotebookDispatcher.dispatch({
           actionType: NotebookActionConstants.NOTEBOOK_DATABASE_READ_NOTE_ERROR,
           noteDescriptor: noteDescriptor,
@@ -960,7 +1006,6 @@ export default {
   saveNote: (noteDescriptor, manually) => {
     if (!databaseStorage) return;
 
-    var self = this;
     var notePath = getNotePath(noteDescriptor);
 
     NotebookDispatcher.dispatch({
@@ -1010,7 +1055,7 @@ export default {
             var assetFile = notePath + '/assets/' + _fileUploadName;
 
             FSAPI.wget(buildApiPath(assetFile), _src, {
-              onSuccess: function() {
+              onSuccess: () => {
                 content = unescape(escape(content).replace(
                   new RegExp(escape(_src), 'g'),
                   escape (
@@ -1023,7 +1068,7 @@ export default {
                 ));
                 __grabNext();
               },
-              onError: function(error) {
+              onError: (error) => {
                 console.log("Unable to save file from URL " + _src);
                 content = unescape(escape(content).replace(
                   new RegExp(escape(_src), 'g'),
@@ -1064,17 +1109,17 @@ export default {
       var noteFile = notePath  + '/' + NotebookConstants.DATABASE_NOTE_FILE;
 
       FSAPI.writeFile(buildApiPath(noteFile), _doc, {
-        onSuccess: function() {
+        onSuccess: () => {
           /* Update summary.json */
-          self.saveNoteSummary(noteDescriptor, { title: title }, function(summary, error) {
+          saveNoteSummary(noteDescriptor, { title: title }, (summary, error) => {
             if (error)
               return (cb && cb("unable to update " + noteFile + ": " + error.message));
 
             /* Update last modified time */
             FSAPI.touch(buildApiPath(notePath), {
-              onSuccess: function() {
+              onSuccess: () => {
                 FSAPI.stat(buildApiPath(notePath), {
-                  onSuccess: function(stat) {
+                  onSuccess: (stat) => {
                     noteDescriptor.noteTitle = title;
                     noteDescriptor.noteContent = content;
                     noteDescriptor.noteSummary = summary;
@@ -1083,26 +1128,26 @@ export default {
                     noteDescriptor.dirtyNoteContent = null;
                     return (cb && cb());
                   },
-                  onError: function(error) {
+                  onError: (error) => {
                     cb && cb("unable to get stat of " + notePath + ": " + error.message);
                   }
                 });
               },
-              onError: function(error) {
+              onError: (error) => {
                 cb && cb("unable to touch " + notePath + ": " + error.message);
               }
             });
           });
         },
-        onError: function(error) {
+        onError: (error) => {
           cb && cb("unable to write " + noteFile + ": " + error.message);
         }
       });
     }
 
     // FIXME: should save content first, then grab resource
-    __grabResources(noteDescriptor.dirtyNoteContent, function(grabbedContent) {
-      __save(noteDescriptor.dirtyNoteTitle, grabbedContent, function(error) {
+    __grabResources(noteDescriptor.dirtyNoteContent, (grabbedContent) => {
+      __save(noteDescriptor.dirtyNoteTitle, grabbedContent, (error) => {
         if (error)
           return NotebookDispatcher.dispatch({
             actionType: NotebookActionConstants.NOTEBOOK_DATABASE_SAVE_NOTE_ERROR,
@@ -1121,59 +1166,6 @@ export default {
   },
 
   /**
-   * Create or merge note summary and save it to summary.json
-   * @method saveNoteSummary
-   * @param noteDescriptor {Object} NoteDescriptor object of note
-   * @param summary {Object} JSON summary object
-   * @param callback {Function} Callback function with summary object or error message passed in
-   */
-  saveNoteSummary: (noteDescriptor, summary, callback) => {
-    var self = this;
-    var notePath = getNotePath(noteDescriptor);
-    var summaryPath = notePath + "/summary.json";
-
-    FSAPI.exist(buildApiPath(summaryPath), {
-      onSuccess: function(exist) {
-        if (exist) {
-          FSAPI.readFile(buildApiPath(summaryPath), {
-            encoding: "utf8",
-            onSuccess: function(data) {
-              try {
-                var _newSummary = assign(JSON.parse(data), summary);
-
-                FSAPI.writeFile(buildApiPath(summaryPath), JSON.stringify(_newSummary), {
-                  onSuccess: function() {
-                    callback(_newSummary, null);
-                  },
-                  onError: function(error) {
-                    callback(null, error);
-                  }
-                });
-              }
-              catch (error) {
-                callback(null, error);
-              }
-            },
-            onError: function(error) {
-              callback(null, error);
-            }
-          });
-        }
-        else {
-          FSAPI.writeFile(buildApiPath(summaryPath), JSON.stringify(summary), {
-            onSuccess: function() {
-              callback(summary, null);
-            },
-            onError: function(error) {
-              callback(null, error);
-            }
-          });
-        }
-      }
-    });
-  },
-
-  /**
    * Renew note modified date. Usually used to update last modified date of manually saved note after flushing
    * other dirty notes to ensure the manually saved note has latest modified date.
    * @method renewNoteModifyDate
@@ -1183,13 +1175,13 @@ export default {
     var notePath = getNotePath(noteDescriptor);
 
     FSAPI.touch(buildApiPath(notePath), {
-      onError: function(error) {
+      onError: (error) => {
         FSAPI.stat(buildApiPath(notePath), {
-          onSuccess: function(stat) {
+          onSuccess: (stat) => {
             noteDescriptor.noteStat = stat;
           }
         });
-      }.bind(this)
+      }
     });
   },
 
@@ -1202,7 +1194,6 @@ export default {
   clearUselessAssets: (noteDescriptor, afterDelay) => {
     if (!databaseStorage) return;
 
-    var self = this;
     var notePath = getNotePath(noteDescriptor);
 
     function __removeUseless(items, i, cb) {
@@ -1216,14 +1207,14 @@ export default {
             var assetFile = notePath + '/assets/' + items[i];
 
             FSAPI.removeFile(buildApiPath(assetFile), {
-              onSuccess: function() {
+              onSuccess: () => {
                 console.log("Unused asset '" + items[i] + "' removed");
                 if (i === items.length - 1)
                   cb && cb();
                 else
                   __removeUseless(items, i + 1, cb);
               },
-              onError: function(error) {
+              onError: (error) => {
                 cb && cb("unable to remove " + assetFile + ": " + error.message);
               }
             });
@@ -1235,7 +1226,7 @@ export default {
               __removeUseless(items, i + 1, cb);
           }
         },
-        onError: function(error) {
+        onError: (error) => {
           cb && cb("unable to read " + noteFile + ": " + error.message);
         }
       });
@@ -1252,7 +1243,7 @@ export default {
       FSAPI.list(buildApiPath(assetsDir), {
         onSuccess: function(items) {
           if (items.length > 0)
-            __removeUseless(items, 0, function(error) {
+            __removeUseless(items, 0, (error) => {
               if (error)
                 NotebookDispatcher.dispatch({
                   actionType: NotebookActionConstants.NOTEBOOK_DATABASE_CLEAR_USELESS_NOTE_ASSETS_ERROR,
@@ -1271,7 +1262,7 @@ export default {
               noteDescriptor: noteDescriptor
             });
         },
-        onError: function(error) {
+        onError: (error) => {
           NotebookDispatcher.dispatch({
             actionType: NotebookActionConstants.NOTEBOOK_DATABASE_CLEAR_USELESS_NOTE_ASSETS_ERROR,
             noteDescriptor: noteDescriptor,
@@ -1293,7 +1284,6 @@ export default {
   takeNoteSnapshot: (noteDescriptor, snapshotDOMContainer, width, height) => {
     if (!databaseStorage) return;
 
-    var self = this;
     var snapshotPath = getBookshelfPath(
       noteDescriptor.notebookNode.id + '/' + noteDescriptor.id + '/' + NotebookConstants.DATABASE_NOTE_SNAPSHOT_FILE
     );
@@ -1311,13 +1301,13 @@ export default {
         var data = dataUrl.replace(/^data:image\/png;base64,/, "");
 
         FSAPI.writeFile(buildApiPath(snapshotPath), base64ToBlob(data), {
-          onSuccess: function() {
+          onSuccess: () => {
             NotebookDispatcher.dispatch({
               actionType: NotebookActionConstants.NOTEBOOK_DATABASE_TAKE_NOTE_SNAPSHOT_SUCCESS,
               noteDescriptor: noteDescriptor
             });
           },
-          onError: function(error) {
+          onError: (error) => {
             NotebookDispatcher.dispatch({
               actionType: NotebookActionConstants.NOTEBOOK_DATABASE_TAKE_NOTE_SNAPSHOT_ERROR,
               noteDescriptor: noteDescriptor,
@@ -1338,7 +1328,6 @@ export default {
    * @param files {Array} File object array containing files to upload
    */
   attachFilesToNote: (noteDescriptor, files) => {
-    var self = this;
     var notePath = getNotePath(noteDescriptor);
 
     NotebookDispatcher.dispatch({
@@ -1370,7 +1359,7 @@ export default {
           noteDescriptor.fileUploadXHR = xhr;
           onProgress(progress);
         },
-        onError: function(error) {
+        onError: (error) => {
           onError(error);
         }
       });
@@ -1391,7 +1380,7 @@ export default {
               overallProgress: Math.ceil((_frag * index) + (_frag * progress / 100))
             });
           },
-          function(error) {
+          (error) => {
             NotebookDispatcher.dispatch({
               actionType: NotebookActionConstants.NOTEBOOK_DATABASE_ATTACH_FILE_TO_NOTE_ERROR,
               noteDescriptor: noteDescriptor,
