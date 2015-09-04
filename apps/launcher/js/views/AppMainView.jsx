@@ -52,23 +52,23 @@ export default class AppMainView extends React.Component {
   }
 
   handleSort(newOrder) {
-    var newList = newOrder.map(function(index) {
+    var newList = newOrder.map((index) => {
       return this.state.appList[index];
-    }.bind(this));
+    });
     this.setState({ appList: newList });
   }
 
   handleUninstall(appid) {
     AppAPI.getAppByID(appid, {
-      onSuccess: function(manifest) {
+      onSuccess: (manifest) => {
         this._manifest = manifest;
         this.setState({
           alertTitle: 'Uninstall APP',
           alertMessage: 'Are you sure to uninstall ' + this._manifest.name + ' ?'
         });
         this.refs.alertDialog.show();
-      }.bind(this),
-      onError: function(error) {
+      },
+      onError: (error) => {
         console.log('Unable to get app, error: ' + error.message);
       }
     });
@@ -76,10 +76,10 @@ export default class AppMainView extends React.Component {
 
   handleUninstallAffirmative() {
     AppAPI.uninstall(this._manifest, 0, {
-      onSuccess: function() {
+      onSuccess: () => {
         LauncherActionCreators.removeAppFromSortList(this._manifest);
-      }.bind(this),
-      onError: function(error) {
+      },
+      onError: (error) => {
         console.log('Unable to uninstall app, error: ' + error.message);
         if (error.message === 'App Path Not Found')
           LauncherActionCreators.removeAppFromSortList(this._manifest);
@@ -122,7 +122,7 @@ export default class AppMainView extends React.Component {
   }
 
   render() {
-    let appIcons = this.state.appList.map(function(manifest) {
+    let appIcons = this.state.appList.map((manifest) => {
       return (
         <LauncherAppIcon
           key={manifest.identifier}
@@ -131,7 +131,7 @@ export default class AppMainView extends React.Component {
           manageable={this.state.manageable}
         />
       );
-    }, this);
+    });
 
     return (
       <div className='launcher-app-grid' onClick={this.leaveManageMode.bind(this)}>

@@ -1,6 +1,6 @@
 {
   "name": "launcher",
-  "description": "wife.io default launcher",
+  "description": "Application launcher.",
   "repository": "https://github.com/knych/wife.io",
   "main": "js/app.js",
   "dependencies": {

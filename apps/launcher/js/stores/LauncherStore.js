@@ -69,32 +69,44 @@ function mergeSortList(list) {
   FSAPI.readFile(APPSORT_FILE, {
     encoding: 'utf8',
     onSuccess: function(data) {
-      var i;
-      var _sorted = JSON.parse(data);
+      let i;
+      let sortedList = JSON.parse(data);
 
-      /* Build sorted app list dictionary to speed up merge process */
-      var _sortedDict = [];
-      for (i in _sorted)
-        _sortedDict[_sorted[i].identifier] = _sorted[i];
+      appSortList = [];
 
-      var _newDict = [];
+      // Build sorted app list dictionary
+      let sortedDict = [];
+      for (i in sortedList)
+        sortedDict[sortedList[i]] = sortedList[i];
+
+      // Build lastest app list dictionary
+      let _newDict = [];
       for (i in list)
         _newDict[list[i].identifier] = list[i];
 
-      /* Merge sorted list & latest app list */
-      for (i in _sorted)
-        if (_newDict[_sorted[i].identifier] === undefined)
-          _sorted.splice(i, 1);
+      // Insert existent apps to sorted app list
+      for (i in sortedList) {
+        if (_newDict[sortedList[i]]) {
+          appSortList.push(_newDict[sortedList[i]]);
+        }
+        else {
+          sortedList.splice(i, 1);
+          sortedDict[sortedList[i]] = undefined;
+        }
+      }
 
-      for (i in list)
-        if (_sortedDict[list[i].identifier] === undefined)
-          _sorted.push(list[i]);
+      // Insert new apps to sorted app list
+      for (i in list) {
+        if (!sortedDict[list[i].identifier]) {
+          sortedList.push(list[i].identifier);
+          sortedDict[list[i].identifier] = list[i].identifier;
+          appSortList.push(list[i]);
+        }
+      }
 
-      appSortList = _sorted;
       launcherStore.emitChange({
         type: LauncherConstants.LAUNCHER_SORT_APP_LIST
       });
-
     },
     onError: function(error) {
       launcherStore.emitError({
@@ -106,9 +118,10 @@ function mergeSortList(list) {
 }
 
 function writeSortList(list, actionType) {
-  var _appsort = JSON.stringify(list, null, 4);
+  let ids = list.map(app => app.identifier);
+  let appsort = JSON.stringify(ids, null, 4);
 
-  FSAPI.writeFile(APPSORT_FILE, _appsort, {
+  FSAPI.writeFile(APPSORT_FILE, appsort, {
     onSuccess: function() {
       appSortList = list;
       launcherStore.emitChange({ type: actionType });
@@ -124,7 +137,7 @@ function writeSortList(list, actionType) {
 
 function removeAppFromSortList(manifest) {
   /* Remove manifest from appSortList */
-  for (var i = 0, len = appSortList.length; i < len; i++) {
+  for (let i = 0, len = appSortList.length; i < len; i++) {
     if (appSortList[i].identifier === manifest.identifier) {
       appSortList.splice(i, 1);
       break;
@@ -132,8 +145,9 @@ function removeAppFromSortList(manifest) {
   }
 
   /* Update appsort.json */
-  var _appsort = JSON.stringify(appSortList, null, 4);
-  FSAPI.writeFile(APPSORT_FILE, _appsort, {
+  let ids = appSortList.map(app => app.identifier);
+  let appsort = JSON.stringify(appSortList, null, 4);
+  FSAPI.writeFile(APPSORT_FILE, appsort, {
     onSuccess: function() {
       launcherStore.emitChange({
         type: LauncherConstants.LAUNCHER_REMOVE_APP_FROM_SORT_LIST

@@ -35,6 +35,6 @@
     "internet_explorer": "*",
     "safari": "*"
   },
-  "description": "APP launcher",
+  "description": "Application launcher.",
   "identifier": "IAXAOpFRGD"
 }
