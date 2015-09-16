@@ -1,6 +1,6 @@
 {
   "name": "devdoc",
-  "description": "App Developer manual including REST API documentation.",
+  "description": "App developer manual including Web API Reference.",
   "repository": "https://github.com/knych/wife.io",
   "main": "js/app.js",
   "dependencies": {

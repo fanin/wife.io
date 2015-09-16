@@ -2,15 +2,17 @@
 
 import assign from 'object-assign';
 import StorageAPI from 'lib/api/StorageAPI';
-import Menubar from 'lib/cutie/Menubar';
-import Sidebar from 'lib/cutie/Sidebar';
 import DebugView from 'lib/cutie/DebugView';
 import GritterView from 'lib/cutie/GritterView';
-import LoginView from './LoginView';
+import Menubar from './Components/Menubar';
+import Sidebar from './Components/Sidebar';
+import UserDialog from './Components/UserMenu/UserDialog.jsx';
 
 export default class Application {
 
   constructor() {
+
+    React.initializeTouchEvents(true);
 
     this.configs = {
       debug: false
@@ -18,19 +20,22 @@ export default class Application {
 
     $(document).ajaxError((event, jqxhr, settings, exception) => {
       if (jqxhr.status === 401) {
-        React.render(
-          <LoginView
-            title="Authorization Required"
-            onSuccess={() => {
-              $.ajax(settings);
-              React.render(
-                this.configs.appview,
-                document.getElementById('app-main-view')
-              );
-            }}
-          />,
-          document.getElementById('app-login')
-        );
+        if (settings.url.indexOf('/user') === 0) {
+          if ($.cookie('userid'))
+            $.removeCookie('userid', { path: '/' });
+        }
+        else {
+          React.unmountComponentAtNode(document.getElementById('user-dialog'));
+          React.render(
+            <UserDialog
+              onSuccess={() => {
+                $.ajax(settings);
+                this.render();
+              }}
+            />,
+            document.getElementById('user-dialog')
+          );
+        }
       }
     });
 

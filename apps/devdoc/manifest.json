@@ -35,6 +35,6 @@
     "internet_explorer": "*",
     "safari": "*"
   },
-  "description": "App Developer manual including REST API documentation.",
+  "description": "App developer manual including Web API Reference.",
   "identifier": "IAeJoKesBQ"
 }

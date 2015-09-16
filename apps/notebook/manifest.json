@@ -35,6 +35,6 @@
     "internet_explorer": "*",
     "safari": "*"
   },
-  "description": "Write and manage notes",
+  "description": "Create notebooks, write notes and grab web contents to the note.",
   "identifier": "IAnbwWbNnD"
 }

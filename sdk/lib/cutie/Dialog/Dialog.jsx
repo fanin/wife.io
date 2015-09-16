@@ -23,6 +23,7 @@ export default class DialogController extends React.Component {
         closable: this.props.closable,
         detachable: false,
         onShow: this.props.onShow,
+        onHide:this.props.onHide,
         onHidden: this.props.onHidden,
         onApprove: this.props.onApprove,
         onDeny: this.props.onDeny
@@ -32,6 +33,10 @@ export default class DialogController extends React.Component {
 
   hide() {
     this.modalInstance.modal('hide');
+  }
+
+  isActive() {
+    return this.modalInstance.modal('is active');
   }
 
   componentDidMount() {
@@ -52,19 +57,40 @@ export default class DialogController extends React.Component {
 
   render() {
     var image = this.props.image
-                  ? <div className="image">{this.props.image}</div>
-                  : null;
+          ? <div className="image">{this.props.image}</div> : null;
 
-    var actionButtons = this.props.actionButtons.map(function(button) {
-      var buttonClass = "ui "
-                  + (button.iconType ? "center labeled " : "center ")
-                  + "icon " + button.color + " button " + button.actionType;
+    var message = this.props.message
+          ? (
+            <div className="message">
+              <h1 className="ui header">
+                <div className="sub header">
+                  {this.props.message}
+                </div>
+              </h1>
+            </div>
+          ) : null;
+
+    var headerIcon = this.props.headerIcon
+          ? <i className={this.props.headerIcon + " icon"} /> : null;
+
+    var actionButtons = this.props.actionButtons.map((button) => {
+      var cx = React.addons.classSet;
+      var buttonClasses = cx(
+        cx({
+          'ui center': true,
+          'labeled icon': button.iconType,
+          'button': true
+        }),
+        button.color,
+        button.classes,
+        button.actionType
+      );
       var buttonIcon = button.iconType
-                        ? <i className={button.iconType + " icon"} />
-                        : null;
+          ? <i className={button.iconType + ' icon'} /> : null;
+
       return (
         <div
-          className={buttonClass}
+          className={buttonClasses}
           key={button.title}
           onClick={(e) => {
             e.stopPropagation();
@@ -80,15 +106,14 @@ export default class DialogController extends React.Component {
     return (
       <div className={"ui long " + this.props.size + " modal"}>
         <div className="ui header">
-          {this.props.title}
+          {headerIcon}
+          <div className="content">
+            {this.props.title}
+          </div>
         </div>
         <div className="content">
           {image}
-          <div className="message">
-            <div className="ui small header">
-              {this.props.message}
-            </div>
-          </div>
+          {message}
           {this.props.customView}
         </div>
         <div className="actions">

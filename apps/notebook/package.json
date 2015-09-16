@@ -1,6 +1,6 @@
 {
   "name": "Notebook",
-  "description": "Notebook",
+  "description": "Create notebooks, write notes and grab web contents to the note.",
   "repository": "https://github.com/knych/wife.io",
   "main": "js/app.js",
   "dependencies": {

@@ -4,7 +4,7 @@ import NotebookActionConstants from '../constants/NotebookActionConstants';
 import DatabaseStore from '../stores/DatabaseStore';
 import ListViewController from 'lib/cutie/ListView';
 import Dialog from 'lib/cutie/Dialog';
-import DropdownMenu from 'lib/cutie/DropdownMenu';
+import Dropdown from 'lib/cutie/Dropdown';
 
 var SortMethods = {
   /* Sort by last modified date */
@@ -50,13 +50,6 @@ export default class NoteListContainer extends React.Component {
 
   componentWillMount() {
     DatabaseStore.addChangeListener(this.onDatabaseChange.bind(this));
-  }
-
-  componentDidMount() {
-    $(".nb-toolbar-sort-dropdown").dropdown({
-      action: 'hide',
-      transition: 'drop'
-    });
   }
 
   componentWillUnmount() {
@@ -259,23 +252,6 @@ export default class NoteListContainer extends React.Component {
         this.state.sortMethod === SortMethods.sortByTitleDescending
       ) ? "check icon" : "icon";
 
-    var moreOpDropdownItems = [
-      {
-        text: "Copy",
-        value: "copy",
-        icon: "copy",
-        disabled: this.state.disableCopyButton,
-        onSelect: this.copyNote.bind(this)
-      },
-      {
-        text: "Trash",
-        value: "trash",
-        icon: "trash outline",
-        disabled: this.state.disableTrashButton,
-        onSelect: this.trashNote.bind(this)
-      }
-    ];
-
     var emptyMessageHeader =
       DatabaseStore.getSearchString()
         ? "Your search `" + DatabaseStore.getSearchString()
@@ -296,31 +272,52 @@ export default class NoteListContainer extends React.Component {
     return (
       <div className="nb-column-container">
         <div className="ui menu nb-column-toolbar">
-          <div className="ui compact dropdown item nb-toolbar-sort-dropdown">
-            <i className="sort content ascending black icon"></i>
-            <div className="menu">
-              <div className="item" onClick={this.sortByModifiedDate.bind(this)}>
-                <i className={sortLastModDateClass}></i>
-                Sort by modified date
-              </div>
-              <div className="item" onClick={this.sortByCreationDateNewestFirst.bind(this)}>
-                <i className={sortNewestCreatDateClass}></i>
-                Sort by creation date (newest first)
-              </div>
-              <div className="item" onClick={this.sortByCreationDateOldestFirst.bind(this)}>
-                <i className={sortOldestCreatDateClass}></i>
-                Sort by creation date (oldest first)
-              </div>
-              <div className="item" onClick={this.sortByTitleAscending.bind(this)}>
-                <i className={sortTitleAscClass}></i>
-                Sort by title (ascending)
-              </div>
-              <div className="item" onClick={this.sortByTitleDescending.bind(this)}>
-                <i className={sortTitleDscClass}></i>
-                Sort by title (descending)
-              </div>
+          <Dropdown
+            classes="compact item nb-toolbar-sort-dropdown"
+            buttonIconClass="sort content ascending black"
+            itemSelectBar={true}
+            transition="drop"
+            onChange={(value, text) => {
+              switch (value) {
+              case 'modified-date':
+                this.sortByModifiedDate();
+                break;
+              case 'creation-date-new':
+                this.sortByCreationDateNewestFirst();
+                break;
+              case 'creation-date-old':
+                this.sortByCreationDateOldestFirst();
+                break;
+              case 'title-asc':
+                this.sortByTitleAscending();
+                break;
+              case 'title-dsc':
+                this.sortByTitleDescending();
+                break;
+              }
+            }}
+          >
+            <div key="modified-date" data-value="modified-date" className="item">
+              <i className={sortLastModDateClass}></i>
+              Sort by modified date
             </div>
-          </div>
+            <div key="creation-date-new" data-value="creation-date-new" className="item">
+              <i className={sortNewestCreatDateClass}></i>
+              Sort by creation date (newest first)
+            </div>
+            <div key="creation-date-old" data-value="creation-date-old" className="item">
+              <i className={sortOldestCreatDateClass}></i>
+              Sort by creation date (oldest first)
+            </div>
+            <div key="title-asc" data-value="title-asc" className="item">
+              <i className={sortTitleAscClass}></i>
+              Sort by title (ascending)
+            </div>
+            <div key="title-dsc" data-value="title-dsc" className="item">
+              <i className={sortTitleDscClass}></i>
+              Sort by title (descending)
+            </div>
+          </Dropdown>
           <div
             className={this.state.disableNewNoteButton
                         ? "ui pointing link disabled item"
@@ -330,11 +327,41 @@ export default class NoteListContainer extends React.Component {
             <i className="edit icon"></i>
             New
           </div>
-          <DropdownMenu
-            itemDataSource={moreOpDropdownItems}
-            iconClass="ellipsis vertical"
-            useSelectBar={false}
-          />
+          <Dropdown
+            classes="compact link item"
+            buttonIconClass="ellipsis vertical"
+            itemSelectBar={false}
+            transition="drop"
+            onChange={(value, text) => {
+              switch (value) {
+              case 'copy':
+                if (!this.state.disableCopyButton)
+                  this.copyNote();
+                break;
+              case 'trash':
+                if (!this.state.disableTrashButton)
+                  this.trashNote();
+                break;
+              }
+            }}
+          >
+            <div
+              className={ this.state.disableCopyButton ? "disabled item" : "item" }
+              key="copy"
+              data-value="copy"
+            >
+              <i className="write icon" />
+              Copy
+            </div>
+            <div
+              className={ this.state.disableTrashButton ? "disabled item" : "item" }
+              key="trash"
+              data-value="trash"
+            >
+              <i className="trash outline icon" />
+              Trash
+            </div>
+          </Dropdown>
         </div>
 
         <div

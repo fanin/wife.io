@@ -1,5 +1,5 @@
 {
-  "name": "AppShop",
+  "name": "Shopping",
   "version": "0.1.0",
   "api_version": 1,
   "directory": "shop",
@@ -35,6 +35,6 @@
     "internet_explorer": "*",
     "safari": "*"
   },
-  "description": "Online app store as well as an offline app package installer.",
+  "description": "Shopping apps online or install offline app packages.",
   "identifier": "IANPPZlk1Y"
 }

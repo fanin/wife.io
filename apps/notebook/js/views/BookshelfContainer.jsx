@@ -3,7 +3,7 @@ import StorageAPI from 'lib/api/StorageAPI';
 import Dialog from 'lib/cutie/Dialog';
 import Form from 'lib/cutie/Form';
 import Input from 'lib/cutie/Input';
-import DropdownMenu from 'lib/cutie/DropdownMenu';
+import Dropdown from 'lib/cutie/Dropdown';
 import JqTreeViewController from './JqTreeViewController.jsx';
 import NotebookConstants from '../constants/NotebookConstants';
 import NotebookActionConstants from '../constants/NotebookActionConstants';
@@ -92,43 +92,22 @@ export default class BookshelfContainer extends React.Component {
   }
 
   render() {
-    var diskMenuDropdownItems = this.state.disks.map((disk) => {
-      var itemIconClass =
-        (this.state.diskInUse && this.state.diskInUse.uuid === disk.uuid)
-          ? "check" : "";
+    var diskMenuItems = this.state.disks.map((disk) => {
+      var itemIconClass = (
+            this.state.diskInUse && this.state.diskInUse.uuid === disk.uuid
+          ) ? "check icon" : "icon";
 
-      return {
-        text: (disk.name || disk.drive) + " (" + disk.type + ")",
-        value: disk.uuid,
-        icon: itemIconClass
-      };
+      return (
+        <div
+          className="item"
+          key={disk.uuid}
+          data-value={disk.uuid}
+        >
+          <i className={itemIconClass} />
+          { (disk.name || disk.drive) + " (" + disk.type + ")" }
+        </div>
+      );
     });
-
-    var moreOpDropdownItems = [
-      {
-        text:  "Rename",
-        value: "rename",
-        icon:  "write",
-        disabled: this.state.disableMenuItemRename,
-        onSelect: this.showRenameInputDialog.bind(this)
-      },
-      {
-        text:  "Trash",
-        value: "trash",
-        icon:  "trash outline",
-        disabled: this.state.disableMenuItemTrash,
-        onSelect: this.showTrashConfirmDialog.bind(this)
-      },
-      {
-        text:  this.state.notebookSearchString ? "Clear search" : "Search",
-        value: "search",
-        icon:  "search",
-        disabled: this.state.disableMenuItemSearch,
-        onSelect: this.state.notebookSearchString
-                    ? this.clearSearch.bind(this)
-                    : this.showSearchInputDialog.bind(this)
-      }
-    ];
 
     var inputForm = (
       <Form
@@ -150,6 +129,7 @@ export default class BookshelfContainer extends React.Component {
         }}
       >
         <div className="field">
+          <label>Name</label>
           <Input
             type="text"
             name="name"
@@ -188,13 +168,17 @@ export default class BookshelfContainer extends React.Component {
     return (
       <div className="nb-column-container">
         <div className="ui menu nb-column-toolbar">
-          <DropdownMenu
-            itemDataSource={diskMenuDropdownItems}
-            ref="diskSelectDropdown"
-            iconClass="disk outline"
-            useSelectBar={true}
-            onChange={this.onDiskMenuSelect.bind(this)}
-          />
+          <Dropdown
+            classes="compact link item"
+            buttonIconClass="disk outline"
+            itemSelectBar={true}
+            transition="drop"
+            onChange={(value, text) => {
+              this.onDiskMenuSelect(value, text);
+            }}
+          >
+            {diskMenuItems}
+          </Dropdown>
 
           <div
             className={this.state.disableMenuItemNew
@@ -206,12 +190,57 @@ export default class BookshelfContainer extends React.Component {
             New
           </div>
 
-          <DropdownMenu
-            itemDataSource={moreOpDropdownItems}
-            ref="moreOpDropdown"
-            iconClass="ellipsis vertical"
-            useSelectBar={false}
-          />
+          <Dropdown
+            classes="compact link item"
+            buttonIconClass="ellipsis vertical"
+            itemSelectBar={false}
+            transition="drop"
+            onChange={(value, text) => {
+              switch (value) {
+              case 'rename':
+                if (!this.state.disableMenuItemRename)
+                  this.showRenameInputDialog();
+                break;
+              case 'trash':
+                if (!this.state.disableMenuItemTrash)
+                  this.showTrashConfirmDialog();
+                break;
+              case 'search':
+                if (!this.state.disableMenuItemSearch) {
+                  if (this.state.notebookSearchString)
+                    this.clearSearch();
+                  else
+                    this.showSearchInputDialog();
+                }
+                break;
+              }
+            }}
+          >
+            <div
+              className={ this.state.disableMenuItemRename ? "disabled item" : "item" }
+              key="rename"
+              data-value="rename"
+            >
+              <i className="write icon" />
+              Rename
+            </div>
+            <div
+              className={ this.state.disableMenuItemTrash ? "disabled item" : "item" }
+              key="trash"
+              data-value="trash"
+            >
+              <i className="trash outline icon" />
+              Trash
+            </div>
+            <div
+              className={ this.state.disableMenuItemSearch ? "disabled item" : "item" }
+              key="search"
+              data-value="search"
+            >
+              <i className="search icon" />
+              { this.state.notebookSearchString ? "Clear search" : "Search" }
+            </div>
+          </Dropdown>
         </div>
 
         <div className="nb-column-content">
@@ -328,7 +357,7 @@ export default class BookshelfContainer extends React.Component {
   }
 
   onDiskMenuSelect(value, text) {
-    var _disk = StorageAPI.getDisk(value, {
+    StorageAPI.getDisk(value, {
       onSuccess: (disk) => {
         DatabaseActionCreators.closeDatabase();
         DatabaseActionCreators.openDatabase(disk);

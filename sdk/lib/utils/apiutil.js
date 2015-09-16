@@ -41,7 +41,7 @@ export default {
         callbacks.success && callbacks.success(xhr);
       },
       error: function(xhr) {
-        if (xhr.status !== 401)
+        if (xhr.status !== 401 || url.indexOf('/user/') >= 0)
           callbacks.error && callbacks.error(xhr);
       }
     });
@@ -58,7 +58,7 @@ export default {
         callbacks.success && callbacks.success(xhr);
       },
       error: function(xhr) {
-        if (xhr.status !== 401)
+        if (xhr.status !== 401 || url.indexOf('/user/') >= 0)
           callbacks.error && callbacks.error(xhr);
       }
     });
@@ -74,7 +74,7 @@ export default {
         callbacks.success && callbacks.success(xhr);
       },
       error: function(xhr) {
-        if (xhr.status !== 401)
+        if (xhr.status !== 401 || url.indexOf('/user/') >= 0)
           callbacks.error && callbacks.error(xhr);
       }
     });

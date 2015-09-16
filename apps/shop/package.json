@@ -1,6 +1,6 @@
 {
   "name": "shop",
-  "description": "Install online and offline apps",
+  "description": "Shopping apps online or install offline app packages.",
   "repository": "https://github.com/knych/wife.io",
   "main": "js/app.js",
   "dependencies": {

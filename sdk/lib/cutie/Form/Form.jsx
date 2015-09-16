@@ -54,6 +54,11 @@ export default class Form extends React.Component {
     $(React.findDOMNode(this)).removeClass("error");
   }
 
+  addError(errors) {
+    $(React.findDOMNode(this)).form("add errors", errors);
+    $(React.findDOMNode(this)).find('.ui.error.message').show();
+  }
+
   render() {
     return (
       <form className="ui form" method="POST" action={this.props.action}>

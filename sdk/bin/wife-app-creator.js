@@ -97,7 +97,7 @@ appConfig.identifier = randomstring(appType + 'XXXXXXXX');
 
 process.env.NODE_PATH = path.resolve(__dirname, '..');
 
-var templatePath = path.join(appConfig.sdk_path, 'v' + appConfig.api_version, '/framework/AppFramework/template');
+var templatePath = path.join(appConfig.sdk_path, 'v' + appConfig.api_version, '/framework/AppFramework/Template');
 var appDirectory = path.join(argv._[0], appConfig.package_name);
 
 console.log('Create application `' + appConfig.name + '`:');

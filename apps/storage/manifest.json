@@ -35,6 +35,6 @@
     "internet_explorer": "*",
     "safari": "*"
   },
-  "description": "Storage Manager",
+  "description": "Storage management for system administrators.",
   "identifier": "IAiBelWizY"
 }

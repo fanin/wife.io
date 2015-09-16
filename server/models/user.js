@@ -12,7 +12,7 @@ var User = new Schema({
 
 User.plugin(passportLocalMongoose, {
   usernameField: 'email',
-  usernameQueryFields: 'email'
+  usernameQueryFields: [ 'email' ]
 });
 
 module.exports = mongoose.model('User', User);

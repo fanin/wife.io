@@ -1,7 +1,10 @@
 'use strict';
 
+import UserMenu from '../UserMenu';
+
 export default class Menubar extends React.Component {
-  toggleDock(event) {
+
+  toggleDock(e) {
     $('#app-sidebar')
       .sidebar('setting', 'transition', 'overlay')
       .sidebar('setting', 'dimPage', false)
@@ -14,6 +17,9 @@ export default class Menubar extends React.Component {
         <a className="item" onClick={this.toggleDock}>
           <i className="content icon"></i>
         </a>
+        <div className="right menu">
+          <UserMenu />
+        </div>
       </div>
     );
   }
