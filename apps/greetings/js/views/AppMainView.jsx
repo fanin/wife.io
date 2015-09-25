@@ -14,7 +14,7 @@ var AppMainView = React.createClass({
                 {
                     name: 'App API',
                     apiMethod: 'GET',
-                    apiBaseURL: '/api/v1/apps'
+                    apiBaseURL: '/api/v1/app'
                 },
                 {
                     name: 'File System API',
@@ -402,7 +402,7 @@ var AppMainView = React.createClass({
 
         async.series([
             function(callback) {
-                apiutil.get('/api/v1/apps', function(response, data) {
+                apiutil.get('/api/v1/app', function(response, data) {
                     apps = data;
                     self.handleSuccess(response, data);
                     callback(null, true);
@@ -412,7 +412,7 @@ var AppMainView = React.createClass({
                 });
             },
             function(callback) {
-                apiutil.get('/api/v1/apps/' + apps[0].identifier, function(response, manifest) {
+                apiutil.get('/api/v1/app/' + apps[0].identifier, function(response, manifest) {
                     self.handleSuccess(response, manifest);
                     callback(null, true);
                 }, function(error) {
@@ -433,7 +433,7 @@ var AppMainView = React.createClass({
         for (var i = 0; i < files.length; i++) {
             async.series([
                 function(callback) {
-                    apiutil.upload('/api/v1/apps/install', files[i], function(response, data) {
+                    apiutil.upload('/api/v1/app/install', files[i], function(response, data) {
                         instid = data;
                         self.handleSuccess(response, data);
                         callback(null, true);
@@ -445,7 +445,7 @@ var AppMainView = React.createClass({
                     });
                 },
                 function(callback) {
-                    apiutil.get('/api/v1/apps/install/' + instid, function(response, data) {
+                    apiutil.get('/api/v1/app/install/' + instid, function(response, data) {
                         self.handleSuccess(response, data);
                         callback(null, true);
                     }, function(error) {
@@ -460,10 +460,10 @@ var AppMainView = React.createClass({
     testAppUninstallApi: function() {
         var self = this;
 
-        apiutil.get('/api/v1/apps', function(apps) {
+        apiutil.get('/api/v1/app', function(apps) {
             apps.every(function(app) {
                 if (app.name === 'Greetings' || app.name === 'Hello') {
-                    apiutil.delete('/api/v1/apps/' + app.identifier + '?keepUserData=0', function(response, data) {
+                    apiutil.delete('/api/v1/app/' + app.identifier + '?keepUserData=0', function(response, data) {
                         self.handleSuccess(response, data);
                     }, function(error) {
                         self.handleError(error);

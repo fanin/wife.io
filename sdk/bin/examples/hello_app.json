@@ -4,26 +4,6 @@
   "api_version": 1,
   "description": "The first app for beginners.",
   "repository": "",
-  "permissions": {
-    "apps": {
-      "POST": "denied",
-      "GET": "denied",
-      "PUT": "denied",
-      "DELETE": "denied"
-    },
-    "storage": {
-      "POST": "denied",
-      "GET": "denied",
-      "PUT": "denied",
-      "DELETE": "denied"
-    },
-    "fs": {
-      "POST": "allow",
-      "GET": "allow",
-      "PUT": "allow",
-      "DELETE": "allow"
-    }
-  },
   "locales": [ "en_US" ],
   "default_locale": "en_US",
   "author": "Mu Chen",

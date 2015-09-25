@@ -13,7 +13,8 @@
     "password"  : "741225",
     "firstname" : "Chardi",
     "lastname"  : "Chang",
-    "group"     : "admin",
+    "group"     : "Admin",
     "gender"    : false
-  }
+  },
+  "group"          : []
 }

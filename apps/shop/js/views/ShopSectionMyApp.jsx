@@ -1,4 +1,3 @@
-var DialogController   = require("lib/cutie/Dialog");
 var ShopActionCreators = require("../actions/ShopActionCreators");
 var ShopStore          = require("../stores/ShopStore");
 
@@ -22,13 +21,6 @@ var UserAppInfoModal = React.createClass({
 	render: function() {
 		return (
 			<div>
-				<DialogController
-					ref="appInfoDialog"
-					size="large"
-					title={this.props.appname}
-					message=""
-				  closable={true}
-				  customView={<div/>/* TODO */} />
 			</div>
 		);
 	}

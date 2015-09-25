@@ -4,6 +4,8 @@
 
 'use strict';
 
+import classnames from 'classnames';
+
 export default class Dropdown extends React.Component {
 
   static defaultProps = {
@@ -58,6 +60,23 @@ export default class Dropdown extends React.Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
+    var _settings = this.props.itemSelectBar
+      ? {
+          transition: this.props.transition,
+          onChange: (value, text) => {
+            this.props.onChange(value, text);
+          }
+        }
+      : {
+          transition: this.props.transition,
+          action: (text, value) => {
+            $(React.findDOMNode(this)).dropdown('hide');
+            this.props.onChange(value, text);
+          }
+        };
+
+    $(React.findDOMNode(this)).dropdown(_settings);
+
     if (this.props.selectDefaultValue !== prevProps.selectDefaultValue) {
       if (this.props.type.indexOf('multiple') >= 0) {
         $(React.findDOMNode(this)).dropdown(
@@ -77,10 +96,10 @@ export default class Dropdown extends React.Component {
   render() {
     var dropdown;
     var classes;
-    var cx = React.addons.classSet;
 
     if (this.props.type.indexOf('selection') >= 0) {
-      classes = cx('ui fluid dropdown', this.props.classes, this.props.type);
+      classes = classnames('ui fluid dropdown', this.props.classes, this.props.type);
+
       dropdown = (
         <div className={classes}>
           <input
@@ -96,7 +115,7 @@ export default class Dropdown extends React.Component {
       );
     }
     else {
-      classes = cx('ui dropdown', this.props.classes, this.props.type);
+      classes = classnames('ui dropdown', this.props.classes, this.props.type);
 
       var buttonIcon = this.props.buttonIconClass
             ? <i className={this.props.buttonIconClass + ' icon'} /> : null;

@@ -1,6 +1,8 @@
 import assign from 'object-assign';
+import classnames from 'classnames';
 import StorageAPI from 'lib/api/StorageAPI';
-import Dialog from 'lib/cutie/Dialog';
+import * as Dialog from 'lib/cutie/Dialog';
+import Button from 'lib/cutie/Button';
 import Form from 'lib/cutie/Form';
 import Input from 'lib/cutie/Input';
 import Dropdown from 'lib/cutie/Dropdown';
@@ -93,77 +95,23 @@ export default class BookshelfContainer extends React.Component {
 
   render() {
     var diskMenuItems = this.state.disks.map((disk) => {
-      var itemIconClass = (
-            this.state.diskInUse && this.state.diskInUse.uuid === disk.uuid
-          ) ? "check icon" : "icon";
-
       return (
         <div
           className="item"
           key={disk.uuid}
           data-value={disk.uuid}
         >
-          <i className={itemIconClass} />
+          <i
+            className={
+              classnames('icon', {
+                check: this.state.diskInUse && this.state.diskInUse.uuid === disk.uuid
+              })
+            }
+          />
           { (disk.name || disk.drive) + " (" + disk.type + ")" }
         </div>
       );
     });
-
-    var inputForm = (
-      <Form
-        ref="inputForm"
-        preventDefaultSubmit={true}
-        fields={{
-          name: {
-            identifier: 'name',
-            rules: notebookInputRules
-          }
-        }}
-        dataType="Array"
-        onValidate={(hasError, formData) => {
-          if (!hasError) {
-            this.state.onInputDialogAffirmative(formData);
-            this.refs.editInputViewController.hide();
-            this.refs.inputForm.clear();
-          }
-        }}
-      >
-        <div className="field">
-          <label>Name</label>
-          <Input
-            type="text"
-            name="name"
-            defaultValue={this.state.inputDialogDefaultValue}
-          />
-        </div>
-        <div className="ui error message" />
-      </Form>
-    );
-
-    var searchForm = (
-      <Form
-        ref="searchForm"
-        preventDefaultSubmit={true}
-        fields={{
-          name: {
-            identifier: 'name',
-            rules: notebookInputRules
-          }
-        }}
-        dataType="Array"
-        onValidate={(hasError, formData) => {
-          if (!hasError) {
-            this.onSearchNotebook(formData);
-            this.refs.searchInputViewController.hide();
-          }
-        }}
-      >
-        <div className="field">
-          <Input type="text" name="name" />
-        </div>
-        <div className="ui error message" />
-      </Form>
-    );
 
     return (
       <div className="nb-column-container">
@@ -181,9 +129,11 @@ export default class BookshelfContainer extends React.Component {
           </Dropdown>
 
           <div
-            className={this.state.disableMenuItemNew
-                        ? "ui pointing link item disabled"
-                        : "ui pointing link item"}
+            className={
+              classnames("ui pointing link item", {
+                disabled: this.state.disableMenuItemNew
+              })
+            }
             onClick={this.showCreateNotebookInputDialog.bind(this)}
           >
             <i className="plus icon"></i>
@@ -258,100 +208,137 @@ export default class BookshelfContainer extends React.Component {
           />
         </div>
 
-        <Dialog
+        <Dialog.Container
           ref="editInputViewController"
-          title={ this.state.inputDialogTitle }
-          customView={ inputForm }
-          actionButtons={
-            [{
-              title: "Cancel",
-              iconType: "remove",
-              color: "red",
-              actionType: "deny"
-            },
-            {
-              title: "OK",
-              iconType: "checkmark",
-              color: "green",
-              actionType: "approve"
-            }]
-          }
           onApprove={() => {
             this.refs.inputForm.submit();
             return false;
           }}
           onDeny={() => {
-            this.refs.inputForm.clear();
+
           }}
-          onShow={() => {
+          onVisible={() => {
             this.refs.inputForm.focus();
           }}
-        />
+        >
+          <Dialog.Header>{this.state.inputDialogTitle}</Dialog.Header>
+          <Dialog.Content>
+            <Form
+              ref="inputForm"
+              preventDefaultSubmit={true}
+              fields={{
+                name: {
+                  identifier: 'name',
+                  rules: notebookInputRules
+                }
+              }}
+              dataType="Array"
+              onValidate={(hasError, formData) => {
+                if (!hasError) {
+                  this.state.onInputDialogAffirmative(formData);
+                  this.refs.editInputViewController.hide();
 
-        <Dialog
+                }
+              }}
+            >
+              <div className="field">
+                <label>Name</label>
+                <Input
+                  type="text"
+                  name="name"
+                  defaultValue={this.state.inputDialogDefaultValue}
+                />
+              </div>
+              <div className="ui error message" />
+            </Form>
+          </Dialog.Content>
+          <Dialog.ButtonSet>
+            <Button style="labeled icon" icon="remove" color="red" classes="deny">
+              Cancel
+            </Button>
+            <Button style="labeled icon" icon="checkmark" color="green" classes="approve">
+              OK
+            </Button>
+          </Dialog.ButtonSet>
+        </Dialog.Container>
+
+        <Dialog.Container
           ref="searchInputViewController"
-          title="Search notebook"
-          customView={ searchForm }
-          actionButtons={
-            [{
-              title: "Cancel",
-              iconType: "remove",
-              color: "red",
-              actionType: "deny"
-            },
-            {
-              title: "OK",
-              iconType: "checkmark",
-              color: "green",
-              actionType: "approve"
-            }]
-          }
           onApprove={() => {
             this.refs.searchForm.submit();
             return false;
           }}
           onDeny={() => {
-            this.refs.searchForm.clear();
+
           }}
-          onShow={() => {
+          onVisible={() => {
             this.refs.searchForm.focus();
           }}
-        />
+        >
+          <Dialog.Header>Search notebook</Dialog.Header>
+          <Dialog.Content>
+            <Form
+              ref="searchForm"
+              preventDefaultSubmit={true}
+              fields={{
+                name: {
+                  identifier: 'name',
+                  rules: notebookInputRules
+                }
+              }}
+              dataType="Array"
+              onValidate={(hasError, formData) => {
+                if (!hasError) {
+                  this.onSearchNotebook(formData);
+                  this.refs.searchInputViewController.hide();
+                }
+              }}
+            >
+              <div className="field">
+                <Input type="text" name="name" />
+              </div>
+              <div className="ui error message" />
+            </Form>
+          </Dialog.Content>
+          <Dialog.ButtonSet>
+            <Button style="labeled icon" icon="remove" color="red" classes="deny">
+              Cancel
+            </Button>
+            <Button style="labeled icon" icon="checkmark" color="green" classes="approve">
+              OK
+            </Button>
+          </Dialog.ButtonSet>
+        </Dialog.Container>
 
-        <Dialog
+        <Dialog.Container
           ref="confirmDialog"
-          title={this.state.confirmTitle}
-          message={this.state.confirmMessage}
-          actionButtons={
-            [{
-              title: "No",
-              iconType: "remove",
-              color: "red",
-              actionType: "deny"
-            },
-            {
-              title: "Yes",
-              iconType: "checkmark",
-              color: "green",
-              actionType: "approve"
-            }]
-          }
           onApprove={this.trashSelected.bind(this)}
-        />
+        >
+          <Dialog.Header>{this.state.confirmTitle}</Dialog.Header>
+          <Dialog.Content>
+            {this.state.confirmMessage}
+          </Dialog.Content>
+          <Dialog.ButtonSet>
+            <Button style="labeled icon" icon="remove" color="red" classes="deny">
+              No
+            </Button>
+            <Button style="labeled icon" icon="checkmark" color="green" classes="approve">
+              Yes
+            </Button>
+          </Dialog.ButtonSet>
+        </Dialog.Container>
 
-        <Dialog
-          ref="alertDialog"
-          title={this.state.errorTitle}
-          message={this.state.errorMessage}
-          actionButtons={
-            [{
-              title: "Got It",
-              color: "red",
-              actionType: "approve",
-            }]
-          }
-          actionButtonsAlign="center"
-        />
+        <Dialog.Container ref="alertDialog">
+          <Dialog.Header>{this.state.errorTitle}</Dialog.Header>
+          <Dialog.Content>
+            {this.state.errorMessage}
+          </Dialog.Content>
+          <Dialog.ButtonSet>
+            <Button color="red" classes="approve">
+              Got It
+            </Button>
+          </Dialog.ButtonSet>
+        </Dialog.Container>
       </div>
     );
   }

@@ -41,6 +41,13 @@ export default class Sidebar extends React.Component {
     };
   }
 
+  toggleDock(e) {
+    $('#app-sidebar')
+      .sidebar('setting', 'transition', 'overlay')
+      .sidebar('setting', 'dimPage', false)
+      .sidebar('toggle');
+  }
+
   render() {
     var _items = this.props.debug
       ? [

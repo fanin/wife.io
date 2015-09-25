@@ -4,26 +4,6 @@
   "api_version": 1,
   "directory": "storage",
   "entry": "storage.html",
-  "permission": {
-    "apps": {
-      "POST": "denied",
-      "GET": "denied",
-      "PUT": "denied",
-      "DELETE": "denied"
-    },
-    "storage": {
-      "POST": "allow",
-      "GET": "allow",
-      "PUT": "allow",
-      "DELETE": "allow"
-    },
-    "fs": {
-      "POST": "allow",
-      "GET": "allow",
-      "PUT": "allow",
-      "DELETE": "allow"
-    }
-  },
   "locales": [
     "en_US",
     "zh_TW"

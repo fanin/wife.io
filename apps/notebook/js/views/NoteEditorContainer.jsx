@@ -3,7 +3,8 @@ import NotebookConstants from '../constants/NotebookConstants';
 import NotebookActionConstants from '../constants/NotebookActionConstants';
 import DatabaseStore from '../stores/DatabaseStore';
 import GritterView from 'lib/cutie/GritterView';
-import Dialog from 'lib/cutie/Dialog';
+import * as Dialog from 'lib/cutie/Dialog';
+import Button from 'lib/cutie/Button';
 
 class ProgressBarView extends React.Component {
 
@@ -84,7 +85,7 @@ class NotebookEditor extends React.Component {
     // rather than directly by <script> tag in index.html.
     // Doing this because we wish to keep index.html not modified, so we need to
     // resolve ckeditor base path by ourselves.
-    CKEDITOR.getUrl = function(resource) {
+    /*CKEDITOR.getUrl = function(resource) {
       // If this is not a full or absolute path.
       if (resource.indexOf( ':/' ) == -1 && resource.indexOf( '/' ) !== 0)
         resource = CKEDITOR.basePath + 'lib/ckeditor/' + resource;
@@ -109,6 +110,7 @@ class NotebookEditor extends React.Component {
       return resource;
     };
     CKEDITOR.config.contentsCss = 'lib/ckeditor/contents.css';
+    */
     CKEDITOR.config.readOnly = true;
     CKEDITOR.config.resize_enabled = false;
     CKEDITOR.config.extraPlugins = "menu,panel,justify,image,tableresize,"
@@ -824,55 +826,55 @@ export default class NoteEditorContainer extends React.Component {
             multiple
           />
 
-          <Dialog
+          <Dialog.Container
             ref="fileUploadDialog"
             size="large"
-            title="Select Files to Upload"
-            message=""
-            customView={fileUploadView}
-            actionButtons={[{
-                title: "Cancel",
-                iconType: "remove",
-                color: "red",
-                actionType: "deny"
-              }, {
-                title: "Upload",
-                iconType: "upload",
-                color: "green",
-                actionType: "approve"
-              }]}
-            onShow={this.onDialogShow.bind(this)}
+            onVisible={this.onDialogShow.bind(this)}
             onHidden={this.onDialogHidden.bind(this)}
             onApprove={this.onDialogUpload.bind(this)}
-          />
+          >
+            <Dialog.Header>Select Files to Upload</Dialog.Header>
+            <Dialog.Content>
+              {fileUploadView}
+            </Dialog.Content>
+            <Dialog.ButtonSet>
+              <Button style="labeled icon" icon="remove" color="red" classes="deny">
+                Cancel
+              </Button>
+              <Button style="labeled icon" icon="upload" color="green" classes="approve">
+                Upload
+              </Button>
+            </Dialog.ButtonSet>
+          </Dialog.Container>
         </div>
 
-        <Dialog
+        <Dialog.Container
           ref="uploadProgressDialog"
-          title="File Upload Progress"
-          message=""
-          customView={progressBarView}
-          actionButtons={[{
-            title: "Cancel",
-            iconType: "remove",
-            color: "red",
-            actionType: "deny"
-          }]}
           onHidden={this.onProgressDialogHidden.bind(this)}
           onDeny={this.onProgressDialogCancelUpload.bind(this)}
-        />
+        >
+          <Dialog.Header>File Upload Progress</Dialog.Header>
+          <Dialog.Content>
+            {progressBarView}
+          </Dialog.Content>
+          <Dialog.ButtonSet>
+            <Button style="labeled icon" icon="remove" color="red" classes="deny">
+              Cancel
+            </Button>
+          </Dialog.ButtonSet>
+        </Dialog.Container>
 
-        <Dialog
-          ref="alertDialog"
-          title={this.state.errorTitle}
-          message={this.state.errorMessage}
-          actionButtons={[{
-            title: "Got It",
-            color: "red",
-            actionType: "approve",
-          }]}
-          actionButtonsAlign="center"
-        />
+        <Dialog.Container ref="alertDialog">
+          <Dialog.Header>{this.state.errorTitle}</Dialog.Header>
+          <Dialog.Content>
+            {this.state.errorMessage}
+          </Dialog.Content>
+          <Dialog.ButtonSet>
+            <Button style="labeled icon" icon="remove" color="red" classes="deny">
+              Got It
+            </Button>
+          </Dialog.ButtonSet>
+        </Dialog.Container>
       </div>
     );
   }

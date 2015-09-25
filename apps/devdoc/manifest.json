@@ -4,26 +4,6 @@
   "api_version": 1,
   "directory": "devdoc",
   "entry": "index.html",
-  "permission": {
-    "apps": {
-      "POST": "denied",
-      "GET": "denied",
-      "PUT": "denied",
-      "DELETE": "denied"
-    },
-    "storage": {
-      "POST": "denied",
-      "GET": "denied",
-      "PUT": "denied",
-      "DELETE": "denied"
-    },
-    "fs": {
-      "POST": "denied",
-      "GET": "allow",
-      "PUT": "denied",
-      "DELETE": "denied"
-    }
-  },
   "locales": [
     "en_US",
     "zh_TW"

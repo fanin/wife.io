@@ -2,6 +2,10 @@
   background: #f9fafb !important;
 }
 
+.modal > .content {
+  color: black;
+}
+
 .modal > .content > .message > .header {
   white-space: pre-wrap;
   height: 36px;

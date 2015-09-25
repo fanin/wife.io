@@ -41,7 +41,7 @@ export default {
         callbacks.success && callbacks.success(xhr);
       },
       error: function(xhr) {
-        if (xhr.status !== 401 || url.indexOf('/user/') >= 0)
+        if (xhr.status !== 401 || new RegExp(/\/api\/v\d\/user\//).test(url))
           callbacks.error && callbacks.error(xhr);
       }
     });
@@ -58,7 +58,7 @@ export default {
         callbacks.success && callbacks.success(xhr);
       },
       error: function(xhr) {
-        if (xhr.status !== 401 || url.indexOf('/user/') >= 0)
+        if (xhr.status !== 401 || new RegExp(/\/api\/v\d\/user\//).test(url))
           callbacks.error && callbacks.error(xhr);
       }
     });
@@ -74,7 +74,7 @@ export default {
         callbacks.success && callbacks.success(xhr);
       },
       error: function(xhr) {
-        if (xhr.status !== 401 || url.indexOf('/user/') >= 0)
+        if (xhr.status !== 401 || new RegExp(/\/api\/v\d\/user\//).test(url))
           callbacks.error && callbacks.error(xhr);
       }
     });
@@ -162,8 +162,8 @@ export default {
           dataType: 'script',
           async: true,
           success: function(data) { resolve(data) },
-          error: function(error) {
-            reject('Could not load script ' + url);
+          error: function(xhr, textStatus, error) {
+            reject('Could not load script ' + url + ', error: ' + error);
           }
         });
       }

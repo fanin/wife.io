@@ -1,5 +1,5 @@
 /**
- * The **File System REST API** provides file system accessibility for apps to manipulate files in sandboxed data areas.
+ * The **File System Web API** provides file system accessibility for apps to manipulate files in sandboxed data areas.
  *
  * __Sandboxed Data Area__ is a particular location in the file system where a requested path is resolved and processed by the API. Types of sandboxed data area defined by App Manager are listed below:
  * - __App Built-in Data Area (Read Only)__: Stores app built-in data which can be read by [ReadFile API](#ReadFile) with option `builtin_data=1`.
@@ -408,7 +408,7 @@ function grep(req, res, next) {
  *
  * @apiMethod WriteFile {POST} /fs/file/`:path`_[?options]_
  * @apiParam    {String}  path        URL encoded path.
- * @apiPostData {Object}  formdata    `FormData` object containing `Blob` data.
+ * @apiReqBody  {Object}  formdata    `FormData` object containing `Blob` data.
  * @apiOption   {String}  disk_uuid   Specify the disk for resolving the given `:path`. *Default: Internal data disk.*
  * @apiOption   {Boolean} public_data Set to `1` to write the file in *Shared Data Area*.
  * @apiOption   {Boolean} append      If file already exists, set to `1` to append data to the file, set to `0` to replace it.

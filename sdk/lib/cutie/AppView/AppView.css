@@ -73,13 +73,12 @@ body.pushable
 
 #app-menubar
 {
-  z-index: 998;
-  background: rgba(0, 0, 0, .6) !important;
+  z-index: 1000;
 }
 
 #app-menubar > .menu
 {
-  background: transparent;
+  background: rgba(0, 0, 0, .6) !important;
   height: 40px;
 }
 

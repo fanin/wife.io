@@ -55,15 +55,15 @@ class ApiDocView extends React.Component {
         );
       }) : [];
 
-      var postDataRows = method.apipostdata
-        ? method.apipostdata.map((postdata) => {
+      var reqBodyRows = method.apireqbody
+        ? method.apireqbody.map((body) => {
             return (
               <tr>
                 <td colSpan={4} className="center aligned">
-                  <code>{postdata.name}</code>
+                  <code>{body.name}</code>
                 </td>
-                <td colSpan={4} className="center aligned">{postdata.type}</td>
-                <td colSpan={12}><Markdown string={postdata.description} /></td>
+                <td colSpan={4} className="center aligned">{body.type}</td>
+                <td colSpan={12}><Markdown string={body.description} /></td>
               </tr>
             );
           })
@@ -134,18 +134,18 @@ class ApiDocView extends React.Component {
                 <td className="active" colSpan={12}>Description</td>
               </tr>
               {paramRows}
-              <tr style={{display: method.apipostdata ?  'table-row' : 'none'}}>
+              <tr style={{display: method.apireqbody ?  'table-row' : 'none'}}>
                 <td
                   className="active center aligned"
-                  rowSpan={method.apipostdata ? method.apipostdata.length + 1 : 1}
+                  rowSpan={method.apireqbody ? method.apireqbody.length + 1 : 1}
                 >
-                  Post Data
+                  Request Body
                 </td>
                 <td className="active center aligned" colSpan={4}>Name</td>
                 <td className="active center aligned" colSpan={4}>Type</td>
                 <td className="active" colSpan={12}>Description</td>
               </tr>
-              {postDataRows}
+              {reqBodyRows}
               <tr style={{display: method.apioption ?  'table-row' : 'none'}}>
                 <td
                   className="active center aligned"
@@ -207,13 +207,13 @@ export default class AppMainView extends React.Component {
     window.addEventListener('scroll', this.handleScroll.bind(this));
 
     FSAPI.readFile('restapi.json::1', { encoding: 'ascii' })
-    .then((promise) => {
-      if (promise.data) {
-        var apidata = JSON.parse(promise.data);
+    .then((result) => {
+      if (result.data) {
+        var apidata = this.sortApiClass(JSON.parse(result.data));
         var defclass = apidata.length > 0 ? apidata[0].apiclass : '';
-        var defmethod =
-        (apidata[0].apimethods && apidata[0].apimethods.length > 0)
-        ? apidata[0].apimethods[0].apimethod.name : '';
+        var defmethod = (
+              apidata[0].apimethods && apidata[0].apimethods.length > 0
+            ) ? apidata[0].apimethods[0].apimethod.name : '';
 
         this.setState({
           apiData: apidata,
@@ -258,6 +258,12 @@ export default class AppMainView extends React.Component {
     }
 
     this.anchorOffsets = offsets;
+  }
+
+  sortApiClass(apiData) {
+    return apiData.sort((a, b) => {
+      return +(a.apiclass > b.apiclass) || +(a.apiclass === b.apiclass) - 1
+    });
   }
 
   handleApiClick(apiclass, apimethod) {
@@ -310,7 +316,7 @@ export default class AppMainView extends React.Component {
 
       return (
         <div className="api-menu" key={api.apiclass}>
-          <a className="ui inverted header" href={'#top'} onClick={() => {
+          <a className="ui header" href={'#top'} onClick={() => {
             this.handleApiClick(
               api.apiclass,
               api.apimethods.length > 0 ? api.apimethods[0].apimethod.name : ''
@@ -318,7 +324,7 @@ export default class AppMainView extends React.Component {
           }}>{api.apiclass}</a>
 
           <div
-            className="ui inverted secondary vertical pointing menu"
+            className="ui secondary vertical pointing menu"
             style={{
               display: this.state.apiClass === api.apiclass ? 'block' : 'none'
             }}

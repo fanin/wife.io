@@ -18,11 +18,11 @@
 
 .launcher-app-grid ul
 {
-  overflow: hidden;
+  overflow: auto;
 
   height: 100%;
   margin: 0 auto;
-  padding: 40px;
+  padding: 20px;
 
   list-style: none;
 

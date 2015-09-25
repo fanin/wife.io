@@ -3,7 +3,8 @@ import NotebookConstants from '../constants/NotebookConstants';
 import NotebookActionConstants from '../constants/NotebookActionConstants';
 import DatabaseStore from '../stores/DatabaseStore';
 import ListViewController from 'lib/cutie/ListView';
-import Dialog from 'lib/cutie/Dialog';
+import * as Dialog from 'lib/cutie/Dialog';
+import Button from 'lib/cutie/Button';
 import Dropdown from 'lib/cutie/Dropdown';
 
 var SortMethods = {
@@ -388,19 +389,17 @@ export default class NoteListContainer extends React.Component {
           onRenderListViewItem={this.onRenderListViewItem.bind(this)}
         />
 
-        <Dialog
-          ref="alertDialog"
-          title={this.state.errorTitle}
-          message={this.state.errorMessage}
-          actionButtons={[
-            {
-              title: "Got It",
-              color: "red",
-              actionType: "approve",
-            }
-          ]}
-          actionButtonsAlign="center"
-        />
+        <Dialog.Container ref="alertDialog">
+          <Dialog.Header>{this.state.errorTitle}</Dialog.Header>
+          <Dialog.Content>
+            {this.state.errorMessage}
+          </Dialog.Content>
+          <Dialog.ButtonSet>
+            <Button color="red" classes="approve">
+              Got It
+            </Button>
+          </Dialog.ButtonSet>
+        </Dialog.Container>
       </div>
     );
   }

@@ -22,6 +22,7 @@ h1.ui.header
 
   width: calc(100% - 400px);
   min-width: 420px;
+  margin-bottom: 32px !important;
 }
 
 .ui.left.rail
@@ -40,12 +41,18 @@ h1.ui.header
 
 .api-menu
 {
-  padding-top: 32px;
+  padding-top: 16px;
 }
 
 .api-menu > .secondary.menu
 {
   border-width: 0 !important;
+}
+
+.api-menu > .ui.header,
+.api-menu > .ui.menu .item
+{
+  color: rgba(0,0,0,.66) !important;
 }
 
 .api-description

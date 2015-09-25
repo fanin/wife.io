@@ -1,5 +1,4 @@
 import Dropdown from 'lib/cutie/Dropdown';
-import UserDialog from './UserDialog.jsx';
 import UserAPI from 'lib/api/UserAPI';
 
 export default class UserMenu extends React.Component {
@@ -16,30 +15,34 @@ export default class UserMenu extends React.Component {
     }
   }
 
+  componentDidUpdate(prevProps, prevState) {
+    if ($.cookie("userid")) {
+      this.getUsername();
+    }
+  }
+
   getUsername() {
     UserAPI.getProfile()
       .then((result) => {
-        this.setState({
-          username: result.user.firstname
-        });
+        if (result.user.firstname !== this.state.username)
+          this.setState({
+            username: result.user.firstname
+          });
       })
-      .catch((error) => {
-
-      });
+    ;
   }
 
   handleLogin(e) {
     if (!this.state.username) {
-      React.unmountComponentAtNode(document.getElementById('user-dialog'));
-      React.render(
-        <UserDialog
-          formType="login"
-          onSuccess={() => {
+      document.body.dispatchEvent(new CustomEvent("user-dialog", {
+        detail: {
+          formType: 'login',
+          onApproved: () => {
             this.getUsername();
-          }}
-        />,
-        document.getElementById('user-dialog')
-      );
+            // TODO: Emit a user log in global event
+          }
+        }
+      }));
     }
   }
 
@@ -93,27 +96,24 @@ export default class UserMenu extends React.Component {
         onChange={(value, text) => {
           switch (value) {
           case 'password':
-            React.unmountComponentAtNode(document.getElementById('user-dialog'));
-            React.render(
-              <UserDialog formType="password" />,
-              document.getElementById('user-dialog')
-            );
+            document.body.dispatchEvent(new CustomEvent("user-dialog", {
+              detail: { formType: 'password' }
+            }));
             break;
           case 'profile':
-            React.unmountComponentAtNode(document.getElementById('user-dialog'));
-            React.render(
-              <UserDialog
-                formType="profile"
-                onSuccess={() => {
+            document.body.dispatchEvent(new CustomEvent("user-dialog", {
+              detail: {
+                formType: 'profile',
+                onApproved: () => {
                   this.getUsername();
-                }}
-              />,
-              document.getElementById('user-dialog')
-            );
+                }
+              }
+            }));
             break;
           case 'logout':
             UserAPI.logout().then((result) => {
               this.setState({ username: '' });
+              // TODO: Emit a user log out global event
             });
             break;
           }

@@ -4,26 +4,6 @@
   "api_version": 1,
   "directory": "greetings",
   "entry": "index.html",
-  "permission": {
-    "apps": {
-      "POST": "allow",
-      "GET": "allow",
-      "PUT": "allow",
-      "DELETE": "allow"
-    },
-    "storage": {
-      "POST": "denied",
-      "GET": "allow",
-      "PUT": "denied",
-      "DELETE": "allow"
-    },
-    "fs": {
-      "POST": "allow",
-      "GET": "allow",
-      "PUT": "allow",
-      "DELETE": "allow"
-    }
-  },
   "locales": [
     "en_US",
     "zh_TW"

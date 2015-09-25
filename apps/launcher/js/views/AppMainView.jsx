@@ -1,10 +1,11 @@
-import AppAPI from 'lib/api/AppAPI';
-import DialogController from 'lib/cutie/Dialog';
+import * as Dialog from 'lib/cutie/Dialog';
+import Button from 'lib/cutie/Button';
 import LauncherAppIcon from './LauncherAppIcon.jsx';
 import LauncherSortable from './LauncherSortable.jsx';
 import LauncherConstants from '../constants/LauncherConstants';
 import LauncherActionCreators from '../actions/LauncherActionCreators';
 import LauncherStore from '../stores/LauncherStore';
+import AppAPI from 'lib/api/AppAPI';
 
 export default class AppMainView extends React.Component {
 
@@ -38,8 +39,16 @@ export default class AppMainView extends React.Component {
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    if (this.state.manageable && !nextState.manageable)
-      LauncherActionCreators.writeSortedAppList(this.state.appList);
+    // Saving app list if any app icon moved
+    if (this.state.manageable) {
+      let oldList = LauncherStore.getAppSortList();
+      let diff = (this.state.appList.length != oldList.length) ||
+                 !this.state.appList.every((el, i) => {
+                   return el === oldList[i];
+                 });
+      if (diff)
+        LauncherActionCreators.writeSortedAppList(this.state.appList);
+    }
     return true;
   }
 
@@ -144,25 +153,24 @@ export default class AppMainView extends React.Component {
         >
           {appIcons}
         </LauncherSortable>
-        <DialogController
-          ref='alertDialog'
-          title={this.state.alertTitle}
-          message={this.state.alertMessage}
-          actionButtons={[{
-              title: "No",
-              iconType: "remove",
-              color: "red",
-              actionType: "deny"
-            },
-            {
-              title: "Yes",
-              iconType: "checkmark",
-              color: "green",
-              actionType: "approve"
-            }]}
+        <Dialog.Container
+          ref="alertDialog"
           onDeny={this.handleUninstallNegative.bind(this)}
           onApprove={this.handleUninstallAffirmative.bind(this)}
-        />
+        >
+          <Dialog.Header>{this.state.alertTitle}</Dialog.Header>
+          <Dialog.Content>
+            {this.state.alertMessage}
+          </Dialog.Content>
+          <Dialog.ButtonSet>
+            <Button style="labeled icon" icon="remove" color="red" classes="deny">
+              No
+            </Button>
+            <Button style="labeled icon" icon="checkmark" color="green" classes="approve">
+              Yes
+            </Button>
+          </Dialog.ButtonSet>
+        </Dialog.Container>
       </div>
     );
   }

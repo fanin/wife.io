@@ -11,7 +11,7 @@ var gulp       = require('gulp'),
     transform  = require('vinyl-transform'),
     source     = require('vinyl-source-stream'),
     buffer     = require('vinyl-buffer'),
-    sys        = require('sys'),
+    util       = require('util'),
     exec       = require('child_process').exec;
 
 var APP_NAME       = path.basename(__dirname),
@@ -69,9 +69,9 @@ gulp.task('archive', function() {
   exec('zip -r ' + APP_NAME + '.zip ' + APP_NAME + '/',
     function(error, stdout, stderr) {
       if (error)
-        sys.print(stderr);
+        util.print(stderr);
       else
-        sys.print(stdout);
+        util.print(stdout);
     }
   );
 });

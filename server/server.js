@@ -1,4 +1,5 @@
 var express      = require('express'),
+    mongoose     = require('mongoose'),
     session      = require('express-session'),
     https        = require('https'),
     http         = require('http'),
@@ -12,7 +13,6 @@ var express      = require('express'),
     assert       = require('assert');
 
 var index   = require('routes/index'),
-    user    = require('routes/user'),
     api     = require('routes/api'),
     apps    = require('routes/apps'),
     sdk     = require('routes/sdk');
@@ -26,6 +26,8 @@ var app = express();
 
 http.createServer(app).listen(8001);
 //https.createServer(credentials, app).listen(8443);
+
+mongoose.connect('mongodb://localhost:27017/wife');
 
 app.use(function(req, res, next) {
   res.header('Access-Control-Allow-Origin', '*');
@@ -50,7 +52,6 @@ app.use(express.static(path.join(path.dirname(__dirname), 'public')));
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.use('/user', user);
 app.use('/', index);
 app.use('/apps', apps);
 app.use('/sdk', sdk);

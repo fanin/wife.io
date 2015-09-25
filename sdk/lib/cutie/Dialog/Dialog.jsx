@@ -1,125 +1,164 @@
 'use strict';
 
-export default class DialogController extends React.Component {
+import classnames from 'classnames';
+import { randomString } from 'lib/utils/common/string-misc'
+
+class Dialog extends React.Component {
 
   static defaultProps = {
     size: "small",
-    title: "",
-    image: "",
-    message: "",
-    customView: null,
-    actionButtons: [],
-    actionButtonsAlign: "right",
     closable: false,
     onShow: () => {},
+    onVisible: () => {},
+    onHide: () => {},
     onHidden: () => {},
     onApprove: () => {},
     onDeny: () => {}
   };
 
-  show() {
-    if (!this.modalInstance)
-      this.modalInstance = $(React.findDOMNode(this)).modal({
-        closable: this.props.closable,
-        detachable: false,
-        onShow: this.props.onShow,
-        onHide:this.props.onHide,
-        onHidden: this.props.onHidden,
-        onApprove: this.props.onApprove,
-        onDeny: this.props.onDeny
-      });
-    this.modalInstance.modal('show');
-  }
-
-  hide() {
-    this.modalInstance.modal('hide');
-  }
-
-  isActive() {
-    return this.modalInstance.modal('is active');
-  }
-
   componentDidMount() {
-    $(React.findDOMNode(this))
-      .find(".actions")
-      .css("text-align", this.props.actionButtonsAlign);
+    $(React.findDOMNode(this)).modal({
+      closable: this.props.closable,
+      detachable: false,
+      onShow: this.props.onShow,
+      onVisible: this.props.onVisible,
+      onHide:this.props.onHide,
+      onHidden: this.props.onHidden,
+      onApprove: this.props.onApprove,
+      onDeny: this.props.onDeny
+    });
+
+    $(React.findDOMNode(this)).click((e) => {
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+    });
   }
 
   componentDidUpdate(prevProps, prevState) {
-    if (this.modalInstance && this.modalInstance.modal('is active')) {
-      this.modalInstance.modal('refresh');
-    }
+    $(React.findDOMNode(this)).modal('refresh');
   }
 
   componentWillUnmount() {
-    this.modalInstance && this.modalInstance.modal('destroy');
+    $(React.findDOMNode(this)).modal('hide');
+  }
+
+  show() {
+    $(React.findDOMNode(this)).modal('show');
   }
 
   render() {
-    var image = this.props.image
-          ? <div className="image">{this.props.image}</div> : null;
-
-    var message = this.props.message
-          ? (
-            <div className="message">
-              <h1 className="ui header">
-                <div className="sub header">
-                  {this.props.message}
-                </div>
-              </h1>
-            </div>
-          ) : null;
-
-    var headerIcon = this.props.headerIcon
-          ? <i className={this.props.headerIcon + " icon"} /> : null;
-
-    var actionButtons = this.props.actionButtons.map((button) => {
-      var cx = React.addons.classSet;
-      var buttonClasses = cx(
-        cx({
-          'ui center': true,
-          'labeled icon': button.iconType,
-          'button': true
-        }),
-        button.color,
-        button.classes,
-        button.actionType
-      );
-      var buttonIcon = button.iconType
-          ? <i className={button.iconType + ' icon'} /> : null;
-
-      return (
-        <div
-          className={buttonClasses}
-          key={button.title}
-          onClick={(e) => {
-            e.stopPropagation();
-            button.onClick && button.onClick()
-          }}
-        >
-          {buttonIcon}
-          {button.title}
-        </div>
-      );
-    });
-
     return (
       <div className={"ui long " + this.props.size + " modal"}>
-        <div className="ui header">
-          {headerIcon}
-          <div className="content">
-            {this.props.title}
-          </div>
-        </div>
+        { this.props.children }
+      </div>
+    );
+  }
+}
+
+export class Header extends React.Component {
+
+  static defaultProps = {
+    icon: ''
+  };
+
+  render() {
+    let headerIcon = this.props.icon
+      ? <i className={this.props.icon + " icon"} />
+      : null;
+
+    return (
+      <div className="ui header">
+        {headerIcon}
         <div className="content">
-          {image}
-          {message}
-          {this.props.customView}
-        </div>
-        <div className="actions">
-          {actionButtons}
+          {this.props.children}
         </div>
       </div>
     );
   }
 }
+
+export class Content extends React.Component {
+
+  static defaultProps = {
+    imageElement: null
+  };
+
+  render() {
+    let contentClass = classnames({ image: this.props.imageElement }, 'content');
+    let imageClass = classnames({ image: this.props.imageElement });
+
+    return (
+      <div className={contentClass}>
+        <div className={imageClass}>
+          {this.props.imageElement}
+        </div>
+        <div className="description">
+          {this.props.children}
+        </div>
+      </div>
+    );
+  }
+}
+
+
+export class ButtonSet extends React.Component {
+  render() {
+    return (
+      <div className="actions">
+        {this.props.children}
+      </div>
+    );
+  }
+}
+
+
+export class Container extends React.Component {
+
+  static defaultProps = {
+    size: "small",
+    closable: false,
+    onShow: () => {},
+    onVisible: () => {},
+    onHide: () => {},
+    onHidden: () => {},
+    onApprove: () => {},
+    onDeny: () => {}
+  };
+
+  constructor(props) {
+    super(props);
+    this.componentId = 'dialog-' + randomString('XXXXXXXXXXXX');
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    this.renderDialog();
+  }
+
+  renderDialog() {
+    this.dialog = React.render(
+      <Dialog
+        {...this.props}
+        onHidden={() => { this.hide(); this.props.onHidden() }}
+      >
+        { this.props.children }
+      </Dialog>,
+      document.getElementById(this.componentId)
+    );
+  }
+
+  show() {
+    this.renderDialog();
+    this.dialog.show();
+  }
+
+  hide() {
+    React.unmountComponentAtNode(document.getElementById(this.componentId));
+  }
+
+  render() {
+    return (
+      <div id={this.componentId}></div>
+    );
+  }
+}
+

@@ -38,24 +38,25 @@ export default class Form extends React.Component {
 
   focus() {
     setTimeout(() => {
-      let firstInput = $(React.findDOMNode(this)).find(':input:first');
+      let firstInput = $(React.findDOMNode(this))
+                          .find(':input:not([readonly]):first');
       if (firstInput)
         firstInput.focus().val(firstInput.val());
     }, 1000);
   }
 
   reset() {
-    $(React.findDOMNode(this)).form("reset");
+    $(React.findDOMNode(this)).form('reset');
     $(React.findDOMNode(this)).removeClass("error");
   }
 
   clear() {
-    $(React.findDOMNode(this)).form("clear");
+    $(React.findDOMNode(this)).form('clear');
     $(React.findDOMNode(this)).removeClass("error");
   }
 
   addError(errors) {
-    $(React.findDOMNode(this)).form("add errors", errors);
+    $(React.findDOMNode(this)).form('add errors', errors);
     $(React.findDOMNode(this)).find('.ui.error.message').show();
   }
 

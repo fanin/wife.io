@@ -42,16 +42,17 @@ export default class LauncherSortable extends React.Component {
         var node = $(React.findDOMNode(this)).children().last()[0];
 
         node.manifest = children[childIndex].props.manifest;
-        node.onmousedown = (appType === 'ia')
+        node.onmousedown = node.ontouchstart = (appType === 'ia')
                             ? this.handleMouseDown_ia.bind(this)
                             : this.handleMouseDown_ua.bind(this);
-        node.onmouseup = (appType === 'ia')
+        node.onmouseup = node.ontouchend = (appType === 'ia')
                             ? this.handleMouseUp_ia.bind(this)
                             : this.handleMouseUp_ua.bind(this);
-        node.onmousemove = (appType === 'ia')
+        node.onmousemove = node.ontouchmove = (appType === 'ia')
                             ? this.handleMouseMove_ia.bind(this)
                             : this.handleMouseMove_ua.bind(this);
         node.onclick = this.handleDefaultClick.bind(this);
+        node.oncontextmenu = this.handleDefaultContextMenu.bind(this);
 
         nodes.push(node);
         nodes[numNodes].dataset.reactSortablePos = numNodes;
@@ -95,6 +96,7 @@ export default class LauncherSortable extends React.Component {
   }
 
   handleMouseDown_ia(e) {
+    e.preventDefault();
     this.builtinAppClickTimer = setTimeout(() => {
       this.builtinAppClickTimer = undefined;
     }, 500);
@@ -103,10 +105,16 @@ export default class LauncherSortable extends React.Component {
 
   handleMouseUp_ia(e) {
     if (this.builtinAppClickTimer) {
-      e.stopPropagation();
       if (this.props.manageable) {
         e.preventDefault();
       }
+      else if (!this.eventIsContextMenu) {
+        let target = e.target || e.srcElement;
+        if (target.nodeType == 3) target = target.parentNode;
+        $(target).click();
+      }
+      else
+        this.eventIsContextMenu = false;
     }
     this.stopManageModeTimer();
   }
@@ -118,6 +126,7 @@ export default class LauncherSortable extends React.Component {
   }
 
   handleMouseDown_ua(e) {
+    e.preventDefault();
     this.userAppClickTimer = setTimeout(() => {
       this.userAppClickTimer = undefined;
     }, 500);
@@ -126,11 +135,17 @@ export default class LauncherSortable extends React.Component {
 
   handleMouseUp_ua(e) {
     if (this.userAppClickTimer) {
-      e.stopPropagation();
       if (this.props.manageable) {
         var appid = e.target.id.split('-').pop();
         this.props.onUninstall(appid);
       }
+      else if (!this.eventIsContextMenu) {
+        let target = e.target || e.srcElement;
+        if (target.nodeType == 3) target = target.parentNode;
+        $(target).click();
+      }
+      else
+        this.eventIsContextMenu = false;
     }
     this.stopManageModeTimer();
   }
@@ -146,6 +161,12 @@ export default class LauncherSortable extends React.Component {
       e.preventDefault();
       e.stopPropagation();
     }
+  }
+
+  handleDefaultContextMenu(e) {
+    this.eventIsContextMenu = true;
+    e.preventDefault();
+    e.stopPropagation();
   }
 
   startManageModeTimer() {

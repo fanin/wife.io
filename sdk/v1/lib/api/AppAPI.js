@@ -6,7 +6,7 @@ import apiutil from 'lib/utils/apiutil';
 export default {
   list: function(callbacks = {}) {
     return new Promise(function(resolve, reject) {
-      apiutil.get('/api/v1/apps', {
+      apiutil.get('/api/v1/app', {
         success: function(xhr, list) {
           callbacks.onSuccess && callbacks.onSuccess(list);
           resolve({ api: 'app.list', list: list });
@@ -28,7 +28,7 @@ export default {
 
   install: function(appPkgFile, callbacks = {}) {
     return new Promise(function(resolve, reject) {
-      apiutil.upload('/api/v1/apps/install', appPkgFile, {
+      apiutil.upload('/api/v1/app/install', appPkgFile, {
         xhrFields: {
           clientInstallationID: strmsc.uniqueString()
         }
@@ -58,7 +58,7 @@ export default {
 
   getInstallStatus: function(instid, callbacks = {}) {
     return new Promise(function(resolve, reject) {
-      apiutil.get('/api/v1/apps/install/' + instid, {
+      apiutil.get('/api/v1/app/install/' + instid, {
         success: function(xhr) {
           callbacks.onSuccess && callbacks.onSuccess({
             code: xhr.status,
@@ -92,7 +92,7 @@ export default {
   uninstall: function(manifest, keepUserData, callbacks = {}) {
     return new Promise(function(resolve, reject) {
       apiutil.delete(
-        '/api/v1/apps/' + manifest.identifier + '?keepUserData=' + (keepUserData ? 1 : 0), {
+        '/api/v1/app/' + manifest.identifier + '?keepUserData=' + (keepUserData ? 1 : 0), {
         success: function(xhr, data) {
           callbacks.onSuccess && callbacks.onSuccess();
           resolve({ api: 'app.uninstall' });
@@ -114,7 +114,7 @@ export default {
 
   getAppByID: function(appid, callbacks = {}) {
     return new Promise(function(resolve, reject) {
-      apiutil.get('/api/v1/apps/' + appid, {
+      apiutil.get('/api/v1/app/' + appid, {
         success: function(xhr, manifest) {
           callbacks.onSuccess && callbacks.onSuccess(manifest);
           resolve({ api: 'app.getAppByID', manifest: manifest });

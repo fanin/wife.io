@@ -10,8 +10,7 @@ gulp.task('sdk/lib/utils', function() {
 
 gulp.task('sdk/lib/external', function() {
 
-  var JQUERY_VERSION      = '1.11.2',
-      JQUERYUI_VERSION    = '1.11.1',
+  var JQUERY_VERSION      = '1.11.3',
       FONTAWESOME_VERSION = '4.4.0',
       REACT_VERSION       = '0.13.1',
       SEMANTIC_UI_THEME   = 'default';
@@ -26,8 +25,6 @@ gulp.task('sdk/lib/external', function() {
         __dirname + '/jquery/plugins/*.js'
       ])
       .pipe(gulp.dest(global.BUILD_PATH + '/sdk/lib/jquery/plugins'));
-  var jquery_ui = gulp.src(__dirname + '/jquery/ui/' + JQUERYUI_VERSION + '/*.min.*')
-      .pipe(gulp.dest(global.BUILD_PATH + '/sdk/lib/jquery/ui/' + JQUERYUI_VERSION));
   var semantic_ui = gulp.src(__dirname + '/semantic/**/*.min.*')
       .pipe(gulp.dest(global.BUILD_PATH + '/sdk/lib/semantic/'));
   var semantic_ui_theme = gulp.src(__dirname + '/semantic/themes/' + SEMANTIC_UI_THEME + '/**/*')
@@ -40,7 +37,6 @@ gulp.task('sdk/lib/external', function() {
   return merge(
     jquery,
     jquery_plugin,
-    jquery_ui,
     semantic_ui,
     semantic_ui_theme,
     font_awesome,

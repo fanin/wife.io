@@ -1,0 +1,19 @@
+{
+  "identifier": "IAk0bCO4lB",
+  "name": "Preferences",
+  "description": "System preferences",
+  "version": "0.1.0",
+  "api_version": 1,
+  "directory": "syspref",
+  "entry": "index.html",
+  "locales": [
+    "en_US",
+    ""
+  ],
+  "default_locale": "en_US",
+  "browser_support": {
+    "chrome": "*",
+    "firefox": "*",
+    "safari": "*"
+  }
+}

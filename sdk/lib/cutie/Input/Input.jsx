@@ -1,11 +1,14 @@
 'use strict';
 
+import classnames from 'classnames';
+
 export default class Input extends React.Component {
 
   static defaultProps = {
     type: 'text',
     classes: '',
     name: 'default',
+    placeholder: '',
     defaultValue: '',
     readonly: false
   };
@@ -24,18 +27,18 @@ export default class Input extends React.Component {
   }
 
   render() {
-    var cx = React.addons.classSet;
 
     var props = {
       type: this.props.type,
       name: this.props.name,
+      placeholder: this.props.placeholder,
       value: this.state.value === '_init_' ? this.props.defaultValue : this.state.value,
       onChange: this.onChange.bind(this),
-      disabled: this.props.readonly
+      readOnly: this.props.readonly
     };
 
     return (
-      <div className={cx("ui", this.props.classes, "input")}>
+      <div className={classnames("ui", this.props.classes, "input")}>
         <input {...props} />
       </div>
     );

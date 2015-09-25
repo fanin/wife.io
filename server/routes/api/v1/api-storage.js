@@ -1,5 +1,5 @@
 /**
- * The **Storage Management REST API** allows apps to get local disk and cloud disk _(NOT IMPLEMENTED)_ information, disk list and mount/unmount disks _(NOT IMPLEMENTED)_.
+ * The **Storage Management Web API** allows apps to get local disk and cloud disk _(NOT IMPLEMENTED)_ information, disk list and mount/unmount disks _(NOT IMPLEMENTED)_.
  *
  * @apiClass Storage API
  * @apiVersion 1.00
