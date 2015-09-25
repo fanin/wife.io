@@ -127,18 +127,31 @@ export class Container extends React.Component {
 
   constructor(props) {
     super(props);
+    this.state = { hideCall: false, useCount: 0 };
     this.componentId = 'dialog-' + randomString('XXXXXXXXXXXX');
   }
 
   componentDidUpdate(prevProps, prevState) {
-    this.renderDialog();
+    if (prevState.useCount != this.state.useCount && this.state.useCount > 0) {
+      if (this.state.useCount == 1)
+        this.renderDialog();
+      this.dialog.show();
+    }
+    else if (prevState.useCount > 0 && this.state.useCount == 0) {
+      React.unmountComponentAtNode(document.getElementById(this.componentId));
+      this.props.onHidden();
+    }
   }
 
   renderDialog() {
     this.dialog = React.render(
       <Dialog
         {...this.props}
-        onHidden={() => { this.hide(); this.props.onHidden() }}
+        onHidden={() => {
+          if (!this.state.hideCall)
+            this.hide();
+          this.setState({ hideCall: false });
+        }}
       >
         { this.props.children }
       </Dialog>,
@@ -147,12 +160,13 @@ export class Container extends React.Component {
   }
 
   show() {
-    this.renderDialog();
-    this.dialog.show();
+    this.setState({ useCount: this.state.useCount + 1 });
   }
 
   hide() {
-    React.unmountComponentAtNode(document.getElementById(this.componentId));
+    if (this.state.useCount > 0) {
+      this.setState({ hideCall: true, useCount: this.state.useCount - 1 });
+    }
   }
 
   render() {
