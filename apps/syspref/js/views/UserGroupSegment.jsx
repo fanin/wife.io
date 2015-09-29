@@ -81,7 +81,7 @@ export default class UserGroupSegment extends React.Component {
       return (
         <tr key={user.email}>
           <td className="collapsing">
-            <div className="ui fitted toggle checkbox">
+            <div className="ui fitted slider checkbox">
               <input type="checkbox" defaultChecked={ user.active } />
               <label></label>
             </div>

@@ -1,7 +1,8 @@
-var gulp    = require('gulp'),
+var gulp = require('gulp'),
     jsonmin = require('gulp-jsonmin'),
-    fse     = require('fs-extra'),
-    assign  = require("object-assign");
+    fse = require('fs-extra'),
+    assign = require("object-assign"),
+    _ = require('underscore');
 
 require(__dirname + '/' + global.DEVICE + '/gulpfile.js');
 
@@ -25,6 +26,12 @@ gulp.task('device', [ 'device/' + global.DEVICE ], function(cb) {
   catch (error) {
     return cb('Failed to write system package.json: ' + error);
   }
+
+  // Replace database path
+  var settings = fse.readJsonSync(__dirname + '/' + global.DEVICE + '/server-settings.json');
+  var data = fse.readFileSync(global.BUILD_PATH + '/package.json', 'ascii');
+  var template = _.template(data);
+  fse.writeFileSync(global.BUILD_PATH + '/package.json', template(settings), 'ascii');
 
   if (!global.DEBUG)
     gulp.src(global.BUILD_PATH + '/package.json')

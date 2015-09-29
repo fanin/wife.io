@@ -18,8 +18,4 @@ gulp.task('server/bin', function(cb) {
   return server_js;
 });
 
-gulp.task('server/data', function(cb) {
-  fse.mkdirp(global.BUILD_PATH + '/server/data/mongodb');
-});
-
-gulp.task('server', [ 'server/bin', 'server/data' ]);
+gulp.task('server', [ 'server/bin' ]);

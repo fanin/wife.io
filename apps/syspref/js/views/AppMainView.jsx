@@ -27,6 +27,10 @@ export default class AppMainView extends React.Component {
               <i className="lock icon"></i>
               Security & Policy
             </a>
+            <a className="item">
+              <i className="laptop icon"></i>
+              Assets
+            </a>
           </div>
         </div>
         <div className="thirteen wide stretched column">
