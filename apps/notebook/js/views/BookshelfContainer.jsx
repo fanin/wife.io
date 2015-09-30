@@ -108,7 +108,7 @@ export default class BookshelfContainer extends React.Component {
               })
             }
           />
-          { (disk.name || disk.drive) + " (" + disk.type + ")" }
+          { (disk.name || disk.mountpoint || disk.drive) + " (" + disk.type + ")" }
         </div>
       );
     });
