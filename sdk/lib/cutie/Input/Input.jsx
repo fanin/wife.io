@@ -10,7 +10,8 @@ export default class Input extends React.Component {
     name: 'default',
     placeholder: '',
     defaultValue: '',
-    readonly: false
+    readonly: false,
+    onChange: (text) => {}
   };
 
   constructor(props) {
@@ -24,6 +25,7 @@ export default class Input extends React.Component {
     let stateObj = {};
     stateObj['value'] = e.target.value;
     this.setState(stateObj);
+    this.props.onChange(e.target.value);
   }
 
   render() {

@@ -18,6 +18,8 @@ export default class Application {
       debug: false
     };
 
+    this.pendingCalls = [];
+
     $(document).ajaxError((event, jqxhr, settings, exception) => {
       if (
         jqxhr.status === 401 &&
@@ -26,12 +28,18 @@ export default class Application {
         if ($.cookie('userid'))
           $.removeCookie('userid', { path: '/' });
 
+        this.pendingCalls.push(settings);
+
         document.body.dispatchEvent(new CustomEvent("user-dialog", {
           detail: {
             formType: 'auth',
             onApproved: () => {
-              $.ajax(settings);
-              this.render();
+              let pendingCalls = this.pendingCalls;
+              this.pendingCalls = [];
+              pendingCalls.forEach((call) => {
+                $.ajax(call);
+                this.render();
+              });
             }
           }
         }));
@@ -69,7 +77,8 @@ export default class Application {
   configure(conf) {
     assign(this.configs, conf);
     document.body.addEventListener("user-dialog", (e) => {
-      this.dialog.show(e.detail.formType, e.detail.onApproved, e.detail.onDenied);
+      if (!this.dialog.isShow())
+        this.dialog.show(e.detail.formType, e.detail.onApproved, e.detail.onDenied);
     }, false);
   }
 

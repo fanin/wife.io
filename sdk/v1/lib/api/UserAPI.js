@@ -46,7 +46,7 @@ export default {
   admDeactivate: function(email, options = {}) {
     return new Promise(function(resolve, reject) {
       apiutil.delete('/api/v1/user/adm/profile?email=' + encodeURIComponent(email)
-                     + '&delete=' + !!options.delete, {
+                     + '&delete=' + (+!!options.delete), {
         success: function(xhr) {
           options.onSuccess && options.onSuccess(xhr);
           resolve({ api: 'user.admDeactivate' });
@@ -130,10 +130,17 @@ export default {
 
   getProfile: function(options = {}) {
     return new Promise(function(resolve, reject) {
-      apiutil.get('/api/v1/user/profile', {
+      let url = '/api/v1/user/profile';
+
+      if (options.searches)
+        url += '?searches=' + encodeURIComponent(options.searches);
+      else if (options.user)
+        url += '?email=' + encodeURIComponent(options.user);
+
+      apiutil.get(url, {
         success: function(xhr, user) {
           options.onSuccess && options.onSuccess(xhr, user);
-          resolve({ api: 'user.getProfile', user: user });
+          resolve({ api: 'user.getProfile', user: user, users: user });
         },
         error: function(xhr) {
           handleError(xhr, 'user.getProfile', options.onError, reject);
@@ -157,8 +164,13 @@ export default {
   },
 
   getGroups: function(options = {}) {
+    let url = '/api/v1/group';
+
+    if (options.searches)
+      url += '?searches=' + encodeURIComponent(options.searches);
+
     return new Promise(function(resolve, reject) {
-      apiutil.get('/api/v1/group', {
+      apiutil.get(url, {
         success: function(xhr, groups) {
           options.onSuccess && options.onSuccess(xhr, groups);
           resolve({ api: 'user.getGroups', groups: groups });

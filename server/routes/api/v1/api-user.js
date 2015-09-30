@@ -8,7 +8,8 @@
 
 var config   = require('config'),
     express  = require('express'),
-    passport = require('passport'),
+    passport = require('passport')
+    assign   = require('object-assign'),
     User     = require('models/user'),
     Group    = require('models/group');
 
@@ -163,7 +164,7 @@ router.put('/password', passport.authenticate('local'), function(req, res) {
 });
 
 /**
- * Get user profile. An user profile object can look like this:
+ * Get specific user profile or search users. An user profile object can look like this:
  * ```
  * {
  *     email: 'walter@wife.io',
@@ -175,22 +176,50 @@ router.put('/password', passport.authenticate('local'), function(req, res) {
  * ```
  * Note that the user's password is not visible in the object.
  *
+ * For given no option, this API returns profile object of current logged in user.
+ * For given `email` option only, this API returns profile object of user who owns the given email.
+ * For given `searches` option, this API returns an array of users who matches the key words.
+ *
  * @apiMethod GetProfile {GET} /user/profile
  * @apiOption {String} email Email for getting user's profile. If not specified, currently logged in user's profile is returned.
+ * @apiOption {String} searches Key words for searching users.
  *
  * @apiReturn 200 {Object} profile User profile object.
+ * @apiReturn 200 {Array} users Users that match the search key words.
  * @apiReturn 401 (User authorization required)
  * @apiReturn 404 (User not found)
  * @apiReturn 500 (Failed to get user profile)
  */
 router.get('/profile', function(req, res) {
-  User.find({ email: req.query.email || req.user.email }, function(err, users) {
+  var conds;
+
+  if (req.query.searches) {
+    var pattern = req.query.searches.replace(/\ ,/g, '|');
+    var regex = new RegExp(pattern, 'ig');
+    conds = { $or:[
+      { email: regex },
+      { firstname: regex },
+      { lastname: regex },
+      { group: regex }
+    ] };
+  }
+  else {
+    conds = { email: req.query.email || req.user.email };
+  }
+
+  User.find(conds, function(err, users) {
     if (err)
       res.status(500).send('Failed to get user profile, error: ' + err);
-    else if (users.length > 0)
-      res.json(users[0]);
-    else
-      res.status(404).send('User not found');
+    else {
+      if (req.query.searches)
+        res.json(users);
+      else {
+        if (users.length > 0)
+          res.json(users[0]);
+        else
+          res.status(404).send('User not found');
+      }
+    }
   });
 });
 
@@ -307,7 +336,8 @@ router.get('/adm/list', function(req, res) {
  *   firstname: 'Walter',
  *   lastname: 'White',
  *   group: 'Teacher',
- *   gender: true
+ *   gender: true,
+ *   active: true
  * }
  * ```
  * Note that `password` field is not required for administrators.
@@ -319,20 +349,24 @@ router.get('/adm/list', function(req, res) {
  * @apiReturn 500 (Failed to update user profile)
  */
 router.put('/adm/profile', function(req, res) {
-  User.find({ email: req.user.email }, function(err, users) {
+  User.find({ email: req.body.email }, function(err, users) {
     if (err)
       res.status(500).send('Failed to get user profile, error: ' + err);
     else if (users.length > 0) {
-      User.update({
-        email: req.body.email
-      }, {
-        $set: {
-          firstname: req.body.firstname,
-          lastname:  req.body.lastname,
-          group:     req.body.group,
-          gender:    req.body.gender
-        }
-      }, function(err) {
+      var fields = {};
+
+      if (req.body.firstname)
+        fields = assign(fields, { firstname: req.body.firstname });
+      if (req.body.lastname)
+        fields = assign(fields, { lastname: req.body.lastname });
+      if (req.body.group)
+        fields = assign(fields, { group: req.body.group });
+      if (req.body.gender !== undefined)
+        fields = assign(fields, { gender: req.body.gender });
+      if (req.body.active !== undefined)
+        fields = assign(fields, { active: req.body.active });
+
+      User.update({ email: req.body.email }, { $set: fields }, function(err) {
         if (err)
           res.status(500).send('Failed to update user profile, error: ' + err);
         else

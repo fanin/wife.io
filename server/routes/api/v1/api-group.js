@@ -36,19 +36,28 @@ Group.find(function(err, groups) {
 });
 
 /**
- * Get group list.
+ * Get group list or searching group.
  *
  * @apiMethod GetGroups {GET} /group
+ * @apiOption {String} searches Key words for searching group.
  *
- * @apiReturn 200 {Object} groups An array object of groups.
+ * @apiReturn 200 {Array} groups An array object of groups.
  * @apiReturn 500 (Error while loading groups)
  */
 router.get('/', function(req, res) {
-  Group.find(function(err, groups) {
+  var conds = {};
+
+  if (req.query.searches) {
+    var pattern = req.query.searches.replace(/\ ,/g, '|');
+    var regex = new RegExp(pattern, 'ig');
+    conds = { name: regex };
+  }
+
+  Group.find(conds, function(err, groups) {
     if (err)
       res.status(500).send('Error while loading groups: ' + err);
     else
-      res.json(groups.map(function(g) { return g.name }));
+      res.json(groups.map(g => g.name));
   });
 });
 

@@ -1,3 +1,7 @@
+.modal {
+  margin-bottom: 3.5rem !important;
+}
+
 .modal > .header {
   background: #f9fafb !important;
 }
@@ -9,4 +13,19 @@
 .modal > .content > .message > .header {
   white-space: pre-wrap;
   height: 36px;
+}
+
+/* Handle dialog scrolling in dialog-container */
+.dimmable.undetached.dimmed.scrolling {
+  overflow: hidden !important;
+}
+
+.dialog-container {
+  position: fixed;
+  top: 0px;
+  left: 0px;
+  z-index: 1001;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
 }

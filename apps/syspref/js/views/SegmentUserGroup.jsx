@@ -1,11 +1,16 @@
+'use strict';
+
 import classnames from 'classnames';
 import Input from 'lib/cutie/Input';
+import Checkbox from 'lib/cutie/Checkbox';
 import Dropdown from 'lib/cutie/Dropdown';
 import UserAPI from 'lib/api/UserAPI';
-import GroupCreateDialog from './GroupCreateDialog.jsx';
-import GroupModifyDialog from './GroupModifyDialog.jsx';
+import DialogUserCreate from './DialogUserCreate.jsx';
+import DialogUserModify from './DialogUserModify.jsx';
+import DialogGroupCreate from './DialogGroupCreate.jsx';
+import DialogGroupModify from './DialogGroupModify.jsx';
 
-export default class UserGroupSegment extends React.Component {
+export default class SegmentUserGroup extends React.Component {
 
   constructor(props) {
     super(props);
@@ -29,37 +34,53 @@ export default class UserGroupSegment extends React.Component {
     ;
   }
 
+  showUserCreateDialog() {
+    this.refs.userCreateDialog.show();
+  }
+
+  showUserModifyDialog(email) {
+    this.refs.userModifyDialog.show(email);
+  }
+
   showGroupCreateDialog() {
-    this.unmountGroupCreateDialog();
-    React.render(
-      <GroupCreateDialog
-        onSuccess={this.groupCreateSuccess.bind(this)}
-      />,
-      document.getElementById('group-create-dialog')
-    );
+    this.refs.groupCreateDialog.show();
   }
 
-  unmountGroupCreateDialog() {
-    React.unmountComponentAtNode(document.getElementById('group-create-dialog'));
+  showGroupModifyDialog() {
+    this.refs.groupModifyDialog.show();
   }
 
-  showGroupModifyDialog(name) {
-    this.unmountGroupModifyDialog();
-    React.render(
-      <GroupModifyDialog
-        defaultName={name}
-        onSuccess={this.groupModifySuccess.bind(this)}
-      />,
-      document.getElementById('group-modify-dialog')
-    );
+  toggleUserActivation(target) {
+    UserAPI.admSetProfile('email=' + encodeURIComponent(target.getName()) +
+                          '&active=' + (+!!target.isChecked()));
   }
 
-  unmountGroupModifyDialog() {
-    React.unmountComponentAtNode(document.getElementById('group-modify-dialog'));
+  userCreateSuccess() {
+    this.refs.userCreateDialog.hide();
+    UserAPI.admGetList()
+      .then((result) => {
+        this.setState({ users: result.users });
+      })
+      .catch((error) => {
+        console.log(error);
+      })
+    ;
+  }
+
+  userModifySuccess() {
+    this.refs.userModifyDialog.hide();
+    UserAPI.admGetList()
+      .then((result) => {
+        this.setState({ users: result.users });
+      })
+      .catch((error) => {
+        console.log(error);
+      })
+    ;
   }
 
   groupCreateSuccess() {
-    this.unmountGroupCreateDialog();
+    this.refs.groupCreateDialog.hide();
     UserAPI.getGroups()
       .then((result) => {
         this.setState({ groups: result.groups });
@@ -68,7 +89,7 @@ export default class UserGroupSegment extends React.Component {
   }
 
   groupModifySuccess() {
-    this.unmountGroupModifyDialog();
+    this.refs.groupModifyDialog.hide();
     UserAPI.getGroups()
       .then((result) => {
         this.setState({ groups: result.groups });
@@ -81,25 +102,40 @@ export default class UserGroupSegment extends React.Component {
       return (
         <tr key={user.email}>
           <td className="collapsing">
-            <div className="ui fitted slider checkbox">
-              <input type="checkbox" defaultChecked={ user.active } />
-              <label></label>
-            </div>
+            <Checkbox
+              name={user.email}
+              readOnly={(user.email.split('@')[0] === 'admin')}
+              checked={user.active}
+              onChange={this.toggleUserActivation}
+            />
           </td>
-          <td>{ user.firstname + ' ' + user.lastname }</td>
-          <td>{ user.email }</td>
-          <td style={{ textAlign: 'center' }}>{ user.group }</td>
+          <td>{user.firstname + ' ' + user.lastname}</td>
+          <td>{user.email}</td>
+          <td style={{ textAlign: 'center' }}>{user.group}</td>
           <td style={{ textAlign: 'center' }}>
             <i
               className="write link large icon"
-              onClick={() => {
-
-              }}
+              onClick={() => { this.showUserModifyDialog(user.email) }}
             />
             <i
-              className="trash link large red icon"
+              className={
+                classnames(
+                  "trash link large red icon",
+                  {
+                    hidden: (user.email.split('@')[0] === 'admin')
+                  }
+                )
+              }
               onClick={() => {
-
+                UserAPI.admDeactivate(user.email, { delete: true })
+                  .then(UserAPI.admGetList)
+                  .then((result) => {
+                    this.setState({ users: result.users });
+                  })
+                  .catch((error) => {
+                    console.log(error);
+                  })
+                ;
               }}
             />
           </td>
@@ -122,7 +158,8 @@ export default class UserGroupSegment extends React.Component {
                 )
               }
               onClick={() => {
-                this.showGroupModifyDialog(group);
+                this.setState({ groupToModify: group });
+                this.showGroupModifyDialog();
               }}
             />
             <i
@@ -157,7 +194,12 @@ export default class UserGroupSegment extends React.Component {
         <div className="ui tab vertical padded segment" data-tab="users">
           <div className="ui borderless menu">
             <div className="ui item">
-              <div className="ui green button">Add User</div>
+              <div
+                className="ui green button"
+                onClick={this.showUserCreateDialog.bind(this)}
+              >
+                Add User
+              </div>
             </div>
             <a className="item active">1</a>
             <a className="item">2</a>
@@ -166,7 +208,26 @@ export default class UserGroupSegment extends React.Component {
             <div className="right menu">
               <div className="item">
                 <div className="ui icon input">
-                  <input type="text" placeholder="Search User..." />
+                  <Input
+                    type="text"
+                    placeholder="Search User..."
+                    onChange={(text) => {
+                      if (!text) {
+                        UserAPI.admGetList()
+                          .then((result) => {
+                            this.setState({ users: result.users });
+                          })
+                        ;
+                      }
+                      else {
+                        UserAPI.getProfile({ searches: text })
+                          .then((result) => {
+                            this.setState({ users: result.users });
+                          })
+                        ;
+                      }
+                    }}
+                  />
                   <i className="search link icon"></i>
                 </div>
               </div>
@@ -204,7 +265,17 @@ export default class UserGroupSegment extends React.Component {
             <div className="right menu">
               <div className="item">
                 <div className="ui icon input">
-                  <input type="text" placeholder="Search Group..." />
+                  <Input
+                    type="text"
+                    placeholder="Search Group..."
+                    onChange={(text) => {
+                      UserAPI.getGroups({ searches: text })
+                        .then((result) => {
+                          this.setState({ groups: result.groups });
+                        })
+                      ;
+                    }}
+                  />
                   <i className="search link icon"></i>
                 </div>
               </div>
@@ -224,8 +295,25 @@ export default class UserGroupSegment extends React.Component {
             </tbody>
           </table>
         </div>
-        <div id='group-create-dialog' />
-        <div id='group-modify-dialog' />
+        <div>
+          <DialogUserCreate
+            ref="userCreateDialog"
+            onSuccess={this.userCreateSuccess.bind(this)}
+          />
+          <DialogUserModify
+            ref="userModifyDialog"
+            onSuccess={this.userModifySuccess.bind(this)}
+          />
+          <DialogGroupCreate
+            ref="groupCreateDialog"
+            onSuccess={this.groupCreateSuccess.bind(this)}
+          />
+          <DialogGroupModify
+            ref="groupModifyDialog"
+            defaultName={this.state.groupToModify}
+            onSuccess={this.groupModifySuccess.bind(this)}
+          />
+        </div>
       </div>
     );
   }

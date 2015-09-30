@@ -7,7 +7,6 @@ class Dialog extends React.Component {
 
   static defaultProps = {
     size: "small",
-    closable: false,
     onShow: () => {},
     onVisible: () => {},
     onHide: () => {},
@@ -18,7 +17,7 @@ class Dialog extends React.Component {
 
   componentDidMount() {
     $(React.findDOMNode(this)).modal({
-      closable: this.props.closable,
+      closable: false,
       detachable: false,
       onShow: this.props.onShow,
       onVisible: this.props.onVisible,
@@ -44,6 +43,10 @@ class Dialog extends React.Component {
 
   show() {
     $(React.findDOMNode(this)).modal('show');
+  }
+
+  hide() {
+    $(React.findDOMNode(this)).modal('hide');
   }
 
   render() {
@@ -141,6 +144,8 @@ export class Container extends React.Component {
       React.unmountComponentAtNode(document.getElementById(this.componentId));
       this.props.onHidden();
     }
+    else
+      this.renderDialog();
   }
 
   renderDialog() {
@@ -149,7 +154,7 @@ export class Container extends React.Component {
         {...this.props}
         onHidden={() => {
           if (!this.state.hideCall)
-            this.hide();
+            this.close();
           this.setState({ hideCall: false });
         }}
       >
@@ -164,14 +169,33 @@ export class Container extends React.Component {
   }
 
   hide() {
+    this.dialog.hide();
+  }
+
+  close() {
     if (this.state.useCount > 0) {
       this.setState({ hideCall: true, useCount: this.state.useCount - 1 });
     }
   }
 
+  isShow() {
+    return (this.state.useCount > 0);
+  }
+
   render() {
     return (
-      <div id={this.componentId}></div>
+      <div
+        className={classnames(
+          "dialog-container",
+          { 'hidden': this.state.useCount === 0 }
+        )}
+        onClick={(e) => {
+          if (this.props.closable)
+            this.hide();
+        }}
+      >
+        <div id={this.componentId}></div>
+      </div>
     );
   }
 }

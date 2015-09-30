@@ -5,7 +5,7 @@ import Form from 'lib/cutie/Form';
 import Input from 'lib/cutie/Input';
 import UserAPI from 'lib/api/UserAPI';
 
-export default class GroupModifyDialog extends React.Component {
+export default class DialogGroupModify extends React.Component {
 
   static defaultProps = {
     defaultName: '',
@@ -43,11 +43,11 @@ export default class GroupModifyDialog extends React.Component {
   }
 
   componentDidMount() {
-    this.show();
+    //this.show();
   }
 
   componentWillUnmount() {
-    this.hide();
+    //this.hide();
   }
 
   show() {
@@ -80,6 +80,7 @@ export default class GroupModifyDialog extends React.Component {
     return (
       <Dialog.Container
         ref="groupModifyDialog"
+        closable={true}
         onApprove={ () => {
           this.refs.modifyForm.submit();
           return false;

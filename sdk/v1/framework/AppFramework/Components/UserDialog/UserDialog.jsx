@@ -7,7 +7,6 @@ import ProfileForm from './ProfileForm.jsx';
 import PasswordForm from './PasswordForm.jsx';
 import MessageView from './MessageView.jsx';
 
-
 export default class UserDialog extends React.Component {
 
   constructor(props) {
@@ -30,6 +29,10 @@ export default class UserDialog extends React.Component {
       });
 
     this.refs.dialog.show();
+  }
+
+  isShow() {
+    return this.refs.dialog.isShow();
   }
 
   onLoginSuccess() {

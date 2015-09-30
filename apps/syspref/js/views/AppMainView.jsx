@@ -1,13 +1,9 @@
-import UserGroupSegment from './UserGroupSegment.jsx'
+import SegmentUserGroup from './SegmentUserGroup.jsx'
 
 export default class AppMainView extends React.Component {
 
   constructor(props) {
     super(props);
-  }
-
-  componentDidMount() {
-
   }
 
   render() {
@@ -34,7 +30,7 @@ export default class AppMainView extends React.Component {
           </div>
         </div>
         <div className="thirteen wide stretched column">
-          <UserGroupSegment />
+          <SegmentUserGroup />
         </div>
       </div>
     );
