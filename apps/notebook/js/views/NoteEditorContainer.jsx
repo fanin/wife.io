@@ -5,6 +5,7 @@ import DatabaseStore from '../stores/DatabaseStore';
 import GritterView from 'lib/cutie/GritterView';
 import * as Dialog from 'lib/cutie/Dialog';
 import Button from 'lib/cutie/Button';
+import { FSURLDiskData } from 'lib/api/FSAPI';
 
 class ProgressBarView extends React.Component {
 
@@ -64,12 +65,9 @@ class FileUploadView extends React.Component {
         <tfoot>
           <tr>
             <th colSpan="3">
-              <div
-                className="ui right floated small primary labeled button"
-                onClick={this.props.onAddFile}
-              >
+              <Button style="right floated small primary" onClick={this.props.onAddFile}>
                 Add File
-              </div>
+              </Button>
             </th>
           </tr>
         </tfoot>
@@ -554,12 +552,9 @@ export default class NoteEditorContainer extends React.Component {
     }
   }
 
-  onDialogShow() {
-    $(".nb-editor-upload-dialog-container").css("zIndex", "1001");
-  }
+  onDialogShow() {}
 
   onDialogHidden() {
-    $(".nb-editor-upload-dialog-container").css("zIndex", "-1");
     this.setState({ uploadFiles: [] });
   }
 
@@ -577,12 +572,6 @@ export default class NoteEditorContainer extends React.Component {
       );
       this._unsupportFiles = [];
     }
-
-    this.resetUploadProgressBar();
-  }
-
-  resetUploadProgressBar() {
-    this.refs.progressBarView.setState({ progress: 0, label: "" });
   }
 
   showErrorAlert(errorTitle, errorMessage) {
@@ -692,14 +681,17 @@ export default class NoteEditorContainer extends React.Component {
 
         if (change.noteDescriptor.uploadProgress === 100) {
           var _file = change.noteDescriptor.uploadFileObject;
-          var _path = change.noteDescriptor.fileUploadPath;
+          var _path = '/Applications/notebook/' + change.noteDescriptor.fileUploadPath;
 
           if (_file.type.toLowerCase().indexOf("image") === 0) {
             var _editor = this.editorInstance;
-            var _diskUUID = DatabaseStore.getStorage().uuid;
             var _urlCreator = window.URL || window.webkitURL;
             var _imageUrl = _urlCreator.createObjectURL(_file);
             var _img = document.createElement("img");
+
+            if (DatabaseStore.getStorage().type === 'Removable Disk') {
+              _path = FSURLDiskData(DatabaseStore.getStorage().uuid, _path);
+            }
 
             _img.onload = function() {
               var _targetWidth = this.width;
@@ -710,12 +702,13 @@ export default class NoteEditorContainer extends React.Component {
                 _targetWidth = _maxWidth;
               }
 
+              console.log('insert ' + _path);
+
               _editor.insertHtml(
                 /**
                  * Compose the FSAPI url to access file in userdata.
                  */
                 "<img src='/api/v1/fs/file/" + encodeURIComponent(_path)
-                  + (_diskUUID ? "?disk_uuid=" + _diskUUID : "")
                   + "' style='width:" + _targetWidth
                   + "px; height:" + _targetHeight + "px'/>"
               );
@@ -761,16 +754,6 @@ export default class NoteEditorContainer extends React.Component {
   }
 
   render() {
-    var fileUploadView =
-      <FileUploadView
-        ref="fileUploadView"
-        uploadFiles={this.state.uploadFiles}
-        onAddFile={this.onDialogAddFile.bind(this)}
-        onRemoveFile={this.onDialogRemoveFile.bind(this)}
-      />;
-
-    var progressBarView = <ProgressBarView ref="progressBarView" />;
-
     return (
       <div className="nb-column-container">
         <div className="nb-snapshot-container">
@@ -817,36 +800,38 @@ export default class NoteEditorContainer extends React.Component {
 
         <NotebookEditor />
 
-        <div className="nb-editor-upload-dialog-container">
-          <input
-            type="file"
-            id="upload-files"
-            style={{display: "none"}}
-            onChange={this.onDialogFileInputChange.bind(this)}
-            multiple
-          />
+        <input
+          type="file"
+          id="upload-files"
+          style={{display: "none"}}
+          onChange={this.onDialogFileInputChange.bind(this)}
+          multiple
+        />
 
-          <Dialog.Container
-            ref="fileUploadDialog"
-            size="large"
-            onVisible={this.onDialogShow.bind(this)}
-            onHidden={this.onDialogHidden.bind(this)}
-            onApprove={this.onDialogUpload.bind(this)}
-          >
-            <Dialog.Header>Select Files to Upload</Dialog.Header>
-            <Dialog.Content>
-              {fileUploadView}
-            </Dialog.Content>
-            <Dialog.ButtonSet>
-              <Button style="labeled icon" icon="remove" color="red" classes="deny">
-                Cancel
-              </Button>
-              <Button style="labeled icon" icon="upload" color="green" classes="approve">
-                Upload
-              </Button>
-            </Dialog.ButtonSet>
-          </Dialog.Container>
-        </div>
+        <Dialog.Container
+          ref="fileUploadDialog"
+          size="large"
+          onVisible={this.onDialogShow.bind(this)}
+          onHidden={this.onDialogHidden.bind(this)}
+          onApprove={this.onDialogUpload.bind(this)}
+        >
+          <Dialog.Header>Select Files to Upload</Dialog.Header>
+          <Dialog.Content>
+            <FileUploadView
+              uploadFiles={this.state.uploadFiles}
+              onAddFile={this.onDialogAddFile.bind(this)}
+              onRemoveFile={this.onDialogRemoveFile.bind(this)}
+            />
+          </Dialog.Content>
+          <Dialog.ButtonSet>
+            <Button style="labeled icon" icon="remove" color="red" classes="deny">
+              Cancel
+            </Button>
+            <Button style="labeled icon" icon="upload" color="green" classes="approve">
+              Upload
+            </Button>
+          </Dialog.ButtonSet>
+        </Dialog.Container>
 
         <Dialog.Container
           ref="uploadProgressDialog"
@@ -855,7 +840,7 @@ export default class NoteEditorContainer extends React.Component {
         >
           <Dialog.Header>File Upload Progress</Dialog.Header>
           <Dialog.Content>
-            {progressBarView}
+            <ProgressBarView ref="progressBarView" />
           </Dialog.Content>
           <Dialog.ButtonSet>
             <Button style="labeled icon" icon="remove" color="red" classes="deny">

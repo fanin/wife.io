@@ -36,7 +36,6 @@ gulp.task(APP_TARGET, function() {
 
   if (!APP_DEBUG)
     b = b.pipe(buffer())
-         .pipe(babel({ compact: false }))
          .pipe(uglify())
          .on('error', gutil.log);
 

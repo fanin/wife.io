@@ -14,7 +14,7 @@ export default class AppMainView extends React.Component {
             <NoteListContainer />
           </div>
           <div className="sixteen wide mobile ten wide tablet nine wide computer green column nb-main-eq-h-row">
-            <NoteEditorContainer takeSnapshot={true} />
+            <NoteEditorContainer takeSnapshot={false} />
           </div>
         </div>
       </div>

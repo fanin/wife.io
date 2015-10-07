@@ -1,4 +1,5 @@
 import FSAPI from 'lib/api/FSAPI';
+import { FSURLAppRoData } from 'lib/api/FSAPI';
 import marked from 'marked';
 
 class Markdown extends React.Component {
@@ -206,7 +207,7 @@ export default class AppMainView extends React.Component {
     this.stickyInstance = $('.ui.sticky');
     window.addEventListener('scroll', this.handleScroll.bind(this));
 
-    FSAPI.readFile('restapi.json::1', { encoding: 'ascii' })
+    FSAPI.readFile(FSURLAppRoData('api.json'), { encoding: 'ascii' })
     .then((result) => {
       if (result.data) {
         var apidata = this.sortApiClass(JSON.parse(result.data));

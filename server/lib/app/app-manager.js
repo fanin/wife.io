@@ -14,11 +14,11 @@ var fs     = require('fs-extra'),
 
 //fs.jsonfile.spaces = 4;
 
-var USER_APP_PATH = path.join(
+var USER_APP_PATH = path.resolve(path.join(
                       config.settings.user_data_path,
                       config.settings.sys_name,
-                      'apps'
-                    );
+                      'Applications'
+                    ));
 var INTERNAL_APP_PATH = path.join(config.settings.root_path, 'apps');
 var MANIFEST_FILE = 'manifest.json';
 
@@ -26,6 +26,8 @@ function AppManager() {
   this.appList = [];
   /* Maintain a 'identifier:manifest' dictionary array for all apps */
   this.appDict = [];
+
+  fs.mkdirp(USER_APP_PATH);
 
   this._verifyBundle = function(appBundle) {
     var manifest = null;
@@ -185,65 +187,22 @@ AppManager.prototype.getManifest = function(appid) {
   return this.appDict[appid];
 }
 
-AppManager.prototype.getBuiltinDataPath = function(appid, disk, url) {
+AppManager.prototype.getBuiltinDataPath = function(appid, url) {
   var manifest = appid ? this.appDict[appid] : null;
 
   if (!manifest)
     return null;
 
   if (manifest.identifier.indexOf('IA') === 0 || manifest.identifier.indexOf('CA') === 0)
-    return path.join( config.settings.root_path, '/apps', manifest.directory, 'data', url );
+    return path.join(config.settings.root_path, '/apps', manifest.directory, 'data', url );
   else
     return path.join(
-      disk.mountpoint, config.settings.sys_name.replace(/\s/g, '').toLocaleLowerCase(),
-      'apps', manifest.directory, 'data'
+      config.settings.user_data_path,
+      config.settings.sys_name.replace(/\s/g, '').toLocaleLowerCase(),
+      'apps',
+      manifest.directory,
+      'data'
     );
-}
-
-AppManager.prototype.getUserDataPath = function(appid, disk, url) {
-  var manifest = appid ? this.appDict[appid] : null;
-
-  if (!manifest || !disk)
-    return null;
-
-  var basePath = path.join(
-    disk.mountpoint,
-    config.settings.sys_name.replace(/\s/g, '').toLocaleLowerCase(),
-    'apps',
-    manifest.directory,
-    'userdata'
-  );
-
-  try {
-    if (!fs.existsSync(basePath))
-      fs.mkdirsSync(basePath);
-  }
-  catch (error) {
-    return error; //FIXME
-  }
-
-  return path.join(basePath, url);
-}
-
-AppManager.prototype.getSharedDataPath = function(disk, url) {
-  if (!disk)
-    return null;
-
-  var basePath = path.join(
-    disk.mountpoint,
-    config.settings.sys_name.replace(/\s/g, '').toLocaleLowerCase(),
-    'public'
-  );
-
-  try {
-    if (!fs.existsSync(basePath))
-      fs.mkdirsSync(basePath);
-  }
-  catch (error) {
-    return error; //FIXME
-  }
-
-  return path.join(basePath, url);
 }
 
 AppManager.prototype.install = function(appBundlePath) {

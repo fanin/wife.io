@@ -18,7 +18,7 @@ var APP_NAME       = path.basename(__dirname),
     APP_TARGET     = 'apps/' + APP_NAME,
     APP_ENTRY      = __dirname + '/js/app.js',
     APP_BUILD_PATH = global.BUILD_PATH ? global.BUILD_PATH + '/apps/' : 'build/',
-    SDK_PATH       = global.SDK_PATH || 'sdk',
+    SDK_PATH       = global.SDK_PATH || '/sdk',
     API_PATH       = path.join(SDK_PATH, 'v1'),
     APP_DEBUG      = global.DEBUG;
 
@@ -36,7 +36,6 @@ gulp.task(APP_TARGET, function() {
 
   if (!APP_DEBUG)
     b = b.pipe(buffer())
-         .pipe(babel({ compact: false }))
          .pipe(uglify())
          .on('error', gutil.log);
 

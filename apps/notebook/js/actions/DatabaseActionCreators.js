@@ -2,6 +2,7 @@ import NotebookDispatcher from '../dispatcher/NotebookDispatcher';
 import NotebookConstants from '../constants/NotebookConstants';
 import NotebookActionConstants from '../constants/NotebookActionConstants';
 import FSAPI from 'lib/api/FSAPI';
+import { FSURLDiskData } from 'lib/api/FSAPI';
 import { timestamp } from 'lib/utils/common/string-misc';
 import { base64ToBlob } from 'lib/utils/buffer';
 import assign from 'object-assign';
@@ -58,7 +59,18 @@ let getNoteAssetPath = function(noteDescriptor, assetName) {
  * @private
  */
 let buildApiPath = function(path) {
-  return databaseStorage ? path + ":" + databaseStorage.uuid : path;
+  let p = '/Applications/notebook/' + path;
+
+  if (databaseStorage) {
+    if (databaseStorage.type === 'Internal Storage') {
+      return p;
+    }
+    else {
+      return FSURLDiskData(databaseStorage.uuid, p);
+    }
+  }
+  else
+    return p;
 }
 
 /**
@@ -147,8 +159,8 @@ export default {
     if (!databaseStorage) return;
 
     var bookshelfPath = getBookshelfPath();
-    var bookshelfApiPath = buildApiPath(bookshelfPath);
-    var bookshelfTreeApiPath = buildApiPath(NotebookConstants.DATABASE_TREE_FILE);
+    var bookshelfApiPath = bookshelfPath;
+    var bookshelfTreeApiPath = NotebookConstants.DATABASE_TREE_FILE;
     var initialTreeData = [{
       label: NotebookConstants.DATABASE_NOTEBOOK_ALL_LABEL,
       id: NotebookConstants.DATABASE_NOTEBOOK_ALL_ID
@@ -159,33 +171,33 @@ export default {
     });
 
     /* Create /bookshelf if necessary */
-    FSAPI.exist(bookshelfApiPath)
+    FSAPI.exist(buildApiPath(bookshelfApiPath))
     .then((result) => {
       if (result.exist)
-        return FSAPI.stat(bookshelfApiPath);
+        return FSAPI.stat(buildApiPath(bookshelfApiPath));
       else
-        return FSAPI.createDirectory(bookshelfApiPath);
+        return FSAPI.createDirectory(buildApiPath(bookshelfApiPath));
     })
     .then((result) => {
       if (result.api === 'fs.stat')
         if (!result.stat.isDirectory)
-          return FSAPI.removeFile(bookshelfApiPath);
+          return FSAPI.removeFile(buildApiPath(bookshelfApiPath));
       return result;
     })
     .then((result) => {
       if (result.api === 'fs.removeFile')
-        return FSAPI.createDirectory(bookshelfApiPath);
+        return FSAPI.createDirectory(buildApiPath(bookshelfApiPath));
       else
         return result;
     })
     .then((result) => {
-      return FSAPI.exist(bookshelfTreeApiPath);
+      return FSAPI.exist(buildApiPath(bookshelfTreeApiPath));
     })
     .then((result) => {
       if (result.exist)
-        return FSAPI.readFile(bookshelfTreeApiPath, { encoding: 'utf8' });
+        return FSAPI.readFile(buildApiPath(bookshelfTreeApiPath), { encoding: 'utf8' });
       else
-        return FSAPI.writeFile(bookshelfTreeApiPath, JSON.stringify(initialTreeData));
+        return FSAPI.writeFile(buildApiPath(bookshelfTreeApiPath), JSON.stringify(initialTreeData));
     })
     .then((result) => {
       if (result.api === 'fs.readFile') {
@@ -924,12 +936,12 @@ export default {
   readNote: (noteDescriptor) => {
     if (!databaseStorage) return;
 
-    function __replaceQueryString(url, param, value) {
-      var re = new RegExp("([?|&])" + param + "=.*?(&|$|\")","ig");
-      if (url.match(re))
-        return url.replace(re,'$1' + param + "=" + value + '$2');
+    function __replaceDiskURL(content, value) {
+      var re = new RegExp("(@DISKURL).*?(/.*)","ig");
+      if (content.match(re))
+        return content.replace(re,'$1' + value + '$2');
       else
-        return url;
+        return content;
     }
 
     var noteFile = getNotePath(noteDescriptor) + '/' + NotebookConstants.DATABASE_NOTE_FILE;
@@ -954,7 +966,7 @@ export default {
         /* Remove all single &nbsp; between tags, and extract contents inside <body></body> */
         var content = data.replace(/\>&nbsp;\</gi,'\>\<')
                   .match(/\<body[^>]*\>([^]*)\<\/body/m)[1] || "";
-        noteDescriptor.noteContent = __replaceQueryString(content, "disk_uuid", databaseStorage.uuid);
+        noteDescriptor.noteContent = __replaceDiskURL(content, databaseStorage.uuid);
 
         NotebookDispatcher.dispatch({
           actionType: NotebookActionConstants.NOTEBOOK_DATABASE_READ_NOTE_SUCCESS,
@@ -1056,14 +1068,15 @@ export default {
 
             FSAPI.wget(buildApiPath(assetFile), _src, {
               onSuccess: () => {
+                if (databaseStorage.type === 'Removable Disk') {
+                  assetFile = FSURLDiskData(databaseStorage.uuid, assetFile);
+                }
+
                 content = unescape(escape(content).replace(
                   new RegExp(escape(_src), 'g'),
                   escape (
                     "/api/v1/fs/file/"
                     + encodeURIComponent(assetFile)
-                    + (databaseStorage.uuid
-                       ? "?disk_uuid=" + databaseStorage.uuid
-                       : "")
                   )
                 ));
                 __grabNext();

@@ -12,8 +12,6 @@
 
 var config   = require('config'),
     express  = require('express'),
-    mongoose = require('mongoose'),
-    passport = require('passport'),
     User     = require('models/user'),
     Group    = require('models/group');
 

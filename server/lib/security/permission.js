@@ -1,4 +1,5 @@
 var User = require('models/user');
+var config = require('config');
 
 module.exports = {
   grant: function(req, res, next) {
@@ -10,7 +11,7 @@ module.exports = {
     }
     else {
       User.findById(req.user.id, function(err, user) {
-        if (err)
+        if (err || !user)
           res.status(500).send('Unable to get user profile');
         else
           next();

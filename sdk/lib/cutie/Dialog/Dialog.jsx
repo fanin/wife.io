@@ -3,7 +3,7 @@
 import classnames from 'classnames';
 import { randomString } from 'lib/utils/common/string-misc'
 
-class Dialog extends React.Component {
+export class Dialog extends React.Component {
 
   static defaultProps = {
     size: "small",
@@ -25,11 +25,6 @@ class Dialog extends React.Component {
       onHidden: this.props.onHidden,
       onApprove: this.props.onApprove,
       onDeny: this.props.onDeny
-    });
-
-    $(React.findDOMNode(this)).click((e) => {
-      e.stopPropagation();
-      e.stopImmediatePropagation();
     });
   }
 
@@ -190,8 +185,18 @@ export class Container extends React.Component {
           { 'hidden': this.state.useCount === 0 }
         )}
         onClick={(e) => {
-          if (this.props.closable)
-            this.hide();
+          let d = $(React.findDOMNode(this.dialog));
+          let w = d.width();
+          let h = d.height();
+          let y = d.offset().top;
+          let x = d.offset().left;
+
+          e.stopPropagation();
+
+          if (e.pageX < x || e.pageX > (x + w) || e.pageY < y || e.pageY > (y + h)) {
+            if (this.props.closable)
+              this.hide();
+          }
         }}
       >
         <div id={this.componentId}></div>

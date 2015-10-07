@@ -1,11 +1,12 @@
 import EventEmitter from 'events';
 import FSAPI from 'lib/api/FSAPI';
+import { FSURLUserData } from 'lib/api/FSAPI';
 import LauncherDispatcher from '../dispatcher/LauncherDispatcher';
 import LauncherConstants from '../constants/LauncherConstants';
 
 const CHANGE_EVENT = 'LAUNCHER_CHANGE';
 const ERROR_EVENT  = 'LAUNCHER_ERROR';
-const APPSORT_FILE = 'appsort.json';
+const APPSORT_FILE = FSURLUserData('/Applications/launcher/appsort.json');
 
 var appSortList = null;
 

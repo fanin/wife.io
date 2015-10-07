@@ -17,9 +17,8 @@
  * }
  *
  * Storage Type:
- *   System Disk:      Read only
- *   System Data Disk: User app & app user data
- *   Removable Disk:   USB disks, SD Cards
+ *   Internal Storage: Disk where OS installed
+ *   Removable Disk:   Internal partitions/disks, USB disks, SD Cards
  */
 
 // TODO: Emit disk full event
@@ -33,8 +32,7 @@ var fs     = require('fs-extra'),
 
 function StorageManager() {
   this.systemDisk = null;
-  this.dataDisk = null;
-  this.removableDisk = [];
+  this.dataDisk = [];
   this.pausePolling = false;
 
   this.getDisks(function(disks, error) {
@@ -67,8 +65,8 @@ StorageManager.prototype.verifyDiskInfo = function(disk) {
 
 StorageManager.prototype.getDisks = function(callback) {
   var systemDisk = null;
-  var dataDisk = null;
-  var removableDisk = [];
+  var userDataDisk = null;
+  var dataDisk = [];
 
   this.pausePolling = true;
 
@@ -87,16 +85,24 @@ StorageManager.prototype.getDisks = function(callback) {
       for (var i = 0; i < data.length; i++) {
         if (data[i].mountpoint === '/' || data[i].mountpoint === 'C:') {
           systemDisk = data[i];
-        }
-        else if (path.resolve(config.settings.user_data_path)
-               .indexOf(path.resolve(data[i].mountpoint)) === 0) {
-          dataDisk = data[i];
+          systemDisk.type = 'Internal Storage';
         }
         else if (data[i].mountpoint.indexOf('/mnt') === 0 ||
              data[i].mountpoint.indexOf('/media') === 0 ||
              data[i].mountpoint.indexOf('/Volumes') === 0 ||
              data[i].mountpoint.match(/^[A-Z]:/)) {
-          removableDisk.push(data[i]);
+          data[i].type = 'Removable Disk';
+          dataDisk.push(data[i]);
+        }
+
+        if (
+            !this.userDataDisk &&
+            path.resolve(config.settings.user_data_path)
+                .indexOf(path.resolve(data[i].mountpoint)) === 0
+        ) {
+          data[i].type = 'Internal Storage';
+          this.userDataDisk = data[i];
+          console.log('Found user data disk, mountpoint = ', data[i].mountpoint);
         }
       }
 
@@ -104,39 +110,24 @@ StorageManager.prototype.getDisks = function(callback) {
       if (this.systemDisk === null) {
         /* This is the first time getting disks info */
         this.systemDisk = systemDisk;
-        if (this.systemDisk) {
-          this.systemDisk.type = "System";
-          if (!this.systemDisk.uuid)
-            this.systemDisk.uuid = uuid.v4();
+        if (this.systemDisk && !this.systemDisk.uuid) {
+          this.systemDisk.uuid = uuid.v4();
         }
 
         this.dataDisk = dataDisk;
-        if (this.dataDisk) {
-          this.dataDisk.type = "Data";
-          if (!this.dataDisk.uuid)
-            this.dataDisk.uuid = uuid.v4();
-        }
-        else
-          throw new Error(
-            'Unable to find internal data disk (' +
-            config.settings.user_data_path + ').'
-          );
-
-        this.removableDisk = removableDisk;
-        for (i = 0; i < this.removableDisk.length; i++) {
-          this.removableDisk[i].type = "Removable";
-          if (!this.removableDisk[i].uuid)
-            this.removableDisk[i].uuid = uuid.v4();
+        for (i = 0; i < this.dataDisk.length; i++) {
+          if (!this.dataDisk[i].uuid)
+            this.dataDisk[i].uuid = uuid.v4();
         }
       }
       else {
-        /* Backup previous removable disks array to examine disk insertion/removal */
-        var _oldDisk = this.removableDisk;
-        this.removableDisk = removableDisk;
+        /* Backup previous data disks array to examine disk insertion/removal */
+        var _oldDisk = this.dataDisk;
+        this.dataDisk = dataDisk;
 
         /* Set disk type */
-        for (var i = 0; i < this.removableDisk.length; i++) {
-          this.removableDisk[i].type = "Removable";
+        for (var i = 0; i < this.dataDisk.length; i++) {
+          this.dataDisk[i].type = 'Removable Disk';
         }
 
         /* Reset present flag */
@@ -144,29 +135,29 @@ StorageManager.prototype.getDisks = function(callback) {
           _oldDisk[j].present = false;
         }
 
-        /* Examine if removable disk array changes */
-        for (i = 0; i < this.removableDisk.length; i++) {
+        /* Examine if data disk array changes */
+        for (i = 0; i < this.dataDisk.length; i++) {
           for (j = 0; j < _oldDisk.length; j++) {
             /* To compare two disks by their mountpoint and total capacity */
-            if (this.removableDisk[i].mountpoint === _oldDisk[j].mountpoint &&
-              this.removableDisk[i].total === _oldDisk[j].total) {
-              this.removableDisk[i].uuid = this.removableDisk[i].uuid || _oldDisk[j].uuid;
-              this.removableDisk[i].present = true;
+            if (this.dataDisk[i].mountpoint === _oldDisk[j].mountpoint &&
+              this.dataDisk[i].total === _oldDisk[j].total) {
+              this.dataDisk[i].uuid = this.dataDisk[i].uuid || _oldDisk[j].uuid;
+              this.dataDisk[i].present = true;
               _oldDisk[j].present = true;
             }
           }
         }
 
-        for (i = 0; i < this.removableDisk.length; i++) {
-          if (!this.removableDisk[i].present) {
-            this.removableDisk[i].type = "Removable";
+        for (i = 0; i < this.dataDisk.length; i++) {
+          if (!this.dataDisk[i].present) {
+            this.dataDisk[i].type = 'Removable Disk';
             /* Create a fake uuid if there's no uuid found for the disk */
             // TODO: os should get uuid for all disks
-            if (!this.removableDisk[i].uuid)
-              this.removableDisk[i].uuid = uuid.v4();
+            if (!this.dataDisk[i].uuid)
+              this.dataDisk[i].uuid = uuid.v4();
 
             ssemgr.broadcast(
-              "storage", { eventType: "INSERT", disk: this.removableDisk[i] }
+              "storage", { eventType: "INSERT", disk: this.dataDisk[i] }
             );
           }
         }
@@ -176,7 +167,7 @@ StorageManager.prototype.getDisks = function(callback) {
             ssemgr.broadcast("storage", { eventType: "REMOVE", disk: _oldDisk[i] });
       }
 
-      callback && callback([ this.dataDisk ].concat(this.removableDisk));
+      callback && callback([ this.systemDisk ].concat(this.dataDisk));
 
       this.pausePolling = false;
     }.bind(this));
@@ -187,8 +178,8 @@ StorageManager.prototype.getSystemDisk = function() {
   return this.systemDisk;
 }
 
-StorageManager.prototype.getDataDisk = function() {
-  return this.dataDisk;
+StorageManager.prototype.getUserDataDisk = function() {
+  return this.userDataDisk;
 }
 
 StorageManager.prototype.getDiskByUUID = function(uuid) {
@@ -198,12 +189,9 @@ StorageManager.prototype.getDiskByUUID = function(uuid) {
   if (this.systemDisk && this.systemDisk.uuid === uuid)
     return this.systemDisk;
 
-  if (this.dataDisk && this.dataDisk.uuid === uuid)
-    return this.dataDisk;
-
-  for (var i = 0; i < this.removableDisk.length; i++)
-    if (this.removableDisk[i].uuid === uuid)
-      return this.removableDisk[i];
+  for (var i = 0; i < this.dataDisk.length; i++)
+    if (this.dataDisk[i].uuid === uuid)
+      return this.dataDisk[i];
 
   return null;
 }
