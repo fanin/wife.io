@@ -34,7 +34,9 @@ User.find({ email: config.settings.admin.email }, function(err, admins) {
         lastname: config.settings.admin.lastname,
         group: config.settings.admin.group,
         gender: config.settings.admin.gender,
-        active: true
+        active: true,
+        register_date: new Date,
+        description: 'System default admin account'
       }),
       config.settings.admin.password,
       function(error, admin) {
@@ -57,7 +59,8 @@ User.find({ email: config.settings.admin.email }, function(err, admins) {
  *   firstname: 'Walter',
  *   lastname: 'White',
  *   group: 'User,Cooker',
- *   gender: true // true: male, false: female
+ *   gender: true, // true: male, false: female
+ *   description: 'This is Walter White.'
  * }
  * ```
  * @apiReturn 200 (User account created)
@@ -65,12 +68,14 @@ User.find({ email: config.settings.admin.email }, function(err, admins) {
  */
 router.post('/signup', function(req, res, next) {
   User.register(new User({
-      email:     req.body.email,
+      email: req.body.email,
       firstname: req.body.firstname,
-      lastname:  req.body.lastname,
-      group:     req.body.group,
-      gender:    req.body.gender,
-      active:    true
+      lastname: req.body.lastname,
+      group: req.body.group,
+      gender: req.body.gender,
+      active: true,
+      register_date: new Date,
+      description: req.body.description
     }),
     req.body.password,
     function(error, user) {
@@ -101,8 +106,15 @@ router.post('/signup', function(req, res, next) {
 router.post('/login', passport.authenticate('local'), function(req, res) {
   res.cookie('userid', req.user.id, { maxAge: 600000, httpOnly: false, secure: false });
   //client: $.cookie("userid")
-  if (req.user.active)
-    res.status(200).send('User logged in');
+  if (req.user.active) {
+    User.update({ email: req.user.email }, {
+      $set: {
+        last_login_date: new Date
+      }
+    }, function(err) {
+      res.status(200).send('User logged in');
+    });
+  }
   else
     res.status(503).send('User account deactivated');
 });
@@ -171,7 +183,8 @@ router.put('/password', passport.authenticate('local'), function(req, res) {
  *     firstname: 'Walter',
  *     lastname: 'White',
  *     group: 'User,Cooker',
- *     gender: true
+ *     gender: true,
+ *     description: 'This is Walter White.'
  * }
  * ```
  * Note that the user's password is not visible in the object.
@@ -235,7 +248,8 @@ router.get('/profile', function(req, res) {
  *   firstname: 'Walter',
  *   lastname: 'White',
  *   group: 'User,Teacher',
- *   gender: true
+ *   gender: true,
+ *   description: 'This is Walter White.'
  * }
  * ```
  * Note that `email` and `password` fields are used to authenticate the user before updating profile.
@@ -251,9 +265,10 @@ router.put('/profile', passport.authenticate('local'), function(req, res) {
   }, {
     $set: {
       firstname: req.body.firstname,
-      lastname:  req.body.lastname,
-      group:     req.body.group,
-      gender:    req.body.gender
+      lastname: req.body.lastname,
+      group: req.body.group,
+      gender: req.body.gender,
+      description: req.body.description
     }
   }, function(err) {
     if (err)
@@ -337,7 +352,8 @@ router.get('/adm/list', function(req, res) {
  *   lastname: 'White',
  *   group: 'Teacher',
  *   gender: true,
- *   active: true
+ *   active: true,
+ *   description: 'Update user description'
  * }
  * ```
  * Note that `password` field is not required for administrators.
@@ -365,6 +381,8 @@ router.put('/adm/profile', function(req, res) {
         fields = assign(fields, { gender: req.body.gender });
       if (req.body.active !== undefined)
         fields = assign(fields, { active: req.body.active });
+      if (req.body.description)
+        fields = assign(fields, { description: req.body.description });
 
       User.update({ email: req.body.email }, { $set: fields }, function(err) {
         if (err)

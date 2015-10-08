@@ -8,7 +8,10 @@ var User = new Schema({
   group: { type: String, default: 'User' },
   gender: { type: Boolean, required: true },
   active: { type: Boolean, required: true, default: true },
-  expiration_date: { type: Date }
+  register_date: { type: Date },
+  last_login_date: { type: Date },
+  expiration_date: { type: Date },
+  description: { type: String }
 });
 
 User.plugin(passportLocalMongoose, {
