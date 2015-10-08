@@ -26,6 +26,10 @@ class Dialog extends React.Component {
       onApprove: this.props.onApprove,
       onDeny: this.props.onDeny
     });
+
+    $(React.findDOMNode(this)).click((e) => {
+      e.stopPropagation();
+    });
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -129,6 +133,16 @@ export class Container extends React.Component {
     this.componentId = 'dialog-' + randomString('XXXXXXXXXXXX');
   }
 
+  componentDidMount() {
+    $('.dialog-container').click((e) => {
+      e.stopPropagation();
+
+      if (this.props.closable) {
+        this.hide();
+      }
+    });
+  }
+
   componentDidUpdate(prevProps, prevState) {
     if (prevState.useCount != this.state.useCount && this.state.useCount > 0) {
       if (this.state.useCount == 1)
@@ -184,20 +198,6 @@ export class Container extends React.Component {
           "dialog-container",
           { 'hidden': this.state.useCount === 0 }
         )}
-        onClick={(e) => {
-          let d = $(React.findDOMNode(this.dialog));
-          let w = d.width();
-          let h = d.height();
-          let y = d.offset().top;
-          let x = d.offset().left;
-
-          e.stopPropagation();
-
-          if (e.pageX < x || e.pageX > (x + w) || e.pageY < y || e.pageY > (y + h)) {
-            if (this.props.closable)
-              this.hide();
-          }
-        }}
       >
         <div id={this.componentId}></div>
       </div>
