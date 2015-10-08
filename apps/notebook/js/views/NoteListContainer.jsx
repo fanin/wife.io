@@ -47,10 +47,12 @@ export default class NoteListContainer extends React.Component {
       showEmptyMessage: false,
       sortMethod: SortMethods.sortByLastModifiedDate
     };
+
+    this.onDatabaseChange = this.onDatabaseChange.bind(this);
   }
 
   componentWillMount() {
-    DatabaseStore.addChangeListener(this.onDatabaseChange.bind(this));
+    DatabaseStore.addChangeListener(this.onDatabaseChange);
   }
 
   componentWillUnmount() {
@@ -65,10 +67,10 @@ export default class NoteListContainer extends React.Component {
     switch (change.actionType) {
       case NotebookActionConstants.NOTEBOOK_DATABASE_SELECT_NOTEBOOK:
         var notebook = change.notebookNode;
-        if (notebook &&
-             (notebook.id === NotebookConstants.DATABASE_NOTEBOOK_ALL_ID ||
-            notebook.isFolder())
-        )
+        if (notebook && (
+              notebook.id === NotebookConstants.DATABASE_NOTEBOOK_ALL_ID ||
+              notebook.isFolder()
+        ))
           this.setState({ disableNewNoteButton: true });
         else
           this.setState({ disableNewNoteButton: false });

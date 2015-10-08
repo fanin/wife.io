@@ -46,10 +46,11 @@ export default class BookshelfContainer extends React.Component {
       disableMenuItemSearch: false
     };
     this._timerSaveTreeDelay = null;
+    this.onDatabaseChange = this.onDatabaseChange.bind(this);
   }
 
   componentWillMount() {
-    DatabaseStore.addChangeListener(this.onDatabaseChange.bind(this));
+    DatabaseStore.addChangeListener(this.onDatabaseChange);
 
     $.fn.form.settings.rules.hasSpecialChar = function(text) {
       var regExp = /[`~,.<>\-;':"/[\]|{}()=+!@#$%^&*]/;
@@ -89,7 +90,18 @@ export default class BookshelfContainer extends React.Component {
     });
   }
 
+  componentDidUpdate(prevProps, prevState) {
+    if (this.state.treeData.toString() != prevState.treeData.toString()) {
+      this.refs.treeViewController.nodeSelect(
+        this.refs.treeViewController.getNodeById(
+          NotebookConstants.DATABASE_NOTEBOOK_ALL_ID
+        )
+      );
+    }
+  }
+
   componentWillUnmount() {
+    DatabaseActionCreators.closeDatabase();
     DatabaseStore.removeChangeListener(this.onDatabaseChange);
   }
 
@@ -198,6 +210,7 @@ export default class BookshelfContainer extends React.Component {
             ref="treeViewController"
             data={this.state.treeData}
             exclusives={this.state.exclusiveTreeNodes}
+            onTreeInit={this.onTreeInit.bind(this)}
             onCreateNode={this.onTreeCreateNode.bind(this)}
             onCreateFolder={this.showCreateStackInputDialog.bind(this)}
             onOpen={this.saveTree.bind(this)}
@@ -373,12 +386,6 @@ export default class BookshelfContainer extends React.Component {
           notebookSearchString: "",
           treeData: DatabaseStore.getTreeData()
         });
-
-        this.refs.treeViewController.nodeSelect(
-          this.refs.treeViewController.getNodeById(
-            NotebookConstants.DATABASE_NOTEBOOK_ALL_ID
-          )
-        );
         break;
 
       case NotebookActionConstants.NOTEBOOK_DATABASE_SAVETREE_SUCCESS:
@@ -444,6 +451,10 @@ export default class BookshelfContainer extends React.Component {
         );
         break;
     }
+  }
+
+  onTreeInit() {
+    //
   }
 
   onTreeCreateNode(node) {

@@ -182,6 +182,7 @@ var UserAppCard = React.createClass({
 	}
 });
 
+
 var ShopSectionMyApp = React.createClass({
 
 	getInitialState: function() {

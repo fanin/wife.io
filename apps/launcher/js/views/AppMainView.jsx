@@ -17,10 +17,13 @@ export default class AppMainView extends React.Component {
       alertTitle: '',
       alertMessage: ''
     };
+
+    this.onLauncherChanges = this.onLauncherChanges.bind(this);
+    this.onLauncherError = this.onLauncherError.bind(this);
   }
 
   componentWillMount() {
-    LauncherStore.addChangeListener(this.onLauncherChanges.bind(this));
+    LauncherStore.addChangeListener(this.onLauncherChanges);
     LauncherStore.addErrorListener(this.onLauncherError);
 
     AppAPI.list({

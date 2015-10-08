@@ -15,6 +15,7 @@ export default class JqTreeViewController extends React.Component {
   static defaultProps = {
     exclusives: [],
     onCreateNode: (node) => {},
+    onTreeInit: () => {},
     onOpen: (node) => {},
     onClose: (node) => {},
     onSelect: (node) => {},
@@ -30,6 +31,10 @@ export default class JqTreeViewController extends React.Component {
 
   componentDidMount() {
     this.treeInstance = $(React.findDOMNode(this));
+
+    this.treeInstance.bind("tree.init", (event) => {
+      this.props.onTreeInit();
+    });
 
     this.treeInstance.bind("tree.open", (event) => {
       this.props.onOpen(event.node);

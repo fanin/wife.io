@@ -55,7 +55,7 @@ export default class Application {
     });
 
     StorageAPI.onDiskEvent((event) => {
-      if (event.eventType === "INSERT") {
+      if (event.eventType === 'INSERT') {
         GritterView.add(
           "New Disk",
           "Disk '" + event.disk.name + "' is mounted at " + event.disk.mountpoint,
@@ -63,7 +63,7 @@ export default class Application {
           5000
         );
       }
-      else if (event.eventType === "REMOVE") {
+      else if (event.eventType === 'REMOVE') {
         GritterView.add(
           "Disk Removed",
           "Disk '" + event.disk.name + "' is unmounted",
@@ -76,9 +76,17 @@ export default class Application {
 
   configure(conf) {
     assign(this.configs, conf);
-    document.body.addEventListener("user-dialog", (e) => {
+    document.body.addEventListener('user-dialog', (e) => {
       if (!this.dialog.isShow())
         this.dialog.show(e.detail.formType, e.detail.onApproved, e.detail.onDenied);
+    }, false);
+
+    document.body.addEventListener('user-change', (e) => {
+      React.unmountComponentAtNode(document.getElementById('app-main-view'));
+      React.render(
+        this.configs.appview,
+        document.getElementById('app-main-view')
+      );
     }, false);
   }
 

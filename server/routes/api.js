@@ -10,7 +10,7 @@ var API_VERSION = 1,
 router.use('/v' + API_VERSION + '/user',  require(API_PATH + '/api-user'));
 router.use('/v' + API_VERSION + '/group', require(API_PATH + '/api-group'));
 router.use('/v' + API_VERSION + '/asset', require(API_PATH + '/api-asset'));
-router.use('/v' + API_VERSION + '/fs',      require(API_PATH + '/api-fs'));
+router.use('/v' + API_VERSION + '/fs',    require(API_PATH + '/api-fs'));
 
 router.use(function(req, res, next) {
   if (req.method === 'GET')

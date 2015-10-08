@@ -39,7 +39,7 @@ export default class UserMenu extends React.Component {
           formType: 'login',
           onApproved: () => {
             this.getUsername();
-            // TODO: Emit a user log in global event
+            document.body.dispatchEvent(new CustomEvent("user-change"));
           }
         }
       }));
@@ -113,7 +113,7 @@ export default class UserMenu extends React.Component {
           case 'logout':
             UserAPI.logout().then((result) => {
               this.setState({ username: '' });
-              // TODO: Emit a user log out global event
+              document.body.dispatchEvent(new CustomEvent("user-change"));
             });
             break;
           }

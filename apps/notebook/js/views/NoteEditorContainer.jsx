@@ -150,6 +150,10 @@ class NotebookEditor extends React.Component {
     return false;
   }
 
+  componentWillUnmount() {
+
+  }
+
   render() {
     return (
       <div className="nb-column-content nb-editor-container">
@@ -182,10 +186,12 @@ export default class NoteEditorContainer extends React.Component {
     this._flushAfterDelay = 5000;
     this._dragStartInsideEditor = false;
     this._unsupportFiles = [];
+
+    this.onDatabaseChange = this.onDatabaseChange.bind(this);
   }
 
   componentWillMount() {
-    DatabaseStore.addChangeListener(this.onDatabaseChange.bind(this));
+    DatabaseStore.addChangeListener(this.onDatabaseChange);
   }
 
   componentDidMount() {
@@ -701,8 +707,6 @@ export default class NoteEditorContainer extends React.Component {
                 _targetHeight = (this.height / this.width) * _maxWidth;
                 _targetWidth = _maxWidth;
               }
-
-              console.log('insert ' + _path);
 
               _editor.insertHtml(
                 /**
