@@ -29,3 +29,10 @@
   height: 100%;
   overflow: auto;
 }
+
+/* Enable scroll on long dialog */
+.dialog-container > div > .ui.scrolling.modal {
+  position: absolute;
+  left: 50%;
+  margin-top: 3.5rem !important;
+}

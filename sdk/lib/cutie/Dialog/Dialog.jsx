@@ -3,7 +3,7 @@
 import classnames from 'classnames';
 import { randomString } from 'lib/utils/common/string-misc'
 
-export class Dialog extends React.Component {
+class Dialog extends React.Component {
 
   static defaultProps = {
     size: "small",
