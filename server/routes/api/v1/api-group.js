@@ -45,6 +45,15 @@ Group.find(function(err, groups) {
 /**
  * Get group list or searching group with pagination support.
  *
+ * An object is returned as following:
+ * ```
+ * {
+ *    groups: [Group List of Requested Page],
+ *    count: [Total group count],
+ *    page:  [Requested Page Number]
+ * }
+ * ```
+ *
  * @apiMethod GetGroups {GET} /group
  * @apiOption {String} searches Key words for searching group.
  * @apiOption {Number} page For pagination support. Get groups that belong to given page. For `page=0` or `undefined`, pagination is disabled and all users are returned.
@@ -77,19 +86,31 @@ router.get('/', function(req, res) {
   Group.find(conds, null, paginate, function(err, groups) {
     if (err)
       res.status(500).send('Error while loading groups: ' + err);
-    else
-      res.json(groups.sort((a, b) => {
-        if (a.name === 'Admin')
-          return -1;
-        else if (b.name === 'Admin')
-          return 1;
-        else if (a.name === 'User')
-          return -1;
-        else if (b.name === 'User')
-          return 1;
+    else {
+      Group.count(conds, function(err, count) {
+        if (err)
+          res.status(500).send('Failed to get group count, error: ' + err);
         else
-          return (b - a);
-      }));
+          res.json(
+            {
+              groups: groups.sort((a, b) => {
+                if (a.name === 'Admin')
+                  return -1;
+                else if (b.name === 'Admin')
+                  return 1;
+                else if (a.name === 'User')
+                  return -1;
+                else if (b.name === 'User')
+                  return 1;
+                else
+                  return (b - a);
+              }),
+              count: count,
+              page: req.query.page || 0
+            }
+          );
+      });
+    }
   });
 });
 

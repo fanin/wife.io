@@ -334,6 +334,15 @@ router.use(function(req, res, next) {
  *
  * Get user list with pagination support.
  *
+ * An object is returned as following:
+ * ```
+ * {
+ *    users: [User List of Requested Page],
+ *    count: [Total user count],
+ *    page:  [Requested Page Number]
+ * }
+ * ```
+ *
  * @apiMethod AdmGetList {GET} /user/adm/list
  * @apiOption {String} searches Key words for searching users.
  * @apiOption {Number} page For pagination support. Get users that belong to given page. For `page=0` or `undefined`, pagination is disabled and all users are returned.
@@ -369,8 +378,14 @@ router.get('/adm/list', function(req, res) {
   User.find(conds, null, paginate, function(err, users) {
     if (err)
       res.status(500).send('Failed to get user profiles, error: ' + err);
-    else
-      res.json(users);
+    else {
+      User.count(conds, function(err, count) {
+        if (err)
+          res.status(500).send('Failed to get user count, error: ' + err);
+        else
+          res.json({ users: users, count: count, page: req.query.page || 0 });
+      });
+    }
   });
 });
 

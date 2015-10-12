@@ -4,13 +4,14 @@ import classnames from 'classnames';
 import Input from 'lib/cutie/Input';
 import Checkbox from 'lib/cutie/Checkbox';
 import Dropdown from 'lib/cutie/Dropdown';
+import Pagination from 'lib/cutie/Pagination';
 import UserAPI from 'lib/api/UserAPI';
 import DialogUserCreate from './DialogUserCreate.jsx';
 import DialogUserModify from './DialogUserModify.jsx';
 import DialogGroupCreate from './DialogGroupCreate.jsx';
 import DialogGroupModify from './DialogGroupModify.jsx';
 
-const LIMIT_PER_PAGE = 1;
+const LIMIT_PER_PAGE = 70;
 
 export default class SegmentUserGroup extends React.Component {
 
@@ -19,10 +20,8 @@ export default class SegmentUserGroup extends React.Component {
     this.state = {
       users: [],
       groups: [],
-      userPages: 0,
-      groupPages: 0,
-      userCurrPage: 1,
-      groupCurrPage: 1,
+      userPages: 1,
+      groupPages: 1,
       userSearchText: '',
       groupSearchText: ''
     };
@@ -30,10 +29,15 @@ export default class SegmentUserGroup extends React.Component {
 
   componentDidMount() {
     Promise.all([
-      UserAPI.admGetList({ page: this.state.userCurrPage, limit: LIMIT_PER_PAGE }),
-      UserAPI.getGroups({ page: this.state.groupCurrPage, limit: LIMIT_PER_PAGE })
+      UserAPI.admGetList({ page: this.refs.userPaginator.position(), limit: LIMIT_PER_PAGE }),
+      UserAPI.getGroups({ page: this.refs.groupPaginator.position(), limit: LIMIT_PER_PAGE })
     ]).then((values) => {
-      this.setState({ users: values[0].users, groups: values[1].groups })
+      this.setState({
+        users: values[0].users,
+        userPages: this.calcPages(values[0].count),
+        groups: values[1].groups,
+        groupPages: this.calcPages(values[1].count),
+      })
     }).catch((error) => {
       if (error.code !== 403)
         console.log(error);
@@ -45,61 +49,44 @@ export default class SegmentUserGroup extends React.Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    UserAPI.userCount({ searches: this.state.userSearchText })
-      .then((result) => {
-        let pages = (result.count / LIMIT_PER_PAGE) +
-                      !!(result.count % LIMIT_PER_PAGE) || 1;
+    if (prevState.userSearchText !== this.state.userSearchText)
+      this.reloadUsers();
+    if (prevState.groupSearchText !== this.state.groupSearchText)
+      this.reloadGroups();
+  }
 
-        if (
-          pages !== this.state.userPages ||
-          this.state.userCurrPage !== prevState.userCurrPage
-        ) {
-          UserAPI.admGetList({
-            searches: this.state.userSearchText,
-            page: this.state.userCurrPage,
-            limit: LIMIT_PER_PAGE
-          }).then((result) => {
-            this.setState({
-              users: result.users,
-              userPages: pages,
-              userCurrPage: (this.state.userCurrPage > pages)
-                              ? pages : this.state.userCurrPage
-            });
-          });
-        }
-      })
-      .catch((error) => {
-        console.log(error);
-      })
-    ;
+  reloadUsers() {
+    return UserAPI.admGetList({
+      searches: this.state.userSearchText,
+      page: this.refs.userPaginator.position(),
+      limit: LIMIT_PER_PAGE
+    })
+    .then((result) => {
+      this.setState({
+        users: result.users,
+        userPages: this.calcPages(result.count)
+      });
+    })
+    .catch((error) => {
+      console.log(error);
+    });
+  }
 
-    UserAPI.groupCount({ searches: this.state.groupSearchText })
-      .then((result) => {
-        let pages = (result.count / LIMIT_PER_PAGE) +
-                      !!(result.count % LIMIT_PER_PAGE) || 1;
+  reloadGroups() {
+    return UserAPI.getGroups({
+      searches: this.state.groupSearchText,
+      page: this.refs.groupPaginator.position(),
+      limit: LIMIT_PER_PAGE
+    }).then((result) => {
+      this.setState({
+        groups: result.groups,
+        groupPages: this.calcPages(result.count)
+      });
+    });
+  }
 
-        if (
-          pages !== this.state.groupPages ||
-          this.state.groupCurrPage !== prevState.groupCurrPage
-        ) {
-          UserAPI.getGroups({
-            searches: this.state.groupSearchText,
-            page: this.state.groupCurrPage,
-            limit: LIMIT_PER_PAGE
-          }).then((result) => {
-            this.setState({
-              groups: result.groups,
-              groupPages: pages,
-              groupCurrPage: (this.state.groupCurrPage > pages)
-                                ? pages : this.state.groupCurrPage
-            });
-          });
-        }
-      })
-      .catch((error) => {
-        console.log(error);
-      })
-    ;
+  calcPages(count) {
+    return Math.ceil(count / LIMIT_PER_PAGE) || 1;
   }
 
   showUserCreateDialog() {
@@ -125,147 +112,25 @@ export default class SegmentUserGroup extends React.Component {
 
   userCreateSuccess() {
     this.refs.userCreateDialog.hide();
-    UserAPI.admGetList({
-      searches: this.state.userSearchText,
-      page: this.state.userCurrPage,
-      limit: LIMIT_PER_PAGE
-    })
-    .then((result) => {
-      this.setState({ users: result.users });
-    })
-    .catch((error) => {
-      console.log(error);
-    });
+    this.reloadUsers();
   }
 
   userModifySuccess() {
     this.refs.userModifyDialog.hide();
-    UserAPI.admGetList({
-      searches: this.state.userSearchText,
-      page: this.state.userCurrPage,
-      limit: LIMIT_PER_PAGE
-    })
-    .then((result) => {
-      this.setState({ users: result.users });
-    })
-    .catch((error) => {
-      console.log(error);
-    });
+    this.reloadUsers();
   }
 
   groupCreateSuccess() {
     this.refs.groupCreateDialog.hide();
-    UserAPI.getGroups({
-      searches: this.state.groupSearchText,
-      page: this.state.groupCurrPage,
-      limit: LIMIT_PER_PAGE
-    }).then((result) => {
-      this.setState({ groups: result.groups });
-    });
+    this.reloadGroups();
   }
 
   groupModifySuccess() {
     this.refs.groupModifyDialog.hide();
-    UserAPI.getGroups({
-      searches: this.state.groupSearchText,
-      page: this.state.groupCurrPage,
-      limit: LIMIT_PER_PAGE
-    }).then((result) => {
-      this.setState({ groups: result.groups });
-    });
+    this.reloadGroups();
   }
 
   render() {
-    let userPagination = [];
-    let userPaginationEllipses = [];
-    let groupPagination = [];
-    let groupPaginationEllipses = [];
-    let i = 1, j = 5;
-
-    for (; i <= this.state.userPages; i++) {
-      if (this.state.userPages >= 10) {
-        if (i === 5) {
-          for (; j <= this.state.userPages - 4; j++) {
-            userPaginationEllipses.push(
-              <a className="item" key={'user-page' + j} data-value={j}>{j}</a>
-            );
-          }
-
-          userPagination.push(
-            <Dropdown
-              key='user-page-ellipses'
-              classes='item'
-              buttonText='...'
-              action='select'
-              onChange={(value, text) => {
-                this.setState({ userCurrPage: value })
-              }}
-            >
-              {userPaginationEllipses}
-            </Dropdown>
-          );
-
-          i = j - 1;
-
-          continue;
-        }
-      }
-
-      userPagination.push(
-        <a
-          key={'user-page' + i}
-          className={classnames('item', { active: (this.state.userCurrPage === i) })}
-          onClick={(e) => {
-            this.setState({ userCurrPage: parseInt($(e.target).text()) });
-          }}
-        >
-          {i}
-        </a>
-      );
-    }
-
-    for (i = 1; i <= this.state.groupPages; i++) {
-      if (this.state.groupPages >= 10) {
-        if (i === 5) {
-          for (j = 5; j <= this.state.groupPages - 4; j++) {
-            groupPaginationEllipses.push(
-              <a className="item" key={'group-page' + j} data-value={j}>{j}</a>
-            );
-          }
-
-          groupPagination.push(
-            <Dropdown
-              key='group-page-ellipses'
-              classes='item'
-              buttonText='...'
-              action='select'
-              onChange={(value, text) => {
-                this.setState({ groupCurrPage: value })
-              }}
-            >
-              {groupPaginationEllipses}
-            </Dropdown>
-          );
-
-          i = j - 1;
-
-          continue;
-        }
-      }
-
-      groupPagination.push(
-        <a
-          key={'group-page' + i}
-          className={classnames('item', { active: (this.state.groupCurrPage === i) })}
-          onClick={(e) => {
-            this.setState({ groupCurrPage: parseInt($(e.target).text()) });
-          }}
-        >
-          {i}
-        </a>
-      );
-    }
-
     let userTable = this.state.users.map((user) => {
       return (
         <tr key={user.email}>
@@ -303,14 +168,7 @@ export default class SegmentUserGroup extends React.Component {
               onClick={() => {
                 UserAPI.admDeactivate(user.email, { delete: true })
                   .then((result) => {
-                    return UserAPI.admGetList({
-                      searches: this.state.userSearchText,
-                      page: this.state.userCurrPage,
-                      limit: LIMIT_PER_PAGE
-                    });
-                  })
-                  .then((result) => {
-                    this.setState({ users: result.users });
+                    return this.reloadUsers();
                   })
                   .catch((error) => {
                     console.log(error);
@@ -354,14 +212,7 @@ export default class SegmentUserGroup extends React.Component {
               onClick={() => {
                 UserAPI.removeGroup(group.name)
                   .then((result) => {
-                    return UserAPI.getGroups({
-                      searches: this.state.groupSearchText,
-                      page: this.state.groupCurrPage,
-                      limit: LIMIT_PER_PAGE
-                    });
-                  })
-                  .then((result) => {
-                    this.setState({ groups: result.groups });
+                    return this.reloadGroups();
                   })
                 ;
               }}
@@ -387,7 +238,12 @@ export default class SegmentUserGroup extends React.Component {
                 Add User
               </div>
             </div>
-            {userPagination}
+            <Pagination
+              ref="userPaginator"
+              classes="transparent"
+              pages={this.state.userPages}
+              onSelectPage={(page) => { this.reloadUsers() }}
+            />
             <div className="right menu">
               <div className="item">
                 <div className="ui icon input">
@@ -395,23 +251,8 @@ export default class SegmentUserGroup extends React.Component {
                     type="text"
                     placeholder="Search User..."
                     onChange={(text) => {
-                      if (!text) {
-                        this.setState({ userCurrPage: 1, userSearchText: '' });
-                      }
-                      else {
-                        UserAPI.admGetList({
-                          searches: text,
-                          page: 1,
-                          limit: LIMIT_PER_PAGE
-                        })
-                        .then((result) => {
-                          this.setState({
-                            users: result.users,
-                            userSearchText: text,
-                            userCurrPage: 1
-                          });
-                        });
-                      }
+                      this.refs.userPaginator.setPosition(1);
+                      this.setState({ userSearchText: text || '' });
                     }}
                   />
                   <i className="search link icon"></i>
@@ -446,7 +287,12 @@ export default class SegmentUserGroup extends React.Component {
                 New Group
               </div>
             </div>
-            {groupPagination}
+            <Pagination
+              ref="groupPaginator"
+              classes="transparent"
+              pages={this.state.groupPages}
+              onSelectPage={(page) => { this.reloadGroups() }}
+            />
             <div className="right menu">
               <div className="item">
                 <div className="ui icon input">
@@ -454,22 +300,8 @@ export default class SegmentUserGroup extends React.Component {
                     type="text"
                     placeholder="Search Group..."
                     onChange={(text) => {
-                      if (!text) {
-                        this.setState({ groupCurrPage: 1, groupSearchText: '' });
-                      }
-                      else {
-                        UserAPI.getGroups({
-                          searches: text,
-                          page: this.state.groupCurrPage,
-                          limit: LIMIT_PER_PAGE
-                        }).then((result) => {
-                          this.setState({
-                            groups: result.groups,
-                            groupSearchText: text,
-                            groupCurrPage: 1
-                          });
-                        });
-                      }
+                      this.refs.groupPaginator.setPosition(1);
+                      this.setState({ groupSearchText: text || '' });
                     }}
                   />
                   <i className="search link icon"></i>

@@ -29,9 +29,9 @@ export default {
           url += '&limit=' + options.limit;
 
       apiutil.get(url, {
-        success: function(xhr, users) {
-          options.onSuccess && options.onSuccess(xhr, users);
-          resolve({ api: 'user.admGetList', users: users });
+        success: function(xhr, result) {
+          options.onSuccess && options.onSuccess(xhr, result);
+          resolve({ api: 'user.admGetList', users: result.users, count: result.count });
         },
         error: function(xhr) {
           handleError(xhr, 'user.admGetList', options.onError, reject);
@@ -205,9 +205,9 @@ export default {
 
     return new Promise(function(resolve, reject) {
       apiutil.get(url, {
-        success: function(xhr, groups) {
-          options.onSuccess && options.onSuccess(xhr, groups);
-          resolve({ api: 'user.getGroups', groups: groups });
+        success: function(xhr, result) {
+          options.onSuccess && options.onSuccess(xhr, result.groups);
+          resolve({ api: 'user.getGroups', groups: result.groups, count: result.count });
         },
         error: function(xhr) {
           handleError(xhr, 'user.getGroups', options.onError, reject);
