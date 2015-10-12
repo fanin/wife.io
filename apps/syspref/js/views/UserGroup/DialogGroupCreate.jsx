@@ -21,7 +21,7 @@ export default class DialogGroupCreate extends React.Component {
     };
     this.validateRules = {
       name: {
-        identifier: 'groupName',
+        identifier: 'name',
         rules: [
           {
             type: 'empty',
@@ -95,7 +95,11 @@ export default class DialogGroupCreate extends React.Component {
           >
             <div className="field">
               <label>Group name</label>
-              <Input type="text" name="groupName" />
+              <Input type="text" name="name" />
+            </div>
+            <div className="field">
+              <label>Description</label>
+              <Input type="text" name="description" />
             </div>
             <div className="ui error message" />
           </Form>

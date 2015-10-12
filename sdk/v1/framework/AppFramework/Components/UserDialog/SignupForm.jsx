@@ -60,7 +60,8 @@ export default class SignupForm extends React.Component {
     UserAPI.getGroups()
       .then((result) => {
         this.setState({ groups: result.groups, defaultGroup: 'User' });
-      });
+      })
+    ;
   }
 
   submit() {
@@ -77,7 +78,7 @@ export default class SignupForm extends React.Component {
 
   render() {
     let groupItems = this.state.groups.map(
-      (group) => <div key={group} className="item" data-value={group}>{group}</div>
+      (group) => <div key={group.name} className="item" data-value={group.name}>{group.name}</div>
     );
 
     return (
@@ -99,7 +100,8 @@ export default class SignupForm extends React.Component {
               .catch((error) => {
                 this.refs.form.addError([ error.message ]);
                 this.props.onFailure(error);
-              });
+              })
+            ;
           }
         }}
       >
@@ -153,6 +155,10 @@ export default class SignupForm extends React.Component {
               <div className="item" data-value='1'>Male</div>
             </Dropdown>
           </div>
+        </div>
+        <div className="field">
+          <label>Note</label>
+          <Input type="text" name="note" />
         </div>
         <div className="ui error message" />
       </Form>

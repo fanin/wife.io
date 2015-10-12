@@ -10,6 +10,8 @@ import DialogUserModify from './DialogUserModify.jsx';
 import DialogGroupCreate from './DialogGroupCreate.jsx';
 import DialogGroupModify from './DialogGroupModify.jsx';
 
+const LIMIT_PER_PAGE = 1;
+
 export default class SegmentUserGroup extends React.Component {
 
   constructor(props) {
@@ -17,20 +19,86 @@ export default class SegmentUserGroup extends React.Component {
     this.state = {
       users: [],
       groups: [],
-      groupToModify: '',
-      groupToRemove: ''
+      userPages: 0,
+      groupPages: 0,
+      userCurrPage: 1,
+      groupCurrPage: 1,
+      userSearchText: '',
+      groupSearchText: ''
     };
   }
 
   componentDidMount() {
-    Promise.all([ UserAPI.admGetList(), UserAPI.getGroups() ])
-      .then((values) => {
-        this.setState({ users: values[0].users, groups: values[1].groups })
+    Promise.all([
+      UserAPI.admGetList({ page: this.state.userCurrPage, limit: LIMIT_PER_PAGE }),
+      UserAPI.getGroups({ page: this.state.groupCurrPage, limit: LIMIT_PER_PAGE })
+    ]).then((values) => {
+      this.setState({ users: values[0].users, groups: values[1].groups })
+    }).catch((error) => {
+      if (error.code !== 403)
+        console.log(error);
+    });
+
+    $('.secondary.menu .item')
+      .tab('change tab', 'users')
+    ;
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    UserAPI.userCount({ searches: this.state.userSearchText })
+      .then((result) => {
+        let pages = (result.count / LIMIT_PER_PAGE) +
+                      !!(result.count % LIMIT_PER_PAGE) || 1;
+
+        if (
+          pages !== this.state.userPages ||
+          this.state.userCurrPage !== prevState.userCurrPage
+        ) {
+          UserAPI.admGetList({
+            searches: this.state.userSearchText,
+            page: this.state.userCurrPage,
+            limit: LIMIT_PER_PAGE
+          }).then((result) => {
+            this.setState({
+              users: result.users,
+              userPages: pages,
+              userCurrPage: (this.state.userCurrPage > pages)
+                              ? pages : this.state.userCurrPage
+            });
+          });
+        }
+      })
+      .catch((error) => {
+        console.log(error);
       })
     ;
 
-    $('.secondary.menu .item')
-      .tab('change tab', 'users');
+    UserAPI.groupCount({ searches: this.state.groupSearchText })
+      .then((result) => {
+        let pages = (result.count / LIMIT_PER_PAGE) +
+                      !!(result.count % LIMIT_PER_PAGE) || 1;
+
+        if (
+          pages !== this.state.groupPages ||
+          this.state.groupCurrPage !== prevState.groupCurrPage
+        ) {
+          UserAPI.getGroups({
+            searches: this.state.groupSearchText,
+            page: this.state.groupCurrPage,
+            limit: LIMIT_PER_PAGE
+          }).then((result) => {
+            this.setState({
+              groups: result.groups,
+              groupPages: pages,
+              groupCurrPage: (this.state.groupCurrPage > pages)
+                                ? pages : this.state.groupCurrPage
+            });
+          });
+        }
+      })
+      .catch((error) => {
+        console.log(error);
+      })
     ;
   }
 
@@ -46,8 +114,8 @@ export default class SegmentUserGroup extends React.Component {
     this.refs.groupCreateDialog.show();
   }
 
-  showGroupModifyDialog() {
-    this.refs.groupModifyDialog.show();
+  showGroupModifyDialog(group) {
+    this.refs.groupModifyDialog.show(group);
   }
 
   toggleUserActivation(target) {
@@ -57,47 +125,147 @@ export default class SegmentUserGroup extends React.Component {
 
   userCreateSuccess() {
     this.refs.userCreateDialog.hide();
-    UserAPI.admGetList()
-      .then((result) => {
-        this.setState({ users: result.users });
-      })
-      .catch((error) => {
-        console.log(error);
-      })
-    ;
+    UserAPI.admGetList({
+      searches: this.state.userSearchText,
+      page: this.state.userCurrPage,
+      limit: LIMIT_PER_PAGE
+    })
+    .then((result) => {
+      this.setState({ users: result.users });
+    })
+    .catch((error) => {
+      console.log(error);
+    });
   }
 
   userModifySuccess() {
     this.refs.userModifyDialog.hide();
-    UserAPI.admGetList()
-      .then((result) => {
-        this.setState({ users: result.users });
-      })
-      .catch((error) => {
-        console.log(error);
-      })
-    ;
+    UserAPI.admGetList({
+      searches: this.state.userSearchText,
+      page: this.state.userCurrPage,
+      limit: LIMIT_PER_PAGE
+    })
+    .then((result) => {
+      this.setState({ users: result.users });
+    })
+    .catch((error) => {
+      console.log(error);
+    });
   }
 
   groupCreateSuccess() {
     this.refs.groupCreateDialog.hide();
-    UserAPI.getGroups()
-      .then((result) => {
-        this.setState({ groups: result.groups });
-      })
-    ;
+    UserAPI.getGroups({
+      searches: this.state.groupSearchText,
+      page: this.state.groupCurrPage,
+      limit: LIMIT_PER_PAGE
+    }).then((result) => {
+      this.setState({ groups: result.groups });
+    });
   }
 
   groupModifySuccess() {
     this.refs.groupModifyDialog.hide();
-    UserAPI.getGroups()
-      .then((result) => {
-        this.setState({ groups: result.groups });
-      })
-    ;
+    UserAPI.getGroups({
+      searches: this.state.groupSearchText,
+      page: this.state.groupCurrPage,
+      limit: LIMIT_PER_PAGE
+    }).then((result) => {
+      this.setState({ groups: result.groups });
+    });
   }
 
   render() {
+    let userPagination = [];
+    let userPaginationEllipses = [];
+    let groupPagination = [];
+    let groupPaginationEllipses = [];
+    let i = 1, j = 5;
+
+    for (; i <= this.state.userPages; i++) {
+      if (this.state.userPages >= 10) {
+        if (i === 5) {
+          for (; j <= this.state.userPages - 4; j++) {
+            userPaginationEllipses.push(
+              <a className="item" key={'user-page' + j} data-value={j}>{j}</a>
+            );
+          }
+
+          userPagination.push(
+            <Dropdown
+              key='user-page-ellipses'
+              classes='item'
+              buttonText='...'
+              action='select'
+              onChange={(value, text) => {
+                this.setState({ userCurrPage: value })
+              }}
+            >
+              {userPaginationEllipses}
+            </Dropdown>
+          );
+
+          i = j - 1;
+
+          continue;
+        }
+      }
+
+      userPagination.push(
+        <a
+          key={'user-page' + i}
+          className={classnames('item', { active: (this.state.userCurrPage === i) })}
+          onClick={(e) => {
+            this.setState({ userCurrPage: parseInt($(e.target).text()) });
+          }}
+        >
+          {i}
+        </a>
+      );
+    }
+
+    for (i = 1; i <= this.state.groupPages; i++) {
+      if (this.state.groupPages >= 10) {
+        if (i === 5) {
+          for (j = 5; j <= this.state.groupPages - 4; j++) {
+            groupPaginationEllipses.push(
+              <a className="item" key={'group-page' + j} data-value={j}>{j}</a>
+            );
+          }
+
+          groupPagination.push(
+            <Dropdown
+              key='group-page-ellipses'
+              classes='item'
+              buttonText='...'
+              action='select'
+              onChange={(value, text) => {
+                this.setState({ groupCurrPage: value })
+              }}
+            >
+              {groupPaginationEllipses}
+            </Dropdown>
+          );
+
+          i = j - 1;
+
+          continue;
+        }
+      }
+
+      groupPagination.push(
+        <a
+          key={'group-page' + i}
+          className={classnames('item', { active: (this.state.groupCurrPage === i) })}
+          onClick={(e) => {
+            this.setState({ groupCurrPage: parseInt($(e.target).text()) });
+          }}
+        >
+          {i}
+        </a>
+      );
+    }
+
     let userTable = this.state.users.map((user) => {
       return (
         <tr key={user.email}>
@@ -112,6 +280,12 @@ export default class SegmentUserGroup extends React.Component {
           <td>{user.firstname + ' ' + user.lastname}</td>
           <td>{user.email}</td>
           <td style={{ textAlign: 'center' }}>{user.group}</td>
+          <td style={{ textAlign: 'center' }}>
+            {user.register_date ? (new Date(user.register_date)).toLocaleString() : ''}
+          </td>
+          <td style={{ textAlign: 'center' }}>
+            {user.last_login_date ? (new Date(user.last_login_date)).toLocaleString() : ''}
+          </td>
           <td style={{ textAlign: 'center' }}>
             <i
               className="write link large icon"
@@ -128,7 +302,13 @@ export default class SegmentUserGroup extends React.Component {
               }
               onClick={() => {
                 UserAPI.admDeactivate(user.email, { delete: true })
-                  .then(UserAPI.admGetList)
+                  .then((result) => {
+                    return UserAPI.admGetList({
+                      searches: this.state.userSearchText,
+                      page: this.state.userCurrPage,
+                      limit: LIMIT_PER_PAGE
+                    });
+                  })
                   .then((result) => {
                     this.setState({ users: result.users });
                   })
@@ -145,21 +325,21 @@ export default class SegmentUserGroup extends React.Component {
 
     let groupTable = this.state.groups.map((group) => {
       return (
-        <tr key={group}>
-          <td style={{ textAlign: 'center' }}>{ group }</td>
+        <tr key={group.name}>
+          <td
+            style={{
+              textAlign: 'center',
+              fontWeight: (group.name === 'User' || group.name === 'Admin') ? 'bold' : 'normal'
+            }}
+          >
+            {group.name}
+          </td>
+          <td>{group.description}</td>
           <td style={{ textAlign: 'center' }}>
             <i
-              className={
-                classnames(
-                  "write large red link icon",
-                  {
-                    hidden: (group === 'User' || group === 'Admin')
-                  }
-                )
-              }
+              className="write large link icon"
               onClick={() => {
-                this.setState({ groupToModify: group });
-                this.showGroupModifyDialog();
+                this.showGroupModifyDialog(group);
               }}
             />
             <i
@@ -167,15 +347,21 @@ export default class SegmentUserGroup extends React.Component {
                 classnames(
                   "trash large red link icon",
                   {
-                    hidden: (group === 'User' || group === 'Admin')
+                    hidden: (group.name === 'User' || group.name === 'Admin')
                   }
                 )
               }
               onClick={() => {
-                UserAPI.removeGroup(group)
-                  .then(UserAPI.getGroups)
+                UserAPI.removeGroup(group.name)
                   .then((result) => {
-                    this.setState({ groups: result.groups, groupToRemove: group });
+                    return UserAPI.getGroups({
+                      searches: this.state.groupSearchText,
+                      page: this.state.groupCurrPage,
+                      limit: LIMIT_PER_PAGE
+                    });
+                  })
+                  .then((result) => {
+                    this.setState({ groups: result.groups });
                   })
                 ;
               }}
@@ -201,10 +387,7 @@ export default class SegmentUserGroup extends React.Component {
                 Add User
               </div>
             </div>
-            <a className="item active">1</a>
-            <a className="item">2</a>
-            <a className="item">3</a>
-            <a className="item">4</a>
+            {userPagination}
             <div className="right menu">
               <div className="item">
                 <div className="ui icon input">
@@ -213,18 +396,21 @@ export default class SegmentUserGroup extends React.Component {
                     placeholder="Search User..."
                     onChange={(text) => {
                       if (!text) {
-                        UserAPI.admGetList()
-                          .then((result) => {
-                            this.setState({ users: result.users });
-                          })
-                        ;
+                        this.setState({ userCurrPage: 1, userSearchText: '' });
                       }
                       else {
-                        UserAPI.getProfile({ searches: text })
-                          .then((result) => {
-                            this.setState({ users: result.users });
-                          })
-                        ;
+                        UserAPI.admGetList({
+                          searches: text,
+                          page: 1,
+                          limit: LIMIT_PER_PAGE
+                        })
+                        .then((result) => {
+                          this.setState({
+                            users: result.users,
+                            userSearchText: text,
+                            userCurrPage: 1
+                          });
+                        });
                       }
                     }}
                   />
@@ -240,6 +426,8 @@ export default class SegmentUserGroup extends React.Component {
                 <th>Name</th>
                 <th>E-mail address</th>
                 <th style={{ textAlign: 'center' }}>Group</th>
+                <th style={{ textAlign: 'center' }}>Register date</th>
+                <th style={{ textAlign: 'center' }}>Last login time</th>
                 <th style={{ textAlign: 'center' }}>Edit</th>
               </tr>
             </thead>
@@ -258,10 +446,7 @@ export default class SegmentUserGroup extends React.Component {
                 New Group
               </div>
             </div>
-            <a className="item active">1</a>
-            <a className="item">2</a>
-            <a className="item">3</a>
-            <a className="item">4</a>
+            {groupPagination}
             <div className="right menu">
               <div className="item">
                 <div className="ui icon input">
@@ -269,11 +454,22 @@ export default class SegmentUserGroup extends React.Component {
                     type="text"
                     placeholder="Search Group..."
                     onChange={(text) => {
-                      UserAPI.getGroups({ searches: text })
-                        .then((result) => {
-                          this.setState({ groups: result.groups });
-                        })
-                      ;
+                      if (!text) {
+                        this.setState({ groupCurrPage: 1, groupSearchText: '' });
+                      }
+                      else {
+                        UserAPI.getGroups({
+                          searches: text,
+                          page: this.state.groupCurrPage,
+                          limit: LIMIT_PER_PAGE
+                        }).then((result) => {
+                          this.setState({
+                            groups: result.groups,
+                            groupSearchText: text,
+                            groupCurrPage: 1
+                          });
+                        });
+                      }
                     }}
                   />
                   <i className="search link icon"></i>
@@ -281,12 +477,14 @@ export default class SegmentUserGroup extends React.Component {
               </div>
             </div>
           </div>
-          <table className="ui compact celled collapsing table">
+          <table className="ui compact celled table">
+            <col width="20%" />
             <col width="70%" />
-            <col width="30%" />
+            <col width="10%" />
             <thead>
               <tr>
                 <th style={{ textAlign: 'center' }}>Name</th>
+                <th style={{ textAlign: 'center' }}>Description</th>
                 <th style={{ textAlign: 'center' }}>Edit</th>
               </tr>
             </thead>
@@ -310,7 +508,6 @@ export default class SegmentUserGroup extends React.Component {
           />
           <DialogGroupModify
             ref="groupModifyDialog"
-            defaultName={this.state.groupToModify}
             onSuccess={this.groupModifySuccess.bind(this)}
           />
         </div>

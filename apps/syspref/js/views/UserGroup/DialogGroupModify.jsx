@@ -8,7 +8,6 @@ import UserAPI from 'lib/api/UserAPI';
 export default class DialogGroupModify extends React.Component {
 
   static defaultProps = {
-    defaultName: '',
     onValidate: (form) => {},
     onSuccess: () => {},
     onFailure: (error) => {},
@@ -18,24 +17,17 @@ export default class DialogGroupModify extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      name: '',
+      description: '',
       waiting: false
     };
     this.validateRules = {
       rule1: {
-        identifier: 'groupName',
+        identifier: 'newname',
         rules: [
           {
             type: 'empty',
             prompt: 'Please enter a group name'
-          }
-        ]
-      },
-      rule2: {
-        identifier: 'groupNameNew',
-        rules: [
-          {
-            type: 'empty',
-            prompt: 'Please enter a new group name'
           }
         ]
       }
@@ -50,7 +42,8 @@ export default class DialogGroupModify extends React.Component {
     //this.hide();
   }
 
-  show() {
+  show(group) {
+    this.setState({ name: group.name, description: group.description });
     this.refs.groupModifyDialog.show();
   }
 
@@ -121,18 +114,29 @@ export default class DialogGroupModify extends React.Component {
               }
             }}
           >
+            <Input
+              type="text"
+              name="oldname"
+              classes="hidden"
+              defaultValue={this.state.name}
+              readonly={true}
+            />
             <div className="field">
-              <label>Current group name</label>
+              <label>Group name</label>
               <Input
                 type="text"
-                name="groupName"
-                defaultValue={this.props.defaultName}
-                readonly={true}
+                name="newname"
+                defaultValue={this.state.name}
+                readonly={(this.state.name === 'Admin' || this.state.name === 'User')}
               />
             </div>
             <div className="field">
-              <label>New group name</label>
-              <Input type="text" name="groupNameNew" />
+              <label>Description</label>
+              <Input
+                type="text"
+                name="description"
+                defaultValue={this.state.description}
+              />
             </div>
             <div className="ui error message" />
           </Form>

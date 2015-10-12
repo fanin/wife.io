@@ -19,7 +19,7 @@ export default class Dropdown extends React.Component {
     buttonImageSource: '',
     selectDefaultValue: '',
     selectHintText: '',
-    itemSelectBar: true,
+    action: 'activate',
     transition: 'auto',
     onClick: (e) => {},
     onTouchStart: (e) => {},
@@ -34,9 +34,10 @@ export default class Dropdown extends React.Component {
   }
 
   componentDidMount() {
-    var _settings = this.props.itemSelectBar
+    var _settings = (this.props.action !== 'hide')
       ? {
           transition: this.props.transition,
+          action: this.props.action,
           onChange: (value, text) => {
             this.props.onChange(value, text);
           }
@@ -60,9 +61,10 @@ export default class Dropdown extends React.Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    var _settings = this.props.itemSelectBar
+    var _settings = (this.props.action !== 'hide')
       ? {
           transition: this.props.transition,
+          action: this.props.action,
           onChange: (value, text) => {
             this.props.onChange(value, text);
           }

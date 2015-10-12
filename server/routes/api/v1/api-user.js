@@ -15,6 +15,8 @@ var config   = require('config'),
 
 var router = express.Router();
 
+const PAGINATE_LIMIT = 70;
+
 passport.use(User.createStrategy());
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
@@ -36,7 +38,7 @@ User.find({ email: config.settings.admin.email }, function(err, admins) {
         gender: config.settings.admin.gender,
         active: true,
         register_date: new Date,
-        description: 'System default admin account'
+        note: 'System default admin account'
       }),
       config.settings.admin.password,
       function(error, admin) {
@@ -60,7 +62,7 @@ User.find({ email: config.settings.admin.email }, function(err, admins) {
  *   lastname: 'White',
  *   group: 'User,Cooker',
  *   gender: true, // true: male, false: female
- *   description: 'This is Walter White.'
+ *   note: 'This is Walter White.'
  * }
  * ```
  * @apiReturn 200 (User account created)
@@ -75,7 +77,7 @@ router.post('/signup', function(req, res, next) {
       gender: req.body.gender,
       active: true,
       register_date: new Date,
-      description: req.body.description
+      note: req.body.note
     }),
     req.body.password,
     function(error, user) {
@@ -176,7 +178,7 @@ router.put('/password', passport.authenticate('local'), function(req, res) {
 });
 
 /**
- * Get specific user profile or search users. An user profile object can look like this:
+ * Get profile object for specific user. An user profile object can look like this:
  * ```
  * {
  *     email: 'walter@wife.io',
@@ -184,18 +186,16 @@ router.put('/password', passport.authenticate('local'), function(req, res) {
  *     lastname: 'White',
  *     group: 'User,Cooker',
  *     gender: true,
- *     description: 'This is Walter White.'
+ *     note: 'This is Walter White.'
  * }
  * ```
  * Note that the user's password is not visible in the object.
  *
  * For given no option, this API returns profile object of current logged in user.
  * For given `email` option only, this API returns profile object of user who owns the given email.
- * For given `searches` option, this API returns an array of users who matches the key words.
  *
  * @apiMethod GetProfile {GET} /user/profile
  * @apiOption {String} email Email for getting user's profile. If not specified, currently logged in user's profile is returned.
- * @apiOption {String} searches Key words for searching users.
  *
  * @apiReturn 200 {Object} profile User profile object.
  * @apiReturn 200 {Array} users Users that match the search key words.
@@ -204,34 +204,14 @@ router.put('/password', passport.authenticate('local'), function(req, res) {
  * @apiReturn 500 (Failed to get user profile)
  */
 router.get('/profile', function(req, res) {
-  var conds;
-
-  if (req.query.searches) {
-    var pattern = req.query.searches.replace(/\ ,/g, '|');
-    var regex = new RegExp(pattern, 'ig');
-    conds = { $or:[
-      { email: regex },
-      { firstname: regex },
-      { lastname: regex },
-      { group: regex }
-    ] };
-  }
-  else {
-    conds = { email: req.query.email || req.user.email };
-  }
-
-  User.find(conds, function(err, users) {
+  User.find({ email: req.query.email || req.user.email }, function(err, users) {
     if (err)
       res.status(500).send('Failed to get user profile, error: ' + err);
     else {
-      if (req.query.searches)
-        res.json(users);
-      else {
-        if (users.length > 0)
-          res.json(users[0]);
-        else
-          res.status(404).send('User not found');
-      }
+      if (users.length > 0)
+        res.json(users[0]);
+      else
+        res.status(404).send('User not found');
     }
   });
 });
@@ -249,7 +229,7 @@ router.get('/profile', function(req, res) {
  *   lastname: 'White',
  *   group: 'User,Teacher',
  *   gender: true,
- *   description: 'This is Walter White.'
+ *   note: 'This is Walter White.'
  * }
  * ```
  * Note that `email` and `password` fields are used to authenticate the user before updating profile.
@@ -268,7 +248,7 @@ router.put('/profile', passport.authenticate('local'), function(req, res) {
       lastname: req.body.lastname,
       group: req.body.group,
       gender: req.body.gender,
-      description: req.body.description
+      note: req.body.note
     }
   }, function(err) {
     if (err)
@@ -307,6 +287,37 @@ router.delete('/profile', passport.authenticate('local'), function(req, res) {
   });
 });
 
+/**
+ * Get number of users.
+ *
+ * @apiMethod AdmGetCount {GET} /user/count
+ * @apiOption {String} searches Key words for searching users.
+ *
+ * @apiReturn 200 {Number} count Number of users.
+ * @apiReturn 500 (Failed to get user count)
+ */
+router.get('/count', function(req, res) {
+  var conds = {};
+
+  if (req.query.searches) {
+    var pattern = req.query.searches.replace(/\ ,/g, '|');
+    var regex = new RegExp(pattern, 'ig');
+    conds = { $or: [
+      { email: regex },
+      { firstname: regex },
+      { lastname: regex },
+      { group: regex }
+    ] };
+  }
+
+  User.count(conds, function(err, count) {
+    if (err)
+      res.status(500).send('Failed to get user count, error: ' + err);
+    else
+      res.json({ count: count });
+  });
+});
+
 
 //
 // Security barrier for administrative privilege APIs
@@ -321,16 +332,41 @@ router.use(function(req, res, next) {
 /**
  * **`[Administrative Privilege Required]`**
  *
- * Get all users.
+ * Get user list with pagination support.
  *
- * @apiMethod AdmGetList {GET} /user
+ * @apiMethod AdmGetList {GET} /user/adm/list
+ * @apiOption {String} searches Key words for searching users.
+ * @apiOption {Number} page For pagination support. Get users that belong to given page. For `page=0` or `undefined`, pagination is disabled and all users are returned.
+ * @apiOption {Number} limit For pagination support. Set number of users in a page.
  *
  * @apiReturn 200 {Array} users Array of user profiles.
  * @apiReturn 403 (Administrative privilege required)
  * @apiReturn 500 (Failed to get user profiles)
  */
 router.get('/adm/list', function(req, res) {
-  User.find(function(err, users) {
+  var conds = {};
+  var paginate = {};
+
+  if (req.query.searches) {
+    var pattern = req.query.searches.replace(/\ ,/g, '|');
+    var regex = new RegExp(pattern, 'ig');
+    conds = { $or:[
+      { email: regex },
+      { firstname: regex },
+      { lastname: regex },
+      { group: regex }
+    ] };
+  }
+
+  if (req.query.page > 0) {
+    req.query.limit = req.query.limit || PAGINATE_LIMIT;
+    paginate = {
+      skip: (req.query.page - 1) * req.query.limit,
+      limit: req.query.limit
+    };
+  }
+
+  User.find(conds, null, paginate, function(err, users) {
     if (err)
       res.status(500).send('Failed to get user profiles, error: ' + err);
     else
@@ -353,7 +389,7 @@ router.get('/adm/list', function(req, res) {
  *   group: 'Teacher',
  *   gender: true,
  *   active: true,
- *   description: 'Update user description'
+ *   note: 'Update user note'
  * }
  * ```
  * Note that `password` field is not required for administrators.
@@ -381,8 +417,8 @@ router.put('/adm/profile', function(req, res) {
         fields = assign(fields, { gender: req.body.gender });
       if (req.body.active !== undefined)
         fields = assign(fields, { active: req.body.active });
-      if (req.body.description)
-        fields = assign(fields, { description: req.body.description });
+      if (req.body.note)
+        fields = assign(fields, { note: req.body.note });
 
       User.update({ email: req.body.email }, { $set: fields }, function(err) {
         if (err)

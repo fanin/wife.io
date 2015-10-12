@@ -1,5 +1,6 @@
 import classnames from 'classnames';
-import UserGroup from './UserGroup/SegmentUserGroup.jsx'
+import SegmentUserGroup from './UserGroup/SegmentUserGroup.jsx';
+import SegmentAsset from './Asset/SegmentAsset.jsx';
 
 export default class AppMainView extends React.Component {
 
@@ -16,7 +17,7 @@ export default class AppMainView extends React.Component {
     if (this.state.activeTab === 'General')
       ;
     else if (this.state.activeTab === 'Users & Groups')
-      contentView = <UserGroup />;
+      contentView = <SegmentUserGroup />;
     else if (this.state.activeTab === 'Security & Policy')
       ;
     else if (this.state.activeTab === 'Assets')

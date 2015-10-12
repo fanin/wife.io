@@ -77,8 +77,7 @@ export default class Application {
   configure(conf) {
     assign(this.configs, conf);
     document.body.addEventListener('user-dialog', (e) => {
-      if (!this.dialog.isShow())
-        this.dialog.show(e.detail.formType, e.detail.onApproved, e.detail.onDenied);
+      this.dialog.show(e.detail.formType, e.detail.onApproved, e.detail.onDenied);
     }, false);
 
     document.body.addEventListener('user-change', (e) => {

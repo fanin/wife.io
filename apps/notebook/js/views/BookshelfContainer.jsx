@@ -131,7 +131,6 @@ export default class BookshelfContainer extends React.Component {
           <Dropdown
             classes="compact link item"
             buttonIconClass="disk outline"
-            itemSelectBar={true}
             transition="drop"
             onChange={(value, text) => {
               this.onDiskMenuSelect(value, text);
@@ -155,7 +154,7 @@ export default class BookshelfContainer extends React.Component {
           <Dropdown
             classes="compact link item"
             buttonIconClass="ellipsis vertical"
-            itemSelectBar={false}
+            action="hide"
             transition="drop"
             onChange={(value, text) => {
               switch (value) {
