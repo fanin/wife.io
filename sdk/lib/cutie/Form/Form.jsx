@@ -3,6 +3,7 @@
 export default class Form extends React.Component {
 
   static defaultProps = {
+    fields: {},
     preventDefaultSubmit: false
   };
 

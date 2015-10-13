@@ -7,9 +7,9 @@ import Dropdown from 'lib/cutie/Dropdown';
 import Pagination from 'lib/cutie/Pagination';
 import UserAPI from 'lib/api/UserAPI';
 import DialogUserCreate from './DialogUserCreate.jsx';
-import DialogUserModify from './DialogUserModify.jsx';
+import DialogUserUpdate from './DialogUserUpdate.jsx';
 import DialogGroupCreate from './DialogGroupCreate.jsx';
-import DialogGroupModify from './DialogGroupModify.jsx';
+import DialogGroupUpdate from './DialogGroupUpdate.jsx';
 
 const LIMIT_PER_PAGE = 70;
 
@@ -93,16 +93,16 @@ export default class SegmentUserGroup extends React.Component {
     this.refs.userCreateDialog.show();
   }
 
-  showUserModifyDialog(email) {
-    this.refs.userModifyDialog.show(email);
+  showUserUpdateDialog(email) {
+    this.refs.userUpdateDialog.show(email);
   }
 
   showGroupCreateDialog() {
     this.refs.groupCreateDialog.show();
   }
 
-  showGroupModifyDialog(group) {
-    this.refs.groupModifyDialog.show(group);
+  showGroupUpdateDialog(group) {
+    this.refs.groupUpdateDialog.show(group);
   }
 
   toggleUserActivation(target) {
@@ -115,8 +115,8 @@ export default class SegmentUserGroup extends React.Component {
     this.reloadUsers();
   }
 
-  userModifySuccess() {
-    this.refs.userModifyDialog.hide();
+  userUpdateSuccess() {
+    this.refs.userUpdateDialog.hide();
     this.reloadUsers();
   }
 
@@ -125,8 +125,8 @@ export default class SegmentUserGroup extends React.Component {
     this.reloadGroups();
   }
 
-  groupModifySuccess() {
-    this.refs.groupModifyDialog.hide();
+  groupUpdateSuccess() {
+    this.refs.groupUpdateDialog.hide();
     this.reloadGroups();
   }
 
@@ -154,7 +154,7 @@ export default class SegmentUserGroup extends React.Component {
           <td style={{ textAlign: 'center' }}>
             <i
               className="write link large icon"
-              onClick={() => { this.showUserModifyDialog(user.email) }}
+              onClick={() => { this.showUserUpdateDialog(user.email) }}
             />
             <i
               className={
@@ -197,7 +197,7 @@ export default class SegmentUserGroup extends React.Component {
             <i
               className="write large link icon"
               onClick={() => {
-                this.showGroupModifyDialog(group);
+                this.showGroupUpdateDialog(group);
               }}
             />
             <i
@@ -235,7 +235,7 @@ export default class SegmentUserGroup extends React.Component {
                 className="ui green button"
                 onClick={this.showUserCreateDialog.bind(this)}
               >
-                Add User
+                New User
               </div>
             </div>
             <Pagination
@@ -316,7 +316,7 @@ export default class SegmentUserGroup extends React.Component {
             <thead>
               <tr>
                 <th style={{ textAlign: 'center' }}>Name</th>
-                <th style={{ textAlign: 'center' }}>Description</th>
+                <th>Description</th>
                 <th style={{ textAlign: 'center' }}>Edit</th>
               </tr>
             </thead>
@@ -330,17 +330,17 @@ export default class SegmentUserGroup extends React.Component {
             ref="userCreateDialog"
             onSuccess={this.userCreateSuccess.bind(this)}
           />
-          <DialogUserModify
-            ref="userModifyDialog"
-            onSuccess={this.userModifySuccess.bind(this)}
+          <DialogUserUpdate
+            ref="userUpdateDialog"
+            onSuccess={this.userUpdateSuccess.bind(this)}
           />
           <DialogGroupCreate
             ref="groupCreateDialog"
             onSuccess={this.groupCreateSuccess.bind(this)}
           />
-          <DialogGroupModify
-            ref="groupModifyDialog"
-            onSuccess={this.groupModifySuccess.bind(this)}
+          <DialogGroupUpdate
+            ref="groupUpdateDialog"
+            onSuccess={this.groupUpdateSuccess.bind(this)}
           />
         </div>
       </div>

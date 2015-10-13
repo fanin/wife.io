@@ -5,7 +5,7 @@ import Form from 'lib/cutie/Form';
 import Input from 'lib/cutie/Input';
 import UserAPI from 'lib/api/UserAPI';
 
-export default class DialogGroupModify extends React.Component {
+export default class DialogGroupUpdate extends React.Component {
 
   static defaultProps = {
     onValidate: (form) => {},
@@ -44,11 +44,11 @@ export default class DialogGroupModify extends React.Component {
 
   show(group) {
     this.setState({ name: group.name, description: group.description });
-    this.refs.groupModifyDialog.show();
+    this.refs.groupUpdateDialog.show();
   }
 
   hide() {
-    this.refs.groupModifyDialog.hide();
+    this.refs.groupUpdateDialog.hide();
   }
 
   render() {
@@ -72,23 +72,23 @@ export default class DialogGroupModify extends React.Component {
 
     return (
       <Dialog.Container
-        ref="groupModifyDialog"
+        ref="groupUpdateDialog"
         closable={true}
         onApprove={ () => {
-          this.refs.modifyForm.submit();
+          this.refs.updateForm.submit();
           return false;
         }}
         onVisible={ () => {
-          this.refs.modifyForm.focus();
+          this.refs.updateForm.focus();
         }}
         onHidden={this.props.onHidden}
       >
         <Dialog.Header icon="circular users">
-          Modify group name
+          Update group name
         </Dialog.Header>
         <Dialog.Content>
           <Form
-            ref="modifyForm"
+            ref="updateForm"
             preventDefaultSubmit={true}
             fields={this.validateRules}
             onValidate={(error, formData) => {
@@ -106,7 +106,7 @@ export default class DialogGroupModify extends React.Component {
                     this.props.onSuccess();
                   })
                   .catch((error) => {
-                    this.refs.modifyForm.addError([ error.message ]);
+                    this.refs.updateForm.addError([ error.message ]);
                     this.setState({ waiting: false });
                     this.props.onFailure(error);
                   })

@@ -36,12 +36,12 @@ export default class Pagination extends React.Component {
   render() {
     let pagination = [];
     let paginationEllipses = [];
-    let i = 1, j = 5;
+    let i = 1, j = this.props.ellipsesAt;
 
     for (; i <= this.props.pages; i++) {
-      if (this.props.pages >= 10) {
-        if (i === 5) {
-          for (; j <= this.props.pages - 4; j++) {
+      if (this.props.pages >= this.props.maxItems) {
+        if (i === ellipsesAt) {
+          for (; j <= this.props.pages - (this.props.ellipsesAt - 1); j++) {
             paginationEllipses.push(
               <a className="item" key={i + j + Date.now()} data-value={j}>{j}</a>
             );

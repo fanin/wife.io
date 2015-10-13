@@ -6,7 +6,7 @@ import Input from 'lib/cutie/Input';
 import Dropdown from 'lib/cutie/Dropdown';
 import UserAPI from 'lib/api/UserAPI';
 
-export class UserModifyForm extends React.Component {
+export class UserUpdateForm extends React.Component {
 
   static defaultProps = {
     email: '',
@@ -69,8 +69,11 @@ export class UserModifyForm extends React.Component {
   }
 
   componentDidMount() {
-    Promise.all([ UserAPI.getGroups(), UserAPI.getProfile({ user: this.props.email }) ])
-      .then((values) => {
+    if (this.props.email) {
+      Promise.all([
+        UserAPI.getGroups(),
+        UserAPI.getProfile({ user: this.props.email })
+      ]).then((values) => {
         this.setState({
           email: values[1].user.email,
           firstname: values[1].user.firstname,
@@ -80,12 +83,12 @@ export class UserModifyForm extends React.Component {
           note: values[1].user.note,
           groups: values[0].groups
         });
-      })
-    ;
+      });
+    }
   }
 
   componentDidUpdate(prevProps, prevState) {
-    if (prevProps.email !== this.props.email) {
+    if (prevProps.email !== this.props.email && this.props.email != '') {
       Promise.all([
         UserAPI.getGroups(),
         UserAPI.getProfile({ user: this.props.email })
@@ -217,7 +220,7 @@ export class UserModifyForm extends React.Component {
   }
 }
 
-export default class DialogUserCreate extends React.Component {
+export default class DialogUserUpdate extends React.Component {
 
   static defaultProps = {
     onValidate: (form) => {},
@@ -236,11 +239,11 @@ export default class DialogUserCreate extends React.Component {
 
   show(email) {
     this.setState({ email: email });
-    this.refs.userModifyDialog.show();
+    this.refs.userUpdateDialog.show();
   }
 
   hide() {
-    this.refs.userModifyDialog.hide();
+    this.refs.userUpdateDialog.hide();
   }
 
   onValidate(formData) {
@@ -261,23 +264,23 @@ export default class DialogUserCreate extends React.Component {
   render() {
     return (
       <Dialog.Container
-        ref="userModifyDialog"
+        ref="userUpdateDialog"
         closable={true}
         onApprove={() => {
-          this.refs.userModifyForm.submit();
+          this.refs.userUpdateForm.submit();
           return false;
         }}
         onVisible={() => {
-          this.refs.userModifyForm.focus();
+          this.refs.userUpdateForm.focus();
         }}
         onHidden={this.props.onHidden}
       >
-        <Dialog.Header icon="circular users">
+        <Dialog.Header icon="circular user">
           Update user profile
         </Dialog.Header>
         <Dialog.Content>
-          <UserModifyForm
-            ref="userModifyForm"
+          <UserUpdateForm
+            ref="userUpdateForm"
             email={this.state.email}
             onValidate={this.onValidate.bind(this)}
             onSuccess={this.onSuccess.bind(this)}

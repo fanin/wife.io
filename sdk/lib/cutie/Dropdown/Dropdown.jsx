@@ -13,6 +13,7 @@ export default class Dropdown extends React.Component {
     name: '',
     type: '',
     classes: '',
+    readonly: false,
     buttonText: '',
     buttonIconClass: '',
     buttonImageClass: '',
@@ -28,9 +29,6 @@ export default class Dropdown extends React.Component {
 
   constructor(props) {
     super(props);
-    this.state = {
-      disabled: false
-    };
   }
 
   componentDidMount() {
@@ -51,13 +49,6 @@ export default class Dropdown extends React.Component {
         };
 
     $(React.findDOMNode(this)).dropdown(_settings);
-  }
-
-  componentWillUpdate(nextProps, nextState) {
-    if (nextProps.disabled)
-      $(React.findDOMNode(this)).addClass("disabled");
-    else
-      $(React.findDOMNode(this)).removeClass("disabled");
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -100,7 +91,15 @@ export default class Dropdown extends React.Component {
     var classes;
 
     if (this.props.type.indexOf('selection') >= 0) {
-      classes = classnames('ui fluid dropdown', this.props.classes, this.props.type);
+      classes = classnames(
+        'ui cutie fluid dropdown',
+        this.props.classes,
+        this.props.type,
+        {
+          readonly: this.props.readonly,
+          disabled: this.props.disabled
+        }
+      );
 
       dropdown = (
         <div className={classes}>
@@ -117,7 +116,15 @@ export default class Dropdown extends React.Component {
       );
     }
     else {
-      classes = classnames('ui dropdown', this.props.classes, this.props.type);
+      classes = classnames(
+        'ui cutie dropdown',
+        this.props.classes,
+        this.props.type,
+        {
+          readonly: this.props.readonly,
+          disabled: this.props.disabled
+        }
+      );
 
       var buttonIcon = this.props.buttonIconClass
             ? <i className={this.props.buttonIconClass + ' icon'} /> : null;

@@ -45,7 +45,12 @@ Group.find(function(err, groups) {
 /**
  * Get group list or searching group with pagination support.
  *
- * An object is returned as following:
+ * @apiMethod GetGroups {GET} /group
+ * @apiOption {String} searches Key words for searching group.
+ * @apiOption {Number} page *[Pagination]* Get groups that belong to given page. For `page=0` or `undefined`, pagination is disabled and all users are returned.
+ * @apiOption {Number} limit *[Pagination]* Set number of groups per page.
+ *
+ * @apiReturn 200 {Object} groups An object contains group info as below:
  * ```
  * {
  *    groups: [Group List of Requested Page],
@@ -53,13 +58,6 @@ Group.find(function(err, groups) {
  *    page:  [Requested Page Number]
  * }
  * ```
- *
- * @apiMethod GetGroups {GET} /group
- * @apiOption {String} searches Key words for searching group.
- * @apiOption {Number} page For pagination support. Get groups that belong to given page. For `page=0` or `undefined`, pagination is disabled and all users are returned.
- * @apiOption {Number} limit For pagination support. Set number of groups in a page.
- *
- * @apiReturn 200 {Array} groups An array object of groups.
  * @apiReturn 500 (Error while loading groups)
  */
 router.get('/', function(req, res) {
@@ -177,6 +175,7 @@ router.use(function(req, res, next) {
  * @apiReturn 405 (Special characters not allowed)
  * @apiReturn 409 (Group name already exists)
  * @apiReturn 500 (Error while loading group)
+ * @apiReturn 500 (Failed to add group)
  */
 router.post('/', function(req, res) {
   if (/[`~,.<>\-;':"/[\]|{}()=+!@#$%^&*]/.test(req.body.name))
@@ -192,8 +191,12 @@ router.post('/', function(req, res) {
         name: req.body.name,
         description: req.body.description
       });
-      g.save();
-      res.status(200).send('Group created');
+      g.save(function(err) {
+        if (err)
+          res.send(500).status('Failed to add group, error: ' + err);
+        else
+          res.status(200).send('Group created');
+      });
     }
   });
 });

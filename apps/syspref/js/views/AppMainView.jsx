@@ -21,7 +21,7 @@ export default class AppMainView extends React.Component {
     else if (this.state.activeTab === 'Security & Policy')
       ;
     else if (this.state.activeTab === 'Assets')
-      ;
+      contentView = <SegmentAsset />;
 
     return (
       <div className="ui bottom attached segment grid">

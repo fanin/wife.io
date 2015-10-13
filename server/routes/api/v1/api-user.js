@@ -170,8 +170,12 @@ router.put('/password', passport.authenticate('local'), function(req, res) {
         if (err)
           res.status(500).send('Failed to update password, error: ' + err);
         else {
-          user.save();
-          res.status(200).send('User password updated');
+          user.save(function(err) {
+            if (err)
+              res.status(500).send('Failed to update password, error: ' + err);
+            else
+              res.status(200).send('User password updated');
+          });
         }
       });
   });
@@ -334,21 +338,19 @@ router.use(function(req, res, next) {
  *
  * Get user list with pagination support.
  *
- * An object is returned as following:
- * ```
- * {
- *    users: [User List of Requested Page],
- *    count: [Total user count],
- *    page:  [Requested Page Number]
- * }
- * ```
- *
  * @apiMethod AdmGetList {GET} /user/adm/list
  * @apiOption {String} searches Key words for searching users.
- * @apiOption {Number} page For pagination support. Get users that belong to given page. For `page=0` or `undefined`, pagination is disabled and all users are returned.
- * @apiOption {Number} limit For pagination support. Set number of users in a page.
+ * @apiOption {Number} page *[Pagination]* Get users that belong to given page. For `page=0` or `undefined`, pagination is disabled and all users are returned.
+ * @apiOption {Number} limit *[Pagination]* Set number of users per page.
  *
- * @apiReturn 200 {Array} users Array of user profiles.
+ * @apiReturn 200 {Object} info An object contains user info as below:
+ * ```
+ * {
+ *   users: [User List of Requested Page],
+ *   count: [Total user count],
+ *   page:  [Requested Page Number]
+ * }
+ * ```
  * @apiReturn 403 (Administrative privilege required)
  * @apiReturn 500 (Failed to get user profiles)
  */
@@ -359,7 +361,7 @@ router.get('/adm/list', function(req, res) {
   if (req.query.searches) {
     var pattern = req.query.searches.replace(/\ ,/g, '|');
     var regex = new RegExp(pattern, 'ig');
-    conds = { $or:[
+    conds = { $or: [
       { email: regex },
       { firstname: regex },
       { lastname: regex },
