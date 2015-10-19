@@ -6,9 +6,10 @@ import Input from 'lib/cutie/Input';
 import Dropdown from 'lib/cutie/Dropdown';
 import UserAPI from 'lib/api/UserAPI';
 
-export class UserCreateForm extends React.Component {
+export class UserUpdaterForm extends React.Component {
 
   static defaultProps = {
+    email: '',
     onValidate: () => {},
     onSuccess: () => {},
     onFailure: (error) => {}
@@ -16,7 +17,15 @@ export class UserCreateForm extends React.Component {
 
   constructor(props) {
     super(props);
-    this.state = { groups: [], defaultGroup: '' };
+    this.state = {
+      email: '',
+      firstname: '',
+      lastname: '',
+      group: '',
+      gender: '',
+      note: '',
+      groups: []
+    };
     this.validateRules = {
       email: {
         identifier: 'email',
@@ -30,7 +39,7 @@ export class UserCreateForm extends React.Component {
         rules: [{
           type: 'empty',
           prompt: 'Please enter a password'
-        },{
+        }, {
           type: 'minLength[6]',
           prompt: 'Your password must be at least 6 characters'
         }]
@@ -60,11 +69,41 @@ export class UserCreateForm extends React.Component {
   }
 
   componentDidMount() {
-    UserAPI.getGroups()
-      .then((result) => {
-        this.setState({ groups: result.groups, defaultGroup: 'User' });
-      })
-    ;
+    if (this.props.email) {
+      Promise.all([
+        UserAPI.getGroups(),
+        UserAPI.getProfile({ user: this.props.email })
+      ]).then((values) => {
+        this.setState({
+          email: values[1].user.email,
+          firstname: values[1].user.firstname,
+          lastname: values[1].user.lastname,
+          group: values[1].user.group,
+          gender: values[1].user.gender,
+          note: values[1].user.note,
+          groups: values[0].groups
+        });
+      });
+    }
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (prevProps.email !== this.props.email && this.props.email != '') {
+      Promise.all([
+        UserAPI.getGroups(),
+        UserAPI.getProfile({ user: this.props.email })
+      ]).then((values) => {
+        this.setState({
+          email: values[1].user.email,
+          firstname: values[1].user.firstname,
+          lastname: values[1].user.lastname,
+          group: values[1].user.group,
+          gender: values[1].user.gender,
+          note: values[1].user.note,
+          groups: values[0].groups
+        });
+      });
+    }
   }
 
   submit() {
@@ -96,12 +135,12 @@ export class UserCreateForm extends React.Component {
             this.props.onFailure(error);
           }
           else {
-            UserAPI.signup(formData)
+            UserAPI.admSetProfile(formData)
               .then(() => {
                 this.props.onSuccess();
               })
               .catch((error) => {
-                this.refs.form.addError([ error.message ]);
+                this.refs.form.addError([ 'Password incorrect' ]);
                 this.props.onFailure(error);
               })
             ;
@@ -115,24 +154,31 @@ export class UserCreateForm extends React.Component {
           />
           <Input type="hidden" name="avatar" />
         </div>
-        <div className="two fields" style={{ margin: '0 0 1em' }}>
-          <div className="field">
-            <label>E-Mail</label>
-            <Input type="text" name="email" />
-          </div>
-          <div className="field">
-            <label>Password</label>
-            <Input type="password" name="password" />
-          </div>
+        <div className="field" style={{ margin: '0 0 1em' }}>
+          <label>E-Mail</label>
+          <Input
+            readonly={true}
+            type="text"
+            name="email"
+            defaultValue={this.state.email}
+          />
         </div>
         <div className="two fields">
           <div className="field">
             <label>First Name</label>
-            <Input type="text" name="firstname" />
+            <Input
+              type="text"
+              name="firstname"
+              defaultValue={this.state.firstname}
+            />
           </div>
           <div className="field">
             <label>Last Name</label>
-            <Input type="text" name="lastname" />
+            <Input
+              type="text"
+              name="lastname"
+              defaultValue={this.state.lastname}
+            />
           </div>
         </div>
         <div className="fields">
@@ -142,7 +188,7 @@ export class UserCreateForm extends React.Component {
               name="group"
               type="multiple selection"
               selectHintText="Group"
-              selectDefaultValue={this.state.defaultGroup}
+              selectDefaultValue={this.state.group}
             >
               {groupItems}
             </Dropdown>
@@ -153,6 +199,11 @@ export class UserCreateForm extends React.Component {
               name="gender"
               type="selection"
               selectHintText="Gender"
+              selectDefaultValue={
+                typeof this.state.gender === 'boolean'
+                  ? (this.state.gender ? 1 : 0)
+                  : null
+              }
             >
               <div className="item" data-value='0'>Female</div>
               <div className="item" data-value='1'>Male</div>
@@ -160,16 +211,16 @@ export class UserCreateForm extends React.Component {
           </div>
         </div>
         <div className="field">
-          <label>Note</label>
-          <Input type="text" name="note" />
-        </div>
+            <label>Note</label>
+            <Input type="text" name="note" defaultValue={this.state.note} />
+          </div>
         <div className="ui error message" />
       </Form>
     );
   }
 }
 
-export default class DialogUserCreate extends React.Component {
+export default class DialogUserUpdater extends React.Component {
 
   static defaultProps = {
     onValidate: (form) => {},
@@ -181,16 +232,18 @@ export default class DialogUserCreate extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      email: '',
       waiting: false
     };
   }
 
-  show() {
-    this.refs.userCreateDialog.show();
+  show(email) {
+    this.setState({ email: email });
+    this.refs.userUpdateDialog.show();
   }
 
   hide() {
-    this.refs.userCreateDialog.hide();
+    this.refs.userUpdateDialog.hide();
   }
 
   onValidate(formData) {
@@ -211,23 +264,24 @@ export default class DialogUserCreate extends React.Component {
   render() {
     return (
       <Dialog.Container
-        ref="userCreateDialog"
+        ref="userUpdateDialog"
         closable={true}
         onApprove={() => {
-          this.refs.userCreateForm.submit();
+          this.refs.userUpdateForm.submit();
           return false;
         }}
         onVisible={() => {
-          this.refs.userCreateForm.focus();
+          this.refs.userUpdateForm.focus();
         }}
         onHidden={this.props.onHidden}
       >
         <Dialog.Header icon="circular user">
-          Create a new user
+          Update user profile
         </Dialog.Header>
         <Dialog.Content>
-          <UserCreateForm
-            ref="userCreateForm"
+          <UserUpdaterForm
+            ref="userUpdateForm"
+            email={this.state.email}
             onValidate={this.onValidate.bind(this)}
             onSuccess={this.onSuccess.bind(this)}
             onFailure={this.onFailure.bind(this)}
@@ -241,11 +295,10 @@ export default class DialogUserCreate extends React.Component {
             color="green"
             classes={classnames("approve", { loading: this.state.waiting })}
           >
-            Create
+            Update
           </Button>
         </Dialog.ButtonSet>
       </Dialog.Container>
     );
   }
 }
-

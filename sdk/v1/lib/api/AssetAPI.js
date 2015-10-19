@@ -85,5 +85,41 @@ export default {
         }
       });
     });
+  },
+
+  startBrowser: function(options = {}) {
+    return new Promise(function(resolve, reject) {
+      apiutil.post('/api/v1/asset/browser', null, {
+        success: function(xhr) {
+          options.onSuccess && options.onSuccess(xhr);
+          resolve({ api: 'asset.startBrowser' });
+        },
+        error: function(xhr) {
+          handleError(xhr, 'asset.startBrowser', options.onError, reject);
+        }
+      });
+    });
+  },
+
+  stopBrowser: function(options = {}) {
+    return new Promise(function(resolve, reject) {
+      apiutil.delete('/api/v1/asset/browser', {
+        success: function(xhr) {
+          options.onSuccess && options.onSuccess(xhr);
+          resolve({ api: 'asset.stopBrowser' });
+        },
+        error: function(xhr) {
+          handleError(xhr, 'asset.stopBrowser', options.onError, reject);
+        }
+      });
+    });
+  },
+
+  on: function(callback) {
+    apiutil.on('/api/v1/asset/sse', callback);
+  },
+
+  off: function(callback) {
+    apiutil.off('/api/v1/asset/sse', callback);
   }
 }

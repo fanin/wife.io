@@ -5,7 +5,7 @@ import Form from 'lib/cutie/Form';
 import Input from 'lib/cutie/Input';
 import UserAPI from 'lib/api/UserAPI';
 
-export default class DialogGroupCreate extends React.Component {
+export default class DialogGroupCreator extends React.Component {
 
   static defaultProps = {
     onValidate: (form) => {},

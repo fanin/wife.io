@@ -1,7 +1,9 @@
-import sse from 'sendevent';
+import * as sse from 'lib/sendevent';
 import { timestamp } from './common/string-misc';
 
 export default {
+  on: sse.on,
+  off: sse.off,
 
   get: function(url, callbacks = {}) {
     $.ajax({
@@ -149,8 +151,6 @@ export default {
   abort: function(xhr) {
     xhr && xhr.abort();
   },
-
-  on: sse,
 
   include: function(url) {
     return new Promise(function(resolve, reject) {

@@ -47,7 +47,11 @@ export default {
     });
   },
 
-  onDiskEvent: function(callback = {}) {
+  on: function(callback) {
     apiutil.on('/api/v1/storage/sse', callback);
+  },
+
+  off: function(callback) {
+    apiutil.off('/api/v1/storage/sse', callback);
   }
 };

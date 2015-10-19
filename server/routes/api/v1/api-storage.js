@@ -6,17 +6,18 @@
  * @apiBasePath /api/v1
  */
 
-var express    = require('express'),
-		sendevent  = require('sendevent'),
-		permission = require('lib/security/permission'),
-		stormgr    = require('lib/storage/storage-manager'),
-		ssemgr     = require('lib/sse/sse-manager');
+var express = require('express'),
+		sendevent = require('sendevent');
+
+var Permission = require('lib/security/permission'),
+		StorageManager = require('lib/storage/storage-manager'),
+		SSEMnanager = require('lib/sse/sse-manager');
 
 var router = express.Router();
 var events = sendevent('/sse');
 
 function getDisks(req, res, next) {
-	stormgr.getDisks(function(disks, error) {
+	StorageManager.getDisks(function(disks, error) {
 		if (error)
 			res.status(500).send(error);
 		else
@@ -25,7 +26,7 @@ function getDisks(req, res, next) {
 }
 
 function getDisk(req, res, next) {
-	var disk = stormgr.getDiskByUUID(req.params.uuid);
+	var disk = StorageManager.getDiskByUUID(req.params.uuid);
 
 	if (disk)
 		res.json(disk);
@@ -37,7 +38,7 @@ function unmountDisk(req, res, next) {
 	response.NOT_IMPLEMENT(res);
 }
 
-ssemgr.register('storage', events);
+SSEMnanager.register('storage', events);
 router.use(events);
 
 /**
@@ -49,7 +50,7 @@ router.use(events);
  * @apiReturn 200 {Array} list Disk object array.
  * @apiReturn 500 Unable to get disk list.
  */
-router.get('/', permission.grant, getDisks);
+router.get('/', Permission.grant, getDisks);
 
 /**
  * Get disk information. A disk object is returned.
@@ -82,11 +83,11 @@ router.get('/', permission.grant, getDisks);
  * @apiReturn 200 {Object} disk Disk object.
  * @apiReturn 404 Disk not found.
  */
-router.get('/:uuid', permission.grant, getDisk);
+router.get('/:uuid', Permission.grant, getDisk);
 
 /**
  * TBD
  */
-router.delete('/:uuid', permission.grant, unmountDisk);
+router.delete('/:uuid', Permission.grant, unmountDisk);
 
 module.exports = router;

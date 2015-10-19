@@ -2,10 +2,11 @@ import classnames from 'classnames';
 import * as Dialog from 'lib/cutie/Dialog';
 import Form from 'lib/cutie/Form';
 import Input from 'lib/cutie/Input';
+import Button from 'lib/cutie/Button';
 import Dropdown from 'lib/cutie/Dropdown';
 import UserAPI from 'lib/api/UserAPI';
 
-export class UserInfoForm extends React.Component {
+export class UserViewerForm extends React.Component {
 
   static defaultProps = {
     email: ''
@@ -142,7 +143,7 @@ export class UserInfoForm extends React.Component {
   }
 }
 
-export default class DialogUserInfo extends React.Component {
+export default class DialogUserViewer extends React.Component {
 
   static defaultProps = {
     onHidden: () => {}
@@ -175,8 +176,13 @@ export default class DialogUserInfo extends React.Component {
           {this.state.email}
         </Dialog.Header>
         <Dialog.Content>
-          <UserInfoForm email={this.state.email} />
+          <UserViewerForm email={this.state.email} />
         </Dialog.Content>
+        <Dialog.ButtonSet>
+          <Button classes="deny">
+            Close
+          </Button>
+        </Dialog.ButtonSet>
       </Dialog.Container>
     );
   }

@@ -5,7 +5,7 @@ import Form from 'lib/cutie/Form';
 import Input from 'lib/cutie/Input';
 import UserAPI from 'lib/api/UserAPI';
 
-export default class DialogGroupUpdate extends React.Component {
+export default class DialogGroupUpdater extends React.Component {
 
   static defaultProps = {
     onValidate: (form) => {},
@@ -84,7 +84,7 @@ export default class DialogGroupUpdate extends React.Component {
         onHidden={this.props.onHidden}
       >
         <Dialog.Header icon="circular users">
-          Update group name
+          Update group
         </Dialog.Header>
         <Dialog.Content>
           <Form

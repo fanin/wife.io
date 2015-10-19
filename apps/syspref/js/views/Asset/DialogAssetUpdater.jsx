@@ -7,7 +7,7 @@ import Dropdown from 'lib/cutie/Dropdown';
 import UserAPI from 'lib/api/UserAPI';
 import AssetAPI from 'lib/api/AssetAPI';
 
-export class AssetModifyForm extends React.Component {
+export class AssetUpdaterForm extends React.Component {
 
   static defaultProps = {
     assetid: '',
@@ -233,7 +233,7 @@ export class AssetModifyForm extends React.Component {
   }
 }
 
-export default class DialogAssetModify extends React.Component {
+export default class DialogAssetUpdater extends React.Component {
 
   static defaultProps = {
     onValidate: (form) => {},
@@ -292,7 +292,7 @@ export default class DialogAssetModify extends React.Component {
           Update asset data
         </Dialog.Header>
         <Dialog.Content>
-          <AssetModifyForm
+          <AssetUpdaterForm
             ref="assetModifyForm"
             assetid={this.state.assetid}
             onValidate={this.onValidate.bind(this)}

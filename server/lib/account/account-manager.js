@@ -7,14 +7,7 @@ var config = require('config');
 class AccountManager {
   constructor() {
     [ 'Shared', 'Guest' ].forEach((n) => {
-      let p = path.resolve(path.join(
-        config.settings.user_data_path,
-        config.settings.sys_name,
-        'Users',
-        n
-      ));
-
-      fs.mkdirp(p);
+      this.createDirectories(n);
     });
   }
 

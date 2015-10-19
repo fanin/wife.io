@@ -54,7 +54,7 @@ export default class Application {
       }
     });
 
-    StorageAPI.onDiskEvent((event) => {
+    StorageAPI.on((event) => {
       if (event.eventType === 'INSERT') {
         GritterView.add(
           "New Disk",

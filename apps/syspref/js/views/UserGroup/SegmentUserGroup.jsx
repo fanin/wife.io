@@ -6,10 +6,10 @@ import Checkbox from 'lib/cutie/Checkbox';
 import Dropdown from 'lib/cutie/Dropdown';
 import Pagination from 'lib/cutie/Pagination';
 import UserAPI from 'lib/api/UserAPI';
-import DialogUserCreate from './DialogUserCreate.jsx';
-import DialogUserUpdate from './DialogUserUpdate.jsx';
-import DialogGroupCreate from './DialogGroupCreate.jsx';
-import DialogGroupUpdate from './DialogGroupUpdate.jsx';
+import DialogUserCreator from './DialogUserCreator.jsx';
+import DialogUserUpdater from './DialogUserUpdater.jsx';
+import DialogGroupCreator from './DialogGroupCreator.jsx';
+import DialogGroupUpdater from './DialogGroupUpdater.jsx';
 
 const LIMIT_PER_PAGE = 70;
 
@@ -132,6 +132,18 @@ export default class SegmentUserGroup extends React.Component {
 
   render() {
     let userTable = this.state.users.map((user) => {
+      let groupLabels = user.group.split(',').map((group) => {
+        return (
+          <a
+            key={group}
+            className="ui label"
+            onClick={(e) => {}}
+          >
+            {group}
+          </a>
+        );
+      });
+
       return (
         <tr key={user.email}>
           <td className="collapsing">
@@ -144,7 +156,7 @@ export default class SegmentUserGroup extends React.Component {
           </td>
           <td>{user.firstname + ' ' + user.lastname}</td>
           <td>{user.email}</td>
-          <td style={{ textAlign: 'center' }}>{user.group}</td>
+          <td style={{ textAlign: 'center' }}>{groupLabels}</td>
           <td style={{ textAlign: 'center' }}>
             {user.register_date ? (new Date(user.register_date)).toLocaleString() : ''}
           </td>
@@ -326,19 +338,19 @@ export default class SegmentUserGroup extends React.Component {
           </table>
         </div>
         <div>
-          <DialogUserCreate
+          <DialogUserCreator
             ref="userCreateDialog"
             onSuccess={this.userCreateSuccess.bind(this)}
           />
-          <DialogUserUpdate
+          <DialogUserUpdater
             ref="userUpdateDialog"
             onSuccess={this.userUpdateSuccess.bind(this)}
           />
-          <DialogGroupCreate
+          <DialogGroupCreator
             ref="groupCreateDialog"
             onSuccess={this.groupCreateSuccess.bind(this)}
           />
-          <DialogGroupUpdate
+          <DialogGroupUpdater
             ref="groupUpdateDialog"
             onSuccess={this.groupUpdateSuccess.bind(this)}
           />

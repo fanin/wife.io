@@ -5,9 +5,8 @@ import Button from 'lib/cutie/Button';
 import Input from 'lib/cutie/Input';
 import Dropdown from 'lib/cutie/Dropdown';
 import UserAPI from 'lib/api/UserAPI';
-import AssetAPI from 'lib/api/AssetAPI';
 
-export class AssetCreateForm extends React.Component {
+export class UserCreatorForm extends React.Component {
 
   static defaultProps = {
     onValidate: () => {},
@@ -17,47 +16,53 @@ export class AssetCreateForm extends React.Component {
 
   constructor(props) {
     super(props);
-    this.state = {
-      users: []
-    };
+    this.state = { groups: [], defaultGroup: '' };
     this.validateRules = {
-      assetid: {
-        identifier: 'assetid',
+      email: {
+        identifier: 'email',
+        rules: [{
+          type: 'email',
+          prompt: 'Please enter a valid e-mail address'
+        }]
+      },
+      password: {
+        identifier: 'password',
         rules: [{
           type: 'empty',
-          prompt: 'Please enter an asset ID'
+          prompt: 'Please enter a password'
+        },{
+          type: 'minLength[6]',
+          prompt: 'Your password must be at least 6 characters'
         }]
       },
-      name: {
-        identifier: 'name',
+      firstname: {
+        identifier: 'firstname',
         rules: [{
           type: 'empty',
-          prompt: 'Please enter asset name'
+          prompt: 'Please enter your first name'
         }]
       },
-      acquisition_date: {
-        identifier: 'acquisition_date',
+      lastname: {
+        identifier: 'lastname',
         rules: [{
-          type: 'regExp[/[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])|(^$)/]',
-          prompt: 'Acquisition Date: Date format is YYYY-MM-DD (Ex: 2014-10-01)'
+          type: 'empty',
+          prompt: 'Please enter your last name'
         }]
       },
-      warranty_expiration_date: {
-        identifier: 'warranty_expiration_date',
+      gender: {
+        identifier: 'gender',
         rules: [{
-          type: 'regExp[/[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])|(^$)/]',
-          prompt: 'Warranty Expiration Date: Date format is YYYY-MM-DD (Ex: 2014-02-26)'
+          type: 'empty',
+          prompt: 'Please select your gender'
         }]
       }
     };
   }
 
   componentDidMount() {
-    UserAPI.admGetList()
+    UserAPI.getGroups()
       .then((result) => {
-        this.setState({
-          users: result.users
-        });
+        this.setState({ groups: result.groups, defaultGroup: 'User' });
       })
     ;
   }
@@ -75,13 +80,9 @@ export class AssetCreateForm extends React.Component {
   }
 
   render() {
-    let owners = this.state.users.map((user) => {
-      return (
-        <div key={user.email} className="item" data-value={user.email}>
-          {user.firstname + ' ' + user.lastname + ' (' + user.group + ')'}
-        </div>
-      );
-    });
+    let groupItems = this.state.groups.map(
+      (group) => <div key={group.name} className="item" data-value={group.name}>{group.name}</div>
+    );
 
     return (
       <Form
@@ -95,7 +96,7 @@ export class AssetCreateForm extends React.Component {
             this.props.onFailure(error);
           }
           else {
-            AssetAPI.add(formData)
+            UserAPI.signup(formData)
               .then(() => {
                 this.props.onSuccess();
               })
@@ -107,55 +108,60 @@ export class AssetCreateForm extends React.Component {
           }
         }}
       >
-        <div className="two fields">
+        <div className="field" style={{ margin: '0 0 3em' }}>
+          <img
+            className="ui centered small circular image"
+            src="/img/guest-avatar.jpg"
+          />
+          <Input type="hidden" name="avatar" />
+        </div>
+        <div className="two fields" style={{ margin: '0 0 1em' }}>
           <div className="field">
-            <label>ID</label>
-            <Input type="text" name="assetid" />
+            <label>E-Mail</label>
+            <Input type="text" name="email" />
           </div>
           <div className="field">
-            <label>Name</label>
-            <Input type="text" name="name" />
+            <label>Password</label>
+            <Input type="password" name="password" />
           </div>
         </div>
         <div className="two fields">
           <div className="field">
-            <label>Vendor</label>
-            <Input type="text" name="vendor" />
+            <label>First Name</label>
+            <Input type="text" name="firstname" />
           </div>
           <div className="field">
-            <label>Model</label>
-            <Input type="text" name="model" />
+            <label>Last Name</label>
+            <Input type="text" name="lastname" />
           </div>
         </div>
-        <div className="two fields">
-          <div className="field">
-            <label>Serial</label>
-            <Input type="text" name="serial" />
-          </div>
-          <div className="field">
-            <label>Owner</label>
+        <div className="fields">
+          <div className="ten wide field">
+            <label>Group</label>
             <Dropdown
-              name="owner"
-              type="search selection"
-              selectHintText="Owner"
+              name="group"
+              type="multiple selection"
+              selectHintText="Group"
+              selectDefaultValue={this.state.defaultGroup}
             >
-              {owners}
+              {groupItems}
+            </Dropdown>
+          </div>
+          <div className="six wide field">
+            <label>Gender</label>
+            <Dropdown
+              name="gender"
+              type="selection"
+              selectHintText="Gender"
+            >
+              <div className="item" data-value='0'>Female</div>
+              <div className="item" data-value='1'>Male</div>
             </Dropdown>
           </div>
         </div>
-        <div className="two fields">
-          <div className="field">
-            <label>Acquisition Date</label>
-            <Input type="text" name="acquisition_date" />
-          </div>
-          <div className="field">
-            <label>Warranty Expiration Date</label>
-            <Input type="text" name="warranty_expiration_date" />
-          </div>
-        </div>
         <div className="field">
-          <label>Description</label>
-          <Input type="text" name="description" />
+          <label>Note</label>
+          <Input type="text" name="note" />
         </div>
         <div className="ui error message" />
       </Form>
@@ -163,7 +169,7 @@ export class AssetCreateForm extends React.Component {
   }
 }
 
-export default class DialogAssetCreate extends React.Component {
+export default class DialogUserCreator extends React.Component {
 
   static defaultProps = {
     onValidate: (form) => {},
@@ -180,11 +186,11 @@ export default class DialogAssetCreate extends React.Component {
   }
 
   show() {
-    this.refs.assetCreateDialog.show();
+    this.refs.userCreateDialog.show();
   }
 
   hide() {
-    this.refs.assetCreateDialog.hide();
+    this.refs.userCreateDialog.hide();
   }
 
   onValidate(formData) {
@@ -205,23 +211,23 @@ export default class DialogAssetCreate extends React.Component {
   render() {
     return (
       <Dialog.Container
-        ref="assetCreateDialog"
+        ref="userCreateDialog"
         closable={true}
         onApprove={() => {
-          this.refs.assetCreateForm.submit();
+          this.refs.userCreateForm.submit();
           return false;
         }}
         onVisible={() => {
-          this.refs.assetCreateForm.focus();
+          this.refs.userCreateForm.focus();
         }}
         onHidden={this.props.onHidden}
       >
-        <Dialog.Header icon="circular laptop">
-          Create a new asset
+        <Dialog.Header icon="circular user">
+          Create a new user
         </Dialog.Header>
         <Dialog.Content>
-          <AssetCreateForm
-            ref="assetCreateForm"
+          <UserCreatorForm
+            ref="userCreateForm"
             onValidate={this.onValidate.bind(this)}
             onSuccess={this.onSuccess.bind(this)}
             onFailure={this.onFailure.bind(this)}
@@ -242,3 +248,4 @@ export default class DialogAssetCreate extends React.Component {
     );
   }
 }
+

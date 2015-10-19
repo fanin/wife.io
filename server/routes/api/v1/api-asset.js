@@ -6,12 +6,56 @@
  * @apiBasePath /api/v1
  */
 
-var config  = require('config'),
+var config = require('config'),
     express = require('express'),
-    User    = require('models/user'),
-    Asset   = require('models/asset');
+    sendevent = require('sendevent'),
+    User = require('models/user'),
+    Asset = require('models/asset');
 
 var router = express.Router();
+
+var NetServBrowser = require('lib/netserv/netserv-browser'),
+    SSEManager = require('lib/sse/sse-manager');
+
+var events = sendevent('/sse');
+
+SSEManager.register('asset', events);
+router.use(events);
+
+var assetBrowser = new NetServBrowser({
+  serviceType: NetServBrowser.serviceType('http', 'tcp'),
+  onServiceUp: (service) => {
+    SSEManager.broadcast(
+      "asset", { eventType: 'ServiceUp', service: service }
+    );
+  },
+  onServiceDown: (service) => {
+    SSEManager.broadcast(
+      "asset", { eventType: 'ServiceDown', service: service }
+    );
+  }
+});
+
+/**
+ * Start to discover possible assets on the same subnet.
+ * The discovered devices/services will report to client by SSE.
+ *
+ * @apiMethod StartAssetBrowser {POST} /asset/browser
+ */
+router.post('/browser', function(req, res) {
+  assetBrowser.start();
+  res.sendStatus(200);
+});
+
+/**
+ * Stop discovering assets.
+ *
+ * @apiMethod StopAssetBrowser {DELETE} /asset/browser
+ */
+router.delete('/browser', function(req, res) {
+  assetBrowser.stop();
+  res.sendStatus(200);
+});
 
 /**
  * Get assets list or one specified asset object.

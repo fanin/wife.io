@@ -6,12 +6,13 @@
  * @apiBasePath /api/v1
  */
 
-var config   = require('config'),
-    express  = require('express'),
+var config = require('config'),
+    express = require('express'),
     passport = require('passport')
-    assign   = require('object-assign'),
-    User     = require('models/user'),
-    Group    = require('models/group');
+    assign = require('object-assign'),
+    User = require('models/user'),
+    Group = require('models/group'),
+    AccountManager = require('lib/account/account-manager');
 
 var router = express.Router();
 
@@ -83,8 +84,10 @@ router.post('/signup', function(req, res, next) {
     function(error, user) {
       if (error)
         res.status(403).send(error.message);
-      else
+      else {
+        AccountManager.createDirectories(user.email);
         res.status(200).send('User account created');
+      }
     }
   );
 });
@@ -109,6 +112,9 @@ router.post('/login', passport.authenticate('local'), function(req, res) {
   res.cookie('userid', req.user.id, { maxAge: 600000, httpOnly: false, secure: false });
   //client: $.cookie("userid")
   if (req.user.active) {
+    /* Create home directory structure */
+    AccountManager.createDirectories(req.user.email);
+
     User.update({ email: req.user.email }, {
       $set: {
         last_login_date: new Date
