@@ -31,10 +31,6 @@ export default class UserDialog extends React.Component {
     this.refs.dialog.show();
   }
 
-  isShow() {
-    return this.refs.dialog.isShow();
-  }
-
   onLoginSuccess() {
     this.refs.dialog.hide();
     this.state.onApproved();
@@ -82,11 +78,11 @@ export default class UserDialog extends React.Component {
       onHidden: () => {
         // Must reset state after dialog has been unmounted to make sure
         // dialog content reset to default views
-        this.setState({
-          formType: 'login',
-          congrats: false,
-          waiting: false
-        });
+        //this.setState({
+        //  formType: 'login',
+        //  congrats: false,
+        //  waiting: false
+        //});
       },
       onApprove: () => {
         if (this.state.formType === 'login' || this.state.formType === 'auth')

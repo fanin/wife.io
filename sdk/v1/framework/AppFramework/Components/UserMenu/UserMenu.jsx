@@ -90,7 +90,7 @@ export default class UserMenu extends React.Component {
         buttonText={this.state.username || 'Log in'}
         buttonImageClass="avatar"
         buttonImageSource="/img/guest-avatar.jpg"
-        itemSelectBar={false}
+        action="hide"
         onClick={this.handleLogin.bind(this)}
         onTouchStart={this.handleLogin.bind(this)}
         onChange={(value, text) => {

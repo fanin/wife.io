@@ -6,38 +6,125 @@
  * @apiBasePath /api/v1
  */
 
-var config   = require('config'),
-    express  = require('express'),
-    User     = require('models/user'),
-    Asset    = require('models/asset');
+var config = require('config'),
+    express = require('express'),
+    sendevent = require('sendevent'),
+    User = require('models/user'),
+    Asset = require('models/asset');
 
 var router = express.Router();
+
+var NetServBrowser = require('lib/netserv/netserv-browser'),
+    SSEManager = require('lib/sse/sse-manager');
+
+var events = sendevent('/sse');
+
+SSEManager.register('asset', events);
+router.use(events);
+
+var assetBrowser = new NetServBrowser({
+  serviceType: NetServBrowser.serviceType('http', 'tcp'),
+  onServiceUp: (service) => {
+    SSEManager.broadcast(
+      "asset", { eventType: 'ServiceUp', service: service }
+    );
+  },
+  onServiceDown: (service) => {
+    SSEManager.broadcast(
+      "asset", { eventType: 'ServiceDown', service: service }
+    );
+  }
+});
+
+/**
+ * Start to discover possible assets on the same subnet.
+ * The discovered devices/services will report to client by SSE.
+ *
+ * @apiMethod StartAssetBrowser {POST} /asset/browser
+ */
+router.post('/browser', function(req, res) {
+  assetBrowser.start();
+  res.sendStatus(200);
+});
+
+/**
+ * Stop discovering assets.
+ *
+ * @apiMethod StopAssetBrowser {DELETE} /asset/browser
+ */
+router.delete('/browser', function(req, res) {
+  assetBrowser.stop();
+  res.sendStatus(200);
+});
 
 /**
  * Get assets list or one specified asset object.
  *
- * @apiMethod GetAsset {GET} /asset/`:assetid`
- * @apiParam {String} assetid Asset ID. Leave this param empty to get all assets.
+ * @apiMethod GetAsset {GET} /asset
+ * @apiOption {String} assetid Get asset by this ID.
+ * @apiOption {String} searches Key words for searching assets.
+ * @apiOption {Number} page *[Pagination]* Get assets that belong to given page. For `page=0` or `undefined`, pagination is disabled and all assets are returned.
+ * @apiOption {Number} limit *[Pagination]* Set number of assets per page.
  *
- * @apiReturn 200 {Array} assets Assets list.
- * @apiReturn 200 {Object} asset Asset object with given serial ID.
+ * @apiReturn 200 {Object} info An object contains asset info as below:
+ * ```
+ * {
+ *   assets: [Asset List of Requested Page],
+ *   count: [Total asset count],
+ *   page:  [Requested Page Number]
+ * }
+ * ```
+ * For `assetid` unspecified, `assets` field is an one element array, `count` and `page` fields are set to `1` and `0` respectively.
+ *
  * @apiReturn 404 (Given asset ID not found)
  * @apiReturn 500 (Error while loading asset)
  */
-router.get('/:assetid', function(req, res) {
-  var cond = req.params.assetid ? { assetid: req.params.assetid } : {};
+router.get('/', function(req, res) {
+  var conds = {};
+  var paginate = {};
 
-  Asset.find(cond, function(err, assets) {
-    if (err)
-      res.status(500).send('Error while loading asset');
-    else if (req.params.assetid) {
-      if (assets.length > 0)
-        res.json(assets[0]);
-      else
-        res.status(404).send('Given asset ID not found');
+  if (req.query.assetid) {
+    conds = { assetid: req.query.assetid };
+  }
+  else {
+    if (req.query.searches) {
+      var pattern = req.query.searches.replace(/\ ,/g, '|');
+      var regex = new RegExp(pattern, 'ig');
+      conds = { $or: [
+        { assetid: regex },
+        { serial: regex },
+        { name: regex },
+        { vendor: regex },
+        { model: regex },
+        { owner: regex },
+        { acquisition_date: { $eq: new Date(pattern) } },
+        { warranty_expiration_date: { $eq: new Date(pattern) } },
+        { description: regex }
+      ] };
     }
-    else
-      res.json(assets);
+
+    if (req.query.page > 0) {
+      req.query.limit = req.query.limit || PAGINATE_LIMIT;
+      paginate = {
+        skip: (req.query.page - 1) * req.query.limit,
+        limit: req.query.limit
+      };
+    }
+  }
+
+  Asset.find(conds, null, paginate, function(err, assets) {
+    if (err)
+      res.status(500).send('Error while loading asset, error: ' + err);
+    else if (req.query.assetid && assets.length === 0)
+      res.status(404).send('Given asset ID not found');
+    else {
+      Asset.count(conds, function(err, count) {
+        if (err)
+          res.status(500).send('Error while loading asset, error: ' + err);
+        else
+          res.json({ assets: assets, count: count, page: req.query.page || 0 });
+      });
+    }
   });
 });
 
@@ -67,7 +154,6 @@ router.use(function(req, res, next) {
  *   assetid: 'IT00000001'
  *   serial: '0000-0001-234567',
  *   name: 'NB0001',
- *   type: 'PC',
  *   vendor: 'Apple',
  *   model: 'Macbook Pro 2015',
  *   owner: 'admin@wife.io',
@@ -81,6 +167,7 @@ router.use(function(req, res, next) {
  * @apiReturn 403 (Administrative privilege required)
  * @apiReturn 409 (Asset ID already exists)
  * @apiReturn 500 (Error while loading asset)
+ * @apiReturn 500 (Failed to create asset)
  */
 router.post('/', function(req, res) {
   Asset.find({ assetid: req.body.assetid } , function(err, assets) {
@@ -100,8 +187,12 @@ router.post('/', function(req, res) {
         warranty_expiration_date: req.body.warranty_expiration_date,
         description: req.body.description
       });
-      a.save();
-      res.status(200).send('Asset created');
+      a.save(function(err) {
+        if (err)
+          res.status(500).send('Failed to create asset, error: ' + err);
+        else
+          res.status(200).send('Asset created');
+      });
     }
   });
 });
@@ -119,7 +210,6 @@ router.post('/', function(req, res) {
  *   assetid: 'IT00000002',
  *   serial: '0000-0001-234567',
  *   name: 'NB0002',
- *   type: 'PC',
  *   vendor: 'Apple Inc.',
  *   model: 'Macbook Pro 2015 Retina',
  *   owner: 'kenny@wife.io',
@@ -135,7 +225,7 @@ router.post('/', function(req, res) {
  * @apiReturn 500 (Error while loading asset)
  * @apiReturn 500 (Error while updating asset)
  */
-router.put('/asset/:assetid', function(req, res) {
+router.put('/:assetid', function(req, res) {
   if (!req.params.assetid) {
     res.status(404).send('Asset not found');
     return;

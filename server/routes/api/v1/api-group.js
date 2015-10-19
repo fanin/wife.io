@@ -26,36 +26,118 @@ Group.find(function(err, groups) {
     console.log('User groups found');
   else {
     console.log('Createing default groups');
-    [ 'Admin', 'User' ].concat(config.settings.group).forEach(function(group) {
-      var g = new Group({ name: group });
+    [
+      {
+        name: 'Admin',
+        description: 'Administrators'
+      },
+      {
+        name: 'User',
+        description: 'All regular users'
+      }
+    ].concat(config.settings.group).forEach(function(group) {
+      var g = new Group(group);
       g.save();
     });
   }
 });
 
 /**
- * Get group list or searching group.
+ * Get group list or searching group with pagination support.
  *
  * @apiMethod GetGroups {GET} /group
  * @apiOption {String} searches Key words for searching group.
+ * @apiOption {Number} page *[Pagination]* Get groups that belong to given page. For `page=0` or `undefined`, pagination is disabled and all users are returned.
+ * @apiOption {Number} limit *[Pagination]* Set number of groups per page.
  *
- * @apiReturn 200 {Array} groups An array object of groups.
+ * @apiReturn 200 {Object} groups An object contains group info as below:
+ * ```
+ * {
+ *    groups: [Group List of Requested Page],
+ *    count: [Total group count],
+ *    page:  [Requested Page Number]
+ * }
+ * ```
  * @apiReturn 500 (Error while loading groups)
  */
 router.get('/', function(req, res) {
+  var conds = {};
+  var paginate = {};
+
+  if (req.query.searches) {
+    var pattern = req.query.searches.replace(/\ ,/g, '|');
+    var regex = new RegExp(pattern, 'ig');
+    conds = { $or: [
+      { name: regex },
+      { description: regex }
+    ] };
+  }
+
+  if (req.query.page > 0) {
+    req.query.limit = req.query.limit || PAGINATE_LIMIT;
+    paginate = {
+      skip: (req.query.page - 1) * req.query.limit,
+      limit: req.query.limit
+    };
+  }
+
+  Group.find(conds, null, paginate, function(err, groups) {
+    if (err)
+      res.status(500).send('Error while loading groups: ' + err);
+    else {
+      Group.count(conds, function(err, count) {
+        if (err)
+          res.status(500).send('Failed to get group count, error: ' + err);
+        else
+          res.json(
+            {
+              groups: groups.sort((a, b) => {
+                if (a.name === 'Admin')
+                  return -1;
+                else if (b.name === 'Admin')
+                  return 1;
+                else if (a.name === 'User')
+                  return -1;
+                else if (b.name === 'User')
+                  return 1;
+                else
+                  return (b - a);
+              }),
+              count: count,
+              page: req.query.page || 0
+            }
+          );
+      });
+    }
+  });
+});
+
+/**
+ * Get number of groups.
+ *
+ * @apiMethod GetCount {GET} /group/count
+ * @apiOption {String} searches Key words for searching groups.
+ *
+ * @apiReturn 200 {Number} count Number of groups.
+ * @apiReturn 500 (Failed to get group count)
+ */
+router.get('/count', function(req, res) {
   var conds = {};
 
   if (req.query.searches) {
     var pattern = req.query.searches.replace(/\ ,/g, '|');
     var regex = new RegExp(pattern, 'ig');
-    conds = { name: regex };
+    conds = { $or: [
+      { name: regex },
+      { description: regex }
+    ] };
   }
 
-  Group.find(conds, function(err, groups) {
+  Group.count(conds, function(err, count) {
     if (err)
-      res.status(500).send('Error while loading groups: ' + err);
+      res.status(500).send('Failed to get group count, error: ' + err);
     else
-      res.json(groups.map(g => g.name));
+      res.json({ count: count });
   });
 });
 
@@ -83,7 +165,8 @@ router.use(function(req, res, next) {
  * @apiReqBody {Object} formdata `FormData` object built with group name:
  * ```
  * {
- *   groupName: groupNameToCreate
+ *   name: nameToCreate,
+ *   description: description
  * }
  * ```
  * @apiReturn 200 (Group created)
@@ -92,20 +175,28 @@ router.use(function(req, res, next) {
  * @apiReturn 405 (Special characters not allowed)
  * @apiReturn 409 (Group name already exists)
  * @apiReturn 500 (Error while loading group)
+ * @apiReturn 500 (Failed to add group)
  */
 router.post('/', function(req, res) {
-  if (/[`~,.<>\-;':"/[\]|{}()=+!@#$%^&*]/.test(req.body.groupName))
+  if (/[`~,.<>\-;':"/[\]|{}()=+!@#$%^&*]/.test(req.body.name))
     return res.status(405).send('Special characters not allowed');
 
-  Group.find({ name: req.body.groupName } , function(err, groups) {
+  Group.find({ name: req.body.name } , function(err, groups) {
     if (err)
       res.status(500).send('Error while loading group: ' + err);
     else if (groups.length > 0)
       res.status(409).send('Group name already exists');
     else {
-      var g = new Group({ name: req.body.groupName });
-      g.save();
-      res.status(200).send('Group created');
+      var g = new Group({
+        name: req.body.name,
+        description: req.body.description
+      });
+      g.save(function(err) {
+        if (err)
+          res.send(500).status('Failed to add group, error: ' + err);
+        else
+          res.status(200).send('Group created');
+      });
     }
   });
 });
@@ -119,7 +210,8 @@ router.post('/', function(req, res) {
  * @apiReqBody {Object} formdata `FormData` object built with group name:
  * ```
  * {
- *   groupName: newGroupName
+ *   oldname: oldname
+ *   newname: newname
  * }
  * ```
  * @apiReturn 200 (Group name update)
@@ -131,22 +223,27 @@ router.post('/', function(req, res) {
  * @apiReturn 500 (Error while updating group name)
  */
 router.put('/', function(req, res) {
-  if (/[`~,.<>\-;':"/[\]|{}()=+!@#$%^&*]/.test(req.body.groupNameNew))
+  if (/[`~,.<>\-;':"/[\]|{}()=+!@#$%^&*]/.test(req.body.newname))
     return res.status(405).send('Special characters not allowed');
 
-  Group.find({ name: req.body.groupName }, function(err, groups) {
+  Group.find({ name: req.body.oldname }, function(err, groups) {
     if (err)
       res.status(500).send('Error while loading group: ' + err);
     else if (groups.length > 0) {
-      Group.find({ name: req.body.groupNameNew }, function(err, groups) {
+      Group.find({ name: req.body.newname }, function(err, groups) {
         if (err)
           res.status(500).send('Error while loading group: ' + err);
-        else if (groups.length > 0)
+        else if (groups.length > 0 && req.body.newname !== req.body.oldname)
           res.status(409).send('New group name already exists');
         else {
           Group.update(
-            { name: req.body.groupName },
-            { $set: { name: req.body.groupNameNew } },
+            { name: req.body.oldname },
+            {
+              $set: {
+                name: req.body.newname,
+                description: req.body.description
+              }
+            },
             function(err) {
               if (err)
                 res.status(500).send('Error while updating group name: ' + err);

@@ -278,7 +278,6 @@ export default class NoteListContainer extends React.Component {
           <Dropdown
             classes="compact item nb-toolbar-sort-dropdown"
             buttonIconClass="sort content ascending black"
-            itemSelectBar={true}
             transition="drop"
             onChange={(value, text) => {
               switch (value) {
@@ -333,7 +332,7 @@ export default class NoteListContainer extends React.Component {
           <Dropdown
             classes="compact link item"
             buttonIconClass="ellipsis vertical"
-            itemSelectBar={false}
+            action="hide"
             transition="drop"
             onChange={(value, text) => {
               switch (value) {

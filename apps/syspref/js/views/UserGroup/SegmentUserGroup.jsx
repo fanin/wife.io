@@ -4,11 +4,14 @@ import classnames from 'classnames';
 import Input from 'lib/cutie/Input';
 import Checkbox from 'lib/cutie/Checkbox';
 import Dropdown from 'lib/cutie/Dropdown';
+import Pagination from 'lib/cutie/Pagination';
 import UserAPI from 'lib/api/UserAPI';
-import DialogUserCreate from './DialogUserCreate.jsx';
-import DialogUserModify from './DialogUserModify.jsx';
-import DialogGroupCreate from './DialogGroupCreate.jsx';
-import DialogGroupModify from './DialogGroupModify.jsx';
+import DialogUserCreator from './DialogUserCreator.jsx';
+import DialogUserUpdater from './DialogUserUpdater.jsx';
+import DialogGroupCreator from './DialogGroupCreator.jsx';
+import DialogGroupUpdater from './DialogGroupUpdater.jsx';
+
+const LIMIT_PER_PAGE = 70;
 
 export default class SegmentUserGroup extends React.Component {
 
@@ -17,37 +20,89 @@ export default class SegmentUserGroup extends React.Component {
     this.state = {
       users: [],
       groups: [],
-      groupToModify: '',
-      groupToRemove: ''
+      userPages: 1,
+      groupPages: 1,
+      userSearchText: '',
+      groupSearchText: ''
     };
   }
 
   componentDidMount() {
-    Promise.all([ UserAPI.admGetList(), UserAPI.getGroups() ])
-      .then((values) => {
-        this.setState({ users: values[0].users, groups: values[1].groups })
+    Promise.all([
+      UserAPI.admGetList({ page: this.refs.userPaginator.position(), limit: LIMIT_PER_PAGE }),
+      UserAPI.getGroups({ page: this.refs.groupPaginator.position(), limit: LIMIT_PER_PAGE })
+    ]).then((values) => {
+      this.setState({
+        users: values[0].users,
+        userPages: this.calcPages(values[0].count),
+        groups: values[1].groups,
+        groupPages: this.calcPages(values[1].count),
       })
-    ;
+    }).catch((error) => {
+      if (error.code !== 403)
+        console.log(error);
+    });
 
     $('.secondary.menu .item')
-      .tab('change tab', 'users');
+      .tab('change tab', 'users')
     ;
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (prevState.userSearchText !== this.state.userSearchText)
+      this.reloadUsers();
+    if (prevState.groupSearchText !== this.state.groupSearchText)
+      this.reloadGroups();
+  }
+
+  reloadUsers() {
+    return UserAPI.admGetList({
+      searches: this.state.userSearchText,
+      page: this.refs.userPaginator.position(),
+      limit: LIMIT_PER_PAGE
+    })
+    .then((result) => {
+      this.setState({
+        users: result.users,
+        userPages: this.calcPages(result.count)
+      });
+    })
+    .catch((error) => {
+      console.log(error);
+    });
+  }
+
+  reloadGroups() {
+    return UserAPI.getGroups({
+      searches: this.state.groupSearchText,
+      page: this.refs.groupPaginator.position(),
+      limit: LIMIT_PER_PAGE
+    }).then((result) => {
+      this.setState({
+        groups: result.groups,
+        groupPages: this.calcPages(result.count)
+      });
+    });
+  }
+
+  calcPages(count) {
+    return Math.ceil(count / LIMIT_PER_PAGE) || 1;
   }
 
   showUserCreateDialog() {
     this.refs.userCreateDialog.show();
   }
 
-  showUserModifyDialog(email) {
-    this.refs.userModifyDialog.show(email);
+  showUserUpdateDialog(email) {
+    this.refs.userUpdateDialog.show(email);
   }
 
   showGroupCreateDialog() {
     this.refs.groupCreateDialog.show();
   }
 
-  showGroupModifyDialog() {
-    this.refs.groupModifyDialog.show();
+  showGroupUpdateDialog(group) {
+    this.refs.groupUpdateDialog.show(group);
   }
 
   toggleUserActivation(target) {
@@ -57,48 +112,38 @@ export default class SegmentUserGroup extends React.Component {
 
   userCreateSuccess() {
     this.refs.userCreateDialog.hide();
-    UserAPI.admGetList()
-      .then((result) => {
-        this.setState({ users: result.users });
-      })
-      .catch((error) => {
-        console.log(error);
-      })
-    ;
+    this.reloadUsers();
   }
 
-  userModifySuccess() {
-    this.refs.userModifyDialog.hide();
-    UserAPI.admGetList()
-      .then((result) => {
-        this.setState({ users: result.users });
-      })
-      .catch((error) => {
-        console.log(error);
-      })
-    ;
+  userUpdateSuccess() {
+    this.refs.userUpdateDialog.hide();
+    this.reloadUsers();
   }
 
   groupCreateSuccess() {
     this.refs.groupCreateDialog.hide();
-    UserAPI.getGroups()
-      .then((result) => {
-        this.setState({ groups: result.groups });
-      })
-    ;
+    this.reloadGroups();
   }
 
-  groupModifySuccess() {
-    this.refs.groupModifyDialog.hide();
-    UserAPI.getGroups()
-      .then((result) => {
-        this.setState({ groups: result.groups });
-      })
-    ;
+  groupUpdateSuccess() {
+    this.refs.groupUpdateDialog.hide();
+    this.reloadGroups();
   }
 
   render() {
     let userTable = this.state.users.map((user) => {
+      let groupLabels = user.group.split(',').map((group) => {
+        return (
+          <a
+            key={group}
+            className="ui label"
+            onClick={(e) => {}}
+          >
+            {group}
+          </a>
+        );
+      });
+
       return (
         <tr key={user.email}>
           <td className="collapsing">
@@ -111,11 +156,17 @@ export default class SegmentUserGroup extends React.Component {
           </td>
           <td>{user.firstname + ' ' + user.lastname}</td>
           <td>{user.email}</td>
-          <td style={{ textAlign: 'center' }}>{user.group}</td>
+          <td style={{ textAlign: 'center' }}>{groupLabels}</td>
+          <td style={{ textAlign: 'center' }}>
+            {user.register_date ? (new Date(user.register_date)).toLocaleString() : ''}
+          </td>
+          <td style={{ textAlign: 'center' }}>
+            {user.last_login_date ? (new Date(user.last_login_date)).toLocaleString() : ''}
+          </td>
           <td style={{ textAlign: 'center' }}>
             <i
               className="write link large icon"
-              onClick={() => { this.showUserModifyDialog(user.email) }}
+              onClick={() => { this.showUserUpdateDialog(user.email) }}
             />
             <i
               className={
@@ -128,9 +179,8 @@ export default class SegmentUserGroup extends React.Component {
               }
               onClick={() => {
                 UserAPI.admDeactivate(user.email, { delete: true })
-                  .then(UserAPI.admGetList)
                   .then((result) => {
-                    this.setState({ users: result.users });
+                    return this.reloadUsers();
                   })
                   .catch((error) => {
                     console.log(error);
@@ -145,21 +195,21 @@ export default class SegmentUserGroup extends React.Component {
 
     let groupTable = this.state.groups.map((group) => {
       return (
-        <tr key={group}>
-          <td style={{ textAlign: 'center' }}>{ group }</td>
+        <tr key={group.name}>
+          <td
+            style={{
+              textAlign: 'center',
+              fontWeight: (group.name === 'User' || group.name === 'Admin') ? 'bold' : 'normal'
+            }}
+          >
+            {group.name}
+          </td>
+          <td>{group.description}</td>
           <td style={{ textAlign: 'center' }}>
             <i
-              className={
-                classnames(
-                  "write large red link icon",
-                  {
-                    hidden: (group === 'User' || group === 'Admin')
-                  }
-                )
-              }
+              className="write large link icon"
               onClick={() => {
-                this.setState({ groupToModify: group });
-                this.showGroupModifyDialog();
+                this.showGroupUpdateDialog(group);
               }}
             />
             <i
@@ -167,15 +217,14 @@ export default class SegmentUserGroup extends React.Component {
                 classnames(
                   "trash large red link icon",
                   {
-                    hidden: (group === 'User' || group === 'Admin')
+                    hidden: (group.name === 'User' || group.name === 'Admin')
                   }
                 )
               }
               onClick={() => {
-                UserAPI.removeGroup(group)
-                  .then(UserAPI.getGroups)
+                UserAPI.removeGroup(group.name)
                   .then((result) => {
-                    this.setState({ groups: result.groups, groupToRemove: group });
+                    return this.reloadGroups();
                   })
                 ;
               }}
@@ -198,13 +247,15 @@ export default class SegmentUserGroup extends React.Component {
                 className="ui green button"
                 onClick={this.showUserCreateDialog.bind(this)}
               >
-                Add User
+                New User
               </div>
             </div>
-            <a className="item active">1</a>
-            <a className="item">2</a>
-            <a className="item">3</a>
-            <a className="item">4</a>
+            <Pagination
+              ref="userPaginator"
+              classes="transparent"
+              pages={this.state.userPages}
+              onSelectPage={(page) => { this.reloadUsers() }}
+            />
             <div className="right menu">
               <div className="item">
                 <div className="ui icon input">
@@ -212,20 +263,8 @@ export default class SegmentUserGroup extends React.Component {
                     type="text"
                     placeholder="Search User..."
                     onChange={(text) => {
-                      if (!text) {
-                        UserAPI.admGetList()
-                          .then((result) => {
-                            this.setState({ users: result.users });
-                          })
-                        ;
-                      }
-                      else {
-                        UserAPI.getProfile({ searches: text })
-                          .then((result) => {
-                            this.setState({ users: result.users });
-                          })
-                        ;
-                      }
+                      this.refs.userPaginator.setPosition(1);
+                      this.setState({ userSearchText: text || '' });
                     }}
                   />
                   <i className="search link icon"></i>
@@ -240,6 +279,8 @@ export default class SegmentUserGroup extends React.Component {
                 <th>Name</th>
                 <th>E-mail address</th>
                 <th style={{ textAlign: 'center' }}>Group</th>
+                <th style={{ textAlign: 'center' }}>Register date</th>
+                <th style={{ textAlign: 'center' }}>Last login time</th>
                 <th style={{ textAlign: 'center' }}>Edit</th>
               </tr>
             </thead>
@@ -258,10 +299,12 @@ export default class SegmentUserGroup extends React.Component {
                 New Group
               </div>
             </div>
-            <a className="item active">1</a>
-            <a className="item">2</a>
-            <a className="item">3</a>
-            <a className="item">4</a>
+            <Pagination
+              ref="groupPaginator"
+              classes="transparent"
+              pages={this.state.groupPages}
+              onSelectPage={(page) => { this.reloadGroups() }}
+            />
             <div className="right menu">
               <div className="item">
                 <div className="ui icon input">
@@ -269,11 +312,8 @@ export default class SegmentUserGroup extends React.Component {
                     type="text"
                     placeholder="Search Group..."
                     onChange={(text) => {
-                      UserAPI.getGroups({ searches: text })
-                        .then((result) => {
-                          this.setState({ groups: result.groups });
-                        })
-                      ;
+                      this.refs.groupPaginator.setPosition(1);
+                      this.setState({ groupSearchText: text || '' });
                     }}
                   />
                   <i className="search link icon"></i>
@@ -281,12 +321,14 @@ export default class SegmentUserGroup extends React.Component {
               </div>
             </div>
           </div>
-          <table className="ui compact celled collapsing table">
+          <table className="ui compact celled table">
+            <col width="20%" />
             <col width="70%" />
-            <col width="30%" />
+            <col width="10%" />
             <thead>
               <tr>
                 <th style={{ textAlign: 'center' }}>Name</th>
+                <th>Description</th>
                 <th style={{ textAlign: 'center' }}>Edit</th>
               </tr>
             </thead>
@@ -296,22 +338,21 @@ export default class SegmentUserGroup extends React.Component {
           </table>
         </div>
         <div>
-          <DialogUserCreate
+          <DialogUserCreator
             ref="userCreateDialog"
             onSuccess={this.userCreateSuccess.bind(this)}
           />
-          <DialogUserModify
-            ref="userModifyDialog"
-            onSuccess={this.userModifySuccess.bind(this)}
+          <DialogUserUpdater
+            ref="userUpdateDialog"
+            onSuccess={this.userUpdateSuccess.bind(this)}
           />
-          <DialogGroupCreate
+          <DialogGroupCreator
             ref="groupCreateDialog"
             onSuccess={this.groupCreateSuccess.bind(this)}
           />
-          <DialogGroupModify
-            ref="groupModifyDialog"
-            defaultName={this.state.groupToModify}
-            onSuccess={this.groupModifySuccess.bind(this)}
+          <DialogGroupUpdater
+            ref="groupUpdateDialog"
+            onSuccess={this.groupUpdateSuccess.bind(this)}
           />
         </div>
       </div>

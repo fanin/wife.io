@@ -11,7 +11,7 @@ var User = new Schema({
   register_date: { type: Date },
   last_login_date: { type: Date },
   expiration_date: { type: Date },
-  description: { type: String }
+  note: { type: String }
 });
 
 User.plugin(passportLocalMongoose, {

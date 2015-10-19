@@ -27,8 +27,9 @@ var fs     = require('fs-extra'),
     path   = require('path'),
     uuid   = require('node-uuid'),
     config = require('config'),
-    disks  = require('./disks'),
-    ssemgr = require('../sse/sse-manager');
+    disks  = require('./disks');
+
+var SSEManager = require('lib/sse/sse-manager'); // FIXME: Should move sse to api-storage
 
 function StorageManager() {
   this.systemDisk = null;
@@ -156,7 +157,7 @@ StorageManager.prototype.getDisks = function(callback) {
             if (!this.dataDisk[i].uuid)
               this.dataDisk[i].uuid = uuid.v4();
 
-            ssemgr.broadcast(
+            SSEManager.broadcast(
               "storage", { eventType: "INSERT", disk: this.dataDisk[i] }
             );
           }
@@ -164,7 +165,7 @@ StorageManager.prototype.getDisks = function(callback) {
 
         for (i = 0; i < _oldDisk.length; i++)
           if (!_oldDisk[i].present)
-            ssemgr.broadcast("storage", { eventType: "REMOVE", disk: _oldDisk[i] });
+            SSEManager.broadcast("storage", { eventType: "REMOVE", disk: _oldDisk[i] });
       }
 
       callback && callback([ this.systemDisk ].concat(this.dataDisk));

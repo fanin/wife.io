@@ -17,10 +17,21 @@ function handleError(xhr, api, error, reject) {
 export default {
   admGetList: function(options = {}) {
     return new Promise(function(resolve, reject) {
-      apiutil.get('/api/v1/user/adm/list', {
-        success: function(xhr, users) {
-          options.onSuccess && options.onSuccess(xhr, users);
-          resolve({ api: 'user.admGetList', users: users });
+      let url = '/api/v1/user/adm/list?k=0';
+
+      if (options.searches)
+        url += '&searches=' + encodeURIComponent(options.searches);
+
+      if (options.page)
+        url += '&page=' + options.page;
+
+      if (options.limit)
+          url += '&limit=' + options.limit;
+
+      apiutil.get(url, {
+        success: function(xhr, result) {
+          options.onSuccess && options.onSuccess(xhr, result);
+          resolve({ api: 'user.admGetList', users: result.users, count: result.count });
         },
         error: function(xhr) {
           handleError(xhr, 'user.admGetList', options.onError, reject);
@@ -132,9 +143,7 @@ export default {
     return new Promise(function(resolve, reject) {
       let url = '/api/v1/user/profile';
 
-      if (options.searches)
-        url += '?searches=' + encodeURIComponent(options.searches);
-      else if (options.user)
+      if (options.user)
         url += '?email=' + encodeURIComponent(options.user);
 
       apiutil.get(url, {
@@ -163,17 +172,42 @@ export default {
     });
   },
 
+  userCount: function(options = {}) {
+    return new Promise(function(resolve, reject) {
+      let url = '/api/v1/user/count';
+
+      if (options.searches)
+        url += '?searches=' + encodeURIComponent(options.searches);
+
+      apiutil.get(url, {
+        success: function(xhr, result) {
+          options.onSuccess && options.onSuccess(xhr, result.count);
+          resolve({ api: 'user.userCount', count: result.count });
+        },
+        error: function(xhr) {
+          handleError(xhr, 'user.userCount', options.onError, reject);
+        }
+      });
+    });
+  },
+
   getGroups: function(options = {}) {
-    let url = '/api/v1/group';
+    let url = '/api/v1/group?k=0';
 
     if (options.searches)
-      url += '?searches=' + encodeURIComponent(options.searches);
+      url += '&searches=' + encodeURIComponent(options.searches);
+
+    if (options.page)
+      url += '&page=' + options.page;
+
+    if (options.limit)
+        url += '&limit=' + options.limit;
 
     return new Promise(function(resolve, reject) {
       apiutil.get(url, {
-        success: function(xhr, groups) {
-          options.onSuccess && options.onSuccess(xhr, groups);
-          resolve({ api: 'user.getGroups', groups: groups });
+        success: function(xhr, result) {
+          options.onSuccess && options.onSuccess(xhr, result.groups);
+          resolve({ api: 'user.getGroups', groups: result.groups, count: result.count });
         },
         error: function(xhr) {
           handleError(xhr, 'user.getGroups', options.onError, reject);
@@ -222,5 +256,30 @@ export default {
         }
       });
     });
-  }
+  },
+
+  groupCount: function(options = {}) {
+    return new Promise(function(resolve, reject) {
+      let url = '/api/v1/group/count?k=0';
+
+      if (options.searches)
+        url += '&searches=' + encodeURIComponent(options.searches);
+
+      if (options.page)
+        url += '&page=' + options.page;
+
+      if (options.limit)
+          url += '&limit=' + options.limit;
+
+      apiutil.get(url, {
+        success: function(xhr, result) {
+          options.onSuccess && options.onSuccess(xhr, result.count);
+          resolve({ api: 'user.groupCount', count: result.count });
+        },
+        error: function(xhr) {
+          handleError(xhr, 'user.groupCount', options.onError, reject);
+        }
+      });
+    });
+  },
 }

@@ -14,6 +14,12 @@ export default class Button extends React.Component {
     super(props);
   }
 
+  componentDidMount() {
+    $(React.findDOMNode(this)).click((e) => {
+      this.props.onClick();
+    });
+  }
+
   render() {
     let classes = classnames(
       'ui',
@@ -35,7 +41,7 @@ export default class Button extends React.Component {
     }
     else {
       button = (
-        <div className={classes} onClick={this.props.onClick}>
+        <div className={classes}>
           {this.props.children}
         </div>
       );

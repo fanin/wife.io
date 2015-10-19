@@ -14,13 +14,13 @@ var fs     = require('fs-extra'),
 
 //fs.jsonfile.spaces = 4;
 
-var USER_APP_PATH = path.resolve(path.join(
+const USER_APP_PATH = path.resolve(path.join(
                       config.settings.user_data_path,
                       config.settings.sys_name,
                       'Applications'
                     ));
-var INTERNAL_APP_PATH = path.join(config.settings.root_path, 'apps');
-var MANIFEST_FILE = 'manifest.json';
+const INTERNAL_APP_PATH = path.join(config.settings.root_path, 'apps');
+const MANIFEST_FILE = 'manifest.json';
 
 function AppManager() {
   this.appList = [];

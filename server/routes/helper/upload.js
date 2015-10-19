@@ -2,7 +2,7 @@ var fse    = require('fs-extra'),
     path   = require('path'),
     multer = require('multer'),
     config = require('config'),
-    strmsc = require('string-misc');
+    strmsc = require('utils/common/string-misc');
 
 module.exports = function(sizeLimit, mimeType, onUploadStart, onUploadComplete, onUploadError) {
   return [ multer({

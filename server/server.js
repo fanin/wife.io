@@ -10,12 +10,15 @@ var express      = require('express'),
     cookieParser = require('cookie-parser'),
     bodyParser   = require('body-parser'),
     passport     = require('passport'),
-    assert       = require('assert');
+    assert       = require('assert'),
+    config       = require('config');
 
-var index   = require('routes/index'),
-    api     = require('routes/api'),
-    apps    = require('routes/apps'),
-    sdk     = require('routes/sdk');
+var index = require('routes/index'),
+    api   = require('routes/api'),
+    apps  = require('routes/apps'),
+    sdk   = require('routes/sdk');
+
+var NetServAdvertiser = require('lib/netserv/netserv-advertiser');
 
 var app = express();
 
@@ -24,7 +27,7 @@ var app = express();
 
 //var credentials = { key: privateKey, cert: certificate };
 
-http.createServer(app).listen(8001);
+http.createServer(app).listen(config.settings.port);
 //https.createServer(credentials, app).listen(8443);
 
 mongoose.connect('mongodb://localhost:27017/wife');
@@ -65,5 +68,16 @@ app.get('*', function(req, res, next) {
 app.use(function(req, res, next) {
   res.sendStatus(404);
 });
+
+var advertiser = new NetServAdvertiser({
+  name: config.settings.serv_name,
+  port: config.settings.port,
+  serviceType: NetServAdvertiser.serviceType('http', 'tcp'),
+  txtRecord: {
+    version: '0.5.5'
+  }
+});
+
+advertiser.start();
 
 module.exports = app;

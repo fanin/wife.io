@@ -19,6 +19,7 @@ export default class ProfileForm extends React.Component {
       lastname: '',
       group: '',
       gender: '',
+      note: '',
       groups: []
     };
     this.validateRules = {
@@ -72,6 +73,7 @@ export default class ProfileForm extends React.Component {
           lastname: values[1].user.lastname,
           group: values[1].user.group,
           gender: values[1].user.gender,
+          note: values[1].user.note,
           groups: values[0].groups
         });
       })
@@ -92,7 +94,7 @@ export default class ProfileForm extends React.Component {
 
   render() {
     let groupItems = this.state.groups.map(
-      (group) => <div key={group} className="item" data-value={group}>{group}</div>
+      (group) => <div key={group.name} className="item" data-value={group.name}>{group.name}</div>
     );
 
     return (
@@ -187,6 +189,10 @@ export default class ProfileForm extends React.Component {
               <div className="item" data-value='1'>Male</div>
             </Dropdown>
           </div>
+        </div>
+        <div className="field">
+          <label>Note</label>
+          <Input type="text" name="note" defaultValue={this.state.note} />
         </div>
         <div className="ui error message" />
       </Form>

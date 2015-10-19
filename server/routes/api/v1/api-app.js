@@ -99,44 +99,24 @@ router.get('/', permission.grant, getAppList);
  * App manifest is a JSON format document which looks like this:
  * ```
  * {
- *     "name": "HelloWorld",
- *     "version": "0.1.0",
- *     "api_version": 1,
- *     "directory": "hello",
- *     "entry": "index.html",
- *     "permission": {
- *         "app": {
- *             "POST": "denied",
- *             "GET": "denied",
- *             "PUT": "denied",
- *             "DELETE": "denied"
- *         },
- *         "storage": {
- *             "POST": "denied",
- *             "GET": "denied",
- *             "PUT": "denied",
- *             "DELETE": "denied"
- *         },
- *         "fs": {
- *             "POST": "denied",
- *             "GET": "allow",
- *             "PUT": "denied",
- *             "DELETE": "denied"
- *         }
- *     },
- *     "locales": [
- *         "en_US",
- *         "zh_TW"
- *     ],
- *     "default_locale": "en_US",
- *     "browser_support": {
- *         "chrome": "*",
- *         "firefox": "*",
- *         "internet_explorer": "*",
- *         "safari": "*"
- *     },
- *     "description": "Hello world app.",
- *     "identifier": "IAeIjl3saB"
+ *   "name": "Hello World",
+ *   "version": "0.1.0",
+ *   "api_version": 1,
+ *   "directory": "hello",
+ *   "entry": "index.html",
+ *   "locales": [
+ *     "en_US",
+ *     "zh_TW"
+ *   ],
+ *   "default_locale": "en_US",
+ *   "browser_support": {
+ *     "chrome": "*",
+ *     "firefox": "*",
+ *     "internet_explorer": "*",
+ *     "safari": "*"
+ *   },
+ *   "description": "Hello application.",
+ *   "identifier": "UAeJoKesDc"
  * }
  * ```
  * where

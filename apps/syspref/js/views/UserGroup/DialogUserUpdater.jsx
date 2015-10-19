@@ -6,7 +6,7 @@ import Input from 'lib/cutie/Input';
 import Dropdown from 'lib/cutie/Dropdown';
 import UserAPI from 'lib/api/UserAPI';
 
-export class UserModifyForm extends React.Component {
+export class UserUpdaterForm extends React.Component {
 
   static defaultProps = {
     email: '',
@@ -23,6 +23,7 @@ export class UserModifyForm extends React.Component {
       lastname: '',
       group: '',
       gender: '',
+      note: '',
       groups: []
     };
     this.validateRules = {
@@ -68,22 +69,7 @@ export class UserModifyForm extends React.Component {
   }
 
   componentDidMount() {
-    Promise.all([ UserAPI.getGroups(), UserAPI.getProfile({ user: this.props.email }) ])
-      .then((values) => {
-        this.setState({
-          email: values[1].user.email,
-          firstname: values[1].user.firstname,
-          lastname: values[1].user.lastname,
-          group: values[1].user.group,
-          gender: values[1].user.gender,
-          groups: values[0].groups
-        });
-      })
-    ;
-  }
-
-  componentDidUpdate(prevProps, prevState) {
-    if (prevProps.email !== this.props.email) {
+    if (this.props.email) {
       Promise.all([
         UserAPI.getGroups(),
         UserAPI.getProfile({ user: this.props.email })
@@ -94,6 +80,26 @@ export class UserModifyForm extends React.Component {
           lastname: values[1].user.lastname,
           group: values[1].user.group,
           gender: values[1].user.gender,
+          note: values[1].user.note,
+          groups: values[0].groups
+        });
+      });
+    }
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (prevProps.email !== this.props.email && this.props.email != '') {
+      Promise.all([
+        UserAPI.getGroups(),
+        UserAPI.getProfile({ user: this.props.email })
+      ]).then((values) => {
+        this.setState({
+          email: values[1].user.email,
+          firstname: values[1].user.firstname,
+          lastname: values[1].user.lastname,
+          group: values[1].user.group,
+          gender: values[1].user.gender,
+          note: values[1].user.note,
           groups: values[0].groups
         });
       });
@@ -114,7 +120,7 @@ export class UserModifyForm extends React.Component {
 
   render() {
     let groupItems = this.state.groups.map(
-      (group) => <div key={group} className="item" data-value={group}>{group}</div>
+      (group) => <div key={group.name} className="item" data-value={group.name}>{group.name}</div>
     );
 
     return (
@@ -204,13 +210,17 @@ export class UserModifyForm extends React.Component {
             </Dropdown>
           </div>
         </div>
+        <div className="field">
+            <label>Note</label>
+            <Input type="text" name="note" defaultValue={this.state.note} />
+          </div>
         <div className="ui error message" />
       </Form>
     );
   }
 }
 
-export default class DialogUserCreate extends React.Component {
+export default class DialogUserUpdater extends React.Component {
 
   static defaultProps = {
     onValidate: (form) => {},
@@ -229,11 +239,11 @@ export default class DialogUserCreate extends React.Component {
 
   show(email) {
     this.setState({ email: email });
-    this.refs.userModifyDialog.show();
+    this.refs.userUpdateDialog.show();
   }
 
   hide() {
-    this.refs.userModifyDialog.hide();
+    this.refs.userUpdateDialog.hide();
   }
 
   onValidate(formData) {
@@ -254,23 +264,23 @@ export default class DialogUserCreate extends React.Component {
   render() {
     return (
       <Dialog.Container
-        ref="userModifyDialog"
+        ref="userUpdateDialog"
         closable={true}
         onApprove={() => {
-          this.refs.userModifyForm.submit();
+          this.refs.userUpdateForm.submit();
           return false;
         }}
         onVisible={() => {
-          this.refs.userModifyForm.focus();
+          this.refs.userUpdateForm.focus();
         }}
         onHidden={this.props.onHidden}
       >
-        <Dialog.Header icon="circular users">
+        <Dialog.Header icon="circular user">
           Update user profile
         </Dialog.Header>
         <Dialog.Content>
-          <UserModifyForm
-            ref="userModifyForm"
+          <UserUpdaterForm
+            ref="userUpdateForm"
             email={this.state.email}
             onValidate={this.onValidate.bind(this)}
             onSuccess={this.onSuccess.bind(this)}
@@ -292,4 +302,3 @@ export default class DialogUserCreate extends React.Component {
     );
   }
 }
-

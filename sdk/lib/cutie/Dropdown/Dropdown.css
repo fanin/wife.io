@@ -5,3 +5,10 @@
   color: rgba(40,40,40,.3) !important;
   background-color: transparent !important;
 }
+
+.ui.cutie.readonly.dropdown
+{
+  cursor: default;
+  pointer-events: none;
+  opacity: 1;
+}

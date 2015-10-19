@@ -33,6 +33,8 @@ gulp.task('sdk/lib/external', function() {
       .pipe(gulp.dest(global.BUILD_PATH + '/sdk/lib/font-awesome/'));
   var react = gulp.src(__dirname + '/react/react*-' + REACT_VERSION + '*.js')
       .pipe(gulp.dest(global.BUILD_PATH + '/sdk/lib/react'));
+  var sendevent = gulp.src(__dirname + '/sendevent/*.js')
+      .pipe(gulp.dest(global.BUILD_PATH + '/sdk/lib/sendevent'));
 
   return merge(
     jquery,
@@ -40,7 +42,8 @@ gulp.task('sdk/lib/external', function() {
     semantic_ui,
     semantic_ui_theme,
     font_awesome,
-    react
+    react,
+    sendevent
   );
 });
 

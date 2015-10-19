@@ -3,6 +3,7 @@
 export default class Form extends React.Component {
 
   static defaultProps = {
+    fields: {},
     preventDefaultSubmit: false
   };
 
@@ -42,7 +43,7 @@ export default class Form extends React.Component {
                           .find(':input:not([readonly]):first');
       if (firstInput)
         firstInput.focus().val(firstInput.val());
-    }, 1000);
+    }, 500);
   }
 
   reset() {

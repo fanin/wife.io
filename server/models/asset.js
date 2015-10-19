@@ -3,11 +3,10 @@ var Schema = mongoose.Schema;
 
 var Asset = new Schema({
   assetid: { type: String, required: true, trim: true, index: { unique: true } },
-  serial: { type: String },
-  path: { type: String },
-  name: { type: String },
+  name: { type: String, required: true, trim: true },
   vendor: { type: String },
   model: { type: String },
+  serial: { type: String },
   owner: { type: String },
   acquisition_date: { type: Date },
   warranty_expiration_date: { type: Date },

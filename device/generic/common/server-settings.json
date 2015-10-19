@@ -1,5 +1,6 @@
 {
   "sys_name"       : "wife.io",
+  "serv_name"      : "Wife Service",
   "brand"          : "Chardi",
   "web_protocol"   : "http",
   "port"           : 8001,

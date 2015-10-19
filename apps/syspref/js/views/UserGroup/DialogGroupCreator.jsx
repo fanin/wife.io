@@ -5,10 +5,9 @@ import Form from 'lib/cutie/Form';
 import Input from 'lib/cutie/Input';
 import UserAPI from 'lib/api/UserAPI';
 
-export default class DialogGroupModify extends React.Component {
+export default class DialogGroupCreator extends React.Component {
 
   static defaultProps = {
-    defaultName: '',
     onValidate: (form) => {},
     onSuccess: () => {},
     onFailure: (error) => {},
@@ -21,21 +20,12 @@ export default class DialogGroupModify extends React.Component {
       waiting: false
     };
     this.validateRules = {
-      rule1: {
-        identifier: 'groupName',
+      name: {
+        identifier: 'name',
         rules: [
           {
             type: 'empty',
             prompt: 'Please enter a group name'
-          }
-        ]
-      },
-      rule2: {
-        identifier: 'groupNameNew',
-        rules: [
-          {
-            type: 'empty',
-            prompt: 'Please enter a new group name'
           }
         ]
       }
@@ -51,51 +41,33 @@ export default class DialogGroupModify extends React.Component {
   }
 
   show() {
-    this.refs.groupModifyDialog.show();
+    this.refs.groupCreateDialog.show();
   }
 
   hide() {
-    this.refs.groupModifyDialog.hide();
+    this.refs.groupCreateDialog.hide();
   }
 
   render() {
-    let title = '';
-
-    let buttons = [
-      {
-        title: 'Cancel',
-        iconType: '',
-        color: '',
-        actionType: 'deny'
-      },
-      {
-        title: 'Save',
-        iconType: '',
-        color: 'green',
-        classes: this.state.waiting ? 'loading' : '',
-        actionType: this.state.waiting ? '' : 'approve'
-      }
-    ];
-
     return (
       <Dialog.Container
-        ref="groupModifyDialog"
+        ref="groupCreateDialog"
         closable={true}
         onApprove={ () => {
-          this.refs.modifyForm.submit();
+          this.refs.createForm.submit();
           return false;
         }}
         onVisible={ () => {
-          this.refs.modifyForm.focus();
+          this.refs.createForm.focus();
         }}
         onHidden={this.props.onHidden}
       >
         <Dialog.Header icon="circular users">
-          Modify group name
+          Create a new group
         </Dialog.Header>
         <Dialog.Content>
           <Form
-            ref="modifyForm"
+            ref="createForm"
             preventDefaultSubmit={true}
             fields={this.validateRules}
             onValidate={(error, formData) => {
@@ -107,32 +79,27 @@ export default class DialogGroupModify extends React.Component {
                 this.setState({ waiting: false });
               }
               else {
-                UserAPI.renameGroup(formData)
+                UserAPI.addGroup(formData)
                   .then(() => {
-                    this.setState({ waiting: false });
                     this.props.onSuccess();
+                    this.setState({ waiting: false });
                   })
                   .catch((error) => {
-                    this.refs.modifyForm.addError([ error.message ]);
-                    this.setState({ waiting: false });
+                    this.refs.createForm.addError([ error.message ]);
                     this.props.onFailure(error);
+                    this.setState({ waiting: false });
                   })
                 ;
               }
             }}
           >
             <div className="field">
-              <label>Current group name</label>
-              <Input
-                type="text"
-                name="groupName"
-                defaultValue={this.props.defaultName}
-                readonly={true}
-              />
+              <label>Group name</label>
+              <Input type="text" name="name" />
             </div>
             <div className="field">
-              <label>New group name</label>
-              <Input type="text" name="groupNameNew" />
+              <label>Description</label>
+              <Input type="text" name="description" />
             </div>
             <div className="ui error message" />
           </Form>
@@ -145,7 +112,7 @@ export default class DialogGroupModify extends React.Component {
             color="green"
             classes={classnames("approve", { loading: this.state.waiting })}
           >
-            Save
+            Create
           </Button>
         </Dialog.ButtonSet>
       </Dialog.Container>

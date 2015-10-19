@@ -3,7 +3,7 @@
 import classnames from 'classnames';
 import { randomString } from 'lib/utils/common/string-misc'
 
-export class Dialog extends React.Component {
+class Dialog extends React.Component {
 
   static defaultProps = {
     size: "small",
@@ -25,6 +25,10 @@ export class Dialog extends React.Component {
       onHidden: this.props.onHidden,
       onApprove: this.props.onApprove,
       onDeny: this.props.onDeny
+    });
+
+    $(React.findDOMNode(this)).click((e) => {
+      e.stopPropagation();
     });
   }
 
@@ -129,6 +133,16 @@ export class Container extends React.Component {
     this.componentId = 'dialog-' + randomString('XXXXXXXXXXXX');
   }
 
+  componentDidMount() {
+    $('.dialog-container').click((e) => {
+      e.stopPropagation();
+
+      if (this.props.closable) {
+        this.hide();
+      }
+    });
+  }
+
   componentDidUpdate(prevProps, prevState) {
     if (prevState.useCount != this.state.useCount && this.state.useCount > 0) {
       if (this.state.useCount == 1)
@@ -136,8 +150,10 @@ export class Container extends React.Component {
       this.dialog.show();
     }
     else if (prevState.useCount > 0 && this.state.useCount == 0) {
-      React.unmountComponentAtNode(document.getElementById(this.componentId));
-      this.props.onHidden();
+      setTimeout(() => {
+        React.unmountComponentAtNode(document.getElementById(this.componentId));
+        this.props.onHidden();
+      }, 200);
     }
     else
       this.renderDialog();
@@ -148,9 +164,17 @@ export class Container extends React.Component {
       <Dialog
         {...this.props}
         onHidden={() => {
-          if (!this.state.hideCall)
-            this.close();
-          this.setState({ hideCall: false });
+          let state = { hideCall: false };
+
+          if (!this.state.hideCall) {
+            if (this.state.useCount > 0) {
+              state = {
+                hideCall: false,
+                useCount: this.state.useCount - 1
+              };
+            }
+          }
+          this.setState(state);
         }}
       >
         { this.props.children }
@@ -164,17 +188,10 @@ export class Container extends React.Component {
   }
 
   hide() {
-    this.dialog.hide();
-  }
-
-  close() {
-    if (this.state.useCount > 0) {
-      this.setState({ hideCall: true, useCount: this.state.useCount - 1 });
-    }
-  }
-
-  isShow() {
-    return (this.state.useCount > 0);
+    if (this.state.useCount === 1)
+      this.dialog.hide();
+    else if (this.state.useCount > 1)
+      this.setState({ useCount: this.state.useCount - 1 });
   }
 
   render() {
@@ -184,20 +201,6 @@ export class Container extends React.Component {
           "dialog-container",
           { 'hidden': this.state.useCount === 0 }
         )}
-        onClick={(e) => {
-          let d = $(React.findDOMNode(this.dialog));
-          let w = d.width();
-          let h = d.height();
-          let y = d.offset().top;
-          let x = d.offset().left;
-
-          e.stopPropagation();
-
-          if (e.pageX < x || e.pageX > (x + w) || e.pageY < y || e.pageY > (y + h)) {
-            if (this.props.closable)
-              this.hide();
-          }
-        }}
       >
         <div id={this.componentId}></div>
       </div>

@@ -1,0 +1,9 @@
+.transparent.menu {
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.transparent.menu > .item:first-child {
+    border-radius: 0;
+}

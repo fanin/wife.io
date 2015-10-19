@@ -528,7 +528,7 @@ export default class NoteEditorContainer extends React.Component {
     setTimeout(() => { this.flushDirtyNotes() }, 0);
   }
 
-  onDialogFileInputChange() {
+  onUploadDialogFileInputChange() {
     var files = $("#upload-files")[0].files;
     var list = this.state.uploadFiles;
 
@@ -539,17 +539,17 @@ export default class NoteEditorContainer extends React.Component {
     this.setState({ uploadFiles: list });
   }
 
-  onDialogAddFile() {
+  onUploadDialogAddFile() {
     $("#upload-files").click();
   }
 
-  onDialogRemoveFile(file) {
+  onUploadDialogRemoveFile(file) {
     var files = this.state.uploadFiles;
     files.splice(files.indexOf(file), 1);
     this.setState({ uploadFiles: files });
   }
 
-  onDialogUpload() {
+  onUploadDialogApprove() {
     var files = this.state.uploadFiles;
     if (files.length > 0) {
       DatabaseActionCreators.attachFilesToNote(
@@ -558,9 +558,10 @@ export default class NoteEditorContainer extends React.Component {
     }
   }
 
-  onDialogShow() {}
+  onUploadDialogShow() {}
 
-  onDialogHidden() {
+  onUploadDialogHidden() {
+    $("#upload-files").replaceWith($("#upload-files").clone());
     this.setState({ uploadFiles: [] });
   }
 
@@ -808,23 +809,23 @@ export default class NoteEditorContainer extends React.Component {
           type="file"
           id="upload-files"
           style={{display: "none"}}
-          onChange={this.onDialogFileInputChange.bind(this)}
+          onChange={this.onUploadDialogFileInputChange.bind(this)}
           multiple
         />
 
         <Dialog.Container
           ref="fileUploadDialog"
           size="large"
-          onVisible={this.onDialogShow.bind(this)}
-          onHidden={this.onDialogHidden.bind(this)}
-          onApprove={this.onDialogUpload.bind(this)}
+          onVisible={this.onUploadDialogShow.bind(this)}
+          onHidden={this.onUploadDialogHidden.bind(this)}
+          onApprove={this.onUploadDialogApprove.bind(this)}
         >
           <Dialog.Header>Select Files to Upload</Dialog.Header>
           <Dialog.Content>
             <FileUploadView
               uploadFiles={this.state.uploadFiles}
-              onAddFile={this.onDialogAddFile.bind(this)}
-              onRemoveFile={this.onDialogRemoveFile.bind(this)}
+              onAddFile={this.onUploadDialogAddFile.bind(this)}
+              onRemoveFile={this.onUploadDialogRemoveFile.bind(this)}
             />
           </Dialog.Content>
           <Dialog.ButtonSet>

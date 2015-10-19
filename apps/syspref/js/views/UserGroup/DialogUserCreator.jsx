@@ -6,7 +6,7 @@ import Input from 'lib/cutie/Input';
 import Dropdown from 'lib/cutie/Dropdown';
 import UserAPI from 'lib/api/UserAPI';
 
-export class UserCreateForm extends React.Component {
+export class UserCreatorForm extends React.Component {
 
   static defaultProps = {
     onValidate: () => {},
@@ -63,7 +63,8 @@ export class UserCreateForm extends React.Component {
     UserAPI.getGroups()
       .then((result) => {
         this.setState({ groups: result.groups, defaultGroup: 'User' });
-      });
+      })
+    ;
   }
 
   submit() {
@@ -80,7 +81,7 @@ export class UserCreateForm extends React.Component {
 
   render() {
     let groupItems = this.state.groups.map(
-      (group) => <div key={group} className="item" data-value={group}>{group}</div>
+      (group) => <div key={group.name} className="item" data-value={group.name}>{group.name}</div>
     );
 
     return (
@@ -102,7 +103,8 @@ export class UserCreateForm extends React.Component {
               .catch((error) => {
                 this.refs.form.addError([ error.message ]);
                 this.props.onFailure(error);
-              });
+              })
+            ;
           }
         }}
       >
@@ -157,13 +159,17 @@ export class UserCreateForm extends React.Component {
             </Dropdown>
           </div>
         </div>
+        <div className="field">
+          <label>Note</label>
+          <Input type="text" name="note" />
+        </div>
         <div className="ui error message" />
       </Form>
     );
   }
 }
 
-export default class DialogUserCreate extends React.Component {
+export default class DialogUserCreator extends React.Component {
 
   static defaultProps = {
     onValidate: (form) => {},
@@ -216,11 +222,11 @@ export default class DialogUserCreate extends React.Component {
         }}
         onHidden={this.props.onHidden}
       >
-        <Dialog.Header icon="circular users">
+        <Dialog.Header icon="circular user">
           Create a new user
         </Dialog.Header>
         <Dialog.Content>
-          <UserCreateForm
+          <UserCreatorForm
             ref="userCreateForm"
             onValidate={this.onValidate.bind(this)}
             onSuccess={this.onSuccess.bind(this)}
