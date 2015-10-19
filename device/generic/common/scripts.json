@@ -1,7 +1,7 @@
 {
   "scripts": {
     "prestart": "mkdir <%= user_data_path + '/' + sys_name + '/Database' %>; mongod --dbpath <%= user_data_path + '/' + sys_name + '/Database' %> --nojournal --smallfiles --fork --logpath /dev/null",
-    "start": "node server/index.js &",
+    "start": "node server/index.js ",
     "stop": "killall wife.io; exit 0",
     "poststop": "mongo admin --eval 'db.shutdownServer()' 2>&1 >/dev/null; rm -f <%= user_data_path + '/' + sys_name + '/Database/mongod.lock' %>; exit 0"
   }
